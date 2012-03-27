@@ -262,16 +262,29 @@ public class CModel {
 					Vector direction = pBall1.pos.minus( pBall0.pos );
 					direction.normalise();
 					double displacement = pBall0.Radius()/2;
-					// Make a new, displaced cell, this strongly differs from original C++ code TODO
+					// Make a new, displaced cell
 					Vector middle = pBall1.pos.minus(pBall0.pos); 
-					CCell pNew = new CCell(pCell.type,															// Same type as pCell
-							middle.x,					
-							middle.y,
-							middle.z,
+					CCell pNew = new CCell(pCell.type,													// Same type as pCell
+							middle.x+	  displacement*direction.x,											// First ball					
+							middle.y+1.01*displacement*direction.y,										// possible TODO, ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
+							middle.z+	  displacement*direction.z,
+							pBall1.pos.x,																// Second ball
+							pBall1.pos.y,
+							pBall1.pos.z,
 							pCell.filament,this);														// Same filament boolean as pCell and pointer to the model
+					// Displace old cell, 2nd ball
+					pBall1.pos = middle.minus(direction.times(displacement));
 					// Set mass for both cells
 					pNew.SetMass(mass/2);
 					pCell.SetMass(mass/2);
+					// Displace old cell and reset spring
+					pCell.ballArray[0].pos.plus(  direction.times( displacement )  );
+					pCell.springArray[0].restLength = (pCell.type==1) ? pBall0.Radius()*aspect*2 : pBall0.Radius()*aspect*4.*pBall0.mass/MCellMax;		// If type == 1 based on mass, else (so type==2) based on max mass 
+					// Contain cells to y dimension of domain
+					for(int iBall=0; iBall<2; iBall++) {
+						if(pCell.ballArray[iBall].pos.y < pCell.ballArray[iBall].Radius()) {pCell.ballArray[0].pos.y = pCell.ballArray[0].Radius();};
+						if( pNew.ballArray[iBall].pos.y <  pNew.ballArray[iBall].Radius()) { pNew.ballArray[0].pos.y =  pNew.ballArray[0].Radius();};
+					}
 					// Set properties for new cell
 					for(int iBall=0; iBall<2; iBall++) {
 						pNew.ballArray[iBall].vel = 	pCell.ballArray[iBall].vel;
@@ -279,27 +292,22 @@ public class CModel {
 					}
 					pNew.colour =	pCell.colour;
 					pNew.mother = 	pCell;
-					// Displace old cell
-					pCell.ballArray[0].pos.plus(  direction.times( displacement )  );
-					// Contain cells to y dimension of domain
-					for(int iBall=0; iBall<2; iBall++) {
-						if(pCell.ballArray[iBall].pos.y < pCell.ballArray[iBall].Radius()) {pCell.ballArray[0].pos.y = pCell.ballArray[0].Radius();};
-						if( pNew.ballArray[iBall].pos.y <  pNew.ballArray[iBall].Radius()) { pNew.ballArray[0].pos.y =  pNew.ballArray[0].Radius();};
+					pNew.springArray[0].restLength = pCell.springArray[0].restLength;
+
+					// Set filament springs
+					if(pNew.filament) {
+						for(CFilSpring pFilSpring : filSpringArray) {
+							if( pFilSpring.bigSpring.ballArray[0]== pBall0) {
+								pFilSpring.bigSpring.ballArray[0] = pNew.ballArray[0];}
+							if( pFilSpring.bigSpring.ballArray[1]== pBall0) {
+								pFilSpring.bigSpring.ballArray[1] = pNew.ballArray[0];}
+							if( pFilSpring.smallSpring.ballArray[0]== pBall1) {
+								pFilSpring.smallSpring.ballArray[0] = pNew.ballArray[1];}
+							if( pFilSpring.smallSpring.ballArray[1]== pBall1) {
+								pFilSpring.smallSpring.ballArray[1] = pNew.ballArray[1];}
+						}
+						new CFilSpring(pCell,pNew);
 					}
-//					// Set filament springs
-//					if(pNew.filament) {
-//						for(CFilSpring pFilSpring : filSpringArray) {
-//							CSpring[] springs = {pFilSpring.bigSpring, pFilSpring.smallSpring};
-//							for(CSpring pSpring : springs) {
-//								for(int ii=0; ii<1; ii++) {
-//									if(pSpring.ballArray[ii])
-//									if pBall.equals(pCell.ballArray[0])
-//								}
-//								if(pSpring.ballArray.equals(pCell.ballArray[0]))
-//								if(pSpring.ballArray.equals(pCell.ballArray[0] || pSpring.ballArray.equals(pCell.ballArray[1])
-//							}
-//						}
-//					}
 				}
 
 			} else {		
@@ -322,29 +330,21 @@ public class CModel {
 	}
 	
 	public int BuildStick(ArrayList<CCell> collisionArray) {
-		// Kick out the already stuck ones
-		int ii=0;
-		while(ii<collisionArray.size()) {
+		int counter = 0;
+		for(int ii=0; ii<collisionArray.size(); ii+=2) {		// For loop works per duo
+			boolean setStick = true;
 			CCell pCell0 = collisionArray.get(ii);
 			CCell pCell1 = collisionArray.get(ii+1);
-			for(CStickSpring pSpring : stickSpringArray) {
-				if((pSpring.ballArray[0].pCell.equals(pCell0) && pSpring.ballArray[1].pCell.equals(pCell1)) ||
-						(pSpring.ballArray[0].pCell.equals(pCell1) && pSpring.ballArray[1].pCell.equals(pCell0))) {
-					collisionArray.remove(ii+1);// Remove the cells from the collisionArray. This one first to prevent indexing from being messed up 	
-					collisionArray.remove(ii);	
-					ii=ii-2;					// Counter the advance later on. Should be faster than an if statement, fewer executions this way. Not too elegant, though
-					break;
+			for(CStickSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
+				if((pSpring.ballArray[0].equals(pCell0) && pSpring.ballArray[0].equals(pCell1)) || (pSpring.ballArray[0].equals(pCell1) && pSpring.ballArray[0].equals(pCell0))) {
+					setStick = false;
+					break;										// We've found a duplicate, don't stick this one
 				}
 			}
-			ii=ii+2;								// Advance to the next duo
+			if(setStick) {
+				pCell0.Stick(pCell1);
+				counter++;}
 		}
-
-		// Stick the non-stuck, collided cells to eachother
-		for(int jj = 0; jj < collisionArray.size(); jj=jj+2) {		// Again (see collision detection), we'll need indexing to facilitate the rel. complicated for loop
-			CCell pCell0 = collisionArray.get(jj);
-			CCell pCell1 = collisionArray.get(jj+1);
-			pCell0.Stick(pCell1);
-		}
-		return collisionArray.size();
+		return counter;
 	}
 }

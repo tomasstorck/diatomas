@@ -7,7 +7,7 @@ public class CCell {
 	boolean filament;
 	Vector colour;
 	CBall[] ballArray = 	new CBall[2];
-	CSpring springArray;
+	CSpring[] springArray = new CSpring[1];
 	CCell mother;
 	int cellArrayIndex;
 	CModel pModel;
@@ -24,9 +24,9 @@ public class CCell {
 		if(type==0) { // Leaves ballArray and springArray, and mother
 			ballArray[0] = new CBall(base0x, base0y, base0z, model.MCellInit,   0, this);
 		} else {
-			ballArray[0] = new CBall(base0x, base0y, base0z, model.MCellInit/2, 0, this);
-			ballArray[1] = new CBall(base1x, base1y, base1z, model.MCellInit/2, 0, this);
-			springArray = new CSpring(ballArray[0],ballArray[1]);
+			new CBall(base0x, base0y, base0z, model.MCellInit/2, 0, this);		// Constructor adds it to the array
+			new CBall(base1x, base1y, base1z, model.MCellInit/2, 0, this);		// Constructor adds it to the array
+			new CSpring(ballArray[0],ballArray[1]);								// Constructor adds it to the array
 		}
 		model.cellArray.add(this);	
 	}
@@ -57,13 +57,14 @@ public class CCell {
 			double base1z = base0z + direction.z * Rpos;
 			
 			ballArray[1] = new CBall(base1x, base1y, base1z, model.MCellInit/2, 0, this);
-			springArray = new CSpring(ballArray[0],ballArray[1]);
+			springArray[0] = new CSpring(ballArray[0],ballArray[1]);
 		}
 		model.cellArray.add(this);
 	}
 	
 	public CCell(int type, Vector base, boolean filament, CModel model) {
 		new CCell(type, base.x, base.y, base.z, filament, model);
+		// Add is taken care of through calling method
 	}
 	
 	public void Anchor() {

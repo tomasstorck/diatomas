@@ -37,7 +37,8 @@ public class main {
 			model.movementTime += model.movementTimeStep;
 			
 			// Break anchor springs
-			{ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak();	// {} to make sure objects are destroyed when we're done (aka scope)
+			// {} to make sure objects are destroyed when we're done (aka scope)
+			{ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak();	// This one will return a nice and unique ArrayList, though perhaps already anchored cells 
 			model.anchorSpringArray.removeAll(breakArray);
 			model.Write(breakArray.size() + " anchor springs broken","iter");
 			// Build anchor springs
@@ -52,9 +53,10 @@ public class main {
 			model.Write(breakArray.size() + " sticking springs broken","iter");
 			// Build stick springs
 			model.Write("Detecting cell-cell collisions","iter");
-			ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple();
+			ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple();	 // Note that this one returns already stuck and duplicate cells
+			model.Write("Building new sticking springs","iter");
 			int NnewStick = model.BuildStick(collisionArray);
-			model.Write(NnewStick/2 + " cell pairs sticked","iter");};			// Divided by two, as array is based on origin and other cell (see for loop)
+			model.Write(NnewStick + " cell pairs sticked","iter");};			// Divided by two, as array is based on origin and other cell (see for loop)
 			
 			// Grow cells
 			{int newCell = model.GrowCell();

@@ -4,19 +4,16 @@ public class CSpring {
 	CBall[] ballArray = new CBall[2];
 	double K;
 	double restLength;
-	
-	public CSpring(CBall ball1, CBall ball2){
-		CModel pModel = ball1.pCell.pModel;
-		K = pModel.Ks;
-		restLength = ball1.Radius() * pModel.aspect * 2;
-		ballArray[0] = ball1;
-		ballArray[1] = ball2;
-	}
-	
-	public CSpring(CBall ball1, CBall ball2, double K, double restLength){
+
+	public CSpring(CBall ball0, CBall ball1, double K, double restLength){
 		this.K = K;
 		this.restLength = restLength;
-		ballArray[0] = ball1;
-		ballArray[1] = ball2;
+		ballArray[0] = ball0;
+		ballArray[1] = ball1;
+		ball0.pCell.springArray[0] = this;
+	}
+	
+	public CSpring(CBall ball0, CBall ball1){
+		new CSpring(ball0, ball1, ball0.pCell.pModel.Ks, ball0.Radius()*ball0.pCell.pModel.aspect * 2);
 	}
 }
