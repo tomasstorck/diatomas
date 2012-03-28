@@ -6,27 +6,29 @@ public class Interface {
 
 	public static void main(String[] args){
 		System.out.println("////// DIATOMAS Java model //////");
+		// Defaults
+		boolean enablePlot = true;
+		boolean enableMenu = false;
 		boolean simSet = false;
-		boolean menuSet = false;
+		
 		String name = "default";
 
 		int Narg = args.length;
 		// Find out if the simulation name is specified, ALSO if the menu has been called  
 		for(int ii=0; ii<Narg; ii++) {
-			if((!args[ii].equalsIgnoreCase("menu"))) {
-				// A name has been specified
-				simSet = true;
-				name = args[ii];
-			} else {
-				// Menu has been called
-				menuSet = true;
-			}
+			String arg = args[ii];
+			if(arg.equalsIgnoreCase("enableplot")) 	{enablePlot = true;} else
+			if(arg.equalsIgnoreCase("disableplot")) {enablePlot = false;} else
+			if(arg.equalsIgnoreCase("menu")) 		{enableMenu = true;} else
+//			if(arg.equalsIgnoreCase("enableplot")) 	{enablePlot = true;} else
+//			if(arg.equalsIgnoreCase("enableplot")) 	{enablePlot = true;} else
+													{name = arg;}
 		}
 		System.out.println("Simulation loaded:\t" + name);
 
 		// Display menu OR go with default Run model choice
 		String input = "1";
-		if(menuSet) {	// Don't forget to add new options below
+		if(enableMenu) {	// Don't forget to add new options below
 			System.out.println("[1] Run model");
 			System.out.println("[2] Render POV files");
 			System.out.println("[3] Clean files/Reset simulation");
@@ -56,10 +58,12 @@ public class Interface {
 
 		if(input.equalsIgnoreCase("1")) {
 			// Start the model
-			new main(name);
+			CModel model = new CModel(name);
+			new Run(model);
 		} else if(input.equalsIgnoreCase("2")) {
 			// Render POV
-			// TODO
+			CModel model = new CModel(name);			// We only need the method here, so no need to call the main/backbone script
+			model.POV_Plot();		
 		} else if(input.equalsIgnoreCase("3")) {
 			// Reset model
 			// TODO

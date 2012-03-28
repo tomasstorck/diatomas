@@ -1,5 +1,6 @@
 package cell;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -35,7 +36,7 @@ public class CModel {
 	double G		= -9.8;		// [m/s2], acceleration due to gravity
 	double rho_w	= 1000;		// [kg/m3], density of bulk liquid (water)
 	double rho_m	= 1100;		// [kg/m3], diatoma density
-	double Lx = 1200e-6; double  Ly = 300e-6; double Lz = 1200e-6;		// [m], Dimensions of domain
+	Vector L = new Vector(1200e-6, 300e-6, 1200e-6);	// [m], Dimensions of domain
 	int randomSeed= 1;
 	// Cell properties
 	int NType 		= 2;		// Types of cell
@@ -64,9 +65,9 @@ public class CModel {
 	//////////////////
 	
 	public CModel(String name) {
-		this.name = name;
-		String filesep = "/";
-		pathOutput = new String(name + filesep + "output") ;
+		this.name  = name;
+		pathImage  = name + "/image";
+		pathOutput = name + "/output";
 		
 	}
 	
@@ -96,31 +97,36 @@ public class CModel {
 	/////////////////
 	// Log writing //
 	/////////////////
-	public void Write(String message, String format) {
-		try {
-			// Construct date and time
-			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-			Calendar cal = Calendar.getInstance();
-			// Extract format from input arguments
-			String prefix = "";
-			String suffix = "";
-			if(format.equalsIgnoreCase("iter")) 	{suffix = "(" + movementIter + "/" + growthIter + ")";} 	else
-				if(format.equalsIgnoreCase("warning")) 	{prefix = "WARNING:";} 									else
-					if(format.equalsIgnoreCase("error")) 	{prefix = "ERROR:";}
-			String string = dateFormat.format(cal.getTime()) + "  " + prefix + " " + message + " " + suffix;
-			// Write to console
-			System.out.println(string);
-			// Write to file
-			PrintWriter fid = new PrintWriter(new FileWriter("logfile.txt",true));		// True is for append
-			fid.println(string);
-			fid.close();
-		} catch(IOException E) {
-			E.printStackTrace();
+	public void Write(String message, String format, boolean suppressFileOutput) {
+		// Construct date and time
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		Calendar cal = Calendar.getInstance();
+		// Extract format from input arguments
+		String prefix = "   ";
+		String suffix = "";
+		if(format.equalsIgnoreCase("iter")) 	{suffix = " (" + movementIter + "/" + growthIter + ")";} 	else
+			if(format.equalsIgnoreCase("warning")) 	{prefix = " WARNING: ";} 									else
+				if(format.equalsIgnoreCase("error")) 	{prefix = " ERROR: ";}
+		String string = dateFormat.format(cal.getTime()) + prefix + message + suffix;
+		// Write to console
+		System.out.println(string);
+		// Write to file
+		if(!suppressFileOutput) {
+			try {
+				if(!(new File(name)).exists()) {
+					new File(name).mkdir();
+				}
+				PrintWriter fid = new PrintWriter(new FileWriter(name + "/" + "logfile.txt",true));		// True is for append // Not platform independent TODO
+				fid.println(string);
+				fid.close();
+			} catch(IOException E) {
+				E.printStackTrace();
+			}
 		}
 	}
 	
-	public void Write(String message) {
-		Write(message,"");
+	public void Write(String message, String format) {
+		Write(message,"",false);
 	}
 	
 	//////////////////////////
@@ -272,14 +278,13 @@ public class CModel {
 							pBall1.pos.y,
 							pBall1.pos.z,
 							pCell.filament,this);														// Same filament boolean as pCell and pointer to the model
-					// Displace old cell, 2nd ball
-					pBall1.pos = middle.minus(direction.times(displacement));
 					// Set mass for both cells
 					pNew.SetMass(mass/2);
 					pCell.SetMass(mass/2);
-					// Displace old cell and reset spring
-					pCell.ballArray[0].pos.plus(  direction.times( displacement )  );
-					pCell.springArray[0].restLength = (pCell.type==1) ? pBall0.Radius()*aspect*2 : pBall0.Radius()*aspect*4.*pBall0.mass/MCellMax;		// If type == 1 based on mass, else (so type==2) based on max mass 
+					// Displace old cell, 2nd ball
+					pBall1.pos = middle.minus(direction.times(displacement));
+//					pBall0.pos.plus(  direction.times( displacement )  );	// Where did I find this? Commented out for now TODO
+					pCell.springArray[0].restLength = (pCell.type==1) ? pBall0.Radius()*aspect*2 : pBall0.Radius()*aspect*4.*pBall0.mass/MCellMax;		// If type == 1 based on mass, else (so type==2) based on max mass
 					// Contain cells to y dimension of domain
 					for(int iBall=0; iBall<2; iBall++) {
 						if(pCell.ballArray[iBall].pos.y < pCell.ballArray[iBall].Radius()) {pCell.ballArray[0].pos.y = pCell.ballArray[0].Radius();};
@@ -346,5 +351,184 @@ public class CModel {
 				counter++;}
 		}
 		return counter;
+	}
+	
+	///////////////////
+	// POV-Ray stuff //
+	///////////////////
+	
+	public void POV_Write() {
+		if(!(new File(name)).exists()) {
+			new File(name).mkdir();
+		}
+		if(!(new File(name + "/ouptut")).exists()) {
+			new File(name + "/output").mkdir();
+		}
+		
+		try {
+			String fileName = String.format("%s/output/pov.%04d.%04d.inc", name, movementIter,growthIter); 
+			PrintWriter fid = new PrintWriter(new FileWriter(fileName,true));		// True is for append // Not platform independent TODO
+			// Build spheres and rods
+			for(int iCell=0; iCell<cellArray.size(); iCell++) {
+				CCell pCell = cellArray.get(iCell);
+				if(pCell.type == 0) {
+					// Spherical cell
+					CBall pBall = pCell.ballArray[0];
+
+					fid.println("sphere\n" + 
+							"{\n" + 
+							String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) + 
+							String.format("\t%10.3f\n", pBall.Radius()*1e6) +
+							"\ttexture{\n" + 
+							"\t\tpigment{\n" +
+							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
+							"\t\t}\n" +
+							"\t\tfinish{\n" +
+							"\t\t\tambient .2\n" +
+							"\t\t\tdiffuse .6\n" +
+							"\t\t}\n" +
+							"\t}\n" +
+							"}\n");}
+				else if(pCell.type == 1 || pCell.type == 2) {	// Rod
+					CBall pBall = pCell.ballArray[0];
+					CBall pBallNext = pCell.ballArray[1];
+
+					fid.println("cylinder\n" +
+							"{\n" +
+							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
+							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
+							String.format("\t%10.3f\n", pBall.Radius()*1e6) +
+							"\ttexture{\n" +
+							"\t\tpigment{\n" +
+							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
+							"\t\t}\n" +
+							"\t\tfinish{\n" +
+							"\t\t\tambient .2\n" +
+							"\t\t\tdiffuse .6\n" +
+							"\t\t}\n" +
+							"\t}\n" +
+							"}\n" +
+							"sphere\n" +		// New sphere
+							"{\n" +
+							String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
+							String.format("\t%10.3f\n", pBall.Radius()*1e6) +
+							"\ttexture{\n" +
+							"\t\tpigment{\n" +
+							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
+							"\t\t}\n" +
+							"\t\tfinish{\n" +
+							"\t\t\tambient .2\n" +
+							"\t\t\tdiffuse .6\n" +
+							"\t\t}\n" +
+							"\t}\n" +
+							"}\n"+
+							"sphere\n" +		// New sphere
+							"{\n" +
+							String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
+							String.format("\t%10.3f\n", pBallNext.Radius()*1e6) +
+							"\ttexture{\n" +
+							"\t\tpigment{\n" +
+							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
+							"\t\t}\n" +
+							"\t\tfinish{\n" +
+							"\t\t\tambient .2\n" +
+							"\t\t\tdiffuse .6\n" +
+							"\t\t}\n" +
+							"\t}\n" +
+							"}\n");
+				}
+			}
+
+			// Build filament springs
+			for(int iFil = 0; iFil<filSpringArray.size(); iFil++) {
+				for(int springType = 0; springType < 2; springType++) {
+					CSpring pSpring;
+					double[] colour = new double[3];
+					if(springType==0) {		// Set specific things for small spring and big spring
+						pSpring = filSpringArray.get(iFil).bigSpring;
+						colour[0] = 0; colour[1] = 0; colour[2] = 1;		// Big spring is blue
+					} else {
+						pSpring = filSpringArray.get(iFil).smallSpring;
+						colour[0] = 1; colour[1] = 0; colour[2] = 0;		// Small spring is red
+					}
+
+					CBall pBall = pSpring.ballArray[0];
+					CBall pBallNext = pSpring.ballArray[1];
+
+					fid.println("cylinder\n" +
+							"{\n" +
+							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
+							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
+							String.format("\t%10.3f\n", pBall.Radius()*1e5) +
+							"\ttexture{\n" +
+							"\t\tpigment{\n" +
+							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", colour[0], colour[1], colour[2]) +
+							"\t\t}\n" +
+							"\t\tfinish{\n" +
+							"\t\t\tambient .2\n" +
+							"\t\t\tdiffuse .6\n" +
+							"\t\t}\n" +
+							"\t}\n" +
+							"}\n");
+				}
+			}
+
+			// Build stick spring array
+			for(int iStick = 0; iStick < stickSpringArray.size(); iStick++) {
+				CStickSpring pSpring = stickSpringArray.get(iStick);
+				CBall pBall = pSpring.ballArray[0];
+				CBall pBallNext = pSpring.ballArray[1];
+
+				fid.println("cylinder\n" +
+						"{\n" +
+						String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
+						String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
+						String.format("\t%10.3f\n", pBall.Radius()*1e5) +
+						"\ttexture{\n" +
+						"\t\tpigment{\n" +
+						String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 0.0, 1.0, 0.0) +		//Sticking springs are green
+						"\t\t}\n" +
+						"\t\tfinish{\n" +
+						"\t\t\tambient .2\n" +
+						"\t\t\tdiffuse .6\n" +
+						"\t\t}\n" +
+						"\t}\n" +
+						"}\n");
+			}
+
+			//Build anchor spring array
+			for(int iAnchor = 1; iAnchor < anchorSpringArray.size(); iAnchor++) {
+				CAnchorSpring pSpring = anchorSpringArray.get(iAnchor);
+				CBall pBall = pSpring.pBall;
+
+				if (!pSpring.anchor.equals(pBall.pos)) {		// else we get degenerate cylinders (i.e. height==0), POV doesn't like that
+					fid.println("cylinder\n" +
+							"{\n" +
+							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
+							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pSpring.anchor.x*1e6, pSpring.anchor.y*1e6, pSpring.anchor.z*1e6) +
+							String.format("\t%10.3f\n", pBall.Radius()*1e5) +	// Note 1e5 instead of 1e6 TODO
+							"\ttexture{\n" +
+							"\t\tpigment{\n" +
+							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 1.0, 1.0, 0.0) +		//Anchoring springs are yellow
+							"\t\t}\n" +
+							"\t\tfinish{\n" +
+							"\t\t\tambient .2\n" +
+							"\t\t\tdiffuse .6\n" +
+							"\t\t}\n" +
+							"\t}\n" +
+							"}\n");
+				}
+			}
+			fid.close();
+		} catch(IOException E) {
+			E.printStackTrace();
+		}
+
+	}
+	
+	public void POV_Plot() {
+		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + pathImage + "/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
+		String reply = LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", false);		// true == wait for process to finish
+		System.out.println(reply);
 	}
 }

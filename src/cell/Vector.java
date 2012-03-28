@@ -22,6 +22,13 @@ public class Vector {
 		z = z/L;
 	}
 	
+	public boolean equals(Vector v) {
+		if(x==v.x && y==v.y && z==v.z) {
+			return true;
+		}
+		return false;
+	}
+	
 	//////////////////////////////////
 	// Arithmetic operations 		//
 	//////////////////////////////////

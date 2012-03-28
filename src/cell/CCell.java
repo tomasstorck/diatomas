@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class CCell {
 	int type;
 	boolean filament;
-	Vector colour;
+	double[] colour = 		new double[3];
 	CBall[] ballArray = 	new CBall[2];
 	CSpring[] springArray = new CSpring[1];
 	CCell mother;
@@ -17,7 +17,7 @@ public class CCell {
 	public CCell(int type, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, CModel model) {
 		this.type = type;
 		this.filament = filament;
-		colour = new Vector(rand.Double(),rand.Double(),rand.Double());
+		colour[0] = rand.Double(); colour[1] = rand.Double(); colour[2] = rand.Double();
 		cellArrayIndex = model.cellArray.size();			// +1 because it's the next, -1 because index in Java is 0-based
 		pModel = model;
 		
@@ -25,7 +25,7 @@ public class CCell {
 			ballArray[0] = new CBall(base0x, base0y, base0z, model.MCellInit,   0, this);
 		} else {
 			new CBall(base0x, base0y, base0z, model.MCellInit/2, 0, this);		// Constructor adds it to the array
-			new CBall(base1x, base1y, base1z, model.MCellInit/2, 0, this);		// Constructor adds it to the array
+			new CBall(base1x, base1y, base1z, model.MCellInit/2, 1, this);		// Constructor adds it to the array
 			new CSpring(ballArray[0],ballArray[1]);								// Constructor adds it to the array
 		}
 		model.cellArray.add(this);	
@@ -34,14 +34,14 @@ public class CCell {
 	public CCell(int type, double base0x, double base0y, double base0z, boolean filament, CModel model) {
 		this.type = type;
 		this.filament = filament;
-		colour = new Vector(rand.Double(),rand.Double(),rand.Double());
+		colour[0] = rand.Double(); colour[1] = rand.Double(); colour[2] = rand.Double();
 		cellArrayIndex = model.cellArray.size();			// +1 because it's the next, -1 because index in Java is 0-based
 		pModel = model;
 		
 		if(type==0) { // Leaves ballArray and springArray, and mother
-			ballArray[0] = new CBall(base0x, base0y, base0z, model.MCellInit,   0, this);
+			new CBall(base0x, base0y, base0z, model.MCellInit,   0, this);
 		} else {
-			ballArray[0] = new CBall(base0x, base0y, base0z, model.MCellInit/2, 0, this);
+			new CBall(base0x, base0y, base0z, model.MCellInit/2, 0, this);
 			
 			Vector direction = new Vector(rand.Double(),rand.Double(),rand.Double());
 			direction.normalise();	// Normalise direction
@@ -56,8 +56,8 @@ public class CCell {
 			double base1y = base0y + direction.y * Rpos;
 			double base1z = base0z + direction.z * Rpos;
 			
-			ballArray[1] = new CBall(base1x, base1y, base1z, model.MCellInit/2, 0, this);
-			springArray[0] = new CSpring(ballArray[0],ballArray[1]);
+			new CBall(base1x, base1y, base1z, model.MCellInit/2, 1, this);
+			new CSpring(ballArray[0],ballArray[1]);
 		}
 		model.cellArray.add(this);
 	}

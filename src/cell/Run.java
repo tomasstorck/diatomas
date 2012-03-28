@@ -2,23 +2,18 @@ package cell;
 
 import java.util.ArrayList;
 
-public class main {
+public class Run {
 	
-	public main(String args){
-
-		CModel model;
-		model = new CModel(args);
-		model.randomSeed = 1;
-		
+	public Run(CModel model){
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
 		
 		// Create initial cells
 		for(int iCell = 0; iCell < model.NInitCell; iCell++){
 			new CCell(rand.Int(model.NType+1), 	// 0, 1 or 2 by default (specified numer is exclusive)
-					rand.Double()*model.Lx, 					// Anywhere between 0 and Lx
+					rand.Double()*model.L.x, 					// Anywhere between 0 and Lx
 					1e-4, 										// Standard height
-					rand.Double()*model.Lz,						// Anywhere between 0 and Lz
+					rand.Double()*model.L.z,					// Anywhere between 0 and Lz
 					true,										// With filament
 					model);										// And a pointer to the model
 		}
@@ -57,7 +52,11 @@ public class main {
 			model.Write("Building new sticking springs","iter");
 			int NnewStick = model.BuildStick(collisionArray);
 			model.Write(NnewStick + " cell pairs sticked","iter");};			// Divided by two, as array is based on origin and other cell (see for loop)
-			
+
+			// Plot
+			model.Write("Writing POV files","iter");
+			model.POV_Write();
+			model.POV_Plot();
 			// Grow cells
 			{int newCell = model.GrowCell();
 			model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");}
