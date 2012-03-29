@@ -46,15 +46,15 @@ public class CCell {
 			Vector direction = new Vector(rand.Double(),rand.Double(),rand.Double());
 			direction.normalise();	// Normalise direction
 			
-			double Rpos;
+			double distance;
 			if(type==1) {
-				Rpos = ballArray[0].Radius() * model.aspect*2;							// Find new pos
+				distance = ballArray[0].Radius() * model.aspect*2;										// type == 1 is fixed ball-ball distance
 			} else {
-				Rpos = ballArray[0].Radius() * model.aspect*2 * ballArray[0].mass/model.MCellMax;
+				distance = ballArray[0].Radius() * model.aspect*2 * ballArray[0].mass/model.MCellMax;	// type == 2 is variable ball-ball distance
 			}
-			double base1x = base0x + direction.x * Rpos;
-			double base1y = base0y + direction.y * Rpos;
-			double base1z = base0z + direction.z * Rpos;
+			double base1x = base0x + direction.x * distance;
+			double base1y = base0y + direction.y * distance;
+			double base1z = base0z + direction.z * distance;
 			
 			new CBall(base1x, base1y, base1z, model.MCellInit/2, 1, this);
 			new CSpring(ballArray[0],ballArray[1]);
@@ -93,7 +93,7 @@ public class CCell {
 		int NSpring;
 		CCell pA, pB;
 		if(type == 0 && pCell.type == 0) 		{NSpring = 1; pA = this; 	pB = pCell;}	// Doesn't matter which one goes first
-		else if(type > 0 && pCell.type == 0) 	{NSpring = 2; pA = pCell; 	pB = this;}	// Sphere goes first (see indexing next paragraph)
+		else if(type > 0 && pCell.type == 0) 	{NSpring = 2; pA = pCell; 	pB = this;}		// Sphere goes first (see indexing next paragraph)
 		else if(type == 0) 						{NSpring = 2; pA = this; 	pB = pCell;}	// Sphere goes first
 		else 									{NSpring = 4; pA = this; 	pB = pCell;} 	// Doesn't matter
 		

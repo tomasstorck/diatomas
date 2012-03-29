@@ -267,11 +267,18 @@ public class CModel {
 					//Direction
 					Vector direction = pBall1.pos.minus( pBall0.pos );
 					direction.normalise();
-					double displacement = pBall0.Radius()/2;
+					
+					double displacement; 																// Should be improved/made to make sense (TODO)
+					if(pCell.type==1) {
+						displacement = pBall0.Radius()*Math.pow(2,-0.666666);							// A very strange formula: compare our Radius() to the C++ equation for Rpos and you'll see it's the same
+					} else {
+						displacement = pBall1.Radius()/2;
+					}
+					
 					// Make a new, displaced cell
-					Vector middle = pBall1.pos.minus(pBall0.pos); 
+					Vector middle = pBall1.pos.plus(pBall0.pos).divide(2); 
 					CCell pNew = new CCell(pCell.type,													// Same type as pCell
-							middle.x+	  displacement*direction.x,											// First ball					
+							middle.x+	  displacement*direction.x,										// First ball					
 							middle.y+1.01*displacement*direction.y,										// possible TODO, ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
 							middle.z+	  displacement*direction.z,
 							pBall1.pos.x,																// Second ball
@@ -283,8 +290,7 @@ public class CModel {
 					pCell.SetMass(mass/2);
 					// Displace old cell, 2nd ball
 					pBall1.pos = middle.minus(direction.times(displacement));
-//					pBall0.pos.plus(  direction.times( displacement )  );	// Where did I find this? Commented out for now TODO
-					pCell.springArray[0].restLength = (pCell.type==1) ? pBall0.Radius()*aspect*2 : pBall0.Radius()*aspect*4.*pBall0.mass/MCellMax;		// If type == 1 based on mass, else (so type==2) based on max mass
+					pCell.springArray[0].Reset();
 					// Contain cells to y dimension of domain
 					for(int iBall=0; iBall<2; iBall++) {
 						if(pCell.ballArray[iBall].pos.y < pCell.ballArray[iBall].Radius()) {pCell.ballArray[0].pos.y = pCell.ballArray[0].Radius();};
@@ -316,8 +322,9 @@ public class CModel {
 				}
 
 			} else {		
-				// Simply increase mass
+				// Simply increase mass and reset spring
 				pCell.SetMass(mass);
+				if(pCell.type>0) {pCell.springArray[0].Reset();};
 			}
 		}
 		return newCell;
@@ -371,6 +378,7 @@ public class CModel {
 			// Build spheres and rods
 			for(int iCell=0; iCell<cellArray.size(); iCell++) {
 				CCell pCell = cellArray.get(iCell);
+				fid.println("// Cell no. " + iCell);
 				if(pCell.type == 0) {
 					// Spherical cell
 					CBall pBall = pCell.ballArray[0];
@@ -442,6 +450,7 @@ public class CModel {
 			// Build filament springs
 			for(int iFil = 0; iFil<filSpringArray.size(); iFil++) {
 				for(int springType = 0; springType < 2; springType++) {
+					fid.println("// Filament spring no. " + iFil);
 					CSpring pSpring;
 					double[] colour = new double[3];
 					if(springType==0) {		// Set specific things for small spring and big spring
@@ -475,6 +484,7 @@ public class CModel {
 
 			// Build stick spring array
 			for(int iStick = 0; iStick < stickSpringArray.size(); iStick++) {
+				fid.println("// Sticking spring no. " + iStick);
 				CStickSpring pSpring = stickSpringArray.get(iStick);
 				CBall pBall = pSpring.ballArray[0];
 				CBall pBallNext = pSpring.ballArray[1];
@@ -498,6 +508,7 @@ public class CModel {
 
 			//Build anchor spring array
 			for(int iAnchor = 1; iAnchor < anchorSpringArray.size(); iAnchor++) {
+				fid.println("// Anchor spring no. " + iAnchor);
 				CAnchorSpring pSpring = anchorSpringArray.get(iAnchor);
 				CBall pBall = pSpring.pBall;
 
@@ -519,6 +530,7 @@ public class CModel {
 							"}\n");
 				}
 			}
+			// Done, clean up and catch errors
 			fid.close();
 		} catch(IOException E) {
 			E.printStackTrace();
@@ -528,7 +540,7 @@ public class CModel {
 	
 	public void POV_Plot() {
 		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + pathImage + "/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
-		String reply = LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", false);		// true == wait for process to finish
-		System.out.println(reply);
+		String reply = LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", false,false);		// 1st true == wait for process to finish, 2nd true == tell command
+//		System.out.println(reply);
 	}
 }

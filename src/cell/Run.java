@@ -20,7 +20,7 @@ public class Run {
 		
 		model.Write(model.cellArray.size() + " initial cells created","iter");
 	
-		for(int iteration=0; iteration<100; iteration++){
+		for(int iteration=0; iteration<100; iteration++){					// Softcode this TODO
 			// Reset the random seed
 			rand.Seed(model.randomSeed*(2+model.growthIter));				// + something because if growthIter == 0, randomSeed doesn't matter. 
 																			// Not +1 because then we'd reuse the generator used during initialisation

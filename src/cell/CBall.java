@@ -44,9 +44,9 @@ public class CBall {
 	public double Radius() {							// Doing this here might save some calculations on the long run
 		if (pCell.type == 0) {
 			return Math.pow(0.75 * mass/(Math.PI * this.pCell.pModel.rho_m), .333333);
-		} else if(pCell.type == 1) {
+		} else if(pCell.type == 1) {					// type == 1 is variable radius balls
 			return Math.pow(mass 					/ (2*Math.PI*pCell.pModel.rho_m*pCell.pModel.aspect), .333333);		// FIXME: original code: Rpos=pow((sBall->mass/PI/pModel->RHO_M/aspect),0.333333333333);
-		} else if(pCell.type == 2) {
+		} else if(pCell.type == 2) {					// type == 2 is fixed radius balls
 			return Math.pow(pCell.pModel.MCellMax	/ (2*Math.PI*pCell.pModel.rho_m*pCell.pModel.aspect), .333333);		// TODO: this is constant, would making it static help here?
 		} else {
 			return -1;		// Error

@@ -72,14 +72,24 @@ public class Vector {
 		return plus;
 	}
 	
-	public Vector times(double scale) {
-		double newx = this.x * scale;
-		double newy = this.y * scale;
-		double newz = this.z * scale;
+	public Vector times(double number) {
+		double newx = this.x * number;
+		double newy = this.y * number;
+		double newz = this.z * number;
 		
 		Vector times = new Vector(newx, newy, newz);
 		
 		return times;
+	}
+	
+	public Vector divide(double number) {
+		double newx = this.x / number;
+		double newy = this.y / number;
+		double newz = this.z / number;
+		
+		Vector divide = new Vector(newx, newy, newz);
+		
+		return divide;
 	}
 	
 	

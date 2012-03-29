@@ -12,11 +12,11 @@ import java.io.StringWriter;
 import java.io.Writer;
 
 public class LinuxInteractor {
-	public static String executeCommand(String command, boolean waitForResponse) {
+	public static String executeCommand(String command, boolean waitForResponse, boolean showCommand) {
 		String response = "";
 		ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
 		pb.redirectErrorStream(true);
-//		System.out.println("Linux command: " + command);
+		if(showCommand) {System.out.println("Linux command: " + command);}
 
 		try {
 			Process shell = pb.start();

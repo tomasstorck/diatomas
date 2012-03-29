@@ -14,6 +14,24 @@ public class CSpring {
 	}
 	
 	public CSpring(CBall ball0, CBall ball1){
-		new CSpring(ball0, ball1, ball0.pCell.pModel.Ks, ball0.Radius()*ball0.pCell.pModel.aspect * 2);
+		double restLength;
+		if(ball0.pCell.type == 1) {
+			restLength = ball0.Radius()*ball0.pCell.pModel.aspect * 2;
+		} else {
+			restLength = ball0.Radius()*ball0.pCell.pModel.aspect * 2 * ball0.mass/ball0.pCell.pModel.MCellMax;		// Note that with this mass will have to be set before spring
+		}
+		
+		new CSpring(ball0, ball1, ball0.pCell.pModel.Ks, restLength);
+	}
+	
+	public double Reset() {
+		// If type == 1 based on mass, else (so type==2) based on max mass
+		CModel pModel = ballArray[0].pCell.pModel;
+		if(ballArray[0].pCell.type == 1) {
+			restLength = ballArray[0].Radius()*pModel.aspect*2;  
+		} else {
+			restLength = ballArray[0].Radius()*pModel.aspect*2 * ballArray[0].mass/pModel.MCellMax;			// Used to say 4 in C++ code but that doesn't make sense to me TODO
+		}
+		return restLength;
 	}
 }
