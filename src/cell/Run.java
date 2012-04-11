@@ -2,6 +2,8 @@ package cell;
 
 import java.util.ArrayList;
 
+import NR.*;
+
 public class Run {
 	
 	public Run(CModel model){
@@ -26,7 +28,39 @@ public class Run {
 																			// Not +1 because then we'd reuse the generator used during initialisation
 			
 			// Movement
-			// TODO
+			int nvar = 6*CModel.NBall;
+			int ntimes = (int) (model.movementTimeEnd/model.movementTimeStep);
+			double atol = 1.0e-6, rtol = atol;
+			double h1 = 0.00001, hmin = 0;
+			double t1 = model.movementTime; 
+			double t2 = t1 + model.movementTime + model.movementTimeEnd;
+			NRvector<Double> ystart = new NRvector<Double>(nvar,0.0);
+			
+			{int ii=0;											// Determine initial value vector
+			for(CBall pBall : model.BallArray()) { 
+				ystart.set(ii++, pBall.pos.x);
+				ystart.set(ii++, pBall.pos.y);
+				ystart.set(ii++, pBall.pos.z);
+				ystart.set(ii++, pBall.vel.x);
+				ystart.set(ii++, pBall.vel.x);
+				ystart.set(ii++, pBall.vel.x);
+			}}
+			Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
+			feval dydt = new feval(model);
+			Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt);
+			ode.integrate();
+			for(int iTime=0; iTime<out.count; iTime++) {
+				int iVar = 0;
+				for(CBall pBall : model.BallArray()) {
+					pBall.pos.x = out.ysave.get(iVar++,iTime);
+					pBall.pos.y = out.ysave.get(iVar++,iTime);
+					pBall.pos.z = out.ysave.get(iVar++,iTime);
+					pBall.vel.x = out.ysave.get(iVar++,iTime);
+					pBall.vel.y = out.ysave.get(iVar++,iTime);
+					pBall.vel.z = out.ysave.get(iVar++,iTime);
+				}
+				// save POV TODO
+			}
 			// Advance movement
 			model.movementIter++;
 			model.movementTime += model.movementTimeStep;

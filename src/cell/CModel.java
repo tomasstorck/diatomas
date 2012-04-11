@@ -1,5 +1,6 @@
 package cell;
 
+// Import Java stuff
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -8,6 +9,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+
+// Import NR stuff
+import NR.*;
 
 public class CModel {
 	// Model properties
@@ -542,5 +546,10 @@ public class CModel {
 		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + pathImage + "/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
 		String reply = LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", false,false);		// 1st true == wait for process to finish, 2nd true == tell command
 //		System.out.println(reply);
+	}
+
+	public NRvector<Double> CalculateForces(double t, NRvector<Double> y) {
+		NRvector<Double> dydx = new NRvector<Double>(y);
+		return dydx;
 	}
 }
