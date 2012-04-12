@@ -4,6 +4,7 @@ public class StepperBase {
 		double x;
 		double xold;
 		NRvector<Double> y, dydx;
+		double h;
 		double atol,rtol;
 		boolean dense;
 		double hdid;
@@ -13,10 +14,11 @@ public class StepperBase {
 		NRvector<Double> yout,yerr;
 		
 		public StepperBase(NRvector<Double> yy, NRvector<Double> dydxx, double xx, 
-				double atoll, double rtoll, boolean dens) {
+				double hh, double atoll, double rtoll, boolean dens) {
 			x = xx;				// Should be a reference FIXME
 			y = yy;				// Is a reference
 			dydx = dydxx;		// Is a reference
+			h = hh;
 			atol = atoll;
 			rtol = rtoll;
 			dense = dens;

@@ -53,16 +53,18 @@ public class Output<Stepper extends StepperBase> {
 
 	void save_dense(Stepper s, double xout, double h) {	// Save y to ysave (dense). Produces the output at xout. h is used as the step size: xold < xout < xold+h. Often called from out method below, not directly.
 		if(count == kmax) resize();						// Resize the ysave if we've approached the limit (like with init())
-		xsave.set(count++,xout);						// What does this do? index, THEN add or vice versa? TODO
+		xsave.set(count,xout);
 		for(int i=0; i<nvar; i++) ysave.set(i, count, s.dense_out(i,xout,h));
+		count++;
 //		pModel.movement_time = xout; // Important? FIXME
 	}
 
 	void save(double x, NRvector<Double> y) {			// Save y to ysave (non-dense)
 		if(kmax <= 0) return;
 		if(count == kmax) resize();						// Resize the saves if we've approached the limit (like with init())
-		xsave.set(count++,x);
+		xsave.set(count,x);
 		for(int i=0; i<nvar; i++) ysave.set(i, count, y.get(i));
+		count++;
 	}
 
 	void out(int nstp, double x, NRvector<Double> y, Stepper s, double h) {	// This one is called by Odeint to produce dense output. nstp is the current step number (-1 saves initial values)

@@ -130,7 +130,7 @@ public class CModel {
 	}
 	
 	public void Write(String message, String format) {
-		Write(message,"",false);
+		Write(message,format,false);
 	}
 	
 	//////////////////////////
@@ -542,14 +542,72 @@ public class CModel {
 
 	}
 	
-	public void POV_Plot() {
+	public void POV_Plot(boolean boolWaitForFinish, boolean boolEchoCommand) {
 		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + pathImage + "/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
-		String reply = LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", false,false);		// 1st true == wait for process to finish, 2nd true == tell command
+		String reply = LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", boolWaitForFinish,boolEchoCommand);		// 1st true == wait for process to finish, 2nd true == tell command
 //		System.out.println(reply);
 	}
+	
+	public void POV_Plot() {
+		POV_Plot(false,false);
+	}
 
-	public NRvector<Double> CalculateForces(double t, NRvector<Double> y) {
-		NRvector<Double> dydx = new NRvector<Double>(y);
+	public NRvector<Double> CalculateForces(double t, NRvector<Double> yode) {	// This function gets called again and again --> not very efficient to import/export every time TODO
+		// Read data from y
+		int ii=0; 				// Where we are in yode
+		for(CCell pCell : cellArray) {
+			for(int iBall=0; iBall < ((pCell.type==0) ? 1 : 2); iBall++) {		// If type==0 for 1 ball, else for 2
+				CBall pBall = pCell.ballArray[iBall];
+				
+				pBall.pos.x = 	yode.get(ii++);
+				pBall.pos.y = 	yode.get(ii++);
+				pBall.pos.z = 	yode.get(ii++);
+				pBall.vel.x = 	yode.get(ii++);
+				pBall.vel.y = 	yode.get(ii++);
+				pBall.vel.z = 	yode.get(ii++);
+				pBall.force.x = 0;	// Clear forces for first use
+				pBall.force.y = 0;
+				pBall.force.z = 0;
+			}
+		}
+		
+		// Calculate gravity+bouyancy, normal forces and drag
+		for(CCell pCell : cellArray) {
+			for(int iBall=0; iBall < ((pCell.type==0) ? 1 : 2); iBall++) {		// If type==0 for 1 ball, else for 2
+				CBall pBall = pCell.ballArray[iBall];
+				
+				// Contact forces
+				double y = pBall.pos.y;
+				double r = pBall.Radius();
+				if(y<r){
+					pBall.force.y += Kw*(r-y);
+				}
+				// Gravity and buoyancy
+				if(y>r) {			// Only if not already at the floor 
+					pBall.force.y += G * ((rho_m-rho_w)/rho_w) * pBall.mass ;  //let the ball fall
+				}
+				// Velocity damping
+				pBall.force.x -= Kd*pBall.vel.x;
+				pBall.force.y -= Kd*pBall.vel.y;
+				pBall.force.z -= Kd*pBall.vel.z;
+			}
+		}
+		
+		// Return results
+		NRvector<Double> dydx = new NRvector<Double>(yode.size());
+		ii=0;
+		for(CCell pCell : cellArray) {
+			for(int iBall=0; iBall < ((pCell.type==0) ? 1 : 2); iBall++) {		// If type==0 for 1 ball, else for 2
+				CBall pBall = pCell.ballArray[iBall];
+				double M = pBall.mass;
+				dydx.set(ii++,pBall.vel.x);			// dpos/dt = v;
+				dydx.set(ii++,pBall.vel.y);
+				dydx.set(ii++,pBall.vel.z);
+				dydx.set(ii++,pBall.force.x/M);		// dvel/dt = a = f/M
+				dydx.set(ii++,pBall.force.y/M);
+				dydx.set(ii++,pBall.force.z/M);
+			}
+		}
 		return dydx;
 	}
 }

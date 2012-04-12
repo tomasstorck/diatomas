@@ -28,6 +28,7 @@ public class Run {
 																			// Not +1 because then we'd reuse the generator used during initialisation
 			
 			// Movement
+			model.Write("Starting movement calculations","iter");
 			int nvar = 6*CModel.NBall;
 			int ntimes = (int) (model.movementTimeEnd/model.movementTimeStep);
 			double atol = 1.0e-6, rtol = atol;
@@ -64,6 +65,7 @@ public class Run {
 			// Advance movement
 			model.movementIter++;
 			model.movementTime += model.movementTimeStep;
+			model.Write("Movement finished","iter");
 			
 			// Break anchor springs
 			// {} to make sure objects are destroyed when we're done (aka scope)

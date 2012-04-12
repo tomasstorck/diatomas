@@ -6,8 +6,8 @@ public class StepperDopr853 extends StepperBase {
 	NRvector<Double> rcont1,rcont2,rcont3,rcont4,rcont5,rcont6,rcont7,rcont8;
 	Controller con = new Controller();
 
-	public StepperDopr853(NRvector<Double> yy, NRvector<Double> dydxx, double xx, double atoll, double rtoll, boolean dens) {
-		super(yy,dydxx,xx,atoll,rtoll,dens);	// Construct super class
+	public StepperDopr853(NRvector<Double> yy, NRvector<Double> dydxx, double xx, double hh, double atoll, double rtoll, boolean dens) {
+		super(yy,dydxx,xx,hh,atoll,rtoll,dens);	// Construct super class
 		
 		yerr2 	= new NRvector<Double>(n);
 		k2 		= new NRvector<Double>(n);
@@ -31,16 +31,16 @@ public class StepperDopr853 extends StepperBase {
 		EPS 	= Double.MIN_VALUE;
 	}
 
-	public void step(double htry, feval derivs) {
+	public void step(feval derivs) {
 		NRvector<Double> dydxnew = new NRvector<Double>(n);
-		double h = htry;
+		// Try with h set by Odeint 
 
 		int aaa=0;
 		while(true) {
 			aaa++;
 			dy(h,derivs);
 			double err=error(h);
-			if(con.success(err,h)) break;		// h should be passed by reference FIXME! If we found a decent solution, exit this loop
+			if(con.success(err)) break;		// h is changed in this function --> pass by reference. If we found a decent solution, exit this while loop
 			if(Math.abs(h) <= Math.abs(x)*EPS) {
 				System.out.println("Stepsize underflow in StepperDopr, h = " + h);
 			}
@@ -151,13 +151,13 @@ public class StepperDopr853 extends StepperBase {
 
 	public double dense_out(int i, double x, double h) {		// This is a bit strange, TODO
 		double s = (x - xold)/h;
-		double s1 = 1 - s;
+		double s1 = 1.0 - s;
 		return rcont1.get(i)+s*(rcont2.get(i)+s1*(rcont3.get(i)+s*(rcont4.get(i)+s1*(rcont5.get(i)+s*(rcont6.get(i)+s1*(rcont7.get(i)+s*rcont8.get(i)))))));
 	}
 
 	public double error(double h) {				// Determine how big the error is, based on te results and the tolerances
-		double err = 0;
-		double err2 = 0;
+		double err = 0.0;
+		double err2 = 0.0;
 		double sk, deno;
 		for(int i=0; i<n; i++) {
 			sk = atol+rtol*Math.max(Math.abs(y.get(i)),Math.abs(yout.get(i)));
@@ -165,7 +165,7 @@ public class StepperDopr853 extends StepperBase {
 			err  += Math.pow(yerr2.get(i)/sk,2);
 		}
 		deno = err+0.01*err2;
-		if(deno <= 0) deno = 1;
+		if(deno <= 0.0) deno = 1.0;
 		return Math.abs(h)*err*Math.sqrt(1/(n*deno));
 	}
 
@@ -178,16 +178,16 @@ public class StepperDopr853 extends StepperBase {
 			reject = false;
 			errold = 1e-4;
 		}
-		public boolean success(double err, double h) {
-			double beta	= 0;
-			double alpha = 1/8-beta*0.2;
+		public boolean success(double err) {
+			double beta	= 0.0;
+			double alpha = 1.0/8.0-beta*0.2;
 			double safe	= 0.9;
 			double minscale = 0.333;
-			double maxscale = 6;
+			double maxscale = 6.0;
 			double scale;
 
-			if(err<=1) {
-				if(err == 0) scale = maxscale;					// We can take the maximum allowed step size if err == 0
+			if(err<=1) {										// Good, we're well on our way. Make stepsize bigger.
+				if(err == 0.0) scale = maxscale;					// We can take the maximum allowed step size if err == 0
 				else {
 					scale = safe*Math.pow(err,-alpha) * Math.pow(errold,beta);
 					if(scale<minscale) scale = minscale;
@@ -199,12 +199,12 @@ public class StepperDopr853 extends StepperBase {
 				errold = Math.max(errold, 1e-4);				// The error is at least 1e-4, always? TODO
 				reject = false;
 				return true;
-			} else {
+			} else {											// Probaby added by Cristian (120411 Tomas)
 				if(err == err) {								// Means something among the lines of if err != NaN or infinite
 					scale = Math.max(safe*Math.pow(err,-alpha),minscale);
-					h *= scale;
+					h *= scale;									// FIXME is the h in Stepper scaled? i.e. linked?
 				} else {
-					h *= 0.5;									// Cristian added this... but why? TODO
+					h *= 0.5;									// If we don't know what h should be (e.g. err is inf) half it 
 				}
 				reject = true;
 				return false;
