@@ -59,11 +59,11 @@ public class Interface {
 		if(input.equalsIgnoreCase("1")) {
 			// Start the model
 			CModel model = new CModel(name);
-			new Run(model);
+			new Run(model,enablePlot);
 		} else if(input.equalsIgnoreCase("2")) {
 			// Render POV
 			CModel model = new CModel(name);			// We only need the method here, so no need to call the main/backbone script
-			model.POV_Plot();		
+			model.POV_Plot();
 		} else if(input.equalsIgnoreCase("3")) {
 			// Reset model
 			// TODO

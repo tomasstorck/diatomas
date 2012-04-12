@@ -35,20 +35,20 @@ public class Odeint<Stepper extends StepperBase> {
 		NRvector<Double> y 		= new NRvector<Double>(nvar);
 		NRvector<Double> dydx	= new NRvector<Double>(nvar);	// The derivative values, not as complicated as derivs
 		double h = SIGN(h1,x2-x1);
-		s 		= new StepperDopr853(y, dydx, x, h, atol, rtol, dense); // x should be the same x as in this class FIXME! A Stepper object. No matter what, it'll contain the properties defined in StepperBase (see extend at the top)	// TODO make generic
+		s = new StepperDopr853(y, dydx, x, h, atol, rtol, dense); // A Stepper object. No matter what, it'll contain the properties defined in StepperBase (see extend at the top)	// TODO make generic
 				
 		EPS = Double.MIN_VALUE;		// Not sure about this, FIXME
 		for(int i=0; i<nvar; i++) y.set(i,ystart.get(i));
 		out.init(s.neqn, x1, x2);	// Initialise intermediate values object
 	}
 	
-	public void integrate() {
+	public int integrate() {
 		derivs.calculate(s.x,s.y,s.dydx);
 		if(dense)	out.out(-1,s.x,s.y,s,s.h);	// -1 --> save initial values, see Output class. Note that h should not be obtained in out() as the syntax differs a few lines below here
 		else		out.save(s.x, s.y);
 
 		for(nstp=0; nstp<MAXSTP; nstp++) {
-			if((s.x+s.h*1.0001-x2)*(x2-x1) > 0.0) 	s.h = x2-s.x;	// Parameterise 1.0001? Set the stepsize h for next try 
+			if((s.x+s.h*1.0001-x2)*(x2-x1) > 0.0) 	s.h = x2-s.x;	// Make sure current h doesn't result in next x outside the interval  
 			s.step(derivs); 					// Take a step with the solver. This changes various fields of the stepper
 			if(s.hdid==s.h) ++nok; else ++nbad;	// Did we succeed? Mark that down.
 			// Save results
@@ -61,13 +61,17 @@ public class Odeint<Stepper extends StepperBase> {
 						Math.abs(out.xsave.get(out.count-1)-x2) > 
 						100.0*Math.abs(x2)*EPS) {
 					out.save(s.x,s.y);				// Save the last step					
-					return;						// Done.
+					return nstp;					// Done.
 				}
 			}
-			if (Math.abs(s.hnext)<=hmin) System.out.println("Warning: Step size too small in Odeint (" + s.hnext + ")");	// Make throw() TODO
+			if (Math.abs(s.hnext)<=hmin) {
+				System.out.println("Warning: Step size too small in Odeint (" + s.hnext + ")");	// Make throw() TODO
+				return -1;
+			}
 			s.h=s.hnext;							// Set stepsize and continue
 		}
 		System.out.println("Too many steps in Odeint (>" + MAXSTP + ")");
+		return -1;
 	}
 	
 	double SIGN(double a, double b) {			// return a if both are same sign, else return -a

@@ -6,7 +6,7 @@ import NR.*;
 
 public class Run {
 	
-	public Run(CModel model){
+	public Run(CModel model, boolean enablePlot){
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
 		
@@ -21,11 +21,10 @@ public class Run {
 		}
 		
 		model.Write(model.cellArray.size() + " initial cells created","iter");
-	
+		
 		for(int iteration=0; iteration<100; iteration++){					// Softcode this TODO
 			// Reset the random seed
 			rand.Seed(model.randomSeed*(2+model.growthIter));				// + something because if growthIter == 0, randomSeed doesn't matter. 
-																			// Not +1 because then we'd reuse the generator used during initialisation
 			
 			// Movement
 			model.Write("Starting movement calculations","iter");
@@ -49,7 +48,7 @@ public class Run {
 			Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
 			feval dydt = new feval(model);
 			Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt);
-			ode.integrate();
+			int nstp = ode.integrate();
 			for(int iTime=0; iTime<out.count; iTime++) {
 				int iVar = 0;
 				for(CBall pBall : model.BallArray()) {
@@ -65,7 +64,7 @@ public class Run {
 			// Advance movement
 			model.movementIter++;
 			model.movementTime += model.movementTimeStep;
-			model.Write("Movement finished","iter");
+			model.Write("Movement finished in " + nstp + " solver steps","iter");
 			
 			// Break anchor springs
 			// {} to make sure objects are destroyed when we're done (aka scope)
@@ -90,9 +89,11 @@ public class Run {
 			model.Write(NnewStick + " cell pairs sticked","iter");};			// Divided by two, as array is based on origin and other cell (see for loop)
 
 			// Plot
-			model.Write("Writing POV files","iter");
-			model.POV_Write();
-			model.POV_Plot();
+			if(enablePlot) {
+				model.Write("Writing POV files","iter");
+				model.POV_Write();
+				model.POV_Plot(); 
+			}
 			// Grow cells
 			{int newCell = model.GrowCell();
 			model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");}

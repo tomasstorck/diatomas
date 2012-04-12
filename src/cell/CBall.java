@@ -2,7 +2,7 @@ package cell;
 
 public class CBall {
 	double mass;
-//	double radius;	// Will put in method
+	double radius;	// Will put in method
 	Vector pos;
 	Vector vel;
 	Vector force;
@@ -27,6 +27,8 @@ public class CBall {
 		this.ballArrayIndex = ballArrayIndex;
 		pCell.ballArray[ballArrayIndex] = this;
 		CModel.NBall++;
+		// Update the radius
+		this.radius = Radius();
 	}
 	
 //	public CBall(Vector pos, int ballArrayIndex, CCell cell){																	// Same as above, but from Vector pos

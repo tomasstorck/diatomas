@@ -48,9 +48,9 @@ public class CCell {
 			
 			double distance;
 			if(type==1) {
-				distance = ballArray[0].Radius() * model.aspect*2;										// type == 1 is fixed ball-ball distance
+				distance = ballArray[0].radius * model.aspect*2;										// type == 1 is fixed ball-ball distance
 			} else {
-				distance = ballArray[0].Radius() * model.aspect*2 * ballArray[0].mass/model.MCellMax;	// type == 2 is variable ball-ball distance
+				distance = ballArray[0].radius * model.aspect*2 * ballArray[0].mass/model.MCellMax;	// type == 2 is variable ball-ball distance
 			}
 			double base1x = base0x + direction.x * distance;
 			double base1y = base0y + direction.y * distance;
@@ -138,9 +138,12 @@ public class CCell {
 	public void SetMass(double newMass) {
 		if(type==0) {
 			ballArray[0].mass = newMass;
+			ballArray[0].radius = ballArray[0].Radius();
 		} else {
 			ballArray[0].mass = newMass/2;
+			ballArray[0].radius = ballArray[0].Radius();
 			ballArray[1].mass = newMass/2;
+			ballArray[1].radius = ballArray[1].Radius();
 		}
 	}
 }

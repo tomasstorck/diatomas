@@ -35,17 +35,20 @@ public class StepperDopr853 extends StepperBase {
 		NRvector<Double> dydxnew = new NRvector<Double>(n);
 		// Try with h set by Odeint 
 
-		int aaa=0;
-		while(true) {
-			aaa++;
-			dy(h,derivs);
-			double err=error(h);
-			if(con.success(err)) break;		// h is changed in this function --> pass by reference. If we found a decent solution, exit this while loop
+//		int aaa=0;
+		while(true) {						// While we're not happy with the accuracy
+//			aaa++;
+			dy(h,derivs);					// Guess the next difference based on the derivatives and stepsize (this is where the RK stuff comes into play)
+			double err=error(h);			// Estimate the error
+			if(con.success(err)) {
+				break;						// h is changed in this function --> pass by reference. If we found a decent solution, exit this while loop
+			}
 			if(Math.abs(h) <= Math.abs(x)*EPS) {
 				System.out.println("Stepsize underflow in StepperDopr, h = " + h);
+				return;
 			}
 		}
-		derivs.calculate(x+h,yout,dydxnew);
+		derivs.calculate(x+h,yout,dydxnew);	// One more derivative calculation here
 		if(dense) prepare_dense(h,dydxnew,derivs);
 		dydx = dydxnew;
 		y = yout;
@@ -58,6 +61,7 @@ public class StepperDopr853 extends StepperBase {
 		NRvector<Double> ytemp = new NRvector<Double>(n);
 		int i;
 
+		// 11 derivative calculations below
 		for (i=0;i<n;i++)
 			ytemp.set(i,y.get(i)+h*c.a21*dydx.get(i));
 		derivs.calculate(x+c.c2*h,ytemp,k2);
@@ -161,7 +165,7 @@ public class StepperDopr853 extends StepperBase {
 		double sk, deno;
 		for(int i=0; i<n; i++) {
 			sk = atol+rtol*Math.max(Math.abs(y.get(i)),Math.abs(yout.get(i)));
-			err2 += Math.pow(yerr.get(i)/sk,2);		// Speed up by using another method? TODO
+			err2 += Math.pow(yerr.get(i)/sk,2);		// Speed up by using something else than pow 2 TODO?
 			err  += Math.pow(yerr2.get(i)/sk,2);
 		}
 		deno = err+0.01*err2;
@@ -178,7 +182,7 @@ public class StepperDopr853 extends StepperBase {
 			reject = false;
 			errold = 1e-4;
 		}
-		public boolean success(double err) {
+		public boolean success(double err) {					// Based on the error, determine the hnext and return whether or not this step is accepted or rejected
 			double beta	= 0.0;
 			double alpha = 1.0/8.0-beta*0.2;
 			double safe	= 0.9;

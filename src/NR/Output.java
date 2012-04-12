@@ -33,7 +33,7 @@ public class Output<Stepper extends StepperBase> {
 		if (dense) {									// If dense, we work with set limits, they're defined here
 			x1=xlo;
 			x2=xhi;
-			xout=x1;									// What does this do (TODO)
+			xout=x1;									// Set initial xout to the lower x limit
 			dxout=(x2-x1)/nsave;
 		}
 	}

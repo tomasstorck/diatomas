@@ -143,7 +143,7 @@ public class CModel {
 			int NBall = (pCell.type==0) ? 1 : 2;	// Figure out number of balls based on type
 			for(int iBall=0; iBall<NBall; iBall++) {
 				CBall pBall = pCell.ballArray[iBall];
-				if(pBall.pos.y - pBall.Radius() < 0) {
+				if(pBall.pos.y - pBall.radius < 0) {
 					collisionCell.add(pCell);
 					break;
 				}
@@ -163,7 +163,7 @@ public class CModel {
 				if(pBall.pCell.cellArrayIndex!=pBall2.pCell.cellArrayIndex) {
 					Vector diff = pBall2.pos.minus(pBall.pos);
 					double distance = Math.abs(diff.length());
-					if(distance - pBall.Radius() - pBall2.Radius() < 0) {
+					if(distance - pBall.radius - pBall2.radius < 0) {
 						collisionCell.add(pBall.pCell);
 						collisionCell.add(pBall2.pCell);
 					}
@@ -241,7 +241,7 @@ public class CModel {
 					// Come up with a nice direction in which to place the new cell
 					Vector direction = new Vector(rand.Double(),rand.Double(),rand.Double());			// TODO make the displacement go into any direction			
 					direction.normalise();
-					double displacement = pCell.ballArray[0].Radius();
+					double displacement = pCell.ballArray[0].radius;
 					// Make a new, displaced cell
 					CCell pNew = new CCell(0,															// Same type as pCell
 							pCell.ballArray[0].pos.x - displacement * direction.x,						// The new location is the old one plus some displacement					
@@ -249,7 +249,7 @@ public class CModel {
 							pCell.ballArray[0].pos.z - displacement * direction.z,
 							pCell.filament,this);														// Same filament boolean as pCell and pointer to the model
 					// Set mass for both cells
-					pNew.SetMass(mass/2);
+					pNew.SetMass(mass/2);		// Radius is updated in this method
 					pCell.SetMass(mass/2);
 					// Set properties for new cell
 					pNew.ballArray[0].vel = 	pCell.ballArray[0].vel;
@@ -259,8 +259,8 @@ public class CModel {
 					// Displace old cell
 					pCell.ballArray[0].pos.plus(  direction.times( displacement )  );
 					// Contain cells to y dimension of domain
-					if(pCell.ballArray[0].pos.y < pCell.ballArray[0].Radius()) {pCell.ballArray[0].pos.y = pCell.ballArray[0].Radius();};
-					if(pNew.ballArray[0].pos.y  < pNew.ballArray[0].Radius())  {pNew.ballArray[0].pos.y = pNew.ballArray[0].Radius();};
+					if(pCell.ballArray[0].pos.y < pCell.ballArray[0].radius) {pCell.ballArray[0].pos.y = pCell.ballArray[0].radius;};
+					if(pNew.ballArray[0].pos.y  < pNew.ballArray[0].radius)  {pNew.ballArray[0].pos.y = pNew.ballArray[0].radius;};
 					// Set filament springs
 					if(pNew.filament) {
 						pNew.Stick(pCell);		// but why? TODO
@@ -274,9 +274,9 @@ public class CModel {
 					
 					double displacement; 																// Should be improved/made to make sense (TODO)
 					if(pCell.type==1) {
-						displacement = pBall0.Radius()*Math.pow(2,-0.666666);							// A very strange formula: compare our Radius() to the C++ equation for Rpos and you'll see it's the same
+						displacement = pBall0.radius*Math.pow(2,-0.666666);							// A very strange formula: compare our radius to the C++ equation for Rpos and you'll see it's the same
 					} else {
-						displacement = pBall1.Radius()/2;
+						displacement = pBall1.radius/2;
 					}
 					
 					// Make a new, displaced cell
@@ -297,8 +297,8 @@ public class CModel {
 					pCell.springArray[0].Reset();
 					// Contain cells to y dimension of domain
 					for(int iBall=0; iBall<2; iBall++) {
-						if(pCell.ballArray[iBall].pos.y < pCell.ballArray[iBall].Radius()) {pCell.ballArray[0].pos.y = pCell.ballArray[0].Radius();};
-						if( pNew.ballArray[iBall].pos.y <  pNew.ballArray[iBall].Radius()) { pNew.ballArray[0].pos.y =  pNew.ballArray[0].Radius();};
+						if(pCell.ballArray[iBall].pos.y < pCell.ballArray[iBall].radius) {pCell.ballArray[0].pos.y = pCell.ballArray[0].radius;};
+						if( pNew.ballArray[iBall].pos.y <  pNew.ballArray[iBall].radius) { pNew.ballArray[0].pos.y =  pNew.ballArray[0].radius;};
 					}
 					// Set properties for new cell
 					for(int iBall=0; iBall<2; iBall++) {
@@ -390,7 +390,7 @@ public class CModel {
 					fid.println("sphere\n" + 
 							"{\n" + 
 							String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) + 
-							String.format("\t%10.3f\n", pBall.Radius()*1e6) +
+							String.format("\t%10.3f\n", pBall.radius*1e6) +
 							"\ttexture{\n" + 
 							"\t\tpigment{\n" +
 							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
@@ -409,7 +409,7 @@ public class CModel {
 							"{\n" +
 							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
 							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
-							String.format("\t%10.3f\n", pBall.Radius()*1e6) +
+							String.format("\t%10.3f\n", pBall.radius*1e6) +
 							"\ttexture{\n" +
 							"\t\tpigment{\n" +
 							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
@@ -423,7 +423,7 @@ public class CModel {
 							"sphere\n" +		// New sphere
 							"{\n" +
 							String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
-							String.format("\t%10.3f\n", pBall.Radius()*1e6) +
+							String.format("\t%10.3f\n", pBall.radius*1e6) +
 							"\ttexture{\n" +
 							"\t\tpigment{\n" +
 							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
@@ -437,7 +437,7 @@ public class CModel {
 							"sphere\n" +		// New sphere
 							"{\n" +
 							String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
-							String.format("\t%10.3f\n", pBallNext.Radius()*1e6) +
+							String.format("\t%10.3f\n", pBallNext.radius*1e6) +
 							"\ttexture{\n" +
 							"\t\tpigment{\n" +
 							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
@@ -472,7 +472,7 @@ public class CModel {
 							"{\n" +
 							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
 							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
-							String.format("\t%10.3f\n", pBall.Radius()*1e5) +
+							String.format("\t%10.3f\n", pBall.radius*1e5) +
 							"\ttexture{\n" +
 							"\t\tpigment{\n" +
 							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", colour[0], colour[1], colour[2]) +
@@ -497,7 +497,7 @@ public class CModel {
 						"{\n" +
 						String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
 						String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
-						String.format("\t%10.3f\n", pBall.Radius()*1e5) +
+						String.format("\t%10.3f\n", pBall.radius*1e5) +
 						"\ttexture{\n" +
 						"\t\tpigment{\n" +
 						String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 0.0, 1.0, 0.0) +		//Sticking springs are green
@@ -521,7 +521,7 @@ public class CModel {
 							"{\n" +
 							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
 							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pSpring.anchor.x*1e6, pSpring.anchor.y*1e6, pSpring.anchor.z*1e6) +
-							String.format("\t%10.3f\n", pBall.Radius()*1e5) +	// Note 1e5 instead of 1e6 TODO
+							String.format("\t%10.3f\n", pBall.radius*1e5) +	// Note 1e5 instead of 1e6 TODO
 							"\ttexture{\n" +
 							"\t\tpigment{\n" +
 							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 1.0, 1.0, 0.0) +		//Anchoring springs are yellow
@@ -555,50 +555,40 @@ public class CModel {
 	public NRvector<Double> CalculateForces(double t, NRvector<Double> yode) {	// This function gets called again and again --> not very efficient to import/export every time TODO
 		// Read data from y
 		int ii=0; 				// Where we are in yode
-		for(CCell pCell : cellArray) {
-			for(int iBall=0; iBall < ((pCell.type==0) ? 1 : 2); iBall++) {		// If type==0 for 1 ball, else for 2
-				CBall pBall = pCell.ballArray[iBall];
-				
-				pBall.pos.x = 	yode.get(ii++);
-				pBall.pos.y = 	yode.get(ii++);
-				pBall.pos.z = 	yode.get(ii++);
-				pBall.vel.x = 	yode.get(ii++);
-				pBall.vel.y = 	yode.get(ii++);
-				pBall.vel.z = 	yode.get(ii++);
-				pBall.force.x = 0;	// Clear forces for first use
-				pBall.force.y = 0;
-				pBall.force.z = 0;
-			}
+		for(CBall pBall : BallArray()) {
+			pBall.pos.x = 	yode.get(ii++);
+			pBall.pos.y = 	yode.get(ii++);
+			pBall.pos.z = 	yode.get(ii++);
+			pBall.vel.x = 	yode.get(ii++);
+			pBall.vel.y = 	yode.get(ii++);
+			pBall.vel.z = 	yode.get(ii++);
+			pBall.force.x = 0;	// Clear forces for first use
+			pBall.force.y = 0;
+			pBall.force.z = 0;
 		}
 		
 		// Calculate gravity+bouyancy, normal forces and drag
-		for(CCell pCell : cellArray) {
-			for(int iBall=0; iBall < ((pCell.type==0) ? 1 : 2); iBall++) {		// If type==0 for 1 ball, else for 2
-				CBall pBall = pCell.ballArray[iBall];
-				
-				// Contact forces
-				double y = pBall.pos.y;
-				double r = pBall.Radius();
-				if(y<r){
-					pBall.force.y += Kw*(r-y);
-				}
-				// Gravity and buoyancy
-				if(y>r) {			// Only if not already at the floor 
-					pBall.force.y += G * ((rho_m-rho_w)/rho_w) * pBall.mass ;  //let the ball fall
-				}
-				// Velocity damping
-				pBall.force.x -= Kd*pBall.vel.x;
-				pBall.force.y -= Kd*pBall.vel.y;
-				pBall.force.z -= Kd*pBall.vel.z;
+		for(CBall pBall : BallArray()) {
+			// Contact forces
+			double y = pBall.pos.y;
+			double r = pBall.radius;
+			if(y<r){
+				pBall.force.y += Kw*(r-y);
 			}
+			// Gravity and buoyancy
+			if(y>r) {			// Only if not already at the floor 
+				pBall.force.y += G * ((rho_m-rho_w)/rho_w) * pBall.mass ;  //let the ball fall 
+			}
+			// Velocity damping
+			pBall.force.x -= Kd*pBall.vel.x;
+			pBall.force.y -= Kd*pBall.vel.y;
+			pBall.force.z -= Kd*pBall.vel.z;
 		}
 		
 		// Return results
 		NRvector<Double> dydx = new NRvector<Double>(yode.size());
 		ii=0;
-		for(CCell pCell : cellArray) {
-			for(int iBall=0; iBall < ((pCell.type==0) ? 1 : 2); iBall++) {		// If type==0 for 1 ball, else for 2
-				CBall pBall = pCell.ballArray[iBall];
+		for(CBall pBall : BallArray()) {
 				double M = pBall.mass;
 				dydx.set(ii++,pBall.vel.x);			// dpos/dt = v;
 				dydx.set(ii++,pBall.vel.y);
@@ -606,7 +596,6 @@ public class CModel {
 				dydx.set(ii++,pBall.force.x/M);		// dvel/dt = a = f/M
 				dydx.set(ii++,pBall.force.y/M);
 				dydx.set(ii++,pBall.force.z/M);
-			}
 		}
 		return dydx;
 	}

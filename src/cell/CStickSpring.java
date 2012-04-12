@@ -11,7 +11,7 @@ public class CStickSpring {
 	public CStickSpring(CBall ball1, CBall ball2){			// Note that siblingArray is by default not initialised
 		CModel pModel = ball1.pCell.pModel;
 		K = pModel.Ks;
-		restLength = ball1.Radius() * pModel.aspect * 2;
+		restLength = ball1.radius * pModel.aspect * 2;
 		ballArray[0] = ball1;
 		ballArray[1] = ball2;
 	}
