@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import NR.*;
 
 public class Run {
-	
+
 	public Run(CModel model, boolean enablePlot){
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
-		
+
 		// Create initial cells
 		for(int iCell = 0; iCell < model.NInitCell; iCell++){
 			new CCell(rand.Int(model.NType+1), 	// 0, 1 or 2 by default (specified numer is exclusive)
@@ -19,13 +19,13 @@ public class Run {
 					true,										// With filament
 					model);										// And a pointer to the model
 		}
-		
+
 		model.Write(model.cellArray.size() + " initial cells created","iter");
-		
+
 		for(int iteration=0; iteration<100; iteration++){					// Softcode this TODO
 			// Reset the random seed
 			rand.Seed(model.randomSeed*(2+model.growthIter));				// + something because if growthIter == 0, randomSeed doesn't matter. 
-			
+
 			// Movement
 			model.Write("Starting movement calculations","iter");
 			int nvar = 6*CModel.NBall;
@@ -35,7 +35,7 @@ public class Run {
 			double t1 = model.movementTime; 
 			double t2 = t1 + model.movementTime + model.movementTimeEnd;
 			NRvector<Double> ystart = new NRvector<Double>(nvar,0.0);
-			
+
 			{int ii=0;											// Determine initial value vector
 			for(CBall pBall : model.BallArray()) { 
 				ystart.set(ii++, pBall.pos.x);
@@ -65,7 +65,7 @@ public class Run {
 			model.movementIter++;
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
-			
+
 			// Break anchor springs
 			// {} to make sure objects are destroyed when we're done (aka scope)
 			{ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak();	// This one will return a nice and unique ArrayList, though perhaps already anchored cells 
@@ -76,11 +76,11 @@ public class Run {
 			ArrayList<CCell> collisionArray = model.DetectFloorCollision();
 			int NnewAnchor = model.BuildAnchor(collisionArray);
 			model.Write(NnewAnchor + " anchor springs built","iter");}
-			
+
 			// Break stick springs
-			{ArrayList<CStickSpring> breakArray = model.DetectStickBreak();
-			model.stickSpringArray.removeAll(breakArray);
-			model.Write(breakArray.size() + " sticking springs broken","iter");
+//			{ArrayList<CStickSpring> breakArray = model.DetectStickBreak();
+//			model.stickSpringArray.removeAll(breakArray);
+//			model.Write(breakArray.size() + " sticking springs broken","iter");
 			// Build stick springs
 			model.Write("Detecting cell-cell collisions","iter");
 			ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple();	 // Note that this one returns already stuck and duplicate cells
@@ -100,6 +100,5 @@ public class Run {
 			// Advance growth
 			model.growthIter++;
 			model.growthTime += model.growthTimeStep;
-		}
 	}
 }
