@@ -3,9 +3,9 @@ package cell;
 public class CBall {
 	double mass;
 	double radius;	// Will put in method
-	Vector pos;
-	Vector vel;
-	Vector force;
+	Vector3d pos;
+	Vector3d vel;
+	Vector3d force;
 	int ballArrayIndex;
 	CCell pCell;
 	
@@ -16,9 +16,9 @@ public class CBall {
 //			mass = cell.pModel.MCellInit;
 //		}
 		
-		pos = new Vector(posx, posy, posz);
-		vel = new Vector(0, 0, 0);
-		force = new Vector(0, 0, 0);
+		pos = new Vector3d(posx, posy, posz);
+		vel = new Vector3d(0, 0, 0);
+		force = new Vector3d(0, 0, 0);
 
 		this.mass = mass;
 		

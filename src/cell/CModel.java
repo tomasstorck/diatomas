@@ -40,7 +40,7 @@ public class CModel {
 	double G		= -9.8;		// [m/s2], acceleration due to gravity
 	double rho_w	= 1000;		// [kg/m3], density of bulk liquid (water)
 	double rho_m	= 1100;		// [kg/m3], diatoma density
-	Vector L = new Vector(1200e-6, 300e-6, 1200e-6);	// [m], Dimensions of domain
+	Vector3d L = new Vector3d(1200e-6, 300e-6, 1200e-6);	// [m], Dimensions of domain
 	int randomSeed= 1;
 	// Cell properties
 	int NType 		= 2;		// Types of cell
@@ -161,7 +161,7 @@ public class CModel {
 			for(int iBall2 = iBall+1; iBall2<NBall; iBall2++) {
 				CBall pBall2 = ballArray[iBall2];
 				if(pBall.pCell.cellArrayIndex!=pBall2.pCell.cellArrayIndex) {
-					Vector diff = pBall2.pos.minus(pBall.pos);
+					Vector3d diff = pBall2.pos.minus(pBall.pos);
 					double distance = Math.abs(diff.length());
 					if(distance - pBall.radius - pBall2.radius < 0) {
 						collisionCell.add(pBall.pCell);
@@ -239,7 +239,7 @@ public class CModel {
 				newCell++;
 				if(pCell.type==0) {
 					// Come up with a nice direction in which to place the new cell
-					Vector direction = new Vector(rand.Double(),rand.Double(),rand.Double());			// TODO make the displacement go into any direction			
+					Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());			// TODO make the displacement go into any direction			
 					direction.normalise();
 					double displacement = pCell.ballArray[0].radius;
 					// Make a new, displaced cell
@@ -269,7 +269,7 @@ public class CModel {
 					CBall pBall0 = pCell.ballArray[0];
 					CBall pBall1 = pCell.ballArray[1];
 					//Direction
-					Vector direction = pBall1.pos.minus( pBall0.pos );
+					Vector3d direction = pBall1.pos.minus( pBall0.pos );
 					direction.normalise();
 					
 					double displacement; 																// Should be improved/made to make sense (TODO)
@@ -280,7 +280,7 @@ public class CModel {
 					}
 					
 					// Make a new, displaced cell
-					Vector middle = pBall1.pos.plus(pBall0.pos).divide(2); 
+					Vector3d middle = pBall1.pos.plus(pBall0.pos).divide(2); 
 					CCell pNew = new CCell(pCell.type,													// Same type as pCell
 							middle.x+	  displacement*direction.x,										// First ball					
 							middle.y+1.01*displacement*direction.y,										// possible TODO, ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
@@ -328,7 +328,7 @@ public class CModel {
 			} else {		
 				// Simply increase mass and reset spring
 				pCell.SetMass(mass);
-				if(pCell.type>0) {pCell.springArray[0].Reset();};
+				if(pCell.type>0) pCell.springArray[0].Reset();
 			}
 		}
 		return newCell;
@@ -544,15 +544,14 @@ public class CModel {
 	
 	public void POV_Plot(boolean boolWaitForFinish, boolean boolEchoCommand) {
 		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + pathImage + "/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
-		String reply = LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", boolWaitForFinish,boolEchoCommand);		// 1st true == wait for process to finish, 2nd true == tell command
-//		System.out.println(reply);
+		LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", boolWaitForFinish,boolEchoCommand);		// 1st true == wait for process to finish, 2nd true == tell command
 	}
 	
 	public void POV_Plot() {
 		POV_Plot(false,false);
 	}
 
-	public NRvector<Double> CalculateForces(double t, NRvector<Double> yode) {	// This function gets called again and again --> not very efficient to import/export every time TODO
+	public Vector CalculateForces(double t, Vector yode) {	// This function gets called again and again --> not very efficient to import/export every time TODO
 		// Read data from y
 		int ii=0; 				// Where we are in yode
 		for(CBall pBall : BallArray()) {
@@ -586,7 +585,7 @@ public class CModel {
 		}
 		
 		// Return results
-		NRvector<Double> dydx = new NRvector<Double>(yode.size());
+		Vector dydx = new Vector(yode.size());
 		ii=0;
 		for(CBall pBall : BallArray()) {
 				double M = pBall.mass;

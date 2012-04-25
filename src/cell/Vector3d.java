@@ -1,11 +1,11 @@
 package cell;
 
-public class Vector {
+public class Vector3d {
 	double x;
 	double y;
 	double z;
 	
-	public Vector(double x, double y, double z) {
+	public Vector3d(double x, double y, double z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -22,7 +22,7 @@ public class Vector {
 		z = z/L;
 	}
 	
-	public boolean equals(Vector v) {
+	public boolean equals(Vector3d v) {
 		if(x==v.x && y==v.y && z==v.z) {
 			return true;
 		}
@@ -32,62 +32,62 @@ public class Vector {
 	//////////////////////////////////
 	// Arithmetic operations 		//
 	//////////////////////////////////
-	public Vector minus(Vector v) {
+	public Vector3d minus(Vector3d v) {
 		double newx = this.x - v.x;
 		double newy = this.y - v.y;
 		double newz = this.z - v.z;
 		
-		Vector min = new Vector(newx, newy, newz);
+		Vector3d min = new Vector3d(newx, newy, newz);
 		
 		return min;
 	}
 	
-	public Vector minus(double n) {
+	public Vector3d minus(double n) {
 		double newx = this.x - n;
 		double newy = this.y - n;
 		double newz = this.z - n;
 		
-		Vector min = new Vector(newx, newy, newz);
+		Vector3d min = new Vector3d(newx, newy, newz);
 		
 		return min;
 	}
 	
-	public Vector plus(Vector v) {
+	public Vector3d plus(Vector3d v) {
 		double newx = this.x + v.x;
 		double newy = this.y + v.y;
 		double newz = this.z + v.z;
 		
-		Vector plus = new Vector(newx, newy, newz);
+		Vector3d plus = new Vector3d(newx, newy, newz);
 		
 		return plus;
 	}
 	
-	public Vector plus(double n) {
+	public Vector3d plus(double n) {
 		double newx = this.x + n;
 		double newy = this.y + n;
 		double newz = this.z + n;
 		
-		Vector plus = new Vector(newx, newy, newz);
+		Vector3d plus = new Vector3d(newx, newy, newz);
 		
 		return plus;
 	}
 	
-	public Vector times(double number) {
+	public Vector3d times(double number) {
 		double newx = this.x * number;
 		double newy = this.y * number;
 		double newz = this.z * number;
 		
-		Vector times = new Vector(newx, newy, newz);
+		Vector3d times = new Vector3d(newx, newy, newz);
 		
 		return times;
 	}
 	
-	public Vector divide(double number) {
+	public Vector3d divide(double number) {
 		double newx = this.x / number;
 		double newy = this.y / number;
 		double newz = this.z / number;
 		
-		Vector divide = new Vector(newx, newy, newz);
+		Vector3d divide = new Vector3d(newx, newy, newz);
 		
 		return divide;
 	}

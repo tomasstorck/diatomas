@@ -4,7 +4,7 @@ import java.io.*;
 
 public class Interface {
 
-	public static void main(String[] args){
+	public static void main(String[] args) throws Exception{
 		System.out.println("////// DIATOMAS Java model //////");
 		// Defaults
 		boolean enablePlot = true;

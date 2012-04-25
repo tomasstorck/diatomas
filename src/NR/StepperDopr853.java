@@ -1,121 +1,159 @@
 package NR;
 
+
 public class StepperDopr853 extends StepperBase {
-	NRvector<Double> yerr2;
-	NRvector<Double> k2,k3,k4,k5,k6,k7,k8,k9,k10;
-	NRvector<Double> rcont1,rcont2,rcont3,rcont4,rcont5,rcont6,rcont7,rcont8;
-	Controller con = new Controller();
-
-	public StepperDopr853(NRvector<Double> yy, NRvector<Double> dydxx, double xx, double hh, double atoll, double rtoll, boolean dens) {
+	
+	public StepperDopr853(Vector yy, Vector dydxx, double xx, double hh, double atoll, double rtoll, boolean dens) {
 		super(yy,dydxx,xx,hh,atoll,rtoll,dens);	// Construct super class
+		yerr2 = new Vector(n);
+		k2 = new Vector(n);
+		k3 = new Vector(n);
+		k4 = new Vector(n);
+		k5 = new Vector(n);
+		k6 = new Vector(n);
+		k7 = new Vector(n);
+		k8 = new Vector(n);
+		k9 = new Vector(n);
+		k10 = new Vector(n);
 		
-		yerr2 	= new NRvector<Double>(n);
-		k2 		= new NRvector<Double>(n);
-		k3 		= new NRvector<Double>(n);
-		k4 		= new NRvector<Double>(n);
-		k5 		= new NRvector<Double>(n);
-		k6 		= new NRvector<Double>(n);
-		k7 		= new NRvector<Double>(n);
-		k8 		= new NRvector<Double>(n);
-		k9 		= new NRvector<Double>(n);
-		k10 	= new NRvector<Double>(n);
-		rcont1 	= new NRvector<Double>(n);
-		rcont2 	= new NRvector<Double>(n);
-		rcont3 	= new NRvector<Double>(n);
-		rcont4 	= new NRvector<Double>(n);
-		rcont5 	= new NRvector<Double>(n);
-		rcont6 	= new NRvector<Double>(n);
-		rcont7 	= new NRvector<Double>(n);
-		rcont8 	= new NRvector<Double>(n);
+		rcont1 = new Vector(n);
+		rcont2 = new Vector(n);
+		rcont3 = new Vector(n);
+		rcont4 = new Vector(n);
+		rcont5 = new Vector(n);
+		rcont6 = new Vector(n);
+		rcont7 = new Vector(n);
+		rcont8 = new Vector(n);
 		
-		EPS 	= Double.MIN_VALUE;
-	}
-
-	public void step(feval derivs) {
-		NRvector<Double> dydxnew = new NRvector<Double>(n);
-		// Try with h set by Odeint 
-
-//		int aaa=0;
-		while(true) {						// While we're not happy with the accuracy
-//			aaa++;
-			dy(h,derivs);					// Guess the next difference based on the derivatives and stepsize (this is where the RK stuff comes into play)
-			double err=error(h);			// Estimate the error
-			if(con.success(err)) {
-				break;						// h is changed in this function --> pass by reference. If we found a decent solution, exit this while loop
-			}
-			if(Math.abs(h) <= Math.abs(x)*EPS) {
-				System.out.println("Stepsize underflow in StepperDopr, h = " + h);
-				return;
-			}
-		}
-		derivs.calculate(x+h,yout,dydxnew);	// One more derivative calculation here
-		if(dense) prepare_dense(h,dydxnew,derivs);
-		dydx = dydxnew;
-		y = yout;
-		xold = x;
-		x += (hdid=h);						// hdid = h, THEN add that to x
-		hnext = con.hnext;
+		EPS 	= Double.MIN_VALUE; // correct? FIXME
 	}
 	
-	public void dy(double h, feval derivs) {
-		NRvector<Double> ytemp = new NRvector<Double>(n);
-		int i;
+	Vector yerr2;
+	Vector k2,k3,k4,k5,k6,k7,k8,k9,k10;
+	Vector rcont1,rcont2,rcont3,rcont4,rcont5,rcont6,rcont7,rcont8;
+	Controller con = new Controller();					// Initiate the controller we just made
+	
+	class Controller {
+		double hnext,errold;
+		boolean reject;
 
-		// 11 derivative calculations below
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*c.a21*dydx.get(i));
-		derivs.calculate(x+c.c2*h,ytemp,k2);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a31*dydx.get(i)+c.a32*k2.get(i)));
-		derivs.calculate(x+c.c3*h,ytemp,k3);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a41*dydx.get(i)+c.a43*k3.get(i)));
-		derivs.calculate(x+c.c4*h,ytemp,k4 );
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a51*dydx.get(i)+c.a53*k3.get(i)+c.a54*k4.get(i)));
-		derivs.calculate(x+c.c5*h,ytemp,k5);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a61*dydx.get(i)+c.a64*k4.get(i)+c.a65*k5.get(i)));
-		derivs.calculate(x+c.c6*h,ytemp,k6);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a71*dydx.get(i)+c.a74*k4.get(i)+c.a75*k5.get(i)+c.a76*k6.get(i)));
-		derivs.calculate(x+c.c7*h,ytemp,k7);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a81*dydx.get(i)+c.a84*k4.get(i)+c.a85*k5.get(i)+c.a86*k6.get(i)+c.a87*k7.get(i)));
-		derivs.calculate(x+c.c8*h,ytemp,k8);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a91*dydx.get(i)+c.a94*k4.get(i)+c.a95*k5.get(i)+c.a96*k6.get(i)+c.a97*k7.get(i)+
-				c.a98*k8.get(i)));
-		derivs.calculate(x+c.c9*h,ytemp,k9);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a101*dydx.get(i)+c.a104*k4.get(i)+c.a105*k5.get(i)+c.a106*k6.get(i)+
-				c.a107*k7.get(i)+c.a108*k8.get(i)+c.a109*k9.get(i)));
-		derivs.calculate(x+c.c10*h,ytemp,k10);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a111*dydx.get(i)+c.a114*k4.get(i)+c.a115*k5.get(i)+c.a116*k6.get(i)+
-				c.a117*k7.get(i)+c.a118*k8.get(i)+c.a119*k9.get(i)+c.a1110*k10.get(i)));
-		derivs.calculate(x+c.c11*h,ytemp,k2);
-		double xph=x+h;
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a121*dydx.get(i)+c.a124*k4.get(i)+c.a125*k5.get(i)+c.a126*k6.get(i)+
-				c.a127*k7.get(i)+c.a128*k8.get(i)+c.a129*k9.get(i)+c.a1210*k10.get(i)+c.a1211*k2.get(i)));
-		derivs.calculate(xph,ytemp,k3);
-		for (i=0;i<n;i++) {
-			k4.set(i,c.b1*dydx.get(i)+c.b6*k6.get(i)+c.b7*k7.get(i)+c.b8*k8.get(i)+c.b9*k9.get(i)+c.b10*k10.get(i)+
-				c.b11*k2.get(i)+c.b12*k3.get(i));
-			yout.set(i,y.get(i)+h*k4.get(i));
+		public Controller() {
+			reject = false;
+			errold = 1e-4;
 		}
-		for (i=0;i<n;i++) {
-			yerr.set(i,k4.get(i)-c.bhh1*dydx.get(i)-c.bhh2*k9.get(i)-c.bhh3*k3.get(i));
-			yerr2.set(i,c.er1*dydx.get(i)+c.er6*k6.get(i)+c.er7*k7.get(i)+c.er8*k8.get(i)+c.er9*k9.get(i)+
-				 c.er10*k10.get(i)+c.er11*k2.get(i)+c.er12*k3.get(i));
+		
+		boolean success(double err) {			// h is no longer passed as a reference: we need to change the stepper's h
+			//static const double beta=0.2,alpha=1.0/8.0-beta*0.2,safe=0.9,minscale=0.333,maxscale=6.0;			// Set beta alpha safe minscale maxscale, more stable
+			//fast
+			double beta=0.0;
+			double alpha=1.0/8.0-beta*0.2;
+			double safe=0.9;
+			double minscale=0.333;
+			double maxscale=6.0;				
+			double scale;
+
+			if (err <= 1.0) {
+				if (err == 0.0)
+					scale=maxscale;
+				else {
+					scale=safe*Math.pow(err,-alpha)*Math.pow(errold,beta);
+					if (scale<minscale) scale=minscale;
+					if (scale>maxscale) scale=maxscale;
+				}
+				if (reject)
+					hnext=h*Math.min(scale,1.0);
+				else
+					hnext=h*scale;
+				errold=Math.min(err,1.0e-4);
+				reject=false;
+				return true;
+			} else {
+				if (err==err){										// means something as in !NaN or !inf
+					scale=Math.max(safe*Math.pow(err,-alpha),minscale);
+					h *= scale;
+				}else{
+					h = 0.5*h;										// We don't know what to scale with --> scale by 0.5.		// THIS IS THE PROBLEM: H IS NOT RETURNED BUT CHANGED LOCALLY FIXME
+				}
+				reject=true;
+				return false;
+			}
 		}
 	}
 
-	public void prepare_dense(double h,NRvector<Double> dydxnew,feval derivs) {
+	public void step(double htry,feval derivs) throws Exception {
+		Vector dydxnew = new Vector(n);
+		h=htry;
+
+		for (;;) {
+			dy(h,derivs);
+			double err=error(h);
+
+			if (con.success(err)) 
+				break;
+			if (Math.abs(h) <= Math.abs(x)*EPS) throw new Exception("stepsize underflow in StepperDopr853");
+		}
+		derivs.Calculate(x+h,yout,dydxnew);
+		if (dense)
+			prepare_dense(h,dydxnew,derivs);
+		dydx=dydxnew;
+		y.set(yout);										// This is the one that took me a while: in C++ the pointed value is copied, in Java the value to the reference
+		xold=x;
+		x += (hdid=h);
+		hnext=con.hnext;
+	}
+
+	public void dy(double h,feval derivs) {
+		Vector ytemp= new Vector(n);
+		int i;
+
+		for (i=0;i<n;i++)															// Step 1
+			ytemp.set(i,y.get(i)+h*c.a21*dydx.get(i));
+		derivs.Calculate(x+c.c2*h,ytemp,k2);
+		for (i=0;i<n;i++)															// Step 2
+			ytemp.set(i,y.get(i)+h*(c.a31*dydx.get(i)+c.a32*k2.get(i)));
+		derivs.Calculate(x+c.c3*h,ytemp,k3);
+		for (i=0;i<n;i++)															// Step 3
+			ytemp.set(i,y.get(i)+h*(c.a41*dydx.get(i)+c.a43*k3.get(i)));
+		derivs.Calculate(x+c.c4*h,ytemp,k4);
+		for (i=0;i<n;i++)															// Step 4
+			ytemp.set(i,y.get(i)+h*(c.a51*dydx.get(i)+c.a53*k3.get(i)+c.a54*k4.get(i)));
+		derivs.Calculate(x+c.c5*h,ytemp,k5);
+		for (i=0;i<n;i++)															// Step 5
+			ytemp.set(i,y.get(i)+h*(c.a61*dydx.get(i)+c.a64*k4.get(i)+c.a65*k5.get(i)));
+		derivs.Calculate(x+c.c6*h,ytemp,k6);
+		for (i=0;i<n;i++)															// Step 6
+			ytemp.set(i,y.get(i)+h*(c.a71*dydx.get(i)+c.a74*k4.get(i)+c.a75*k5.get(i)+c.a76*k6.get(i)));
+		derivs.Calculate(x+c.c7*h,ytemp,k7);
+		for (i=0;i<n;i++)															// Step 7
+			ytemp.set(i,y.get(i)+h*(c.a81*dydx.get(i)+c.a84*k4.get(i)+c.a85*k5.get(i)+c.a86*k6.get(i)+c.a87*k7.get(i)));
+		derivs.Calculate(x+c.c8*h,ytemp,k8);
+		for (i=0;i<n;i++)															// Step 8
+			ytemp.set(i,y.get(i)+h*(c.a91*dydx.get(i)+c.a94*k4.get(i)+c.a95*k5.get(i)+c.a96*k6.get(i)+c.a97*k7.get(i)+c.a98*k8.get(i)));
+		derivs.Calculate(x+c.c9*h,ytemp,k9);
+		for (i=0;i<n;i++)															// Step 9
+			ytemp.set(i,y.get(i)+h*(c.a101*dydx.get(i)+c.a104*k4.get(i)+c.a105*k5.get(i)+c.a106*k6.get(i)+c.a107*k7.get(i)+c.a108*k8.get(i)+c.a109*k9.get(i)));
+		derivs.Calculate(x+c.c10*h,ytemp,k10);
+		for (i=0;i<n;i++)															// Step 10
+			ytemp.set(i,y.get(i)+h*(c.a111*dydx.get(i)+c.a114*k4.get(i)+c.a115*k5.get(i)+c.a116*k6.get(i)+c.a117*k7.get(i)+c.a118*k8.get(i)+c.a119*k9.get(i)+c.a1110*k10.get(i)));
+		derivs.Calculate(x+c.c11*h,ytemp,k2);
+		double xph=x+h;
+		for (i=0;i<n;i++)															// Step 11
+			ytemp.set(i,y.get(i)+h*(c.a121*dydx.get(i)+c.a124*k4.get(i)+c.a125*k5.get(i)+c.a126*k6.get(i)+c.a127*k7.get(i)+c.a128*k8.get(i)+c.a129*k9.get(i)+c.a1210*k10.get(i)+c.a1211*k2.get(i)));
+		derivs.Calculate(xph,ytemp,k3);
+		for (i=0;i<n;i++) {															// Step 12
+			k4.set(i,c.b1*dydx.get(i)+c.b6*k6.get(i)+c.b7*k7.get(i)+c.b8*k8.get(i)+c.b9*k9.get(i)+c.b10*k10.get(i)+c.b11*k2.get(i)+c.b12*k3.get(i));
+			yout.set(i,y.get(i)+h*k4.get(i));
+		}
+		for (i=0;i<n;i++) {															// Step 13
+			yerr.set(i,k4.get(i)-c.bhh1*dydx.get(i)-c.bhh2*k9.get(i)-c.bhh3*k3.get(i));
+			yerr2.set(i,c.er1*dydx.get(i)+c.er6*k6.get(i)+c.er7*k7.get(i)+c.er8*k8.get(i)+c.er9*k9.get(i)+c.er10*k10.get(i)+c.er11*k2.get(i)+c.er12*k3.get(i));
+		}
+	}
+	
+	public void prepare_dense(double h,Vector dydxnew,	feval derivs) {
 		int i;
 		double ydiff,bspl;
-		NRvector<Double> ytemp = new NRvector<Double>(n);
+		Vector ytemp = new Vector(n);
 		for (i=0;i<n;i++) {
 			rcont1.set(i,y.get(i));
 			ydiff=yout.get(i)-y.get(i);
@@ -123,101 +161,53 @@ public class StepperDopr853 extends StepperBase {
 			bspl=h*dydx.get(i)-ydiff;
 			rcont3.set(i,bspl);
 			rcont4.set(i,ydiff-h*dydxnew.get(i)-bspl);
-			rcont5.set(i,c.d41*dydx.get(i)+c.d46*k6.get(i)+c.d47*k7.get(i)+c.d48*k8.get(i)+
-					c.d49*k9.get(i)+c.d410*k10.get(i)+c.d411*k2.get(i)+c.d412*k3.get(i));
-			rcont6.set(i,c.d51*dydx.get(i)+c.d56*k6.get(i)+c.d57*k7.get(i)+c.d58*k8.get(i)+
-					c.d59*k9.get(i)+c.d510*k10.get(i)+c.d511*k2.get(i)+c.d512*k3.get(i));
-			rcont7.set(i,c.d61*dydx.get(i)+c.d66*k6.get(i)+c.d67*k7.get(i)+c.d68*k8.get(i)+
-					c.d69*k9.get(i)+c.d610*k10.get(i)+c.d611*k2.get(i)+c.d612*k3.get(i));
-			rcont8.set(i,c.d71*dydx.get(i)+c.d76*k6.get(i)+c.d77*k7.get(i)+c.d78*k8.get(i)+
-					c.d79*k9.get(i)+c.d710*k10.get(i)+c.d711*k2.get(i)+c.d712*k3.get(i));
+			rcont5.set(i,c.d41*dydx.get(i)+c.d46*k6.get(i)+c.d47*k7.get(i)+c.d48*k8.get(i)+c.d49*k9.get(i)+c.d410*k10.get(i)+c.d411*k2.get(i)+c.d412*k3.get(i));
+			rcont6.set(i,c.d51*dydx.get(i)+c.d56*k6.get(i)+c.d57*k7.get(i)+c.d58*k8.get(i)+c.d59*k9.get(i)+c.d510*k10.get(i)+c.d511*k2.get(i)+c.d512*k3.get(i));
+			rcont7.set(i,c.d61*dydx.get(i)+c.d66*k6.get(i)+c.d67*k7.get(i)+c.d68*k8.get(i)+c.d69*k9.get(i)+c.d610*k10.get(i)+c.d611*k2.get(i)+c.d612*k3.get(i));
+			rcont8.set(i,c.d71*dydx.get(i)+c.d76*k6.get(i)+c.d77*k7.get(i)+c.d78*k8.get(i)+c.d79*k9.get(i)+c.d710*k10.get(i)+c.d711*k2.get(i)+c.d712*k3.get(i));
 		}
 		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a141*dydx.get(i)+c.a147*k7.get(i)+c.a148*k8.get(i)+c.a149*k9.get(i)+
-					c.a1410*k10.get(i)+c.a1411*k2.get(i)+c.a1412*k3.get(i)+c.a1413*dydxnew.get(i)));
-		derivs.calculate(x+c.c14*h,ytemp,k10);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a151*dydx.get(i)+c.a156*k6.get(i)+c.a157*k7.get(i)+c.a158*k8.get(i)+
-					c.a1511*k2.get(i)+c.a1512*k3.get(i)+c.a1513*dydxnew.get(i)+c.a1514*k10.get(i)));
-		derivs.calculate(x+c.c15*h,ytemp,k2);
-		for (i=0;i<n;i++)
-			ytemp.set(i,y.get(i)+h*(c.a161*dydx.get(i)+c.a166*k6.get(i)+c.a167*k7.get(i)+c.a168*k8.get(i)+
-					c.a169*k9.get(i)+c.a1613*dydxnew.get(i)+c.a1614*k10.get(i)+c.a1615*k2.get(i)));
-		derivs.calculate(x+c.c16*h,ytemp,k3);			// Correct? TODO
-		for (i=0;i<n;i++)
-		{
-			rcont5.set(i,h*(rcont5.get(i)+c.d413*dydxnew.get(i)+c.d414*k10.get(i)+c.d415*k2.get(i)+c.d416*k3.get(i)));
-			rcont6.set(i,h*(rcont6.get(i)+c.d513*dydxnew.get(i)+c.d514*k10.get(i)+c.d515*k2.get(i)+c.d516*k3.get(i)));
-			rcont7.set(i,h*(rcont7.get(i)+c.d613*dydxnew.get(i)+c.d614*k10.get(i)+c.d615*k2.get(i)+c.d616*k3.get(i)));
-			rcont8.set(i,h*(rcont8.get(i)+c.d713*dydxnew.get(i)+c.d714*k10.get(i)+c.d715*k2.get(i)+c.d716*k3.get(i)));
-		}
+			ytemp.set(i,y.get(i)+h*(c.a141*dydx.get(i)+c.a147*k7.get(i)+c.a148*k8.get(i)+c.a149*k9.get(i)+c.a1410*k10.get(i)+c.a1411*k2.get(i)+c.a1412*k3.get(i)+c.a1413*dydxnew.get(i)));
+			derivs.Calculate(x+c.c14*h,ytemp,k10);
+			for (i=0;i<n;i++)
+				ytemp.set(i,y.get(i)+h*(c.a151*dydx.get(i)+c.a156*k6.get(i)+c.a157*k7.get(i)+c.a158*k8.get(i)+c.a1511*k2.get(i)+c.a1512*k3.get(i)+c.a1513*dydxnew.get(i)+c.a1514*k10.get(i)));
+				derivs.Calculate(x+c.c15*h,ytemp,k2);
+				for (i=0;i<n;i++)
+					ytemp.set(i,y.get(i)+h*(c.a161*dydx.get(i)+c.a166*k6.get(i)+c.a167*k7.get(i)+c.a168*k8.get(i)+c.a169*k9.get(i)+c.a1613*dydxnew.get(i)+c.a1614*k10.get(i)+c.a1615*k2.get(i)));
+					derivs.Calculate(x+c.c16*h,ytemp,k3);
+					for (i=0;i<n;i++)
+					{
+						rcont5.set(i,h*(rcont5.get(i)+c.d413*dydxnew.get(i)+c.d414*k10.get(i)+c.d415*k2.get(i)+c.d416*k3.get(i)));
+						rcont6.set(i,h*(rcont6.get(i)+c.d513*dydxnew.get(i)+c.d514*k10.get(i)+c.d515*k2.get(i)+c.d516*k3.get(i)));
+						rcont7.set(i,h*(rcont7.get(i)+c.d613*dydxnew.get(i)+c.d614*k10.get(i)+c.d615*k2.get(i)+c.d616*k3.get(i)));
+						rcont8.set(i,h*(rcont8.get(i)+c.d713*dydxnew.get(i)+c.d714*k10.get(i)+c.d715*k2.get(i)+c.d716*k3.get(i)));
+					}
+	}
+	
+
+	public double dense_out(int i, double x, double h) {
+		double s=(x-xold)/h;
+		double s1=1.0-s;
+		return rcont1.get(i)+s*(rcont2.get(i)+s1*(rcont3.get(i)+s*(rcont4.get(i)+s1*(rcont5.get(i)+	s*(rcont6.get(i)+s1*(rcont7.get(i)+s*rcont8.get(i)))))));
 	}
 
-	public double dense_out(int i, double x, double h) {		// This is a bit strange, TODO
-		double s = (x - xold)/h;
-		double s1 = 1.0 - s;
-		return rcont1.get(i)+s*(rcont2.get(i)+s1*(rcont3.get(i)+s*(rcont4.get(i)+s1*(rcont5.get(i)+s*(rcont6.get(i)+s1*(rcont7.get(i)+s*rcont8.get(i)))))));
-	}
-
-	public double error(double h) {				// Determine how big the error is, based on te results and the tolerances
-		double err = 0.0;
-		double err2 = 0.0;
-		double sk, deno;
-		for(int i=0; i<n; i++) {
+	public double error(double h) {
+		double err=0.0;
+		double err2=0.0;
+		double sk,deno;
+		for (int i=0;i<n;i++) {
 			sk = atol+rtol*Math.max(Math.abs(y.get(i)),Math.abs(yout.get(i)));
-			err2 += Math.pow(yerr.get(i)/sk,2);		// Speed up by using something else than pow 2 TODO?
-			err  += Math.pow(yerr2.get(i)/sk,2);
+			err2 += Math.pow(yerr.get(i)/sk,2);	// Optimise? TODO
+			err += Math.pow(yerr2.get(i)/sk,2);
 		}
-		deno = err+0.01*err2;
-		if(deno <= 0.0) deno = 1.0;
-		return Math.abs(h)*err*Math.sqrt(1/(n*deno));
+		deno=err+0.01*err2;
+		if (deno <= 0.0)
+			deno=1.0;
+
+		return Math.abs(h)*err*Math.sqrt(1.0/(n*deno));
 	}
-
-
-	class Controller {
-		double hnext, errold;
-		boolean reject;
-
-		public Controller() {
-			reject = false;
-			errold = 1e-4;
-		}
-		public boolean success(double err) {					// Based on the error, determine the hnext and return whether or not this step is accepted or rejected
-			double beta	= 0.0;
-			double alpha = 1.0/8.0-beta*0.2;
-			double safe	= 0.9;
-			double minscale = 0.333;
-			double maxscale = 6.0;
-			double scale;
-
-			if(err<=1) {										// Good, we're well on our way. Make stepsize bigger.
-				if(err == 0.0) scale = maxscale;					// We can take the maximum allowed step size if err == 0
-				else {
-					scale = safe*Math.pow(err,-alpha) * Math.pow(errold,beta);
-					if(scale<minscale) scale = minscale;
-					if(scale>maxscale) scale = maxscale;
-				}
-				if(reject) hnext = h*Math.min(scale, 1.0);		// We'll take the minimum allowed time step if the previous step was rejected
-				else hnext = h*scale;
-
-				errold = Math.max(errold, 1e-4);				// The error is at least 1e-4, always? TODO
-				reject = false;
-				return true;
-			} else {											// Probaby added by Cristian (120411 Tomas)
-				if(err == err) {								// Means something among the lines of if err != NaN or infinite
-					scale = Math.max(safe*Math.pow(err,-alpha),minscale);
-					h *= scale;									// FIXME is the h in Stepper scaled? i.e. linked?
-				} else {
-					h *= 0.5;									// If we don't know what h should be (e.g. err is inf) half it 
-				}
-				reject = true;
-				return false;
-			}
-		}
-	}
-
-	// All the constants for this solver
-	static class c {			//Dopr853_constants
+	
+	private static class c {			//Dopr853_constants
 		static double c2  = 0.526001519587677318785587544488e-01;
 		static double c3  = 0.789002279381515978178381316732e-01;
 		static double c4  = 0.118350341907227396726757197510e+00;

@@ -43,7 +43,7 @@ public class CCell {
 		} else {
 			new CBall(base0x, base0y, base0z, model.MCellInit/2, 0, this);
 			
-			Vector direction = new Vector(rand.Double(),rand.Double(),rand.Double());
+			Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());
 			direction.normalise();	// Normalise direction
 			
 			double distance;
@@ -62,7 +62,7 @@ public class CCell {
 		model.cellArray.add(this);
 	}
 	
-	public CCell(int type, Vector base, boolean filament, CModel model) {
+	public CCell(int type, Vector3d base, boolean filament, CModel model) {
 		new CCell(type, base.x, base.y, base.z, filament, model);
 		// Add is taken care of through calling method
 	}

@@ -6,7 +6,7 @@ import NR.*;
 
 public class Run {
 
-	public Run(CModel model, boolean enablePlot){
+	public Run(CModel model, boolean enablePlot) throws Exception{
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
 
@@ -34,7 +34,7 @@ public class Run {
 			double h1 = 0.00001, hmin = 0;
 			double t1 = model.movementTime; 
 			double t2 = t1 + model.movementTime + model.movementTimeEnd;
-			NRvector<Double> ystart = new NRvector<Double>(nvar,0.0);
+			Vector ystart = new Vector(nvar,0.0);
 
 			{int ii=0;											// Determine initial value vector
 			for(CBall pBall : model.BallArray()) { 
@@ -78,9 +78,9 @@ public class Run {
 			model.Write(NnewAnchor + " anchor springs built","iter");}
 
 			// Break stick springs
-//			{ArrayList<CStickSpring> breakArray = model.DetectStickBreak();
-//			model.stickSpringArray.removeAll(breakArray);
-//			model.Write(breakArray.size() + " sticking springs broken","iter");
+			{ArrayList<CStickSpring> breakArray = model.DetectStickBreak();
+			model.stickSpringArray.removeAll(breakArray);
+			model.Write(breakArray.size() + " sticking springs broken","iter");
 			// Build stick springs
 			model.Write("Detecting cell-cell collisions","iter");
 			ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple();	 // Note that this one returns already stuck and duplicate cells
@@ -100,5 +100,6 @@ public class Run {
 			// Advance growth
 			model.growthIter++;
 			model.growthTime += model.growthTimeStep;
+		}
 	}
 }
