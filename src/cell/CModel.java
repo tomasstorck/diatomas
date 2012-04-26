@@ -18,16 +18,6 @@ public class CModel {
 	String name;
 	String pathOutput;
 	String pathImage;
-	// Arrays
-	ArrayList<CCell> cellArray = new ArrayList<CCell>();
-	ArrayList<CBall> ballArray = new ArrayList<CBall>();
-	//springArray = CSpring.empty;
-	ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>();
-	//modelSpringArray = CModel.empty;
-	//stickingIndexArray = [];
-	ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>();
-	//ballArray = CBall.empty;
-	ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>();
 	// Spring constants
 	double K1 = 0.5e-2;			// Cell spring
 	double Kf = 0.1e-4;			// filament spring
@@ -61,6 +51,16 @@ public class CModel {
 	// Counters
 	static int NBall 		= 0;
 	//		NBall; NCell; NSpring; NFilament; <--- disabled, more reliable and fast enough with length(), used in MEX though, reconstructed there for speed and to prevent errors
+	// Arrays
+	ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
+	ArrayList<CBall> ballArray = new ArrayList<CBall>(NInitCell*NType);
+	//springArray = CSpring.empty;
+	ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
+	//modelSpringArray = CModel.empty;
+	//stickingIndexArray = [];
+	ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(NInitCell);
+	//ballArray = CBall.empty;
+	ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -156,14 +156,13 @@ public class CModel {
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
 		
 		CBall[] ballArray = BallArray();
-		for(int iBall=0; iBall<NBall; iBall++) {		// If we stick to indexing, it'll be easier to determine which cells don't need to be analysed
+		for(int iBall=0; iBall<NBall; iBall++) {						// If we stick to indexing, it'll be easier to determine which cells don't need to be analysed
 			CBall pBall = ballArray[iBall];
 			for(int iBall2 = iBall+1; iBall2<NBall; iBall2++) {
 				CBall pBall2 = ballArray[iBall2];
 				if(pBall.pCell.cellArrayIndex!=pBall2.pCell.cellArrayIndex) {
 					Vector3d diff = pBall2.pos.minus(pBall.pos);
-					double distance = Math.abs(diff.length());
-					if(distance - pBall.radius - pBall2.radius < 0) {
+					if(Math.abs(diff.length()) - pBall.radius - pBall2.radius < 0) {
 						collisionCell.add(pBall.pCell);
 						collisionCell.add(pBall2.pCell);
 					}
@@ -202,9 +201,9 @@ public class CModel {
 			double al = (pSpring.ballArray[1].pos.minus(  pSpring.ballArray[0].pos)  ).length();		// al = Actual Length
 			if(al < minStretch*pSpring.restLength || al > maxStretch*pSpring.restLength) {				// TODO might be nice to just break overstretched springs
 				breakArray.add(pSpring);
-				breakArray.addAll(pSpring.siblingArray);
+//				breakArray.addAll(pSpring.siblingArray);												// We'll do this in StickBreak
 			}
-			iSpring += pSpring.siblingArray.size()+1; 
+			iSpring += pSpring.siblingArray.size()+1;
 		}
 		return breakArray;
 	} 
@@ -223,16 +222,23 @@ public class CModel {
 			// Random growth
 			mass *= (0.95+rand.Double()/5);
 			// Syntrophic growth			// TODO: Horribly inefficient
-			for(CStickSpring pSpring : stickSpringArray) {
-				if(pSpring.ballArray[0].pCell.equals(pCell) || pSpring.ballArray[1].pCell.equals(pCell)) {
-					// We found the cell
-					if(pSpring.ballArray[0].pCell.type == pSpring.ballArray[1].pCell.type) {
-						// The cell types are not different on the other end of the spring
-						mass *= 1.2;
-						break;	// That'll do, pig
-					}
+			for(CCell pStickCell : pCell.stickCellArray) {
+				if((pCell.type==0 && pStickCell.type!=0) || (pCell.type!=0 && pStickCell.type==0)) {
+					// The cell types are not different on the other end of the spring
+					mass *= 1.2;
+					break;
 				}
 			}
+//			for(CStickSpring pSpring : stickSpringArray) {
+//				if(pSpring.ballArray[0].pCell.equals(pCell) || pSpring.ballArray[1].pCell.equals(pCell)) {
+//					// We found the cell
+//					if((pSpring.ballArray[0].pCell.type==0 && pSpring.ballArray[1].pCell.type!=0) || (pSpring.ballArray[0].pCell.type!=0 && pSpring.ballArray[1].pCell.type==0)) {
+//						// The cell types are not different on the other end of the spring
+//						mass *= 1.2;
+//						break;	// That'll do, pig
+//					}
+//				}
+//			}
 			
 			// Cell growth or division
 			if(mass>MCellMax) {
@@ -338,8 +344,21 @@ public class CModel {
 	// Anchor and Stick stuff //
 	////////////////////////////
 	
+	public void BreakStick(ArrayList<CStickSpring> breakArray) {
+		for(CStickSpring pSpring : breakArray) {
+			CCell pCell0 = pSpring.ballArray[0].pCell;
+			CCell pCell1 = pSpring.ballArray[1].pCell;
+			// Remove cells from each others' stickCellArray 
+			pCell0.stickCellArray.remove(pCell1);
+			pCell1.stickCellArray.remove(pCell0);
+			// Remove springs from model stickSpringArray
+			stickSpringArray.remove(pSpring);
+			stickSpringArray.removeAll(pSpring.siblingArray);
+		}
+	}
+	
 	public int BuildAnchor(ArrayList<CCell> collisionArray) {
-		for(CAnchorSpring pSpring : anchorSpringArray) {collisionArray.remove(pSpring.pBall.pCell);}
+		for(CAnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.pBall.pCell);
 		// Anchor the non-stuck, collided cells to the ground
 		for(CCell pCell : collisionArray) {pCell.Anchor();}
 		return anchorSpringArray.size();
@@ -351,6 +370,7 @@ public class CModel {
 			boolean setStick = true;
 			CCell pCell0 = collisionArray.get(ii);
 			CCell pCell1 = collisionArray.get(ii+1);
+			// Check if already stuck, don't stick if that is the case
 			for(CStickSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
 				if((pSpring.ballArray[0].equals(pCell0) && pSpring.ballArray[0].equals(pCell1)) || (pSpring.ballArray[0].equals(pCell1) && pSpring.ballArray[0].equals(pCell0))) {
 					setStick = false;

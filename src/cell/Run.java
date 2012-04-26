@@ -78,15 +78,15 @@ public class Run {
 			model.Write(NnewAnchor + " anchor springs built","iter");}
 
 			// Break stick springs
-			{ArrayList<CStickSpring> breakArray = model.DetectStickBreak();
-			model.stickSpringArray.removeAll(breakArray);
-			model.Write(breakArray.size() + " sticking springs broken","iter");
+			{ArrayList<CStickSpring> breakArray = model.DetectStickBreak();		// Returns all springs that'll be broken. Should not contain any duplicates (i.e. siblingsprings)
+			model.BreakStick(breakArray);
+			model.Write(breakArray.size() + " cell pairs broken","iter");
 			// Build stick springs
 			model.Write("Detecting cell-cell collisions","iter");
 			ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple();	 // Note that this one returns already stuck and duplicate cells
 			model.Write("Building new sticking springs","iter");
 			int NnewStick = model.BuildStick(collisionArray);
-			model.Write(NnewStick + " cell pairs sticked","iter");};			// Divided by two, as array is based on origin and other cell (see for loop)
+			model.Write(NnewStick + " cell pairs sticked","iter");}				// Divided by two, as array is based on origin and other cell (see for loop)
 
 			// Plot
 			if(enablePlot) {

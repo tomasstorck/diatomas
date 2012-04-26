@@ -8,6 +8,7 @@ public class CCell {
 	double[] colour = 		new double[3];
 	CBall[] ballArray = 	new CBall[2];
 	CSpring[] springArray = new CSpring[1];
+	ArrayList<CCell> stickCellArray = new ArrayList<CCell>();  
 	CCell mother;
 	int cellArrayIndex;
 	CModel pModel;
@@ -106,7 +107,7 @@ public class CCell {
 		// Define siblings
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and siblingspring
 			CStickSpring pSpring1 = stickArray[iSpring];
-			pSpring1.siblingArray = new ArrayList<CStickSpring>();			// Initialise the siblingArray for the spring
+			pSpring1.siblingArray = new ArrayList<CStickSpring>(NSpring);	// Initialise the siblingArray for the spring
 
 			for(int iSpring2 = 0; iSpring2 < NSpring; iSpring2++) {			
 				if(iSpring != iSpring2) {									// For all its siblings
@@ -115,10 +116,12 @@ public class CCell {
 			}
 		}
 		
-		//All done, add them
+		//All done, add all the new sticking springs, add the cells to each other's stickCellArray 
 		for(int iSpring = 0; iSpring < stickArray.length; iSpring++) {
 			pModel.stickSpringArray.add(stickArray[iSpring]);
 		}
+		this.stickCellArray.add(pCell);
+		pCell.stickCellArray.add(this);
 	}
 	
 	public void Stick(int otherCellIndex) {
