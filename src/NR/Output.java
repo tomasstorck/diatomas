@@ -1,7 +1,8 @@
 package NR;
 
 public class Output<Stepper extends StepperBase> {
-	int kmax;
+	static int kmax = 10;			// Influence kmax on memory and CPU investigated by Tomas 120426. Chosen static as the model gets gradually more complicated
+	static double resizeFactor = 2.0;
 	int nvar;
 	int nsave;
 	boolean dense;
@@ -12,13 +13,12 @@ public class Output<Stepper extends StepperBase> {
 
 	// Constructors
 	public Output() {				// Default constructor
-		kmax = -1;
 		dense = false;
 		count = 0;
 	}
 
-	public Output(int nsavee) {	// Construct Output as a dense object, i.e. saving the results at nsavee equaly spaced intervals, instead of just at the values the solver thinks are useful. If nsavee <= 0, it's not a dense object   
-		kmax = 500;					// I suppose that when nsavee exceeds kmax, we're in trouble. Higher kmax --> more memory use, possibly lower performance TODO
+	public Output(int nsavee) {	// Construct Output as a dense object, i.e. saving the results at nsavee equaly spaced intervals, instead of just at the values the solver thinks are useful. If nsavee <= 0, it's not a dense object
+		kmax = 500;
 		nsave = nsavee; 
 		count = 0;
 		xsave = new Vector(kmax);		// Since xsave is used to store at most kmax values, we'll make it this size
@@ -28,8 +28,8 @@ public class Output<Stepper extends StepperBase> {
 	// Methods
 	void init(int neqn, double xlo, double xhi) { 	// Odeint constructor is said to call this one, passing resp. (i) neqn number of equations (ii) xlo starting point of integration and (iii) the xhi ending point
 		nvar=neqn;
-		if (kmax == -1) return;
-		ysave = new Matrix(nvar,kmax);		// Initialise ysave to the correct size // was: ysave.resize(nvar,kmax); 
+//		if (kmax == -1) return;							// No point in this IMHO (Tomas 120426)
+		ysave = new Matrix(nvar,kmax);					// Initialise ysave to the correct size // was: ysave.resize(nvar,kmax); 
 		if (dense) {									// If dense, we work with set limits, they're defined here
 			x1=xlo;
 			x2=xhi;
@@ -40,8 +40,8 @@ public class Output<Stepper extends StepperBase> {
 
 	void resize() {										// Resize storage arrays by a factor 2, keeping the saved data (unlike NR* resize())
 		int kold=kmax;
-		kmax *= 2;										// Can we find a better factor? (TODO)
-		Vector tempvec = new Vector(xsave);	// Copy this guy so we can extract values later on
+		kmax *= resizeFactor;							// Can we find a better factor? (TODO)
+		Vector tempvec = new Vector(xsave);				// Copy this guy so we can extract values later on
 		// Fill xsave
 		xsave.resize(kmax);								// Note that this is the other resize method, WITH arguments and defined in NR* classes   
 		for(int i=0; i<kold; i++) xsave.set(i,tempvec.get(i));
@@ -59,8 +59,8 @@ public class Output<Stepper extends StepperBase> {
 //		pModel.movement_time = xout; // Important? FIXME
 	}
 
-	void save(double x, Vector y) {			// Save y to ysave (non-dense)
-		if(kmax <= 0) return;
+	void save(double x, Vector y) {					// Save y to ysave (non-dense)
+//		if(kmax <= 0) return;							// We'll do that somewhere else (Tomas 260412)
 		if(count == kmax) resize();						// Resize the saves if we've approached the limit (like with init())
 		xsave.set(count,x);
 		for(int i=0; i<nvar; i++) ysave.set(i, count, y.get(i));

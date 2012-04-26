@@ -53,7 +53,7 @@ public class Odeint<Stepper extends StepperBase> {
 		for(nstp=0; nstp<MAXSTP; nstp++) {
 			if((s.x+s.h*1.0001-x2)*(x2-x1) > 0.0) 	s.h = x2-s.x;	// Make sure current h doesn't result in next x outside the interval  
 			s.step(s.h,derivs); 					// Take a step with the solver. This changes various fields of the stepper
-			if(s.hdid==s.h) ++nok; else ++nbad;	// Did we succeed? Mark that down.
+			if(s.hdid==s.h) ++nok; else ++nbad;		// Did we succeed? Mark that down.
 			// Save results
 			if(dense){
 				out.out(nstp, s.x, s.y, s, s.hdid);
@@ -61,26 +61,22 @@ public class Odeint<Stepper extends StepperBase> {
 				out.save(s.x,s.y);
 			}
 			// Determine what to do next
-			if((s.x-x2)*(x2-x1) >= 0.0) {			// If we're done
-				for(int i=0; i<nvar; i++) ystart.set(i, s.y.get(i)); // Update initial values for next iteration
-				if(out.kmax>0 && 
-						Math.abs(out.xsave.get(out.count-1)-x2) > 
-						100.0*Math.abs(x2)*EPS) {
+			if((s.x-x2)*(x2-x1) >= 0.0 && Output.kmax>0) {				// If we're done. Criterium is kmax > 0 or we'll crash as there's nothing to save
+				for(int i=0; i<nvar; i++) ystart.set(i, s.y.get(i)); 	// Update initial values for next iteration
+				if(	Math.abs(out.xsave.get(out.count-1)-x2) > 100.0*Math.abs(x2)*EPS) {
 					out.save(s.x,s.y);				// Save the last step					
 					return nstp;					// Done.
 				}
 			}
 			if (Math.abs(s.hnext)<=hmin) {
-				System.out.println("Warning: Step size too small in Odeint (" + s.hnext + ")");	// Make throw() TODO
-				return -1;
+				throw new Exception("Warning: Step size too small in Odeint (" + s.hnext + ")");
 			}
 			s.h=s.hnext;							// Set stepsize and continue
 		}
-		System.out.println("Too many steps in Odeint (>" + MAXSTP + ")");
-		return -1;
+		throw new Exception("Too many steps in Odeint (>" + MAXSTP + ")");
 	}
 	
-	double SIGN(double a, double b) {			// return a if both are same sign, else return -a
+	double SIGN(double a, double b) {				// Return a if both are same sign, else return -a
 		return b >= 0.0 ? (a >= 0.0 ? a : -a) : (a >= 0.0 ? -a : a);
 	}
 
