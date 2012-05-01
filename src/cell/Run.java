@@ -6,7 +6,7 @@ import random.rand;
 
 public class Run {
 
-	public Run(CModel model, boolean enablePlot) throws Exception{
+	public Run(CModel model) throws Exception{
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
 		
@@ -57,7 +57,7 @@ public class Run {
 			model.Write(NnewStick + " cell pairs sticked","iter");}				// Divided by two, as array is based on origin and other cell (see for loop)
 
 			// Plot
-			if(enablePlot) {
+			if(setting.enablePlot) {
 				model.Write("Writing POV files","iter");
 				model.POV_Write();
 				model.POV_Plot(); 
