@@ -2,6 +2,8 @@ package cell;
 
 import java.util.ArrayList;
 
+import random.rand;
+
 public class CCell {
 	int type;
 	boolean filament;

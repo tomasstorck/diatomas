@@ -13,9 +13,9 @@ public class Interface {
 		
 		String name = "default";
 
-		int Narg = args.length;
+		int NArg = args.length;
 		// Find out if the simulation name is specified, ALSO if the menu has been called  
-		for(int ii=0; ii<Narg; ii++) {
+		for(int ii=0; ii<NArg; ii++) {
 			String arg = args[ii];
 			if(arg.equalsIgnoreCase("enableplot")) 	{enablePlot = true;} else
 			if(arg.equalsIgnoreCase("disableplot")) {enablePlot = false;} else
@@ -28,11 +28,12 @@ public class Interface {
 
 		// Display menu OR go with default Run model choice
 		String input = "1";
+		CModel model = new CModel(name);
 		if(enableMenu) {	// Don't forget to add new options below
-			System.out.println("[1] Run model");
-			System.out.println("[2] Render POV files");
-			System.out.println("[3] Clean files/Reset simulation");
-
+			System.out.println("[1] Run model from current time");
+			System.out.println("[2] Set t0");
+			System.out.println("[3] Render POV files");
+			System.out.println("[4] Clean files/Reset simulation");
 			while(true) {
 				System.out.print("\n choose: ");
 				if(!simSet) {
@@ -47,24 +48,37 @@ public class Interface {
 
 				}
 				System.out.println();
-				if(	input.equalsIgnoreCase("1") ||
-						input.equalsIgnoreCase("2") ||
-						input.equalsIgnoreCase("3")) {
+				if(input.equalsIgnoreCase("1") ||
+						input.equalsIgnoreCase("3") ||
+						input.equalsIgnoreCase("4")) {
 					break;
-				} 	
-				else{System.out.println("Invalid choice");}	
+				} else if(input.equalsIgnoreCase("2")) {
+					BufferedReader reader;
+					reader = new BufferedReader(new InputStreamReader(System.in));
+					try {
+						String input2 = reader.readLine();
+						int model.movementIter = Integer.valueOf(input2);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else System.out.println("Invalid choice");	
 			}
 		}
 
 		if(input.equalsIgnoreCase("1")) {
 			// Start the model
-			CModel model = new CModel(name);
+			model.LoadDefaultParameters();
 			new Run(model,enablePlot);
-		} else if(input.equalsIgnoreCase("2")) {
-			// Render POV
-			CModel model = new CModel(name);			// We only need the method here, so no need to call the main/backbone script
-			model.POV_Plot();
+		}
+		if(input.equalsIgnoreCase("2")) {
+			// Start the model
+			model.Load();
+			new Run(model,enablePlot);
 		} else if(input.equalsIgnoreCase("3")) {
+			// Render POV
+			model.POV_Plot();
+		} else if(input.equalsIgnoreCase("4")) {
 			// Reset model
 			// TODO
 

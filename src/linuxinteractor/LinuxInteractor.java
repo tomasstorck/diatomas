@@ -1,4 +1,4 @@
-package cell;
+package linuxinteractor;
 
 // Stolen from: 
 // http://singztechmusings.wordpress.com/2011/06/21/getting-started-with-javas-processbuilder-a-sample-utility-class-to-interact-with-linux-from-java-program/

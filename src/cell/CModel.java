@@ -10,6 +10,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import random.rand;
+
+// Import MATLAB IO stuff
+import jmatio.*;
+import linuxinteractor.LinuxInteractor;
+
 // Import NR stuff
 import NR.*;
 
@@ -19,66 +25,98 @@ public class CModel {
 	String pathOutput;
 	String pathImage;
 	// Spring constants
-	double K1 = 0.5e-2;			// Cell spring
-	double Kf = 0.1e-4;			// filament spring
-	double Kw = 0.5e-5;			// wall spring
-	double Kc = 0.1e-4;			// collision
-	double Ks = 0.5e-5;			// sticking
-	double Ka = 0.5e-5;			// anchor
-	double Kd = 1e-9;			// drag force coefficient
+	double K1;
+	double Kf;
+	double Kw;
+	double Kc;
+	double Ks;
+	double Ka;
+	double Kd;
 	// Domain properties
-	double G		= -9.8;		// [m/s2], acceleration due to gravity
-	double rho_w	= 1000;		// [kg/m3], density of bulk liquid (water)
-	double rho_m	= 1100;		// [kg/m3], diatoma density
-	Vector3d L = new Vector3d(1200e-6, 300e-6, 1200e-6);	// [m], Dimensions of domain
-	int randomSeed= 1;
+	double G;
+	double rho_w;
+	double rho_m;
+	Vector3d L;
+	int randomSeed;
 	// Cell properties
-	int NType 		= 2;		// Types of cell
-	int NInitCell	= 15;		// Initial number of cells
-	double aspect	= 2;		// Aspect ratio of cells
+	int NType;
+	int NInitCell;
+	double aspect;
 	// Ball properties
-	double MCellInit 		= 1e-11;	// kg
-	double MCellMax			= 2e-11; 	// max mass of cells before division
+	double MCellInit;
+	double MCellMax;
 	// Progress
-	double growthTime		= 0;	// [s] Current time for the growth
-	double growthTimeStep	= 900;	// [s] Time step for growth
-	int  growthIter			= 0;	// [-] Counter time iterations for growth
-	double growthMaxIter	= 672;	// [-] where we'll stop
-	double movementTime		= 0;	// [s] initial time for movement (for ODE solver)
-	double movementTimeStep	= 2e-2; // [s] output time step  for movement
-	double movementTimeEnd	= 10e-2;// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
-	int movementIter		= 0;	// [-] counter time iterations for movement
+	double growthTime;
+	double growthTimeStep;
+	int  growthIter;
+	double growthMaxIter;
+	double movementTime;
+	double movementTimeStep;
+	double movementTimeEnd;
+	int movementIter;
 	// Counters
-	static int NBall 		= 0;
-	//		NBall; NCell; NSpring; NFilament; <--- disabled, more reliable and fast enough with length(), used in MEX though, reconstructed there for speed and to prevent errors
+	static int NBall;
+//	NBall; NCell; NSpring; NFilament; <--- disabled, more reliable and fast enough with length(), used in MEX though, reconstructed there for speed and to prevent errors
 	// Arrays
-	ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
-	ArrayList<CBall> ballArray = new ArrayList<CBall>(NInitCell*NType);
-	//springArray = CSpring.empty;
-	ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
-	//modelSpringArray = CModel.empty;
-	//stickingIndexArray = [];
-	ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(NInitCell);
-	//ballArray = CBall.empty;
-	ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
+	ArrayList<CCell> cellArray;
+//	ArrayList<CBall> ballArray = new ArrayList<CBall>(NInitCell*NType);
+	ArrayList<CStickSpring> stickSpringArray;
+	ArrayList<CFilSpring> filSpringArray;
+	ArrayList<CAnchorSpring> anchorSpringArray;
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
 	//////////////////
 	// Constructors //
 	//////////////////
-	
-	public CModel(String name) {
+	public CModel(String name) {	// Default constructor, includes default values
 		this.name  = name;
 		pathImage  = name + "/image";
 		pathOutput = name + "/output";
-		
+	}
+	
+	public void LoadDefaultParameters() {
+		K1 		= 0.5e-2;			// Cell spring
+		Kf 		= 0.1e-4;			// filament spring
+		Kw 		= 0.5e-5;			// wall spring
+		Kc 		= 0.1e-4;			// collision
+		Ks 		= 0.5e-5;			// sticking
+		Ka 		= 0.5e-5;			// anchor
+		Kd 		= 1e-9;				// drag force coefficient
+		// Domain properties
+		G		= -9.8;				// [m/s2], acceleration due to gravity
+		rho_w	= 1000;				// [kg/m3], density of bulk liquid (water)
+		rho_m	= 1100;				// [kg/m3], diatoma density
+		L 		= new Vector3d(1200e-6, 300e-6, 1200e-6);	// [m], Dimensions of domain
+		randomSeed = 1;
+		// Cell properties
+		NType 	= 2;				// Types of cell
+		NInitCell = 15;				// Initial number of cells
+		aspect	= 2;				// Aspect ratio of cells
+		// Ball properties
+		MCellInit = 1e-11;			// kg
+		MCellMax = 2e-11; 			// max mass of cells before division
+		// Progress
+		growthTime = 0;				// [s] Current time for the growth
+		growthTimeStep = 900;		// [s] Time step for growth
+		growthIter = 0;				// [-] Counter time iterations for growth
+		growthMaxIter = 672;		// [-] where we'll stop
+		movementTime = 0;			// [s] initial time for movement (for ODE solver)
+		movementTimeStep = 2e-2;	// [s] output time step  for movement
+		movementTimeEnd	= 10e-2;	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
+		movementIter = 0;			// [-] counter time iterations for movement
+		// Counters
+		NBall 	= 0;
+		// Arrays
+		cellArray = new ArrayList<CCell>(NInitCell);
+		stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
+		filSpringArray = new ArrayList<CFilSpring>(NInitCell);
+		anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
 	}
 	
 	///////////////////////
 	// Get and Set stuff //
 	///////////////////////
-	
 	public CBall[] BallArray() {
 		CBall[] ballArray = new CBall[NBall];
 		int iBall = 0;
@@ -96,7 +134,128 @@ public class CModel {
 	////////////////////////////
 	// Saving, loading things //
 	////////////////////////////
-	// TODO
+	// Save stuff
+	public void Save() {
+		int NstickSpring = stickSpringArray.size();
+		MLStructure mlModel = new MLStructure("model", new int[] {1,1});
+		mlModel.setField("aspect", 				new MLDouble(null, new double[] {aspect}, 1));
+		mlModel.setField("G", 					new MLDouble(null, new double[] {G}, 1));
+		mlModel.setField("growthIter", 			new MLDouble(null, new double[] {aspect}, 1));
+		mlModel.setField("growthMaxIter",		new MLDouble(null, new double[] {growthMaxIter}, 1));
+		mlModel.setField("growthTime",			new MLDouble(null, new double[] {growthTime}, 1));
+		mlModel.setField("growthTimeStep",		new MLDouble(null, new double[] {growthTimeStep}, 1));
+		mlModel.setField("K1",					new MLDouble(null, new double[] {K1}, 1));
+		mlModel.setField("Ka",					new MLDouble(null, new double[] {Ka}, 1));
+		mlModel.setField("Kc",					new MLDouble(null, new double[] {Kc}, 1));
+		mlModel.setField("Kd",					new MLDouble(null, new double[] {Kd}, 1));
+		mlModel.setField("Kf",					new MLDouble(null, new double[] {Kf}, 1));
+		mlModel.setField("Ks",					new MLDouble(null, new double[] {Ks}, 1));
+		mlModel.setField("Kw",					new MLDouble(null, new double[] {Kw}, 1));
+		mlModel.setField("L",					new MLDouble(null, new double[] {L.x, L.y, L.z}, 3));
+		mlModel.setField("MCellInit",			new MLDouble(null, new double[] {MCellInit}, 1));
+		mlModel.setField("MCellMax",			new MLDouble(null, new double[] {MCellMax}, 1));
+		mlModel.setField("movementIter",		new MLDouble(null, new double[] {movementIter}, 1));
+		mlModel.setField("movementTime",		new MLDouble(null, new double[] {movementTime}, 1));
+		mlModel.setField("movementTimeEnd",		new MLDouble(null, new double[] {movementTimeEnd}, 1));
+		mlModel.setField("movementTimeStep",	new MLDouble(null, new double[] {movementTimeStep}, 1));
+		mlModel.setField("name",				new MLChar(null, new String[] {name}, 1));
+		mlModel.setField("NInitCell",			new MLDouble(null, new double[] {NInitCell}, 1));
+		mlModel.setField("NType",				new MLDouble(null, new double[] {NType}, 1));
+		mlModel.setField("pathImage",			new MLChar(null, new String[] {pathImage}, 1));
+		mlModel.setField("pathOutput",			new MLChar(null, new String[] {pathOutput}, 1));
+		mlModel.setField("randomSeed",			new MLDouble(null, new double[] {randomSeed}, 1));
+		mlModel.setField("rho_m",				new MLDouble(null, new double[] {rho_m}, 1));
+		mlModel.setField("rho_w",				new MLDouble(null, new double[] {rho_w}, 1));
+		// anchorSpringArray
+		int NAnchor = anchorSpringArray.size();
+		MLCell mlAnchorSpringArray = new MLCell(null, new int[] {NAnchor,1});
+		for(int iAnchor=0; iAnchor<NAnchor; iAnchor++) {
+			CAnchorSpring pAnchor = anchorSpringArray.get(iAnchor);
+			MLStructure mlAnchor = new MLStructure(null, new int[] {1,1});
+			mlAnchor.setField("anchor", 		new MLDouble(null, new double[] {pAnchor.anchor.x, pAnchor.anchor. y, pAnchor.anchor.z}, 1));
+			mlAnchor.setField("cellArrayIndex", new MLDouble(null, new double[] {pAnchor.pBall.pCell.cellArrayIndex}, 1));
+			mlAnchor.setField("ballArrayIndex", new MLDouble(null, new double[] {pAnchor.pBall.ballArrayIndex}, 1));
+			mlAnchor.setField("K",				new MLDouble(null, new double[] {pAnchor.K}, 1));
+			mlAnchor.setField("restLength",		new MLDouble(null, new double[] {pAnchor.restLength}, 1));
+			mlAnchor.setField("anchorArrayIndex", new MLDouble(null, new double[] {pAnchor.anchorArrayIndex}, 1));
+			if(pAnchor.pBall.pCell.type!=0) {
+				mlAnchor.setField("siblingArrayIndex", new MLDouble(null, new double[] {pAnchor.anchorArrayIndex}, 1));
+			}
+			mlAnchorSpringArray.set(mlAnchor, iAnchor);
+		}
+		mlModel.setField("anchorSpringArray", mlAnchorSpringArray);
+		// cellArray
+		int Ncell = cellArray.size();
+		MLCell mlCellArray = new MLCell(null, new int[] {Ncell,1});
+		for(int iCell=0; iCell<Ncell; iCell++) {
+			CCell pCell = cellArray.get(iCell);
+			MLStructure mlCell = new MLStructure(null, new int[] {1,1});
+			mlCell.setField("cellArrayIndex", 	new MLDouble(null, new double[] {pCell.cellArrayIndex+1}, 1));
+			mlCell.setField("colour", 			new MLDouble(null, new double[] {pCell.colour[0], pCell.colour[1], pCell.colour[2]}, 3));
+			mlCell.setField("filament", 		new MLDouble(null, new double[] {pCell.filament?1:0}, 1));
+			mlCell.setField("type", 			new MLDouble(null, new double[] {pCell.type}, 1));
+			// ballArray
+			int Nball = (pCell.type==0 ? 1 : 2);
+			MLCell mlBallArray = new MLCell(null,new int[] {Nball,1});
+			for(int iBall=0; iBall<Nball; iBall++) {
+				CBall pBall = pCell.ballArray[iBall];
+				MLStructure mlBall = new MLStructure(null, new int[] {1,1});
+				mlBall.setField("pos", 			new MLDouble(null, new double[] {pBall.pos.x, pBall.pos.y, pBall.pos.z}, 3));
+				mlBall.setField("vel", 			new MLDouble(null, new double[] {pBall.vel.x, pBall.vel.y, pBall.vel.z}, 3));
+				mlBall.setField("force",	 	new MLDouble(null, new double[] {pBall.force.x, pBall.force.y, pBall.force.z}, 3));
+				mlBall.setField("ballArrayIndex", new MLDouble(null, new double[] {pBall.ballArrayIndex+1}, 1));
+				mlBall.setField("mass", 		new MLDouble(null, new double[] {pBall.mass}, 1));
+				mlBall.setField("radius", 		new MLDouble(null, new double[] {pBall.radius}, 1));
+				mlBallArray.set(mlBall,iBall);
+			}
+			mlCell.setField("ballArray", mlBallArray);
+			// springArray
+			MLCell mlSpringArray = new MLCell(null,new int[] {1,1});
+			if(pCell.type!=0) {
+				MLStructure mlSpring = new MLStructure(null,new int[] {1,1});
+				CSpring pSpring = pCell.springArray[0];
+				mlSpring.setField("cellArrayIndex",	new MLDouble(null, new double[] {pSpring.ballArray[0].pCell.cellArrayIndex, pSpring.ballArray[1].pCell.cellArrayIndex}, 2));
+				mlSpring.setField("ballArrayIndex",	new MLDouble(null, new double[] {pSpring.ballArray[0].ballArrayIndex, pSpring.ballArray[1].ballArrayIndex}, 2));
+				mlSpring.setField("K",				new MLDouble(null, new double[] {pSpring.K}, 1));
+				mlSpring.setField("restLength",		new MLDouble(null, new double[] {pSpring.restLength}, 1));	
+				mlSpringArray.set(mlSpring, 0);
+				mlCell.setField("springArray", mlSpringArray);
+			}
+			mlCellArray.set(mlCell, iCell);
+		}
+		mlModel.setField("cellArray", mlCellArray);
+		// stickSpringArray
+		int NStick = stickSpringArray.size();
+		MLCell mlStickSpringArray = new MLCell(null, new int[] {NStick,1});
+		for(int iStick=0; iStick<NStick; iStick++) {
+			CStickSpring pStick = stickSpringArray.get(iStick);
+			MLStructure mlStick = new MLStructure(null, new int[] {1,1});
+			mlStick.setField("cellArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].pCell.cellArrayIndex, pStick.ballArray[1].pCell.cellArrayIndex}, 1));
+			mlStick.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].ballArrayIndex, pStick.ballArray[1].ballArrayIndex}, 1));
+			mlStick.setField("K",				new MLDouble(null, new double[] {pStick.K}, 1));
+			mlStick.setField("restLength",		new MLDouble(null, new double[] {pStick.restLength}, 1));
+			mlStick.setField("stickArrayIndex", new MLDouble(null, new double[] {pStick.stickArrayIndex}, 1));
+			if(pStick.ballArray[0].pCell.type!=0) {
+				if(pStick.ballArray[1].pCell.type==0) {
+					mlStick.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray.get(0).stickArrayIndex}, 1));
+				} else {
+					mlStick.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray.get(0).stickArrayIndex, pStick.siblingArray.get(1).stickArrayIndex, pStick.siblingArray.get(2).stickArrayIndex}, 3));
+				}
+			}
+			mlStickSpringArray.set(mlStick, iStick);
+		}
+		mlModel.setField("stickSpringArray", mlStickSpringArray);
+		// Create a list and add mlModel
+		ArrayList<MLArray> list = new ArrayList<MLArray>(1);
+		list.add(mlModel);
+		
+		try {
+			new MatFileWriter(pathOutput + "/m" + movementIter + "g" + growthIter + ".mat",list);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	
 	/////////////////
 	// Log writing //
@@ -136,7 +295,6 @@ public class CModel {
 	//////////////////////////
 	// Collision detection  //
 	//////////////////////////
-	
 	public ArrayList<CCell> DetectFloorCollision() {
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
 		for(CCell pCell : cellArray) {
@@ -152,7 +310,7 @@ public class CModel {
 		return collisionCell;
 	}
 	
-	public ArrayList<CCell> DetectCellCollision_Simple() {				// Using ArrayList, no idea how big this one will get. For some stupid reason, it won't take int
+	public ArrayList<CCell> DetectCellCollision_Simple() {				// Using ArrayList, no idea how big this one will get
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
 		
 		CBall[] ballArray = BallArray();
@@ -175,7 +333,6 @@ public class CModel {
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
-	
 	public ArrayList<CAnchorSpring> DetectAnchorBreak() {
 		double maxStretch = 1.2; 
 		double minStretch = 0.8;
@@ -208,10 +365,98 @@ public class CModel {
 		return breakArray;
 	} 
 	
+
+	////////////////////
+	// Movement stuff //
+	////////////////////
+	public int Movement() throws Exception {
+		int nvar = 6*CModel.NBall;
+		int ntimes = (int) (movementTimeEnd/movementTimeStep);
+		double atol = 1.0e-6, rtol = atol;
+		double h1 = 0.00001, hmin = 0;
+		double t1 = movementTime; 
+		double t2 = t1 + movementTime + movementTimeEnd;
+		Vector ystart = new Vector(nvar,0.0);
+
+		int ii=0;											// Determine initial value vector
+		for(CBall pBall : BallArray()) { 
+			ystart.set(ii++, pBall.pos.x);
+			ystart.set(ii++, pBall.pos.y);
+			ystart.set(ii++, pBall.pos.z);
+			ystart.set(ii++, pBall.vel.x);
+			ystart.set(ii++, pBall.vel.x);
+			ystart.set(ii++, pBall.vel.x);
+		}
+		Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
+		feval dydt = new feval(this);
+		Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt);
+		int nstp = ode.integrate();
+		for(int iTime=0; iTime<out.count; iTime++) {
+			int iVar = 0;
+			for(CBall pBall : BallArray()) {
+				pBall.pos.x = out.ysave.get(iVar++,iTime);
+				pBall.pos.y = out.ysave.get(iVar++,iTime);
+				pBall.pos.z = out.ysave.get(iVar++,iTime);
+				pBall.vel.x = out.ysave.get(iVar++,iTime);
+				pBall.vel.y = out.ysave.get(iVar++,iTime);
+				pBall.vel.z = out.ysave.get(iVar++,iTime);
+			}
+			// save POV TODO
+		}
+		return nstp;
+	}
+	
+	public Vector CalculateForces(double t, Vector yode) {	// This function gets called again and again --> not very efficient to import/export every time TODO
+		// Read data from y
+		int ii=0; 				// Where we are in yode
+		for(CBall pBall : BallArray()) {
+			pBall.pos.x = 	yode.get(ii++);
+			pBall.pos.y = 	yode.get(ii++);
+			pBall.pos.z = 	yode.get(ii++);
+			pBall.vel.x = 	yode.get(ii++);
+			pBall.vel.y = 	yode.get(ii++);
+			pBall.vel.z = 	yode.get(ii++);
+			pBall.force.x = 0;	// Clear forces for first use
+			pBall.force.y = 0;
+			pBall.force.z = 0;
+		}
+		
+		// Calculate gravity+bouyancy, normal forces and drag
+		for(CBall pBall : BallArray()) {
+			// Contact forces
+			double y = pBall.pos.y;
+			double r = pBall.radius;
+			if(y<r){
+				pBall.force.y += Kw*(r-y);
+			}
+			// Gravity and buoyancy
+			if(y>r) {			// Only if not already at the floor 
+				pBall.force.y += G * ((rho_m-rho_w)/rho_w) * pBall.mass ;  //let the ball fall 
+			}
+			// Velocity damping
+			pBall.force.x -= Kd*pBall.vel.x;
+			pBall.force.y -= Kd*pBall.vel.y;
+			pBall.force.z -= Kd*pBall.vel.z;
+		}
+		
+		// Return results
+		Vector dydx = new Vector(yode.size());
+		ii=0;
+		for(CBall pBall : BallArray()) {
+				double M = pBall.mass;
+				dydx.set(ii++,pBall.vel.x);			// dpos/dt = v;
+				dydx.set(ii++,pBall.vel.y);
+				dydx.set(ii++,pBall.vel.z);
+				dydx.set(ii++,pBall.force.x/M);		// dvel/dt = a = f/M
+				dydx.set(ii++,pBall.force.y/M);
+				dydx.set(ii++,pBall.force.z/M);
+		}
+		return dydx;
+	}
+	
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	
 	public int GrowCell() {
 		int newCell = 0;
 		int NCell = cellArray.size();
@@ -221,7 +466,7 @@ public class CModel {
 
 			// Random growth
 			mass *= (0.95+rand.Double()/5);
-			// Syntrophic growth			// TODO: Horribly inefficient
+			// Syntrophic growth
 			for(CCell pStickCell : pCell.stickCellArray) {
 				if((pCell.type==0 && pStickCell.type!=0) || (pCell.type!=0 && pStickCell.type==0)) {
 					// The cell types are not different on the other end of the spring
@@ -229,16 +474,6 @@ public class CModel {
 					break;
 				}
 			}
-//			for(CStickSpring pSpring : stickSpringArray) {
-//				if(pSpring.ballArray[0].pCell.equals(pCell) || pSpring.ballArray[1].pCell.equals(pCell)) {
-//					// We found the cell
-//					if((pSpring.ballArray[0].pCell.type==0 && pSpring.ballArray[1].pCell.type!=0) || (pSpring.ballArray[0].pCell.type!=0 && pSpring.ballArray[1].pCell.type==0)) {
-//						// The cell types are not different on the other end of the spring
-//						mass *= 1.2;
-//						break;	// That'll do, pig
-//					}
-//				}
-//			}
 			
 			// Cell growth or division
 			if(mass>MCellMax) {
@@ -343,7 +578,6 @@ public class CModel {
 	////////////////////////////
 	// Anchor and Stick stuff //
 	////////////////////////////
-	
 	public void BreakStick(ArrayList<CStickSpring> breakArray) {
 		for(CStickSpring pSpring : breakArray) {
 			CCell pCell0 = pSpring.ballArray[0].pCell;
@@ -387,7 +621,6 @@ public class CModel {
 	///////////////////
 	// POV-Ray stuff //
 	///////////////////
-	
 	public void POV_Write() {
 		if(!(new File(name)).exists()) {
 			new File(name).mkdir();
@@ -569,53 +802,5 @@ public class CModel {
 	
 	public void POV_Plot() {
 		POV_Plot(false,false);
-	}
-
-	public Vector CalculateForces(double t, Vector yode) {	// This function gets called again and again --> not very efficient to import/export every time TODO
-		// Read data from y
-		int ii=0; 				// Where we are in yode
-		for(CBall pBall : BallArray()) {
-			pBall.pos.x = 	yode.get(ii++);
-			pBall.pos.y = 	yode.get(ii++);
-			pBall.pos.z = 	yode.get(ii++);
-			pBall.vel.x = 	yode.get(ii++);
-			pBall.vel.y = 	yode.get(ii++);
-			pBall.vel.z = 	yode.get(ii++);
-			pBall.force.x = 0;	// Clear forces for first use
-			pBall.force.y = 0;
-			pBall.force.z = 0;
-		}
-		
-		// Calculate gravity+bouyancy, normal forces and drag
-		for(CBall pBall : BallArray()) {
-			// Contact forces
-			double y = pBall.pos.y;
-			double r = pBall.radius;
-			if(y<r){
-				pBall.force.y += Kw*(r-y);
-			}
-			// Gravity and buoyancy
-			if(y>r) {			// Only if not already at the floor 
-				pBall.force.y += G * ((rho_m-rho_w)/rho_w) * pBall.mass ;  //let the ball fall 
-			}
-			// Velocity damping
-			pBall.force.x -= Kd*pBall.vel.x;
-			pBall.force.y -= Kd*pBall.vel.y;
-			pBall.force.z -= Kd*pBall.vel.z;
-		}
-		
-		// Return results
-		Vector dydx = new Vector(yode.size());
-		ii=0;
-		for(CBall pBall : BallArray()) {
-				double M = pBall.mass;
-				dydx.set(ii++,pBall.vel.x);			// dpos/dt = v;
-				dydx.set(ii++,pBall.vel.y);
-				dydx.set(ii++,pBall.vel.z);
-				dydx.set(ii++,pBall.force.x/M);		// dvel/dt = a = f/M
-				dydx.set(ii++,pBall.force.y/M);
-				dydx.set(ii++,pBall.force.z/M);
-		}
-		return dydx;
 	}
 }

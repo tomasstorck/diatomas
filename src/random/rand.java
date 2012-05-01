@@ -1,4 +1,4 @@
-package cell;
+package random;
 
 import java.util.Random;
 

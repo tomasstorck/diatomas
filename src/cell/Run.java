@@ -2,66 +2,34 @@ package cell;
 
 import java.util.ArrayList;
 
-import NR.*;
+import random.rand;
 
 public class Run {
 
 	public Run(CModel model, boolean enablePlot) throws Exception{
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
-
-		// Create initial cells
-		for(int iCell = 0; iCell < model.NInitCell; iCell++){
-			new CCell(rand.Int(model.NType+1), 	// 0, 1 or 2 by default (specified numer is exclusive)
-					rand.Double()*model.L.x, 					// Anywhere between 0 and Lx
-					1e-4, 										// Standard height
-					rand.Double()*model.L.z,					// Anywhere between 0 and Lz
-					true,										// With filament
-					model);										// And a pointer to the model
+		
+		if(model.growthIter==0 && model.movementIter==0) {
+			// Create initial cells
+			for(int iCell = 0; iCell < model.NInitCell; iCell++){
+				new CCell(rand.Int(model.NType+1), 	// 0, 1 or 2 by default (specified numer is exclusive)
+						rand.Double()*model.L.x, 					// Anywhere between 0 and Lx
+						1e-4, 										// Standard height
+						rand.Double()*model.L.z,					// Anywhere between 0 and Lz
+						true,										// With filament
+						model);										// And a pointer to the model
+			}
+			model.Write(model.cellArray.size() + " initial cells created","iter");
 		}
 
-		model.Write(model.cellArray.size() + " initial cells created","iter");
-
-		while(model.growthIter<24) {
+		while(model.growthIter<100) {
 			// Reset the random seed
 			rand.Seed(model.randomSeed*(2+model.growthIter));				// + something because if growthIter == 0, randomSeed doesn't matter. 
 
 			// Movement
 			model.Write("Starting movement calculations","iter");
-			int nvar = 6*CModel.NBall;
-			int ntimes = (int) (model.movementTimeEnd/model.movementTimeStep);
-			double atol = 1.0e-6, rtol = atol;
-			double h1 = 0.00001, hmin = 0;
-			double t1 = model.movementTime; 
-			double t2 = t1 + model.movementTime + model.movementTimeEnd;
-			Vector ystart = new Vector(nvar,0.0);
-
-			{int ii=0;											// Determine initial value vector
-			for(CBall pBall : model.BallArray()) { 
-				ystart.set(ii++, pBall.pos.x);
-				ystart.set(ii++, pBall.pos.y);
-				ystart.set(ii++, pBall.pos.z);
-				ystart.set(ii++, pBall.vel.x);
-				ystart.set(ii++, pBall.vel.x);
-				ystart.set(ii++, pBall.vel.x);
-			}}
-			Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
-			feval dydt = new feval(model);
-			Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt);
-			int nstp = ode.integrate();
-			for(int iTime=0; iTime<out.count; iTime++) {
-				int iVar = 0;
-				for(CBall pBall : model.BallArray()) {
-					pBall.pos.x = out.ysave.get(iVar++,iTime);
-					pBall.pos.y = out.ysave.get(iVar++,iTime);
-					pBall.pos.z = out.ysave.get(iVar++,iTime);
-					pBall.vel.x = out.ysave.get(iVar++,iTime);
-					pBall.vel.y = out.ysave.get(iVar++,iTime);
-					pBall.vel.z = out.ysave.get(iVar++,iTime);
-				}
-				// save POV TODO
-			}
-			// Advance movement
+			int nstp = model.Movement();
 			model.movementIter++;
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
@@ -97,6 +65,11 @@ public class Run {
 			// Grow cells
 			{int newCell = model.GrowCell();
 			model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");}
+			
+			// Save stuff
+			model.Write("Saving model as .mat file", "iter");
+			model.Save();
+			
 			// Advance growth
 			model.growthIter++;
 			model.growthTime += model.growthTimeStep;

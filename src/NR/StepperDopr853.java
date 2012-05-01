@@ -9,18 +9,12 @@ public class StepperDopr853 extends StepperBase {
 //	final double safe=0.9;
 //	final double minscale=0.333;
 //	final double maxscale=6.0;
-//	// FAST //
-//	final double beta=0.0;				// Set beta to !=0 for PI control. Beta 0.04-0.08 is a good default
-//	final double alpha=1.0/8.0-beta*0.2;
-//	final double safe=0.9;
-//	final double minscale=0.333;
-//	final double maxscale=6.0;
-	// FASTER //
-	static double beta=0.0;
-	static double alpha=0.25-beta*0.75;	// -beta*0.75 hasn't had a noticeable effect
-	static double safe=0.9;
-	static double minscale=0.333;
-	static double maxscale=6.0;
+	// FAST //
+	final double beta=0.0;				// Set beta to !=0 for PI control. Beta 0.04-0.08 is a good default
+	final double alpha=1.0/8.0-beta*0.2;
+	final double safe=0.9;
+	final double minscale=0.333;
+	final double maxscale=6.0;
 	
 	public StepperDopr853(Vector yy, Vector dydxx, double xx, double hh, double atoll, double rtoll, boolean dens) {
 		super(yy,dydxx,xx,hh,atoll,rtoll,dens);	// Construct super class
