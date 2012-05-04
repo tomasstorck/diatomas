@@ -24,6 +24,10 @@ public class CSpring {
 		new CSpring(ball0, ball1, ball0.pCell.pModel.Ks, restLength);
 	}
 	
+	public CSpring() {}
+	
+	////////////////////////////////////////////////////
+	
 	public double Reset() {
 		// If type == 1 based on mass, else (so type==2) based on max mass
 		CModel pModel = ballArray[0].pCell.pModel;

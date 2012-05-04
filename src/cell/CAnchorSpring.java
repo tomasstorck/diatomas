@@ -5,7 +5,7 @@ public class CAnchorSpring {
 	Vector3d anchor;
 	double K;
 	double restLength;
-	CAnchorSpring[] siblingArray;
+	CAnchorSpring[] siblingArray = new CAnchorSpring[1];
 	int anchorArrayIndex;
 	
 	public CAnchorSpring(CBall ball) {		// Note that siblingArray is not assigned here
@@ -15,4 +15,6 @@ public class CAnchorSpring {
 		anchorArrayIndex = ball.pCell.pModel.anchorSpringArray.size();
 		ball.pCell.pModel.anchorSpringArray.add(this);
 	}
+	
+	public CAnchorSpring() {}				// Note that this constructor does NOT add the anchor spring to the model!
 }

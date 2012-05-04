@@ -1,7 +1,5 @@
 package cell;
 
-import java.io.*;
-
 public class Interface {
 
 	public static void main(String[] args) throws Exception{
@@ -24,25 +22,37 @@ public class Interface {
 				return;
 			}
 			//
-			if(arg.equalsIgnoreCase("enableplot")) 	{setting.enablePlot = true;}
-			if(arg.equalsIgnoreCase("disableplot")) {setting.enablePlot = false;}
+			if(arg.equalsIgnoreCase("enableplot")) 	{setting.enablePlot = true;} else
+			if(arg.equalsIgnoreCase("disableplot")) {setting.enablePlot = false;} else
 			//
-			if(arg.equalsIgnoreCase("defaultparameter")) {setting.defaultParameter = true;}
+			if(arg.equalsIgnoreCase("disablestart")) {setting.enableStart = false;} else
+			if(arg.equalsIgnoreCase("enablestart")) {setting.enableStart = true;} else
+			//
+			if(arg.equalsIgnoreCase("defaultparameter")) {setting.defaultParameter = true;} else
 			if(arg.equalsIgnoreCase("load")) {
 				setting.defaultParameter = false;
 				ii++;			// Look at the next argument
 				model.Load(args[ii]);
-			}
+			//
+			} else {model.name = arg;}	// If not any of the above, it must be the name
 			//
 
 //			if(arg.equalsIgnoreCase("enableplot")) 	{enablePlot = true;} else
 //			if(arg.equalsIgnoreCase("enableplot")) 	{enablePlot = true;} else
-													{model.name = arg;}	// If not any of the above, it must be the name
+													
 		}
 
 		// Set defaults if not called
 		if(setting.defaultParameter == true) {
 			model.LoadDefaultParameters();
+		}
+
+		// Start model if requested
+		if(setting.enableStart)	new Run(model);
+		
+		// Render POV things
+		if(setting.postPlot) {
+			// TODO
 		}
 	}
 }

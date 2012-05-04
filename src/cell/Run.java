@@ -66,13 +66,13 @@ public class Run {
 			{int newCell = model.GrowCell();
 			model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");}
 			
-			// Save stuff
-			model.Write("Saving model as .mat file", "iter");
-			model.Save();
-			
 			// Advance growth
 			model.growthIter++;
 			model.growthTime += model.growthTimeStep;
+			
+			// And finally: save stuff
+			model.Write("Saving model as .mat file", "iter");
+			model.Save();
 		}
 	}
 }

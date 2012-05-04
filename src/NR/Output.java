@@ -4,11 +4,11 @@ public class Output<Stepper extends StepperBase> {
 	static int kmax = 10;			// Influence kmax on memory and CPU investigated by Tomas 120426. Chosen static as the model gets gradually more complicated
 	static double resizeFactor = 2.0;
 	int nvar;
-	int nsave;
+	public int nsave;		// Public to enable reading of solutions after integration
 	boolean dense;
-	public int count;				// Public to enable reading of solutions after integration
+	int count;				
 	double x1,x2,xout,dxout;
-	public Vector xsave;			// Vecdouble
+	public Vector xsave;	// Vecdouble
 	public Matrix ysave;	// Matdouble, public to enable reading of solutions after integration
 
 	// Constructors

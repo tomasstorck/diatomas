@@ -3,7 +3,6 @@ package cell;
 public class CFilSpring {
 	CSpring bigSpring;
 	CSpring smallSpring;
-	double K;
 	
 	public CFilSpring(CCell parent, CCell daughter) {
 		double Kf = parent.pModel.Kf; 
@@ -13,4 +12,6 @@ public class CFilSpring {
 		// Add to filSpringArray
 		parent.pModel.filSpringArray.add(this);
 	}
+
+	public CFilSpring() {}		// Empty constructor for loading. Doesn't add to filSpringArray!
 }

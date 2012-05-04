@@ -1,12 +1,11 @@
 package cell;
 
-import java.util.ArrayList;
-
 public class CStickSpring {
 	CBall[] ballArray = new CBall[2];
 	double K;
 	double restLength;
-	ArrayList<CStickSpring> siblingArray;					// TODO: get rid of siblingArray, make CStickSpring of size 2*siblingArray.size()
+	CStickSpring[] siblingArray = new CStickSpring[4];					// TODO: get rid of siblingArray, make CStickSpring of size 2*siblingArray.size()
+	int NSibling;
 	double stickArrayIndex;
 	
 	public CStickSpring(CBall ball1, CBall ball2){			// Note that siblingArray is by default not initialised
@@ -18,4 +17,6 @@ public class CStickSpring {
 		stickArrayIndex = ballArray[0].pCell.pModel.stickSpringArray.size();
 		ballArray[0].pCell.pModel.stickSpringArray.add(this);
 	}
-}
+	
+	public CStickSpring () {}								// Empty constructor for model loading. Note that the stickSpring is not automatically added to the array
+} 

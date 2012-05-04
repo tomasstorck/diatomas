@@ -70,6 +70,10 @@ public class CCell {
 		// Add is taken care of through calling method
 	}
 	
+	public CCell() {}		// Empty constructor for loading, note that this doesn't add the cell to the array!
+	
+	/////////////////////////////////////////////////////////
+	
 	public void Anchor() {
 		int NBall = (type==0) ? 1 : 2;
 		CAnchorSpring[] anchorArray = new CAnchorSpring[NBall];
@@ -101,19 +105,22 @@ public class CCell {
 		else 									{NSpring = 4; pA = this; 	pB = pCell;} 	// Doesn't matter
 		
 		CStickSpring[] stickArray = new CStickSpring[NSpring];
-		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// Create all springs, with input balls
-			stickArray[iSpring] = new CStickSpring(pA.ballArray[iSpring/2],	// 0, 0, 1, 1, ...
-					pB.ballArray[iSpring%2]); 								// 0, 1, 0, 1, ...
+		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, with input balls
+			CStickSpring pSpring 	= new CStickSpring(	pA.ballArray[iSpring/2],	// 0, 0, 1, 1, ...
+													pB.ballArray[iSpring%2]); 	// 0, 1, 0, 1, ...
+			pSpring.NSibling = NSpring-1;
+			stickArray[iSpring] = pSpring;
 		}
 		
 		// Define siblings
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and siblingspring
 			CStickSpring pSpring1 = stickArray[iSpring];
-			pSpring1.siblingArray = new ArrayList<CStickSpring>(NSpring);	// Initialise the siblingArray for the spring
-
+//			pSpring1.siblingArray = new ArrayList<CStickSpring>(NSpring);	// Initialise the siblingArray for the spring
+			
+			int ii = 0;
 			for(int iSpring2 = 0; iSpring2 < NSpring; iSpring2++) {			
 				if(iSpring != iSpring2) {									// For all its siblings
-					pSpring1.siblingArray.add(stickArray[iSpring2]);
+					pSpring1.siblingArray[ii++] = stickArray[iSpring2];
 				}
 			}
 		}
@@ -150,5 +157,14 @@ public class CCell {
 			ballArray[1].mass = newMass/2;
 			ballArray[1].radius = ballArray[1].Radius();
 		}
+	}
+	
+	public ArrayList<CCell> StickCellArray() {			// Currently used only for loading. Using the maintained stickCellArray field is much more CPU efficient.
+		ArrayList<CCell> stickCellArray = new ArrayList<CCell>(1);
+		for(CStickSpring pSpring : pModel.stickSpringArray) {
+			CCell pCell = pSpring.ballArray[0].pCell;
+			if(this.equals(pCell)) stickCellArray.add(pCell);
+		}
+		return stickCellArray;
 	}
 }
