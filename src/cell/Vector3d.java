@@ -11,6 +11,12 @@ public class Vector3d {
 		this.z = z;
 	}
 	
+	public Vector3d(Vector3d v) {
+		this.x = v.x;
+		this.y = v.y;
+		this.z = v.z;
+	}
+	
 	public Vector3d() {}
 	
 	///////////////////////////////////////////////
@@ -94,6 +100,13 @@ public class Vector3d {
 		Vector3d divide = new Vector3d(newx, newy, newz);
 		
 		return divide;
+	}
+
+	///////////////////////
+	// Vector operations //
+	///////////////////////
+	public double dot(Vector3d u) {
+		return this.x*u.x + this.y*u.y + this.z*u.z;
 	}
 	
 	

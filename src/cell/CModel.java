@@ -201,6 +201,91 @@ public class CModel {
 		return collisionCell;
 	}
 	
+	public returnObject DetectCellCollision_Ericson(Vector3d S1_P0, Vector3d S1_P1, Vector3d S2_P0, Vector3d S2_P1) {
+	    Vector3d   u = S1_P1.minus(S1_P0);		// d1(Ericson)
+	    Vector3d   v = S2_P1.minus(S2_P0);		// d2(Ericson)
+	    Vector3d   w = S1_P0.minus(S2_P0);		// r (Ericson)
+
+	    double    a = u.dot(u);			// always >= 0	Called a(Ericson)
+	    double    b = u.dot(v);			//				Called b(Ericson)
+	    double    c = v.dot(v);			// always >= 0	Called e(Ericson)
+	    double    d = u.dot(w);			//				Called c(Ericson)
+	    double    e = v.dot(w);			//				Called f(Ericson)
+	    
+		double    D = a*c - b*b;		// always >= 0	Called denom(Ericson)
+
+		Vector3d c1, c2;
+		double sc, tc;
+		double n, tnom;
+
+		if (D != 0.0){
+			n = (b*e - d*c)/D;
+			if (n<0.0)
+				sc = 0.0;
+			else if (n>1.0)
+				sc = 1.0;
+			else sc = n;
+		} else sc = 0.0; 			//Arbitrary sc
+
+		tc = (b*sc + e)/c;
+		tnom = b*sc + e;
+
+		if (tnom < 0.0){
+			tc = 0.0;
+			
+			n = -d/a;
+			if (n<0.0)
+				sc = 0.0;
+			else if (n>1.0)
+				sc = 1.0;
+			else sc = n;
+
+		} else if (tnom > c) {
+			tc = 1.0;
+
+			n = b - d;
+			if (n<0.0)
+				sc = 0.0;
+			else if (n>1.0)
+				sc = 1.0;
+			else sc = n;
+
+		} else tc = tnom/c;
+
+		// Get the difference of the two closest points
+		Vector3d   dP = w.plus(u.times(sc)).minus(v.times(tc));  // = S1(sc) - S2(tc)
+		double dist = dP.length();
+
+		c1 = S1_P0.plus(u.times(sc));	// NOT NECESSARY... Just to check!!
+		c2 = S2_P0.plus(v.times(tc)); 	// NOT NECESSARY... Just to check!!
+
+		returnObject R = new returnObject(dP, dP.length(), sc, tc, c1, c2);
+//		*c1p = c1;
+//		*c2p = c2;
+//
+//		*scp = sc;
+//		*tcp = tc;
+//		*distp = dist;
+
+		return R;
+	}
+	
+	public returnObject DetectCellCollision_Ericson(Vector3d S1_P0, Vector3d S1_P1, Vector3d S2_P0) {
+		Vector3d ab = S1_P1.minus(S1_P0);  	// line
+		Vector3d w = S2_P0.minus(S1_P0);	//point-line
+		//Project c onto ab, computing parameterized position d(t) = a + t*(b-a)
+		double rpos = w.dot(ab)/ab.dot(ab);
+		//if outside segment, clamp t and therefore d to the closest endpoint
+		if ( rpos<0.0f ) rpos = 0.0f;
+		if ( rpos>1.0f ) rpos = 1.0f;
+		//compute projected position from the clamped t
+		Vector3d d = S1_P0.plus(ab.times(rpos));
+		//calculate the vector c --> d
+		Vector3d dP = d.minus(S2_P0);
+		returnObject R = new returnObject(dP, dP.length(), rpos);	// Defined at the end of the model class
+		return R;
+	}
+	
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
@@ -299,7 +384,145 @@ public class CModel {
 			pBall.force.y = 0;
 			pBall.force.z = 0;
 		}
-		
+		// Collision forces
+		double R2, H2;			// rest length, check distance 
+		for(int iCell=0; iCell<cellArray.size(); iCell++) {
+			CCell pCell = cellArray.get(iCell);
+			CBall pBall = pCell.ballArray[0];
+			// Base collision on the cell type
+			if(pCell.type==0) {
+				// Check for all remaining cells
+				for(int jCell=iCell+1; jCell<cellArray.size(); jCell++) {
+					Vector3d S1_P0 = new Vector3d(pBall.pos);
+					CCell pCellNext = cellArray.get(jCell);
+					// Check for a sticking spring, if there is one let it do the work
+					if(!pCell.stickCellArray.equals(pCellNext)) {
+						CBall pBallNext = pCellNext.ballArray[0];
+						R2 = pBall.radius + pBallNext.radius;
+						H2 = aspect * R2 + R2;
+						if(pCellNext.type==0) {		// The other cell is a ball too
+							// do a simple collision detection
+							Vector3d S2_P0 = new Vector3d(pBallNext.pos);
+							Vector3d dirn = S1_P0.minus(S2_P0);
+							double rpos = dirn.length();
+							if(rpos<R2) {
+								// We have a collision
+								dirn.normalise();
+								rpos = R2-rpos;
+								dirn = dirn.times(Kc*rpos);
+								// Add forces
+								pBall.force.plus(dirn);
+								pBallNext.force.minus(dirn);
+							}
+						} else {					// type != 0 --> the other cell is a rod
+							// do a sphere-rod collision detection
+							CBall pBallNext2 = pCellNext.ballArray[1];
+							returnObject R = DetectCellCollision_Ericson(pBallNext.pos, pBallNext2.pos, pBall.pos);
+							Vector3d dP = R.dP;
+							double dist = R.dist;
+							double sc = R.sc;
+							
+							if(dist<R2) {	// Collision
+								// don't stick, done during growth
+								double f = Kc/dist*(dist-R2);
+								double Fsx = f*dP.x;
+								double Fsy = f*dP.y;
+								double Fsz = f*dP.z;
+								// Add these elastic forces to the cells
+								double sc1 = 1-sc;
+								// both balls in rod
+								pBallNext.force.x -= sc1*Fsx;
+								pBallNext.force.y -= sc1*Fsy;
+								pBallNext.force.z -= sc1*Fsz;
+								pBallNext2.force.x -= sc*Fsx;
+								pBallNext2.force.y -= sc*Fsy;
+								pBallNext2.force.z -= sc*Fsz;
+								// ball in sphere
+								pBall.force.x += Fsx;
+								pBall.force.y += Fsy;
+								pBall.force.z += Fsz;
+							}
+						}
+					}
+				}
+			} else {	// pCell.type != 0
+				CBall pBall2 = pCell.ballArray[1];
+				for(int jCell = iCell+1; jCell<cellArray.size(); jCell++) {
+					CCell pCellNext = cellArray.get(jCell);
+					// check for sticking spring and let it do the work later on if it's there
+					if(!pCell.stickCellArray.equals(pCellNext)) {
+						CBall pBallNext = pCellNext.ballArray[0];
+						R2 = pBall.radius + pBallNext.radius; 
+						if(pCellNext.type==0) {
+							// do a sphere-rod collision detection
+							returnObject R = DetectCellCollision_Ericson(pBall.pos, pBall2.pos, pBallNext.pos); 
+							Vector3d dP = R.dP;
+							double dist = R.dist;
+							double sc = R.sc;
+							
+							if(dist < R2) {
+								double f = Kc/dist*(dist-R2);
+								double Fsx = f*dP.x;
+								double Fsy = f*dP.y;
+								double Fsz = f*dP.z;
+								// Add these elastic forces to the cells
+								double sc1 = 1-sc;
+								// both balls in rod
+								pBall.force.x -= sc1*Fsx;
+								pBall.force.y -= sc1*Fsy;
+								pBall.force.z -= sc1*Fsz;
+								pBall2.force.x -= sc*Fsx;
+								pBall2.force.y -= sc*Fsy;
+								pBall2.force.z -= sc*Fsz;
+								// ball in sphere
+								pBallNext.force.x += Fsx;
+								pBallNext.force.y += Fsy;
+								pBallNext.force.z += Fsz;
+							}
+						} else {	// type != 0 --> the other cell is a rod. This is where it gets tricky
+							Vector3d S1_P0 = new Vector3d(pBall.pos);
+							Vector3d S1_P1 = new Vector3d(pBall2.pos);
+							CBall pBallNext2 = pCellNext.ballArray[1];
+							Vector3d S2_P0 = new Vector3d(pBallNext.pos);
+							Vector3d S2_P1 = new Vector3d(pBallNext2.pos);
+							H2 = aspect*R2*3;
+							if(Math.abs(S2_P0.x - S1_P0.x) < H2 && Math.abs(S2_P0.y - S1_P0.y) < H2 && Math.abs(S2_P0.z - S1_P0.z) < H2) {
+								// calculate the distance between the two diatoma segments
+								returnObject R = DetectCellCollision_Ericson(S1_P0, S1_P1, S2_P0, S2_P1);
+								Vector3d dP = R.dP;
+								double dist = R.dist;
+								double sc = R.sc;
+								double tc = R.tc;
+								
+								if(dist<R2 && !pCell.IsFilament(pCellNext)) {
+									double f = Kc/dist*(dist-R2);
+									double Fsx = f*dP.x;
+									double Fsy = f*dP.y;
+									double Fsz = f*dP.z;
+									// Add these elastic forces to the cells
+									double sc1 = 1-sc;
+									double tc1 = 1-tc;
+									// both balls in 1st rod
+									pBall.force.x -= sc1*Fsx;
+									pBall.force.y -= sc1*Fsy;
+									pBall.force.z -= sc1*Fsz;
+									pBall2.force.x -= sc*Fsx;
+									pBall2.force.y -= sc*Fsy;
+									pBall2.force.z -= sc*Fsz;
+									// both balls in 1st rod
+									pBallNext.force.x += tc1*Fsx;
+									pBallNext.force.y += tc1*Fsy;
+									pBallNext.force.z += tc1*Fsz;
+									pBallNext2.force.x += tc*Fsx;
+									pBallNext2.force.y += tc*Fsy;
+									pBallNext2.force.z += tc*Fsz;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		// Calculate gravity+bouyancy, normal forces and drag
 		for(CBall pBall : BallArray()) {
 			// Contact forces
@@ -487,7 +710,7 @@ public class CModel {
 			CCell pCell1 = collisionArray.get(ii+1);
 			// Check if already stuck, don't stick if that is the case
 			for(CStickSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
-				if((pSpring.ballArray[0].equals(pCell0) && pSpring.ballArray[0].equals(pCell1)) || (pSpring.ballArray[0].equals(pCell1) && pSpring.ballArray[0].equals(pCell0))) {
+				if((pSpring.ballArray[0].pCell.equals(pCell0) && pSpring.ballArray[0].pCell.equals(pCell1)) || (pSpring.ballArray[0].equals(pCell1) && pSpring.ballArray[0].equals(pCell0))) {
 					setStick = false;
 					break;										// We've found a duplicate, don't stick this one
 				}
@@ -536,7 +759,7 @@ public class CModel {
 		MLStructure mlAnchorSpringArray = new MLStructure(null, new int[] {NAnchor,1});
 		for(int iAnchor=0; iAnchor<NAnchor; iAnchor++) {
 			CAnchorSpring pAnchor = anchorSpringArray.get(iAnchor);
-			mlAnchorSpringArray.setField("anchor", 			new MLDouble(null, new double[] {pAnchor.anchor.x, pAnchor.anchor. y, pAnchor.anchor.z}, 1),iAnchor);
+			mlAnchorSpringArray.setField("anchor", 			new MLDouble(null, new double[] {pAnchor.anchor.x, pAnchor.anchor. y, pAnchor.anchor.z}, 3),iAnchor);
 			mlAnchorSpringArray.setField("cellArrayIndex", 	new MLDouble(null, new double[] {pAnchor.pBall.pCell.cellArrayIndex+1}, 1),iAnchor);		// +1 for 0 vs 1 based indexing in Java vs MATLAB
 			mlAnchorSpringArray.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pAnchor.pBall.ballArrayIndex+1}, 1),iAnchor);
 			mlAnchorSpringArray.setField("K",				new MLDouble(null, new double[] {pAnchor.K}, 1),iAnchor);
@@ -568,8 +791,8 @@ public class CModel {
 			MLStructure mlBallArray = new MLStructure(null,new int[] {Nball,1});
 			for(int iBall=0; iBall<Nball; iBall++) {
 				CBall pBall = pCell.ballArray[iBall];
-				mlBallArray.setField("pos", 		new MLDouble(null, new double[] {pBall.pos.x, pBall.pos.y, pBall.pos.z}, 1), iBall);
-				mlBallArray.setField("vel", 		new MLDouble(null, new double[] {pBall.vel.x, pBall.vel.y, pBall.vel.z}, 1), iBall);
+				mlBallArray.setField("pos", 		new MLDouble(null, new double[] {pBall.pos.x, pBall.pos.y, pBall.pos.z}, 3), iBall);
+				mlBallArray.setField("vel", 		new MLDouble(null, new double[] {pBall.vel.x, pBall.vel.y, pBall.vel.z}, 3), iBall);
 //				mlBallArray.setField("force",	 	new MLDouble(null, new double[] {pBall.force.x, pBall.force.y, pBall.force.z}, 1), iBall);
 				// posSave and velSave
 				int NSave = (int)(movementTimeEnd/movementTimeStep)-1;
@@ -593,8 +816,8 @@ public class CModel {
 			if(pCell.type!=0) {
 				mlSpringArray = new MLStructure(null,new int[] {1,1});
 				CSpring pSpring = pCell.springArray[0];
-				mlSpringArray.setField("cellArrayIndex",	new MLDouble(null, new double[] {pSpring.ballArray[0].pCell.cellArrayIndex+1, pSpring.ballArray[1].pCell.cellArrayIndex+1}, 1),0);
-				mlSpringArray.setField("ballArrayIndex",	new MLDouble(null, new double[] {pSpring.ballArray[0].ballArrayIndex+1, pSpring.ballArray[1].ballArrayIndex+1}, 1),0);
+				mlSpringArray.setField("cellArrayIndex",	new MLDouble(null, new double[] {pSpring.ballArray[0].pCell.cellArrayIndex+1, pSpring.ballArray[1].pCell.cellArrayIndex+1}, 2),0);
+				mlSpringArray.setField("ballArrayIndex",	new MLDouble(null, new double[] {pSpring.ballArray[0].ballArrayIndex+1, pSpring.ballArray[1].ballArrayIndex+1}, 2),0);
 				mlSpringArray.setField("K",				new MLDouble(null, new double[] {pSpring.K}, 1),0);
 				mlSpringArray.setField("restLength",		new MLDouble(null, new double[] {pSpring.restLength}, 1),0);	
 			} else {
@@ -613,12 +836,12 @@ public class CModel {
 			MLStructure mlSmallSpring  = new MLStructure(null, new int[] {1,1});
 			mlBigSpring.setField("K", 						new MLDouble(null, new double[] {pFil.bigSpring.K}, 1));
 			mlBigSpring.setField("restLength", 				new MLDouble(null, new double[] {pFil.bigSpring.restLength}, 1));
-			mlBigSpring.setField("cellArrayIndex", 			new MLDouble(null, new double[] {pFil.bigSpring.ballArray[0].pCell.cellArrayIndex+1, 	pFil.bigSpring.ballArray[1].pCell.cellArrayIndex+1}, 1));
-			mlBigSpring.setField("ballArrayIndex", 			new MLDouble(null, new double[] {pFil.bigSpring.ballArray[0].ballArrayIndex+1, 			pFil.bigSpring.ballArray[1].ballArrayIndex+1}, 1));
+			mlBigSpring.setField("cellArrayIndex", 			new MLDouble(null, new double[] {pFil.bigSpring.ballArray[0].pCell.cellArrayIndex+1, 	pFil.bigSpring.ballArray[1].pCell.cellArrayIndex+1}, 2));
+			mlBigSpring.setField("ballArrayIndex", 			new MLDouble(null, new double[] {pFil.bigSpring.ballArray[0].ballArrayIndex+1, 			pFil.bigSpring.ballArray[1].ballArrayIndex+1}, 2));
 			mlSmallSpring.setField("K", 					new MLDouble(null, new double[] {pFil.smallSpring.K}, 1));
 			mlSmallSpring.setField("restLength", 			new MLDouble(null, new double[] {pFil.smallSpring.restLength}, 1));
-			mlSmallSpring.setField("cellArrayIndex", 		new MLDouble(null, new double[] {pFil.smallSpring.ballArray[0].pCell.cellArrayIndex+1, 	pFil.smallSpring.ballArray[1].pCell.cellArrayIndex+1}, 1));
-			mlSmallSpring.setField("ballArrayIndex", 		new MLDouble(null, new double[] {pFil.smallSpring.ballArray[0].ballArrayIndex+1, 		pFil.smallSpring.ballArray[1].ballArrayIndex+1}, 1));
+			mlSmallSpring.setField("cellArrayIndex", 		new MLDouble(null, new double[] {pFil.smallSpring.ballArray[0].pCell.cellArrayIndex+1, 	pFil.smallSpring.ballArray[1].pCell.cellArrayIndex+1}, 2));
+			mlSmallSpring.setField("ballArrayIndex", 		new MLDouble(null, new double[] {pFil.smallSpring.ballArray[0].ballArrayIndex+1, 		pFil.smallSpring.ballArray[1].ballArrayIndex+1}, 2));
 			mlFilSpringArray.setField("bigSpring", mlBigSpring, iFil);
 			mlFilSpringArray.setField("smallSpring", mlSmallSpring, iFil);
 		}
@@ -628,8 +851,8 @@ public class CModel {
 		MLStructure mlStickSpringArray = new MLStructure(null, new int[] {NStick,1});
 		for(int iStick=0; iStick<NStick; iStick++) {
 			CStickSpring pStick = stickSpringArray.get(iStick);
-			mlStickSpringArray.setField("cellArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].pCell.cellArrayIndex+1, pStick.ballArray[1].pCell.cellArrayIndex+1}, 1), iStick);
-			mlStickSpringArray.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].ballArrayIndex+1, pStick.ballArray[1].ballArrayIndex+1}, 1), iStick);
+			mlStickSpringArray.setField("cellArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].pCell.cellArrayIndex+1, pStick.ballArray[1].pCell.cellArrayIndex+1}, 2), iStick);
+			mlStickSpringArray.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].ballArrayIndex+1, pStick.ballArray[1].ballArrayIndex+1}, 2), iStick);
 			mlStickSpringArray.setField("K",				new MLDouble(null, new double[] {pStick.K}, 1), iStick);
 			mlStickSpringArray.setField("restLength",		new MLDouble(null, new double[] {pStick.restLength}, 1), iStick);
 			mlStickSpringArray.setField("stickArrayIndex", 	new MLDouble(null, new double[] {pStick.stickArrayIndex+1}, 1), iStick);
@@ -638,14 +861,14 @@ public class CModel {
 			} else if(pStick.ballArray[0].pCell.type==0 ^ pStick.ballArray[1].pCell.type==0) {		// exactly one rod one sphere, so 1 siblings
 				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1}, 1), iStick);
 			} else {																			// both are two rod, so  3 siblings
-				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1, pStick.siblingArray[1].stickArrayIndex+1, pStick.siblingArray[2].stickArrayIndex+1}, 1), iStick);
+				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1, pStick.siblingArray[1].stickArrayIndex+1, pStick.siblingArray[2].stickArrayIndex+1}, 3), iStick);
 			}
 			
 			if(pStick.ballArray[0].pCell.type!=0 || pStick.ballArray[1].pCell.type!=0) {		// at least one rod, so >0 siblings
 				if(pStick.ballArray[0].pCell.type==0 || pStick.ballArray[1].pCell.type==0) { 	// one ball one rod, so  1 sibling  
 					mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1}, 1), iStick);
 				} else {																		// both are two rod, so  3 siblings
-					mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1, pStick.siblingArray[1].stickArrayIndex+1, pStick.siblingArray[2].stickArrayIndex+1}, 1), iStick);
+					mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1, pStick.siblingArray[1].stickArrayIndex+1, pStick.siblingArray[2].stickArrayIndex+1}, 3), iStick);
 				}
 			}
 		}
@@ -1035,12 +1258,32 @@ public class CModel {
 
 	}
 	
-	public void POV_Plot(boolean boolWaitForFinish, boolean boolEchoCommand) {
-		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + name + "image/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
-		LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", boolWaitForFinish,boolEchoCommand);		// 1st true == wait for process to finish, 2nd true == tell command
+	public void POV_Plot() {
+		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + name + "/image/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
+		LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", setting.waitForFinish,setting.echoCommand);		// 1st true == wait for process to finish, 2nd true == tell command
+	}
+}
+
+class returnObject {		// Used for collision detection multiple return
+	Vector3d dP;
+	double dist;
+	double sc;
+	double tc;
+	Vector3d c1;
+	Vector3d c2;
+	
+	returnObject(Vector3d dP, double dist, double sc) {
+		this.dP = dP;
+		this.dist = dist; 
+		this.sc = sc;
 	}
 	
-	public void POV_Plot() {
-		POV_Plot(false,false);
+	returnObject(Vector3d dP, double dist, double sc, double tc, Vector3d c1, Vector3d c2) {
+		this.dP = dP;
+		this.dist = dist; 
+		this.sc = sc;
+		this.tc = tc;
+		this.c1 = c1;
+		this.c2 = c2;
 	}
 }

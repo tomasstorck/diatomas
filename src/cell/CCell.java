@@ -95,6 +95,12 @@ public class CCell {
 		}
 	}
 	
+
+	public boolean IsFilament(CCell pCell) {
+		if((mother!=null && mother.equals(pCell)) || (pCell.mother!=null && pCell.mother.equals(this))) return true;
+		else return false;
+	}
+	
 	public void Stick(CCell pCell) {
 		// Determine how many sticking springs we need
 		int NSpring;
@@ -167,4 +173,5 @@ public class CCell {
 		}
 		return stickCellArray;
 	}
+
 }
