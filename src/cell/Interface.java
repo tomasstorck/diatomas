@@ -32,14 +32,11 @@ public class Interface {
 			if(arg.equalsIgnoreCase("load")) {
 				setting.defaultParameter = false;
 				ii++;			// Look at the next argument
+				model.Write("Loading " + args[ii], "iter");
 				model.Load(args[ii]);
 			//
 			} else {model.name = arg;}	// If not any of the above, it must be the name
 			//
-
-//			if(arg.equalsIgnoreCase("enableplot")) 	{enablePlot = true;} else
-//			if(arg.equalsIgnoreCase("enableplot")) 	{enablePlot = true;} else
-													
 		}
 
 		// Set defaults if not called

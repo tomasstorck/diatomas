@@ -85,7 +85,7 @@ public class CModel {
 		rho_w	= 1000;				// [kg/m3], density of bulk liquid (water)
 		rho_m	= 1100;				// [kg/m3], diatoma density
 		L 		= new Vector3d(1200e-6, 300e-6, 1200e-6);	// [m], Dimensions of domain
-		randomSeed = 1;
+		randomSeed = 0;
 		// Cell properties
 		NType 	= 2;				// Types of cell
 		NInitCell = 15;				// Initial number of cells
@@ -516,24 +516,24 @@ public class CModel {
 				}
 			}
 		}
-		// Calculate gravity+bouyancy, normal forces and drag
-		for(CBall pBall : BallArray()) {
-			// Contact forces
-			double y = pBall.pos.y;
-			double r = pBall.radius;
-			if(y<r){
-				pBall.force.y += Kw*(r-y);
-			}
-			// Gravity and buoyancy
-			if(y>r) {			// Only if not already at the floor 
-				pBall.force.y += G * ((rho_m-rho_w)/rho_w) * pBall.mass ;  //let the ball fall 
-			}
-			// Velocity damping
-			pBall.force.x -= Kd*pBall.vel.x;
-			pBall.force.y -= Kd*pBall.vel.y;
-			pBall.force.z -= Kd*pBall.vel.z;
-		}
-		
+//		// Calculate gravity+bouyancy, normal forces and drag
+//		for(CBall pBall : BallArray()) {
+//			// Contact forces
+//			double y = pBall.pos.y;
+//			double r = pBall.radius;
+//			if(y<r){
+//				pBall.force.y += Kw*(r-y);
+//			}
+//			// Gravity and buoyancy
+//			if(y>r) {			// Only if not already at the floor 
+//				pBall.force.y += G * ((rho_m-rho_w)/rho_w) * pBall.mass ;  //let the ball fall 
+//			}
+//			// Velocity damping
+//			pBall.force.x -= Kd*pBall.vel.x;
+//			pBall.force.y -= Kd*pBall.vel.y;
+//			pBall.force.z -= Kd*pBall.vel.z;
+//		}
+//		
 		// Elastic forces between springs within cells (CSpring in type>0)
 		for(CCell pCell : cellArray) {
 			if(pCell.type!=0) {
@@ -556,48 +556,48 @@ public class CModel {
 				pSpring.ballArray[1].force.z -= Fsz;
 			}
 		}
+//		
+//		// Sticking springs elastic forces (CStickSpring in stickSpringArray)
+//		for(CStickSpring pStick : stickSpringArray) {
+//				// find difference vector and distance dn between balls (euclidian distance) 
+//				Vector3d diff = pStick.ballArray[1].pos.minus(pStick.ballArray[0].pos);
+//				double dn = diff.length();
+//				// Get force
+//				double f = pStick.K/dn * (dn - pStick.restLength);
+//				// Hooke's law
+//				double Fsx = f*diff.x;
+//				double Fsy = f*diff.y;
+//				double Fsz = f*diff.z;
+//				// apply forces on balls
+//				pStick.ballArray[0].force.x += Fsx;
+//				pStick.ballArray[0].force.y += Fsy;
+//				pStick.ballArray[0].force.z += Fsz;
+//				pStick.ballArray[1].force.x -= Fsx;
+//				pStick.ballArray[1].force.y -= Fsy;
+//				pStick.ballArray[1].force.z -= Fsz;
+//		}
 		
-		// Sticking springs elastic forces (CStickSpring in stickSpringArray)
-		for(CStickSpring pStick : stickSpringArray) {
-				// find difference vector and distance dn between balls (euclidian distance) 
-				Vector3d diff = pStick.ballArray[1].pos.minus(pStick.ballArray[0].pos);
-				double dn = diff.length();
-				// Get force
-				double f = pStick.K/dn * (dn - pStick.restLength);
-				// Hooke's law
-				double Fsx = f*diff.x;
-				double Fsy = f*diff.y;
-				double Fsz = f*diff.z;
-				// apply forces on balls
-				pStick.ballArray[0].force.x += Fsx;
-				pStick.ballArray[0].force.y += Fsy;
-				pStick.ballArray[0].force.z += Fsz;
-				pStick.ballArray[1].force.x -= Fsx;
-				pStick.ballArray[1].force.y -= Fsy;
-				pStick.ballArray[1].force.z -= Fsz;
-		}
-		
-		// Filament spring elastic force (CFilSpring in filSpringArray)
-		for(CFilSpring pFil : filSpringArray) {
-			for(CSpring pSpring : new CSpring[]{pFil.bigSpring, pFil.smallSpring}) {
-				// find difference vector and distance dn between balls (euclidian distance) 
-				Vector3d diff = pSpring.ballArray[1].pos.minus(pSpring.ballArray[0].pos);
-				double dn = diff.length();
-				// Get force
-				double f = pSpring.K/dn * (dn - pSpring.restLength);
-				// Hooke's law
-				double Fsx = f*diff.x;
-				double Fsy = f*diff.y;
-				double Fsz = f*diff.z;
-				// apply forces on balls
-				pSpring.ballArray[0].force.x += Fsx;
-				pSpring.ballArray[0].force.y += Fsy;
-				pSpring.ballArray[0].force.z += Fsz;
-				pSpring.ballArray[1].force.x -= Fsx;
-				pSpring.ballArray[1].force.y -= Fsy;
-				pSpring.ballArray[1].force.z -= Fsz;
-			}
-		}
+//		// Filament spring elastic force (CFilSpring in filSpringArray)
+//		for(CFilSpring pFil : filSpringArray) {
+//			for(CSpring pSpring : new CSpring[]{pFil.bigSpring, pFil.smallSpring}) {
+//				// find difference vector and distance dn between balls (euclidian distance) 
+//				Vector3d diff = pSpring.ballArray[1].pos.minus(pSpring.ballArray[0].pos);
+//				double dn = diff.length();
+//				// Get force
+//				double f = pSpring.K/dn * (dn - pSpring.restLength);
+//				// Hooke's law
+//				double Fsx = f*diff.x;
+//				double Fsy = f*diff.y;
+//				double Fsz = f*diff.z;
+//				// apply forces on balls
+//				pSpring.ballArray[0].force.x += Fsx;
+//				pSpring.ballArray[0].force.y += Fsy;
+//				pSpring.ballArray[0].force.z += Fsz;
+//				pSpring.ballArray[1].force.x -= Fsx;
+//				pSpring.ballArray[1].force.y -= Fsy;
+//				pSpring.ballArray[1].force.z -= Fsz;
+//			}
+//		}
 		
 		// Return results
 		Vector dydx = new Vector(yode.size());
@@ -625,11 +625,11 @@ public class CModel {
 			double mass = pCell.GetMass();
 
 			// Random growth
-			mass *= (0.95+rand.Double()/5);
+			mass *= (0.95+rand.Double()/5.0);
 			// Syntrophic growth
 			for(CCell pStickCell : pCell.stickCellArray) {
 				if((pCell.type==0 && pStickCell.type!=0) || (pCell.type!=0 && pStickCell.type==0)) {
-					// The cell types are not different on the other end of the spring
+					// The cell types are different on the other end of the spring
 					mass *= 1.2;
 					break;
 				}
@@ -650,11 +650,11 @@ public class CModel {
 							pCell.ballArray[0].pos.z - displacement * direction.z,
 							pCell.filament,this);														// Same filament boolean as pCell and pointer to the model
 					// Set mass for both cells
-					pNew.SetMass(mass/2);		// Radius is updated in this method
-					pCell.SetMass(mass/2);
+					pNew.SetMass(mass/2.0);		// Radius is updated in this method
+					pCell.SetMass(mass/2.0);
 					// Set properties for new cell
-					pNew.ballArray[0].vel = 	pCell.ballArray[0].vel;
-					pNew.ballArray[0].force = 	pCell.ballArray[0].force;
+					pNew.ballArray[0].vel = 	new Vector3d(pCell.ballArray[0].vel);
+					pNew.ballArray[0].force = 	new Vector3d(pCell.ballArray[0].force);
 					pNew.colour =				pCell.colour;
 					pNew.mother = 				pCell;
 					// Displace old cell
@@ -675,13 +675,13 @@ public class CModel {
 					
 					double displacement; 																// Should be improved/made to make sense (TODO)
 					if(pCell.type==1) {
-						displacement = pBall0.radius*Math.pow(2,-0.666666);							// A very strange formula: compare our radius to the C++ equation for Rpos and you'll see it's the same
+						displacement = pBall0.radius*Math.pow(2.0,-0.666666);							// A very strange formula: compare our radius to the C++ equation for Rpos and you'll see it's the same
 					} else {
-						displacement = pBall1.radius/2;
+						displacement = pBall1.radius/2.0;
 					}
 					
 					// Make a new, displaced cell
-					Vector3d middle = pBall1.pos.plus(pBall0.pos).divide(2); 
+					Vector3d middle = pBall1.pos.plus(pBall0.pos).divide(2.0); 
 					CCell pNew = new CCell(pCell.type,													// Same type as pCell
 							middle.x+	  displacement*direction.x,										// First ball					
 							middle.y+1.01*displacement*direction.y,										// possible TODO, ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
@@ -691,11 +691,11 @@ public class CModel {
 							pBall1.pos.z,
 							pCell.filament,this);														// Same filament boolean as pCell and pointer to the model
 					// Set mass for both cells
-					pNew.SetMass(mass/2);
-					pCell.SetMass(mass/2);
+					pNew.SetMass(mass/2.0);
+					pCell.SetMass(mass/2.0);
 					// Displace old cell, 2nd ball
 					pBall1.pos = middle.minus(direction.times(displacement));
-					pCell.springArray[0].Reset();
+					pCell.springArray[0].ResetRestLength();
 					// Contain cells to y dimension of domain
 					for(int iBall=0; iBall<2; iBall++) {
 						if(pCell.ballArray[iBall].pos.y < pCell.ballArray[iBall].radius) {pCell.ballArray[0].pos.y = pCell.ballArray[0].radius;};
@@ -703,8 +703,8 @@ public class CModel {
 					}
 					// Set properties for new cell
 					for(int iBall=0; iBall<2; iBall++) {
-						pNew.ballArray[iBall].vel = 	pCell.ballArray[iBall].vel;
-						pNew.ballArray[iBall].force = 	pCell.ballArray[iBall].force;
+						pNew.ballArray[iBall].vel = 	new Vector3d(pCell.ballArray[iBall].vel);
+						pNew.ballArray[iBall].force = 	new Vector3d(pCell.ballArray[iBall].force);
 					}
 					pNew.colour =	pCell.colour;
 					pNew.mother = 	pCell;
@@ -729,7 +729,7 @@ public class CModel {
 			} else {		
 				// Simply increase mass and reset spring
 				pCell.SetMass(mass);
-				if(pCell.type>0) pCell.springArray[0].Reset();
+				if(pCell.type>0) pCell.springArray[0].ResetRestLength();
 			}
 		}
 		return newCell;
@@ -756,7 +756,7 @@ public class CModel {
 	public int BuildAnchor(ArrayList<CCell> collisionArray) {
 		for(CAnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.pBall.pCell);
 		// Anchor the non-stuck, collided cells to the ground
-		for(CCell pCell : collisionArray) {pCell.Anchor();}
+		for(CCell pCell : collisionArray) pCell.Anchor();
 		return anchorSpringArray.size();
 	}
 	
@@ -1143,16 +1143,15 @@ public class CModel {
 	// POV-Ray stuff //
 	///////////////////
 	public void POV_Write() {
-		if(!(new File(name)).exists()) {
-			new File(name).mkdir();
-		}
-		if(!(new File(name + "/output")).exists()) {
-			new File(name + "/output").mkdir();
-		}
-		
+		String fileName = String.format("%s/output/pov.%04d.%04d.inc", name, movementIter,growthIter);
+		// Make output folder if it doesn't exist already
+		if(!(new File(name + "/output")).exists())	new File(name + "/output").mkdir();
+		PrintWriter fid=null;
 		try {
-			String fileName = String.format("%s/output/pov.%04d.%04d.inc", name, movementIter,growthIter); 
-			PrintWriter fid = new PrintWriter(new FileWriter(fileName,true));		// True is for append // Not platform independent TODO
+			// Remove inc file if it already exists
+			if((new File(fileName)).exists()) new File(fileName).delete();
+			// Write new inc file
+			fid = new PrintWriter(new FileWriter(fileName,true));		// True is for append // Not platform independent TODO
 			// Build spheres and rods
 			for(int iCell=0; iCell<cellArray.size(); iCell++) {
 				CCell pCell = cellArray.get(iCell);
@@ -1309,9 +1308,11 @@ public class CModel {
 				}
 			}
 			// Done, clean up and catch errors
-			fid.close();
 		} catch(IOException E) {
 			E.printStackTrace();
+		} finally {
+			fid.close();
+			if((new File(fileName)).exists()) new File(fileName).delete();
 		}
 
 	}

@@ -14,4 +14,16 @@ public class CFilSpring {
 	}
 
 	public CFilSpring() {}		// Empty constructor for loading. Doesn't add to filSpringArray!
+	
+	/////////////////////////////
+	
+	public void ResetRestLength() {			// Note that only bigSpring is reset here, as was in C++ model (TODO)
+		CCell pCell = bigSpring.ballArray[0].pCell;
+		CCell pCell2 = bigSpring.ballArray[1].pCell;
+		if(pCell.type>0 && pCell2.type>0) {
+			double error = bigSpring.restLength - pCell.springArray[0].restLength - pCell2.springArray[0].restLength;
+			if(error < 0) return;
+			bigSpring.restLength = 1.5*(pCell.springArray[0].restLength + pCell2.springArray[0].restLength);
+		}
+	}
 }

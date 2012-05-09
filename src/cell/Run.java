@@ -34,6 +34,9 @@ public class Run {
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
 
+			// Redistribute filament springs
+			for(CFilSpring pFil : model.filSpringArray) pFil.ResetRestLength();
+			
 			// Break anchor springs
 			// {} to make sure objects are destroyed when we're done (aka scope)
 			{ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak();	// This one will return a nice and unique ArrayList, though perhaps already anchored cells 
@@ -62,6 +65,7 @@ public class Run {
 				model.POV_Write();
 				model.POV_Plot(); 
 			}
+			
 			// Grow cells
 			{int newCell = model.GrowCell();
 			model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");}
