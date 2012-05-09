@@ -260,13 +260,6 @@ public class CModel {
 		c2 = S2_P0.plus(v.times(tc)); 	// NOT NECESSARY... Just to check!!
 
 		returnObject R = new returnObject(dP, dP.length(), sc, tc, c1, c2);
-//		*c1p = c1;
-//		*c2p = c2;
-//
-//		*scp = sc;
-//		*tcp = tc;
-//		*distp = dist;
-
 		return R;
 	}
 	
@@ -541,6 +534,71 @@ public class CModel {
 			pBall.force.z -= Kd*pBall.vel.z;
 		}
 		
+		// Elastic forces between springs within cells (CSpring in type>0)
+		for(CCell pCell : cellArray) {
+			if(pCell.type!=0) {
+				CSpring pSpring = pCell.springArray[0];
+				// find difference vector and distance dn between balls (euclidian distance) 
+				Vector3d diff = pSpring.ballArray[1].pos.minus(pSpring.ballArray[0].pos);
+				double dn = diff.length();
+				// Get force
+				double f = pSpring.K/dn * (dn - pSpring.restLength);
+				// Hooke's law
+				double Fsx = f*diff.x;
+				double Fsy = f*diff.y;
+				double Fsz = f*diff.z;
+				// apply forces on balls
+				pSpring.ballArray[0].force.x += Fsx;
+				pSpring.ballArray[0].force.y += Fsy;
+				pSpring.ballArray[0].force.z += Fsz;
+				pSpring.ballArray[1].force.x -= Fsx;
+				pSpring.ballArray[1].force.y -= Fsy;
+				pSpring.ballArray[1].force.z -= Fsz;
+			}
+		}
+		
+		// Sticking springs elastic forces (CStickSpring in stickSpringArray)
+		for(CStickSpring pStick : stickSpringArray) {
+				// find difference vector and distance dn between balls (euclidian distance) 
+				Vector3d diff = pStick.ballArray[1].pos.minus(pStick.ballArray[0].pos);
+				double dn = diff.length();
+				// Get force
+				double f = pStick.K/dn * (dn - pStick.restLength);
+				// Hooke's law
+				double Fsx = f*diff.x;
+				double Fsy = f*diff.y;
+				double Fsz = f*diff.z;
+				// apply forces on balls
+				pStick.ballArray[0].force.x += Fsx;
+				pStick.ballArray[0].force.y += Fsy;
+				pStick.ballArray[0].force.z += Fsz;
+				pStick.ballArray[1].force.x -= Fsx;
+				pStick.ballArray[1].force.y -= Fsy;
+				pStick.ballArray[1].force.z -= Fsz;
+		}
+		
+		// Filament spring elastic force (CFilSpring in filSpringArray)
+		for(CFilSpring pFil : filSpringArray) {
+			for(CSpring pSpring : new CSpring[]{pFil.bigSpring, pFil.smallSpring}) {
+				// find difference vector and distance dn between balls (euclidian distance) 
+				Vector3d diff = pSpring.ballArray[1].pos.minus(pSpring.ballArray[0].pos);
+				double dn = diff.length();
+				// Get force
+				double f = pSpring.K/dn * (dn - pSpring.restLength);
+				// Hooke's law
+				double Fsx = f*diff.x;
+				double Fsy = f*diff.y;
+				double Fsz = f*diff.z;
+				// apply forces on balls
+				pSpring.ballArray[0].force.x += Fsx;
+				pSpring.ballArray[0].force.y += Fsy;
+				pSpring.ballArray[0].force.z += Fsz;
+				pSpring.ballArray[1].force.x -= Fsx;
+				pSpring.ballArray[1].force.y -= Fsy;
+				pSpring.ballArray[1].force.z -= Fsz;
+			}
+		}
+		
 		// Return results
 		Vector dydx = new Vector(yode.size());
 		ii=0;
@@ -710,7 +768,7 @@ public class CModel {
 			CCell pCell1 = collisionArray.get(ii+1);
 			// Check if already stuck, don't stick if that is the case
 			for(CStickSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
-				if((pSpring.ballArray[0].pCell.equals(pCell0) && pSpring.ballArray[0].pCell.equals(pCell1)) || (pSpring.ballArray[0].equals(pCell1) && pSpring.ballArray[0].equals(pCell0))) {
+				if((pSpring.ballArray[0].pCell.equals(pCell0) && pSpring.ballArray[0].pCell.equals(pCell1)) || (pSpring.ballArray[0].pCell.equals(pCell1) && pSpring.ballArray[0].pCell.equals(pCell0))) {
 					setStick = false;
 					break;										// We've found a duplicate, don't stick this one
 				}
@@ -980,7 +1038,7 @@ public class CModel {
 				CSpring pSpring = new CSpring();
 				MLStructure mlSpringArray = (MLStructure)mlCellArray.getField("springArray", iCell);
 				if(pCell.type>0) {
-					for(int iBall=0; iBall<2; iBall++) pSpring.ballArray[iBall] = pCell.ballArray[iBall];
+					for(int iBall=0; iBall<2; iBall++) pSpring.ballArray[iBall] = pCell.ballArray[iBall];	// replace by System.arraycopy? TODO
 					pSpring.K 		= ((MLDouble)mlSpringArray.getField("K")).getReal(0);
 					pSpring.restLength = ((MLDouble)mlSpringArray.getField("restLength")).getReal(0);
 					pCell.springArray[0] = pSpring;
@@ -1088,7 +1146,7 @@ public class CModel {
 		if(!(new File(name)).exists()) {
 			new File(name).mkdir();
 		}
-		if(!(new File(name + "/ouptut")).exists()) {
+		if(!(new File(name + "/output")).exists()) {
 			new File(name + "/output").mkdir();
 		}
 		
@@ -1259,6 +1317,9 @@ public class CModel {
 	}
 	
 	public void POV_Plot() {
+		if(!(new File(name + "/image")).exists()) {
+			new File(name + "/image").mkdir();
+		}
 		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + name + "/image/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
 		LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", setting.waitForFinish,setting.echoCommand);		// 1st true == wait for process to finish, 2nd true == tell command
 	}

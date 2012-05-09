@@ -14,9 +14,9 @@ public class Run {
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				new CCell(rand.Int(model.NType+1), 	// 0, 1 or 2 by default (specified numer is exclusive)
-						rand.Double()*model.L.x, 					// Anywhere between 0 and Lx
-						1e-4, 										// Standard height
-						rand.Double()*model.L.z,					// Anywhere between 0 and Lz
+						(0.25*rand.Double()+0.25)*model.L.x, 		// Anywhere between 0 and Lx
+						1e-5, 										// Standard height
+						(0.25*rand.Double()+0.25)*model.L.z,		// Anywhere between 0 and Lz
 						true,										// With filament
 						model);										// And a pointer to the model
 			}
@@ -53,8 +53,8 @@ public class Run {
 			model.Write("Detecting cell-cell collisions","iter");
 			ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple();	 // Note that this one returns already stuck and duplicate cells
 			model.Write("Building new sticking springs","iter");
-			int NnewStick = model.BuildStick(collisionArray);
-			model.Write(NnewStick + " cell pairs sticked","iter");}				// Divided by two, as array is based on origin and other cell (see for loop)
+			int NNewStick = model.BuildStick(collisionArray);
+			model.Write(NNewStick + " cell pairs sticked","iter");}				// Divided by two, as array is based on origin and other cell (see for loop)
 
 			// Plot
 			if(setting.enablePlot) {
