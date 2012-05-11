@@ -54,11 +54,10 @@ public class CModel {
 	int movementIter;
 	// Counters
 	static int NBall;
-//	NBall; NCell; NSpring; NFilament; <--- disabled, more reliable and fast enough with length(), used in MEX though, reconstructed there for speed and to prevent errors
 	// Arrays
 	ArrayList<CCell> cellArray;
 //	ArrayList<CBall> ballArray;
-//	ArrayList<CSpring> springArray;
+	ArrayList<CSpring> rodSpringArray;
 	ArrayList<CStickSpring> stickSpringArray;
 	ArrayList<CFilSpring> filSpringArray;
 	ArrayList<CAnchorSpring> anchorSpringArray;
@@ -106,6 +105,7 @@ public class CModel {
 		NBall 	= 0;
 		// Arrays
 		cellArray = new ArrayList<CCell>(NInitCell);
+		rodSpringArray = new ArrayList<CSpring>(NInitCell);
 		stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
 		filSpringArray = new ArrayList<CFilSpring>(NInitCell);
 		anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
@@ -323,7 +323,7 @@ public class CModel {
 		double atol = 1.0e-6, rtol = atol;
 		double h1 = 0.00001, hmin = 0;
 		double t1 = movementTime; 
-		double t2 = t1 + movementTime + movementTimeEnd;
+		double t2 = t1 + movementTimeEnd;
 		Vector ystart = new Vector(nvar,0.0);
 
 		int ii=0;											// Determine initial value vector
@@ -516,28 +516,67 @@ public class CModel {
 				}
 			}
 		}
-//		// Calculate gravity+bouyancy, normal forces and drag
-//		for(CBall pBall : BallArray()) {
-//			// Contact forces
-//			double y = pBall.pos.y;
-//			double r = pBall.radius;
-//			if(y<r){
-//				pBall.force.y += Kw*(r-y);
-//			}
-//			// Gravity and buoyancy
-//			if(y>r) {			// Only if not already at the floor 
-//				pBall.force.y += G * ((rho_m-rho_w)/rho_w) * pBall.mass ;  //let the ball fall 
-//			}
-//			// Velocity damping
-//			pBall.force.x -= Kd*pBall.vel.x;
-//			pBall.force.y -= Kd*pBall.vel.y;
-//			pBall.force.z -= Kd*pBall.vel.z;
-//		}
-//		
+		// Calculate gravity+bouyancy, normal forces and drag
+		for(CBall pBall : BallArray()) {
+			// Contact forces
+			double y = pBall.pos.y;
+			double r = pBall.radius;
+			if(y<r){
+				pBall.force.y += Kw*(r-y);
+			}
+			// Gravity and buoyancy
+			if(y>r) {			// Only if not already at the floor 
+				pBall.force.y += G * ((rho_m-rho_w)/rho_w) * pBall.mass ;  //let the ball fall 
+			}
+			// Velocity damping
+			pBall.force.x -= Kd*pBall.vel.x;
+			pBall.force.y -= Kd*pBall.vel.y;
+			pBall.force.z -= Kd*pBall.vel.z;
+		}
+		
 		// Elastic forces between springs within cells (CSpring in type>0)
-		for(CCell pCell : cellArray) {
-			if(pCell.type!=0) {
-				CSpring pSpring = pCell.springArray[0];
+		for(CSpring pSpring : rodSpringArray) {
+			// find difference vector and distance dn between balls (euclidian distance) 
+			Vector3d diff = pSpring.ballArray[1].pos.minus(pSpring.ballArray[0].pos);
+			double dn = diff.length();
+			// Get force
+			double f = pSpring.K/dn * (dn - pSpring.restLength);
+			// Hooke's law
+			double Fsx = f*diff.x;
+			double Fsy = f*diff.y;
+			double Fsz = f*diff.z;
+			// apply forces on balls
+			pSpring.ballArray[0].force.x += Fsx;
+			pSpring.ballArray[0].force.y += Fsy;
+			pSpring.ballArray[0].force.z += Fsz;
+			pSpring.ballArray[1].force.x -= Fsx;
+			pSpring.ballArray[1].force.y -= Fsy;
+			pSpring.ballArray[1].force.z -= Fsz;
+		}
+		
+		// Sticking springs elastic forces (CStickSpring in stickSpringArray)
+		for(CStickSpring pStick : stickSpringArray) {
+				// find difference vector and distance dn between balls (euclidian distance) 
+				Vector3d diff = pStick.ballArray[1].pos.minus(pStick.ballArray[0].pos);
+				double dn = diff.length();
+				// Get force
+				double f = pStick.K/dn * (dn - pStick.restLength);
+				// Hooke's law
+				double Fsx = f*diff.x;
+				double Fsy = f*diff.y;
+				double Fsz = f*diff.z;
+				// apply forces on balls
+				pStick.ballArray[0].force.x += Fsx;
+				pStick.ballArray[0].force.y += Fsy;
+				pStick.ballArray[0].force.z += Fsz;
+				pStick.ballArray[1].force.x -= Fsx;
+				pStick.ballArray[1].force.y -= Fsy;
+				pStick.ballArray[1].force.z -= Fsz;
+		}
+		
+		// Filament spring elastic force (CFilSpring in filSpringArray)
+		for(CFilSpring pFil : filSpringArray) {
+			for(CSpring pSpring : new CSpring[]{pFil.bigSpring, pFil.smallSpring}) {
 				// find difference vector and distance dn between balls (euclidian distance) 
 				Vector3d diff = pSpring.ballArray[1].pos.minus(pSpring.ballArray[0].pos);
 				double dn = diff.length();
@@ -556,48 +595,6 @@ public class CModel {
 				pSpring.ballArray[1].force.z -= Fsz;
 			}
 		}
-//		
-//		// Sticking springs elastic forces (CStickSpring in stickSpringArray)
-//		for(CStickSpring pStick : stickSpringArray) {
-//				// find difference vector and distance dn between balls (euclidian distance) 
-//				Vector3d diff = pStick.ballArray[1].pos.minus(pStick.ballArray[0].pos);
-//				double dn = diff.length();
-//				// Get force
-//				double f = pStick.K/dn * (dn - pStick.restLength);
-//				// Hooke's law
-//				double Fsx = f*diff.x;
-//				double Fsy = f*diff.y;
-//				double Fsz = f*diff.z;
-//				// apply forces on balls
-//				pStick.ballArray[0].force.x += Fsx;
-//				pStick.ballArray[0].force.y += Fsy;
-//				pStick.ballArray[0].force.z += Fsz;
-//				pStick.ballArray[1].force.x -= Fsx;
-//				pStick.ballArray[1].force.y -= Fsy;
-//				pStick.ballArray[1].force.z -= Fsz;
-//		}
-		
-//		// Filament spring elastic force (CFilSpring in filSpringArray)
-//		for(CFilSpring pFil : filSpringArray) {
-//			for(CSpring pSpring : new CSpring[]{pFil.bigSpring, pFil.smallSpring}) {
-//				// find difference vector and distance dn between balls (euclidian distance) 
-//				Vector3d diff = pSpring.ballArray[1].pos.minus(pSpring.ballArray[0].pos);
-//				double dn = diff.length();
-//				// Get force
-//				double f = pSpring.K/dn * (dn - pSpring.restLength);
-//				// Hooke's law
-//				double Fsx = f*diff.x;
-//				double Fsy = f*diff.y;
-//				double Fsz = f*diff.z;
-//				// apply forces on balls
-//				pSpring.ballArray[0].force.x += Fsx;
-//				pSpring.ballArray[0].force.y += Fsy;
-//				pSpring.ballArray[0].force.z += Fsz;
-//				pSpring.ballArray[1].force.x -= Fsx;
-//				pSpring.ballArray[1].force.y -= Fsy;
-//				pSpring.ballArray[1].force.z -= Fsz;
-//			}
-//		}
 		
 		// Return results
 		Vector dydx = new Vector(yode.size());
@@ -845,9 +842,9 @@ public class CModel {
 				mlCellArray.setField("motherIndex", 	new MLDouble(null, new double[] {}, 1), iCell);
 			}
 			// ballArray
-			int Nball = (pCell.type==0 ? 1 : 2);
-			MLStructure mlBallArray = new MLStructure(null,new int[] {Nball,1});
-			for(int iBall=0; iBall<Nball; iBall++) {
+			int NBall = (pCell.type==0 ? 1 : 2);
+			MLStructure mlBallArray = new MLStructure(null,new int[] {NBall,1});
+			for(int iBall=0; iBall<NBall; iBall++) {
 				CBall pBall = pCell.ballArray[iBall];
 				mlBallArray.setField("pos", 		new MLDouble(null, new double[] {pBall.pos.x, pBall.pos.y, pBall.pos.z}, 3), iBall);
 				mlBallArray.setField("vel", 		new MLDouble(null, new double[] {pBall.vel.x, pBall.vel.y, pBall.vel.z}, 3), iBall);
@@ -869,21 +866,20 @@ public class CModel {
 //				mlBallArray.setField("radius", 		new MLDouble(null, new double[] {pBall.radius}, 1), iBall);
 			}
 			mlCellArray.setField("ballArray", mlBallArray, iCell);
-			// springArray
-			MLStructure mlSpringArray;
-			if(pCell.type!=0) {
-				mlSpringArray = new MLStructure(null,new int[] {1,1});
-				CSpring pSpring = pCell.springArray[0];
-				mlSpringArray.setField("cellArrayIndex",	new MLDouble(null, new double[] {pSpring.ballArray[0].pCell.cellArrayIndex+1, pSpring.ballArray[1].pCell.cellArrayIndex+1}, 2),0);
-				mlSpringArray.setField("ballArrayIndex",	new MLDouble(null, new double[] {pSpring.ballArray[0].ballArrayIndex+1, pSpring.ballArray[1].ballArrayIndex+1}, 2),0);
-				mlSpringArray.setField("K",				new MLDouble(null, new double[] {pSpring.K}, 1),0);
-				mlSpringArray.setField("restLength",		new MLDouble(null, new double[] {pSpring.restLength}, 1),0);	
-			} else {
-				mlSpringArray = new MLStructure(null,new int[] {0,0});
-			}
-			mlCellArray.setField("springArray", mlSpringArray,iCell);
 		}
 		mlModel.setField("cellArray", mlCellArray);
+		// rodSpringArray
+		int NRod = rodSpringArray.size();
+		MLStructure mlRodSpringArray = new MLStructure(null, new int[] {NRod,1});
+		for(int iRod=0; iRod<NRod; iRod++) {
+			CSpring pRod = rodSpringArray.get(iRod);
+			mlRodSpringArray.setField("cellArrayIndex",	new MLDouble(null, new double[] {pRod.ballArray[0].pCell.cellArrayIndex+1, pRod.ballArray[1].pCell.cellArrayIndex+1}, 2),iRod);
+			mlRodSpringArray.setField("ballArrayIndex",	new MLDouble(null, new double[] {pRod.ballArray[0].ballArrayIndex+1, pRod.ballArray[1].ballArrayIndex+1}, 2),iRod);
+			mlRodSpringArray.setField("K",				new MLDouble(null, new double[] {pRod.K}, 1),iRod);
+			mlRodSpringArray.setField("restLength",		new MLDouble(null, new double[] {pRod.restLength}, 1),iRod);	
+		}
+		mlModel.setField("rodSpringArray", mlRodSpringArray);
+		
 		// filSpringArray
 		int NFil 	= filSpringArray.size();
 		MLStructure mlFilSpringArray  = new MLStructure(null, new int[] {NFil,1});
@@ -1034,18 +1030,24 @@ public class CModel {
 					}
 					pCell.ballArray[iBall] = pBall;
 				}
-				// springArray
-				CSpring pSpring = new CSpring();
-				MLStructure mlSpringArray = (MLStructure)mlCellArray.getField("springArray", iCell);
-				if(pCell.type>0) {
-					for(int iBall=0; iBall<2; iBall++) pSpring.ballArray[iBall] = pCell.ballArray[iBall];	// replace by System.arraycopy? TODO
-					pSpring.K 		= ((MLDouble)mlSpringArray.getField("K")).getReal(0);
-					pSpring.restLength = ((MLDouble)mlSpringArray.getField("restLength")).getReal(0);
-					pCell.springArray[0] = pSpring;
-					// stickCellArray will be constructed based on stickSpringArray
-				}
 				cellArray.add(pCell);
 			}
+			// rodSpringArray
+			int NRod = ((MLStructure)mlModel.getField("rodSpringArray")).getSize();
+			rodSpringArray = new ArrayList<CSpring>(NRod);
+			MLStructure mlRodSpringArray = (MLStructure)mlModel.getField("rodSpringArray");
+			for(int iRod=0; iRod<NRod; iRod++) {
+				CSpring pRod= new CSpring();
+				// ballArray
+				int iCell = ((MLDouble)mlRodSpringArray.getField("cellArrayIndex",iRod)).getReal(0).intValue()-1;
+				CCell pCell = cellArray.get(iCell);
+				for(int iBall=0; iBall<2; iBall++)	pRod.ballArray[iBall] = pCell.ballArray[iBall];
+				// ^ replace by System.arraycopy? TODO
+				pRod.K 		= ((MLDouble)mlRodSpringArray.getField("K")).getReal(0);
+				pRod.restLength = ((MLDouble)mlRodSpringArray.getField("restLength")).getReal(0);
+				rodSpringArray.add(pRod);
+			}
+			
 			// anchorSpringArray
 			int NAnchor = ((MLStructure)mlModel.getField("anchorSpringArray")).getSize();
 			anchorSpringArray = new ArrayList<CAnchorSpring>(NAnchor);
@@ -1129,10 +1131,15 @@ public class CModel {
 					}
 				}
 			}
-			// construct each cell's stickCellArray
+			// === construct dependent arrays ===
+			// each cell's stickCellArray
 			for(CCell pCell : cellArray) {
 				ArrayList<CCell> stickCellArray = pCell.StickCellArray();
 				pCell.stickCellArray = stickCellArray;
+			}
+			// each cell's springArray
+			for(CSpring pRod : rodSpringArray) {
+				pRod.ballArray[0].pCell.springArray[0] = pRod;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
