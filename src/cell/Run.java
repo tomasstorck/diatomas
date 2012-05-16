@@ -23,7 +23,7 @@ public class Run {
 			model.Write(model.cellArray.size() + " initial cells created","iter");
 		}
 
-		while(model.growthIter<100) {
+		while(model.growthIter<50) {
 			// Reset the random seed
 			rand.Seed(model.randomSeed*(2+model.growthIter));				// + something because if growthIter == 0, randomSeed doesn't matter. 
 
@@ -39,14 +39,14 @@ public class Run {
 			
 			// Break anchor springs
 			// {} to make sure objects are destroyed when we're done (aka scope)
-			{ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak();	// This one will return a nice and unique ArrayList, though perhaps already anchored cells 
+			{ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak(); 
 			model.anchorSpringArray.removeAll(breakArray);
 			model.Write(breakArray.size() + " anchor springs broken","iter");
 			// Build anchor springs
 			model.Write("Detecting cell-floor collisions","iter");
-			ArrayList<CCell> collisionArray = model.DetectFloorCollision();
-			int NnewAnchor = model.BuildAnchor(collisionArray);
-			model.Write(NnewAnchor + " anchor springs built","iter");}
+			ArrayList<CCell> collisionArray = model.DetectFloorCollision();		// Returns already anchored cells
+			int NNewAnchor = model.BuildAnchor(collisionArray);
+			model.Write(NNewAnchor + " anchor springs built","iter");}
 
 			// Break stick springs
 			{ArrayList<CStickSpring> breakArray = model.DetectStickBreak();		// Returns all springs that'll be broken. Should not contain any duplicates (i.e. siblingsprings)

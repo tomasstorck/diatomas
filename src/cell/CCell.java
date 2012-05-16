@@ -8,11 +8,11 @@ public class CCell {
 	int type;
 	boolean filament;
 	double[] colour = 		new double[3];
-	CBall[] ballArray = 	new CBall[2];
+	CBall[] ballArray = 	new CBall[2];							// Note that this ballArray had the same name as CModel's
 	CSpring[] springArray = new CSpring[1];
 	ArrayList<CCell> stickCellArray = new ArrayList<CCell>();  
 	CCell mother;
-	int cellArrayIndex;
+	int arrayIndex;
 	CModel pModel;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@ public class CCell {
 		this.type = type;
 		this.filament = filament;
 		colour[0] = rand.Double(); colour[1] = rand.Double(); colour[2] = rand.Double();
-		cellArrayIndex = model.cellArray.size();			// +1 because it's the next, -1 because index in Java is 0-based
+		arrayIndex = model.cellArray.size();			// +1 because it's the next, -1 because index in Java is 0-based
 		pModel = model;
 		
 		if(type==0) { // Leaves ballArray and springArray, and mother
@@ -38,7 +38,7 @@ public class CCell {
 		this.type = type;
 		this.filament = filament;
 		colour[0] = rand.Double(); colour[1] = rand.Double(); colour[2] = rand.Double();
-		cellArrayIndex = model.cellArray.size();			// +1 because it's the next, -1 because index in Java is 0-based
+		arrayIndex = model.cellArray.size();			// +1 because it's the next, -1 because index in Java is 0-based
 		pModel = model;
 		
 		if(type==0) { // Leaves ballArray and springArray, and mother
@@ -83,15 +83,10 @@ public class CCell {
 		
 		// Define siblings, just hardcode, saves time (for me)
 		if(NBall > 1) {
-			anchorArray[0].siblingArray = new CAnchorSpring[2];
-			anchorArray[1].siblingArray = new CAnchorSpring[2];
+			anchorArray[0].siblingArray = new CAnchorSpring[1];
+			anchorArray[1].siblingArray = new CAnchorSpring[1];
 			anchorArray[0].siblingArray[0] = anchorArray[1];
 			anchorArray[1].siblingArray[0] = anchorArray[0];
-		}
-		
-		// All done, add them
-		for(int iSpring=0; iSpring < NBall; iSpring++) {
-			pModel.anchorSpringArray.add(anchorArray[iSpring]);
 		}
 	}
 	
@@ -113,28 +108,26 @@ public class CCell {
 		CStickSpring[] stickArray = new CStickSpring[NSpring];
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, with input balls
 			CStickSpring pSpring 	= new CStickSpring(	pA.ballArray[iSpring/2],	// 0, 0, 1, 1, ...
-													pB.ballArray[iSpring%2]); 	// 0, 1, 0, 1, ...
-			pSpring.NSibling = NSpring-1;
+														pB.ballArray[iSpring%2]); 	// 0, 1, 0, 1, ...
 			stickArray[iSpring] = pSpring;
 		}
 		
 		// Define siblings
-		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and siblingspring
-			CStickSpring pSpring1 = stickArray[iSpring];
-//			pSpring1.siblingArray = new ArrayList<CStickSpring>(NSpring);	// Initialise the siblingArray for the spring
-			
+		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and siblingspring			
+			CStickSpring pSpring = stickArray[iSpring];			
+			pSpring.NSibling = NSpring-1;
 			int ii = 0;
 			for(int iSpring2 = 0; iSpring2 < NSpring; iSpring2++) {			
 				if(iSpring != iSpring2) {									// For all its siblings
-					pSpring1.siblingArray[ii++] = stickArray[iSpring2];
+					pSpring.siblingArray[ii++] = stickArray[iSpring2];
 				}
 			}
 		}
 		
-		//All done, add all the new sticking springs, add the cells to each other's stickCellArray 
-		for(int iSpring = 0; iSpring < stickArray.length; iSpring++) {
-			pModel.stickSpringArray.add(stickArray[iSpring]);
-		}
+		//All done, add the cells to each other's stickCellArray 
+//		for(int iSpring = 0; iSpring < stickArray.length; iSpring++) {		// Already done in constructor
+//			pModel.stickSpringArray.add(stickArray[iSpring]);
+//		}
 		this.stickCellArray.add(pCell);
 		pCell.stickCellArray.add(this);
 	}

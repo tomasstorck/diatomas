@@ -56,7 +56,7 @@ public class CModel {
 	static int NBall;
 	// Arrays
 	ArrayList<CCell> cellArray;
-//	ArrayList<CBall> ballArray;
+	ArrayList<CBall> ballArray;
 	ArrayList<CSpring> rodSpringArray;
 	ArrayList<CStickSpring> stickSpringArray;
 	ArrayList<CFilSpring> filSpringArray;
@@ -104,6 +104,7 @@ public class CModel {
 		// Counters
 		NBall 	= 0;
 		// Arrays
+		ballArray = new ArrayList<CBall>(2*NInitCell);
 		cellArray = new ArrayList<CCell>(NInitCell);
 		rodSpringArray = new ArrayList<CSpring>(NInitCell);
 		stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
@@ -189,7 +190,7 @@ public class CModel {
 			CBall pBall = ballArray[iBall];
 			for(int iBall2 = iBall+1; iBall2<NBall; iBall2++) {
 				CBall pBall2 = ballArray[iBall2];
-				if(pBall.pCell.cellArrayIndex!=pBall2.pCell.cellArrayIndex) {
+				if(pBall.pCell.arrayIndex!=pBall2.pCell.arrayIndex) {
 					Vector3d diff = pBall2.pos.minus(pBall.pos);
 					if(Math.abs(diff.length()) - pBall.radius - pBall2.radius < 0) {
 						collisionCell.add(pBall.pCell);
@@ -556,22 +557,22 @@ public class CModel {
 		
 		// Sticking springs elastic forces (CStickSpring in stickSpringArray)
 		for(CStickSpring pStick : stickSpringArray) {
-				// find difference vector and distance dn between balls (euclidian distance) 
-				Vector3d diff = pStick.ballArray[1].pos.minus(pStick.ballArray[0].pos);
-				double dn = diff.length();
-				// Get force
-				double f = pStick.K/dn * (dn - pStick.restLength);
-				// Hooke's law
-				double Fsx = f*diff.x;
-				double Fsy = f*diff.y;
-				double Fsz = f*diff.z;
-				// apply forces on balls
-				pStick.ballArray[0].force.x += Fsx;
-				pStick.ballArray[0].force.y += Fsy;
-				pStick.ballArray[0].force.z += Fsz;
-				pStick.ballArray[1].force.x -= Fsx;
-				pStick.ballArray[1].force.y -= Fsy;
-				pStick.ballArray[1].force.z -= Fsz;
+			// find difference vector and distance dn between balls (euclidian distance) 
+			Vector3d diff = pStick.ballArray[1].pos.minus(pStick.ballArray[0].pos);
+			double dn = diff.length();
+			// Get force
+			double f = pStick.K/dn * (dn - pStick.restLength);
+			// Hooke's law
+			double Fsx = f*diff.x;
+			double Fsy = f*diff.y;
+			double Fsz = f*diff.z;
+			// apply forces on balls
+			pStick.ballArray[0].force.x += Fsx;
+			pStick.ballArray[0].force.y += Fsy;
+			pStick.ballArray[0].force.z += Fsz;
+			pStick.ballArray[1].force.x -= Fsx;
+			pStick.ballArray[1].force.y -= Fsy;
+			pStick.ballArray[1].force.z -= Fsz;
 		}
 		
 		// Filament spring elastic force (CFilSpring in filSpringArray)
@@ -751,7 +752,11 @@ public class CModel {
 	}
 	
 	public int BuildAnchor(ArrayList<CCell> collisionArray) {
-		for(CAnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.pBall.pCell);
+		// Make unique
+		for(CAnchorSpring pSpring : anchorSpringArray) {
+			collisionArray.remove(pSpring.pBall.pCell);
+			System.out.println("looped");
+		}
 		// Anchor the non-stuck, collided cells to the ground
 		for(CCell pCell : collisionArray) pCell.Anchor();
 		return anchorSpringArray.size();
@@ -795,7 +800,7 @@ public class CModel {
 		mlModel.setField("Kf",					new MLDouble(null, new double[] {Kf}, 1));
 		mlModel.setField("Ks",					new MLDouble(null, new double[] {Ks}, 1));
 		mlModel.setField("Kw",					new MLDouble(null, new double[] {Kw}, 1));
-		mlModel.setField("L",					new MLDouble(null, new double[] {L.x, L.y, L.z}, 1));
+		mlModel.setField("L",					new MLDouble(null, new double[] {L.x, L.y, L.z}, 3));
 		mlModel.setField("MCellInit",			new MLDouble(null, new double[] {MCellInit}, 1));
 		mlModel.setField("MCellMax",			new MLDouble(null, new double[] {MCellMax}, 1));
 		mlModel.setField("movementIter",		new MLDouble(null, new double[] {movementIter}, 1));
@@ -809,19 +814,19 @@ public class CModel {
 		mlModel.setField("randomSeed",			new MLDouble(null, new double[] {randomSeed}, 1));
 		mlModel.setField("rho_m",				new MLDouble(null, new double[] {rho_m}, 1));
 		mlModel.setField("rho_w",				new MLDouble(null, new double[] {rho_w}, 1));
+		
 		// anchorSpringArray
 		int NAnchor = anchorSpringArray.size();
 		MLStructure mlAnchorSpringArray = new MLStructure(null, new int[] {NAnchor,1});
 		for(int iAnchor=0; iAnchor<NAnchor; iAnchor++) {
 			CAnchorSpring pAnchor = anchorSpringArray.get(iAnchor);
 			mlAnchorSpringArray.setField("anchor", 			new MLDouble(null, new double[] {pAnchor.anchor.x, pAnchor.anchor. y, pAnchor.anchor.z}, 3),iAnchor);
-			mlAnchorSpringArray.setField("cellArrayIndex", 	new MLDouble(null, new double[] {pAnchor.pBall.pCell.cellArrayIndex+1}, 1),iAnchor);		// +1 for 0 vs 1 based indexing in Java vs MATLAB
-			mlAnchorSpringArray.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pAnchor.pBall.ballArrayIndex+1}, 1),iAnchor);
+			mlAnchorSpringArray.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pAnchor.pBall.arrayIndex+1}, 1),iAnchor);		// +1 for 0 vs 1 based indexing in Java vs MATLAB
 			mlAnchorSpringArray.setField("K",				new MLDouble(null, new double[] {pAnchor.K}, 1),iAnchor);
 			mlAnchorSpringArray.setField("restLength",		new MLDouble(null, new double[] {pAnchor.restLength}, 1),iAnchor);
-			mlAnchorSpringArray.setField("anchorArrayIndex", new MLDouble(null, new double[] {pAnchor.anchorArrayIndex+1}, 1),iAnchor);
+			mlAnchorSpringArray.setField("arrayIndex", new MLDouble(null, new double[] {anchorSpringArray.indexOf(pAnchor)+1}, 1),iAnchor);
 			if(pAnchor.pBall.pCell.type!=0) {
-				mlAnchorSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pAnchor.anchorArrayIndex+1}, 1),iAnchor);
+				mlAnchorSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {anchorSpringArray.indexOf(pAnchor.siblingArray[0])+1}, 1),iAnchor);
 			} else {
 				mlAnchorSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {}, 1),iAnchor);
 			}
@@ -832,49 +837,52 @@ public class CModel {
 		MLStructure mlCellArray = new MLStructure(null, new int[] {Ncell,1});
 		for(int iCell=0; iCell<Ncell; iCell++) {
 			CCell pCell = cellArray.get(iCell);
-			mlCellArray.setField("cellArrayIndex", 	new MLDouble(null, new double[] {pCell.cellArrayIndex+1}, 1), iCell);
+			mlCellArray.setField("cellArrayIndex", 	new MLDouble(null, new double[] {pCell.arrayIndex+1}, 1), iCell);
 			mlCellArray.setField("colour", 			new MLDouble(null, new double[] {pCell.colour[0], pCell.colour[1], pCell.colour[2]}, 3), iCell);
 			mlCellArray.setField("filament", 		new MLDouble(null, new double[] {pCell.filament?1:0}, 1), iCell);
 			mlCellArray.setField("type", 			new MLDouble(null, new double[] {pCell.type}, 1), iCell);
 			if(pCell.mother!=null) {
-				mlCellArray.setField("motherIndex", 	new MLDouble(null, new double[] {pCell.mother.cellArrayIndex+1}, 1), iCell);
+				mlCellArray.setField("motherIndex", 	new MLDouble(null, new double[] {pCell.mother.arrayIndex+1}, 1), iCell);
 			} else {
 				mlCellArray.setField("motherIndex", 	new MLDouble(null, new double[] {}, 1), iCell);
 			}
-			// ballArray
-			int NBall = (pCell.type==0 ? 1 : 2);
-			MLStructure mlBallArray = new MLStructure(null,new int[] {NBall,1});
-			for(int iBall=0; iBall<NBall; iBall++) {
-				CBall pBall = pCell.ballArray[iBall];
-				mlBallArray.setField("pos", 		new MLDouble(null, new double[] {pBall.pos.x, pBall.pos.y, pBall.pos.z}, 3), iBall);
-				mlBallArray.setField("vel", 		new MLDouble(null, new double[] {pBall.vel.x, pBall.vel.y, pBall.vel.z}, 3), iBall);
-//				mlBallArray.setField("force",	 	new MLDouble(null, new double[] {pBall.force.x, pBall.force.y, pBall.force.z}, 1), iBall);
-				// posSave and velSave
-				int NSave = (int)(movementTimeEnd/movementTimeStep)-1;
-				double[] posSave = new double[NSave*3];
-				double[] velSave = new double[NSave*3];
-				for(int ii=0; ii<NSave; ii++) {
-					posSave[ii] 		= pBall.posSave[ii].x; 	velSave[ii] 		= pBall.velSave[ii].x;
-					posSave[ii+NSave] 	= pBall.posSave[ii].y; 	velSave[ii+NSave] 	= pBall.velSave[ii].y;
-					posSave[ii+2*NSave] = pBall.posSave[ii].z; 	velSave[ii+2*NSave] = pBall.velSave[ii].z;
-				}
-				mlBallArray.setField("posSave", 	new MLDouble(null, posSave, NSave), iBall);
-				mlBallArray.setField("velSave", 	new MLDouble(null, velSave, NSave), iBall);
-				//
-				mlBallArray.setField("ballArrayIndex", new MLDouble(null, new double[] {pBall.ballArrayIndex+1}, 1), iBall);
-				mlBallArray.setField("mass", 		new MLDouble(null, new double[] {pBall.mass}, 1), iBall);
-//				mlBallArray.setField("radius", 		new MLDouble(null, new double[] {pBall.radius}, 1), iBall);
-			}
-			mlCellArray.setField("ballArray", mlBallArray, iCell);
 		}
 		mlModel.setField("cellArray", mlCellArray);
+		
+		// ballArray
+		int NBall = ballArray.size();
+		MLStructure mlBallArray = new MLStructure(null,new int[] {NBall,1});
+		for(int iBall=0; iBall<NBall; iBall++) {
+			CBall pBall = ballArray.get(iBall);
+			mlBallArray.setField("pos", 		new MLDouble(null, new double[] {pBall.pos.x, pBall.pos.y, pBall.pos.z}, 3), iBall);
+			mlBallArray.setField("vel", 		new MLDouble(null, new double[] {pBall.vel.x, pBall.vel.y, pBall.vel.z}, 3), iBall);
+//			mlBallArray.setField("force",	 	new MLDouble(null, new double[] {pBall.force.x, pBall.force.y, pBall.force.z}, 1), iBall);
+			// posSave and velSave
+			int NSave = (int)(movementTimeEnd/movementTimeStep)-1;
+			double[] posSave = new double[NSave*3];
+			double[] velSave = new double[NSave*3];
+			for(int ii=0; ii<NSave; ii++) {
+				posSave[ii] 		= pBall.posSave[ii].x; 	velSave[ii] 		= pBall.velSave[ii].x;
+				posSave[ii+NSave] 	= pBall.posSave[ii].y; 	velSave[ii+NSave] 	= pBall.velSave[ii].y;
+				posSave[ii+2*NSave] = pBall.posSave[ii].z; 	velSave[ii+2*NSave] = pBall.velSave[ii].z;
+			}
+			mlBallArray.setField("posSave", 	new MLDouble(null, posSave, NSave), iBall);
+			mlBallArray.setField("velSave", 	new MLDouble(null, velSave, NSave), iBall);
+			//
+			mlBallArray.setField("arrayIndex", new MLDouble(null, new double[] {pBall.arrayIndex+1}, 1), iBall);
+			mlBallArray.setField("cellArrayIndex", new MLDouble(null, new double[] {pBall.pCell.arrayIndex+1}, 1), iBall);
+			mlBallArray.setField("cellBallArrayIndex", new MLDouble(null, new double[] {pBall.cellBallArrayIndex+1}, 1), iBall);
+			mlBallArray.setField("mass", 		new MLDouble(null, new double[] {pBall.mass}, 1), iBall);
+//			mlBallArray.setField("radius", 		new MLDouble(null, new double[] {pBall.radius}, 1), iBall);
+		}
+		mlModel.setField("ballArray", mlBallArray);
+		
 		// rodSpringArray
 		int NRod = rodSpringArray.size();
 		MLStructure mlRodSpringArray = new MLStructure(null, new int[] {NRod,1});
 		for(int iRod=0; iRod<NRod; iRod++) {
 			CSpring pRod = rodSpringArray.get(iRod);
-			mlRodSpringArray.setField("cellArrayIndex",	new MLDouble(null, new double[] {pRod.ballArray[0].pCell.cellArrayIndex+1, pRod.ballArray[1].pCell.cellArrayIndex+1}, 2),iRod);
-			mlRodSpringArray.setField("ballArrayIndex",	new MLDouble(null, new double[] {pRod.ballArray[0].ballArrayIndex+1, pRod.ballArray[1].ballArrayIndex+1}, 2),iRod);
+			mlRodSpringArray.setField("ballArrayIndex",	new MLDouble(null, new double[] {pRod.ballArray[0].arrayIndex+1, pRod.ballArray[1].arrayIndex+1}, 2),iRod);
 			mlRodSpringArray.setField("K",				new MLDouble(null, new double[] {pRod.K}, 1),iRod);
 			mlRodSpringArray.setField("restLength",		new MLDouble(null, new double[] {pRod.restLength}, 1),iRod);	
 		}
@@ -885,17 +893,16 @@ public class CModel {
 		MLStructure mlFilSpringArray  = new MLStructure(null, new int[] {NFil,1});
 		for(int iFil=0; iFil<NFil; iFil++) {
 			CFilSpring pFil = filSpringArray.get(iFil);
+			mlFilSpringArray.setField("arrayIndex", 		new MLDouble(null, new double[] {pFil.arrayIndex+1}, 1), iFil);
 //			mlFilSpringArray.setField("K", 					new MLDouble(null, new double[] {pFil.K}, 1), iFil);
 			MLStructure mlBigSpring  = new MLStructure(null, new int[] {1,1});
 			MLStructure mlSmallSpring  = new MLStructure(null, new int[] {1,1});
 			mlBigSpring.setField("K", 						new MLDouble(null, new double[] {pFil.bigSpring.K}, 1));
 			mlBigSpring.setField("restLength", 				new MLDouble(null, new double[] {pFil.bigSpring.restLength}, 1));
-			mlBigSpring.setField("cellArrayIndex", 			new MLDouble(null, new double[] {pFil.bigSpring.ballArray[0].pCell.cellArrayIndex+1, 	pFil.bigSpring.ballArray[1].pCell.cellArrayIndex+1}, 2));
-			mlBigSpring.setField("ballArrayIndex", 			new MLDouble(null, new double[] {pFil.bigSpring.ballArray[0].ballArrayIndex+1, 			pFil.bigSpring.ballArray[1].ballArrayIndex+1}, 2));
+			mlBigSpring.setField("ballArrayIndex", 			new MLDouble(null, new double[] {pFil.bigSpring.ballArray[0].arrayIndex+1, 			pFil.bigSpring.ballArray[1].arrayIndex+1}, 2));
 			mlSmallSpring.setField("K", 					new MLDouble(null, new double[] {pFil.smallSpring.K}, 1));
 			mlSmallSpring.setField("restLength", 			new MLDouble(null, new double[] {pFil.smallSpring.restLength}, 1));
-			mlSmallSpring.setField("cellArrayIndex", 		new MLDouble(null, new double[] {pFil.smallSpring.ballArray[0].pCell.cellArrayIndex+1, 	pFil.smallSpring.ballArray[1].pCell.cellArrayIndex+1}, 2));
-			mlSmallSpring.setField("ballArrayIndex", 		new MLDouble(null, new double[] {pFil.smallSpring.ballArray[0].ballArrayIndex+1, 		pFil.smallSpring.ballArray[1].ballArrayIndex+1}, 2));
+			mlSmallSpring.setField("ballArrayIndex", 		new MLDouble(null, new double[] {pFil.smallSpring.ballArray[0].arrayIndex+1, 		pFil.smallSpring.ballArray[1].arrayIndex+1}, 2));
 			mlFilSpringArray.setField("bigSpring", mlBigSpring, iFil);
 			mlFilSpringArray.setField("smallSpring", mlSmallSpring, iFil);
 		}
@@ -905,25 +912,18 @@ public class CModel {
 		MLStructure mlStickSpringArray = new MLStructure(null, new int[] {NStick,1});
 		for(int iStick=0; iStick<NStick; iStick++) {
 			CStickSpring pStick = stickSpringArray.get(iStick);
-			mlStickSpringArray.setField("cellArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].pCell.cellArrayIndex+1, pStick.ballArray[1].pCell.cellArrayIndex+1}, 2), iStick);
-			mlStickSpringArray.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].ballArrayIndex+1, pStick.ballArray[1].ballArrayIndex+1}, 2), iStick);
+			mlStickSpringArray.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].arrayIndex+1, pStick.ballArray[1].arrayIndex+1}, 2), iStick);
 			mlStickSpringArray.setField("K",				new MLDouble(null, new double[] {pStick.K}, 1), iStick);
 			mlStickSpringArray.setField("restLength",		new MLDouble(null, new double[] {pStick.restLength}, 1), iStick);
-			mlStickSpringArray.setField("stickArrayIndex", 	new MLDouble(null, new double[] {pStick.stickArrayIndex+1}, 1), iStick);
+			mlStickSpringArray.setField("stickArrayIndex", 	new MLDouble(null, new double[] {stickSpringArray.indexOf(pStick)+1}, 1), iStick);
 			if(pStick.ballArray[0].pCell.type==0 && pStick.ballArray[1].pCell.type==0) {
-				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {}, 1), iStick);
-			} else if(pStick.ballArray[0].pCell.type==0 ^ pStick.ballArray[1].pCell.type==0) {		// exactly one rod one sphere, so 1 siblings
-				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1}, 1), iStick);
+				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {}, 1), iStick);	// only spheres, no siblings
+			} else if(pStick.ballArray[0].pCell.type==0 ^ pStick.ballArray[1].pCell.type==0) {	// exactly one (XOR) rod one sphere, so 1 sibling
+				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {stickSpringArray.indexOf(pStick.siblingArray[0])+1}, 1), iStick);
 			} else {																			// both are two rod, so  3 siblings
-				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1, pStick.siblingArray[1].stickArrayIndex+1, pStick.siblingArray[2].stickArrayIndex+1}, 3), iStick);
-			}
-			
-			if(pStick.ballArray[0].pCell.type!=0 || pStick.ballArray[1].pCell.type!=0) {		// at least one rod, so >0 siblings
-				if(pStick.ballArray[0].pCell.type==0 || pStick.ballArray[1].pCell.type==0) { 	// one ball one rod, so  1 sibling  
-					mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1}, 1), iStick);
-				} else {																		// both are two rod, so  3 siblings
-					mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {pStick.siblingArray[0].stickArrayIndex+1, pStick.siblingArray[1].stickArrayIndex+1, pStick.siblingArray[2].stickArrayIndex+1}, 3), iStick);
-				}
+				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {stickSpringArray.indexOf(pStick.siblingArray[0])+1, 
+																									stickSpringArray.indexOf(pStick.siblingArray[1])+1, 
+																									stickSpringArray.indexOf(pStick.siblingArray[2])+1}, 3), iStick);
 			}
 		}
 		mlModel.setField("stickSpringArray", mlStickSpringArray);
@@ -973,16 +973,14 @@ public class CModel {
 			randomSeed 	= ((MLDouble)mlModel.getField("randomSeed")).getReal(0).intValue();
 			rho_m 		= ((MLDouble)mlModel.getField("rho_m")).getReal(0);
 			rho_w 		= ((MLDouble)mlModel.getField("rho_w")).getReal(0);
+			
 			// cellArray
-			int NCell = ((MLStructure)mlModel.getField("cellArray")).getSize();
-			cellArray	 	= new ArrayList<CCell>(NCell);
 			MLStructure mlCellArray = (MLStructure)mlModel.getField("cellArray");
+			int NCell = mlCellArray.getSize();
+			cellArray	 	= new ArrayList<CCell>(NCell);
 			for(int iCell=0; iCell<NCell; iCell++) {
 				CCell pCell = new CCell();
-				// ballArray
-				int NBall 		= ((MLDouble)mlCellArray.getField("type", iCell)).getReal(0).intValue() == 0 ? 1 : 2;
-				MLStructure mlBallArray = (MLStructure) mlCellArray.getField("ballArray", iCell);
-				pCell.cellArrayIndex = ((MLDouble)mlCellArray.getField("cellArrayIndex", iCell)).getReal(0).intValue()-1;
+				pCell.arrayIndex = ((MLDouble)mlCellArray.getField("cellArrayIndex", iCell)).getReal(0).intValue()-1;
 				pCell.colour	= new double[]{((MLDouble)mlCellArray.getField("colour", iCell)).getReal(0),
 									((MLDouble)mlCellArray.getField("colour", iCell)).getReal(1),
 									((MLDouble)mlCellArray.getField("colour", iCell)).getReal(2)};
@@ -994,44 +992,51 @@ public class CModel {
 				} else {
 					pCell.mother 	= cellArray.get(((MLDouble)mlCellArray.getField("motherIndex", iCell)).getReal(0).intValue()-1);					
 				}
-				for(int iBall=0; iBall < NBall; iBall++) {
-					CBall pBall = new CBall();
-					pBall.ballArrayIndex = ((MLDouble)mlBallArray.getField("ballArrayIndex")).getReal(0).intValue()-1;
-					pBall.pCell = pCell;
-					pBall.mass 	= ((MLDouble)mlBallArray.getField("mass")).getReal(0);
-					pBall.radius = pBall.Radius();
-					pBall.pos 	= new Vector3d(
-									((MLDouble)mlBallArray.getField("pos", iBall)).getReal(0),
-									((MLDouble)mlBallArray.getField("pos", iBall)).getReal(1),
-									((MLDouble)mlBallArray.getField("pos", iBall)).getReal(2));
-					pBall.vel 	= new Vector3d(
-									((MLDouble)mlBallArray.getField("vel", iBall)).getReal(0),
-									((MLDouble)mlBallArray.getField("vel", iBall)).getReal(1),
-									((MLDouble)mlBallArray.getField("vel", iBall)).getReal(2));
-//					pBall.force = new Vector3d(
-//									((MLDouble)mlBallArray.getField("force", iBall)).getReal(0),
-//									((MLDouble)mlBallArray.getField("force", iBall)).getReal(1),
-//									((MLDouble)mlBallArray.getField("force", iBall)).getReal(2));
-					pBall.force = new Vector3d();
-					// posSave and velSave
-					int NSave = (int)(movementTimeEnd/movementTimeStep-1);
-					pBall.posSave = new Vector3d[NSave];
-					pBall.velSave = new Vector3d[NSave];
-					for(int ii=0; ii<NSave; ii++) {
-						pBall.posSave[ii] =  new Vector3d(
-											((MLDouble)mlBallArray.getField("posSave", iBall)).getReal(ii,0),
-											((MLDouble)mlBallArray.getField("posSave", iBall)).getReal(ii,1),
-											((MLDouble)mlBallArray.getField("posSave", iBall)).getReal(ii,2));
-						pBall.velSave[ii] =  new Vector3d(
-											((MLDouble)mlBallArray.getField("velSave", iBall)).getReal(ii,0),
-											((MLDouble)mlBallArray.getField("velSave", iBall)).getReal(ii,1),
-											((MLDouble)mlBallArray.getField("velSave", iBall)).getReal(ii,2));
-
-					}
-					pCell.ballArray[iBall] = pBall;
-				}
 				cellArray.add(pCell);
 			}
+			
+			// ballArray
+			MLStructure mlBallArray = (MLStructure)mlModel.getField("ballArray");
+			int NBall 		= mlBallArray.getSize();
+			ballArray	 	= new ArrayList<CBall>(NBall);
+			for(int iBall=0; iBall < NBall; iBall++) {
+				CBall pBall = new CBall();
+				pBall.arrayIndex = ((MLDouble)mlBallArray.getField("arrayIndex",iBall)).getReal(0).intValue()-1;
+				pBall.cellBallArrayIndex = ((MLDouble)mlBallArray.getField("cellBallArrayIndex",iBall)).getReal(0).intValue()-1;
+				pBall.pCell = cellArray.get(((MLDouble)mlBallArray.getField("cellArrayIndex",iBall)).getReal(0).intValue()-1);
+				pBall.mass 	= ((MLDouble)mlBallArray.getField("mass",iBall)).getReal(0);
+				pBall.radius = pBall.Radius();
+				pBall.pos 	= new Vector3d(
+								((MLDouble)mlBallArray.getField("pos", iBall)).getReal(0),
+								((MLDouble)mlBallArray.getField("pos", iBall)).getReal(1),
+								((MLDouble)mlBallArray.getField("pos", iBall)).getReal(2));
+				pBall.vel 	= new Vector3d(
+								((MLDouble)mlBallArray.getField("vel", iBall)).getReal(0),
+								((MLDouble)mlBallArray.getField("vel", iBall)).getReal(1),
+								((MLDouble)mlBallArray.getField("vel", iBall)).getReal(2));
+//				pBall.force = new Vector3d(
+//								((MLDouble)mlBallArray.getField("force", iBall)).getReal(0),
+//								((MLDouble)mlBallArray.getField("force", iBall)).getReal(1),
+//								((MLDouble)mlBallArray.getField("force", iBall)).getReal(2));
+				pBall.force = new Vector3d();
+				// posSave and velSave
+				int NSave = (int)(movementTimeEnd/movementTimeStep-1);
+				pBall.posSave = new Vector3d[NSave];
+				pBall.velSave = new Vector3d[NSave];
+				for(int ii=0; ii<NSave; ii++) {
+					pBall.posSave[ii] =  new Vector3d(
+										((MLDouble)mlBallArray.getField("posSave", iBall)).getReal(ii,0),
+										((MLDouble)mlBallArray.getField("posSave", iBall)).getReal(ii,1),
+										((MLDouble)mlBallArray.getField("posSave", iBall)).getReal(ii,2));
+					pBall.velSave[ii] =  new Vector3d(
+										((MLDouble)mlBallArray.getField("velSave", iBall)).getReal(ii,0),
+										((MLDouble)mlBallArray.getField("velSave", iBall)).getReal(ii,1),
+										((MLDouble)mlBallArray.getField("velSave", iBall)).getReal(ii,2));
+
+				}
+				ballArray.add(pBall);
+			}
+			
 			// rodSpringArray
 			int NRod = ((MLStructure)mlModel.getField("rodSpringArray")).getSize();
 			rodSpringArray = new ArrayList<CSpring>(NRod);
@@ -1039,12 +1044,12 @@ public class CModel {
 			for(int iRod=0; iRod<NRod; iRod++) {
 				CSpring pRod= new CSpring();
 				// ballArray
-				int iCell = ((MLDouble)mlRodSpringArray.getField("cellArrayIndex",iRod)).getReal(0).intValue()-1;
-				CCell pCell = cellArray.get(iCell);
-				for(int iBall=0; iBall<2; iBall++)	pRod.ballArray[iBall] = pCell.ballArray[iBall];
-				// ^ replace by System.arraycopy? TODO
-				pRod.K 		= ((MLDouble)mlRodSpringArray.getField("K")).getReal(0);
-				pRod.restLength = ((MLDouble)mlRodSpringArray.getField("restLength")).getReal(0);
+				for(int iBall=0; iBall<2; iBall++) {
+					int jBall = ((MLDouble)mlRodSpringArray.getField("ballArrayIndex",iRod)).getReal(iBall).intValue()-1;
+					pRod.ballArray[iBall] = ballArray.get(jBall);
+				}
+				pRod.K 		= ((MLDouble)mlRodSpringArray.getField("K", iRod)).getReal(0);
+				pRod.restLength = ((MLDouble)mlRodSpringArray.getField("restLength", iRod)).getReal(0);
 				rodSpringArray.add(pRod);
 			}
 			
@@ -1058,11 +1063,9 @@ public class CModel {
 									((MLDouble)mlAnchorSpringArray.getField("anchor",iAnchor)).getReal(0),
 									((MLDouble)mlAnchorSpringArray.getField("anchor",iAnchor)).getReal(1),
 									((MLDouble)mlAnchorSpringArray.getField("anchor",iAnchor)).getReal(2));
-				pAnchor.anchorArrayIndex = ((MLDouble)mlAnchorSpringArray.getField("anchorArrayIndex",iAnchor)).getReal(0).intValue()-1;
 				pAnchor.K		= ((MLDouble)mlAnchorSpringArray.getField("K",iAnchor)).getReal(0);
-				int iCell 		= ((MLDouble)mlAnchorSpringArray.getField("cellArrayIndex",iAnchor)).getReal(0).intValue()-1;
 				int iBall		= ((MLDouble)mlAnchorSpringArray.getField("ballArrayIndex",iAnchor)).getReal(0).intValue()-1;
-				pAnchor.pBall 	= cellArray.get(iCell).ballArray[iBall];
+				pAnchor.pBall 	= ballArray.get(iBall);
 				pAnchor.restLength = ((MLDouble)mlAnchorSpringArray.getField("restLength",iAnchor)).getReal(0);
 				anchorSpringArray.add(pAnchor);
 			}
@@ -1079,15 +1082,15 @@ public class CModel {
 			filSpringArray = new ArrayList<CFilSpring>(NFil);
 			for(int iFil=0; iFil<NFil; iFil++) {
 				CFilSpring pFil = new CFilSpring();
+				pFil.arrayIndex = ((MLDouble)mlFilSpringArray.getField("arrayIndex", iFil)).getReal(0).intValue()-1;
 				// bigSpring
 				CSpring bigSpring = new CSpring();
 				MLStructure mlBigSpring = (MLStructure)mlFilSpringArray.getField("bigSpring",iFil);
 				bigSpring.K = ((MLDouble)mlBigSpring.getField("K")).getReal(0);
 				bigSpring.restLength = ((MLDouble)mlBigSpring.getField("restLength")).getReal(0);
 				for(int iBall=0; iBall<2; iBall++) {
-					int jCell = ((MLDouble)mlBigSpring.getField("cellArrayIndex")).getReal(iBall).intValue()-1;
 					int jBall = ((MLDouble)mlBigSpring.getField("ballArrayIndex")).getReal(iBall).intValue()-1;
-					bigSpring.ballArray[0] = cellArray.get(jCell).ballArray[jBall];	
+					bigSpring.ballArray[iBall] = ballArray.get(jBall);	
 				}
 				pFil.bigSpring = bigSpring;
 				// smallSpring
@@ -1096,11 +1099,11 @@ public class CModel {
 				smallSpring.K = ((MLDouble)mlSmallSpring.getField("K")).getReal(0);
 				smallSpring.restLength = ((MLDouble)mlSmallSpring.getField("restLength")).getReal(0);
 				for(int iBall=0; iBall<2; iBall++) {
-					int jCell = ((MLDouble)mlSmallSpring.getField("cellArrayIndex")).getReal(iBall).intValue()-1;
 					int jBall = ((MLDouble)mlSmallSpring.getField("ballArrayIndex")).getReal(iBall).intValue()-1;
-					smallSpring.ballArray[0] = cellArray.get(jCell).ballArray[jBall];	
+					smallSpring.ballArray[iBall] = ballArray.get(jBall);	
 				}
 				pFil.smallSpring = smallSpring;
+				filSpringArray.add(pFil);
 			}
 			// stickSpringArray
 			MLStructure mlStickSpringArray = (MLStructure)mlModel.getField("stickSpringArray");
@@ -1110,28 +1113,23 @@ public class CModel {
 				CStickSpring pStick = new CStickSpring();
 				// ballArray
 				for(int iBall=0; iBall<2; iBall++) {
-					int jCell = ((MLDouble)mlStickSpringArray.getField("cellArrayIndex", iStick)).getReal(iBall).intValue()-1;
 					int jBall = ((MLDouble)mlStickSpringArray.getField("ballArrayIndex", iStick)).getReal(iBall).intValue()-1;
-					pStick.ballArray[iBall] = cellArray.get(jCell).ballArray[jBall];
+					pStick.ballArray[iBall] = ballArray.get(jBall);
 				}
 				pStick.K 		= ((MLDouble)mlStickSpringArray.getField("K", iStick)).getReal(0);
 				pStick.restLength = ((MLDouble)mlStickSpringArray.getField("restLength", iStick)).getReal(0);
-				pStick.stickArrayIndex = ((MLDouble)mlStickSpringArray.getField("stickArrayIndex", iStick)).getReal(0).intValue()-1;
+				pStick.NSibling = mlStickSpringArray.getField("siblingArrayIndex", iStick).getSize();
 				stickSpringArray.add(pStick);
 			}
-			for(int iStick=0; iStick<NStick; iStick++) {			// construct stickSpring's siblingSpringArray
+			// construct each stickSpring's siblingSpringArray
+			for(int iStick=0; iStick<NStick; iStick++) {			
 				CStickSpring pStick = stickSpringArray.get(iStick);
-				if(pStick.ballArray[0].pCell.type != 0 || pStick.ballArray[1].pCell.type != 0) {		// at least one rod 
-					if(pStick.ballArray[0].pCell.type == 0 || pStick.ballArray[1].pCell.type == 0) {	// exactly one rod, one sphere --> 1 sibling
-						pStick.siblingArray = new CStickSpring[]{	stickSpringArray.get(((MLDouble)mlStickSpringArray.getField("stickArrayIndex", 0)).getReal(0).intValue()-1)};
-					} else {																			// two rods --> 3 siblings
-						pStick.siblingArray = new CStickSpring[]{	stickSpringArray.get(((MLDouble)mlStickSpringArray.getField("stickArrayIndex", 0)).getReal(0).intValue()-1),
-																	stickSpringArray.get(((MLDouble)mlStickSpringArray.getField("stickArrayIndex", 1)).getReal(0).intValue()-1),
-																	stickSpringArray.get(((MLDouble)mlStickSpringArray.getField("stickArrayIndex", 2)).getReal(0).intValue()-1)};
-					}
+				pStick.siblingArray = new CStickSpring[3];
+				for(int iSibling=0; iSibling < pStick.NSibling; iSibling++) {
+					pStick.siblingArray[iSibling] =  stickSpringArray.get(((MLDouble)mlStickSpringArray.getField("siblingArrayIndex", iStick)).getReal(iSibling).intValue()-1);
 				}
 			}
-			// === construct dependent arrays ===
+			// === construct dependent/redundant arrays ===
 			// each cell's stickCellArray
 			for(CCell pCell : cellArray) {
 				ArrayList<CCell> stickCellArray = pCell.StickCellArray();
@@ -1140,6 +1138,10 @@ public class CModel {
 			// each cell's springArray
 			for(CSpring pRod : rodSpringArray) {
 				pRod.ballArray[0].pCell.springArray[0] = pRod;
+			}
+			// each cell's ballArray
+			for(CBall pBall : ballArray) {
+				pBall.pCell.ballArray[pBall.cellBallArrayIndex] = pBall;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

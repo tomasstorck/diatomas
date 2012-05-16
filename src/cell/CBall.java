@@ -9,10 +9,11 @@ public class CBall {
 	Vector3d[] posSave;
 	Vector3d[] velSave;
 //	Vector3d[] forceSave;
-	int ballArrayIndex;
+	int cellBallArrayIndex;
+	int arrayIndex;
 	CCell pCell;
 	
-	public CBall(double posx, double posy, double posz, double mass, int ballArrayIndex, CCell cell){	// Create a new ball, make it belong to pCell
+	public CBall(double posx, double posy, double posz, double mass, int cellBallArrayIndex, CCell cell){	// Create a new ball, make it belong to pCell
 		pCell = cell;
 		
 		pos = new Vector3d(posx, posy, posz);
@@ -31,10 +32,12 @@ public class CBall {
 		
 		this.mass = mass;
 		
-		// Add ball to cell's ballArary
-		this.ballArrayIndex = ballArrayIndex;
+		// Add ball to ballArrays
+		this.cellBallArrayIndex = cellBallArrayIndex;
 //		pCell.pModel.ballArray.add(this);
-		pCell.ballArray[ballArrayIndex] = this;
+		pCell.ballArray[cellBallArrayIndex] = this;
+		this.arrayIndex = pCell.pModel.ballArray.size(); 
+		pCell.pModel.ballArray.add(this);
 		CModel.NBall++;
 		// Update the radius
 		this.radius = Radius();
