@@ -580,24 +580,40 @@ public class CModel {
 		
 		// Filament spring elastic force (CFilSpring in filSpringArray)
 		for(CFilSpring pFil : filSpringArray) {
-			for(CSpring pSpring : new CSpring[]{pFil.bigSpring, pFil.smallSpring}) {
-				// find difference vector and distance dn between balls (euclidian distance) 
-				Vector3d diff = pSpring.ballArray[1].pos.minus(pSpring.ballArray[0].pos);
-				double dn = diff.length();
-				// Get force
-				double f = pSpring.K/dn * (dn - pSpring.restLength);
-				// Hooke's law
-				double Fsx = f*diff.x;
-				double Fsy = f*diff.y;
-				double Fsz = f*diff.z;
-				// apply forces on balls
-				pSpring.ballArray[0].force.x += Fsx;
-				pSpring.ballArray[0].force.y += Fsy;
-				pSpring.ballArray[0].force.z += Fsz;
-				pSpring.ballArray[1].force.x -= Fsx;
-				pSpring.ballArray[1].force.y -= Fsy;
-				pSpring.ballArray[1].force.z -= Fsz;
-			}
+			// === big spring ===
+			{// find difference vector and distance dn between balls (euclidian distance) 
+			Vector3d diff = pFil.big_ballArray[1].pos.minus(pFil.big_ballArray[0].pos);
+			double dn = diff.length();
+			// Get force
+			double f = pFil.big_K/dn * (dn - pFil.big_restLength);
+			// Hooke's law
+			double Fsx = f*diff.x;
+			double Fsy = f*diff.y;
+			double Fsz = f*diff.z;
+			// apply forces on balls
+			pFil.big_ballArray[0].force.x += Fsx;
+			pFil.big_ballArray[0].force.y += Fsy;
+			pFil.big_ballArray[0].force.z += Fsz;
+			pFil.big_ballArray[1].force.x -= Fsx;
+			pFil.big_ballArray[1].force.y -= Fsy;
+			pFil.big_ballArray[1].force.z -= Fsz;}
+			// === small spring ===
+			{// find difference vector and distance dn between balls (euclidian distance) 
+			Vector3d diff = pFil.small_ballArray[1].pos.minus(pFil.small_ballArray[0].pos);
+			double dn = diff.length();
+			// Get force
+			double f = pFil.small_K/dn * (dn - pFil.small_restLength);
+			// Hooke's law
+			double Fsx = f*diff.x;
+			double Fsy = f*diff.y;
+			double Fsz = f*diff.z;
+			// apply forces on balls
+			pFil.small_ballArray[0].force.x += Fsx;
+			pFil.small_ballArray[0].force.y += Fsy;
+			pFil.small_ballArray[0].force.z += Fsz;
+			pFil.small_ballArray[1].force.x -= Fsx;
+			pFil.small_ballArray[1].force.y -= Fsy;
+			pFil.small_ballArray[1].force.z -= Fsz;}
 		}
 		
 		// Return results
@@ -713,15 +729,15 @@ public class CModel {
 
 					// Set filament springs
 					if(pNew.filament) {
-						for(CFilSpring pFilSpring : filSpringArray) {
-							if( pFilSpring.bigSpring.ballArray[0]== pBall0) {
-								pFilSpring.bigSpring.ballArray[0] = pNew.ballArray[0];}
-							if( pFilSpring.bigSpring.ballArray[1]== pBall0) {
-								pFilSpring.bigSpring.ballArray[1] = pNew.ballArray[0];}
-							if( pFilSpring.smallSpring.ballArray[0]== pBall1) {
-								pFilSpring.smallSpring.ballArray[0] = pNew.ballArray[1];}
-							if( pFilSpring.smallSpring.ballArray[1]== pBall1) {
-								pFilSpring.smallSpring.ballArray[1] = pNew.ballArray[1];}
+						for(CFilSpring pFil : filSpringArray) {
+							if( pFil.big_ballArray[0]== pBall0) {
+								pFil.big_ballArray[0] = pNew.ballArray[0];}
+							if( pFil.big_ballArray[1]== pBall0) {
+								pFil.big_ballArray[1] = pNew.ballArray[0];}
+							if( pFil.small_ballArray[0]== pBall1) {
+								pFil.small_ballArray[0] = pNew.ballArray[1];}
+							if( pFil.small_ballArray[1]== pBall1) {
+								pFil.small_ballArray[1] = pNew.ballArray[1];}
 						}
 						new CFilSpring(pCell,pNew);
 					}
@@ -896,18 +912,13 @@ public class CModel {
 		MLStructure mlFilSpringArray  = new MLStructure(null, new int[] {NFil,1});
 		for(int iFil=0; iFil<NFil; iFil++) {
 			CFilSpring pFil = filSpringArray.get(iFil);
-			mlFilSpringArray.setField("arrayIndex", 		new MLDouble(null, new double[] {pFil.arrayIndex+1}, 1), iFil);
-//			mlFilSpringArray.setField("K", 					new MLDouble(null, new double[] {pFil.K}, 1), iFil);
-			MLStructure mlBigSpring  = new MLStructure(null, new int[] {1,1});
-			MLStructure mlSmallSpring  = new MLStructure(null, new int[] {1,1});
-			mlBigSpring.setField("K", 						new MLDouble(null, new double[] {pFil.bigSpring.K}, 1));
-			mlBigSpring.setField("restLength", 				new MLDouble(null, new double[] {pFil.bigSpring.restLength}, 1));
-			mlBigSpring.setField("ballArrayIndex", 			new MLDouble(null, new double[] {pFil.bigSpring.ballArray[0].arrayIndex+1, 			pFil.bigSpring.ballArray[1].arrayIndex+1}, 2));
-			mlSmallSpring.setField("K", 					new MLDouble(null, new double[] {pFil.smallSpring.K}, 1));
-			mlSmallSpring.setField("restLength", 			new MLDouble(null, new double[] {pFil.smallSpring.restLength}, 1));
-			mlSmallSpring.setField("ballArrayIndex", 		new MLDouble(null, new double[] {pFil.smallSpring.ballArray[0].arrayIndex+1, 		pFil.smallSpring.ballArray[1].arrayIndex+1}, 2));
-			mlFilSpringArray.setField("bigSpring", mlBigSpring, iFil);
-			mlFilSpringArray.setField("smallSpring", mlSmallSpring, iFil);
+			mlFilSpringArray.setField("arrayIndex", 		new MLDouble(null, new double[] {pFil.arrayIndex+1}, 1),iFil);
+			mlFilSpringArray.setField("big_K", 				new MLDouble(null, new double[] {pFil.big_K}, 1),iFil);
+			mlFilSpringArray.setField("big_restLength", 	new MLDouble(null, new double[] {pFil.big_restLength}, 1),iFil);
+			mlFilSpringArray.setField("big_ballArrayIndex", new MLDouble(null, new double[] {pFil.big_ballArray[0].arrayIndex+1, 	pFil.big_ballArray[1].arrayIndex+1}, 2),iFil);
+			mlFilSpringArray.setField("small_K", 			new MLDouble(null, new double[] {pFil.small_K}, 1),iFil);
+			mlFilSpringArray.setField("small_restLength", 	new MLDouble(null, new double[] {pFil.small_restLength}, 1),iFil);
+			mlFilSpringArray.setField("small_ballArrayIndex",new MLDouble(null, new double[] {pFil.small_ballArray[0].arrayIndex+1, pFil.small_ballArray[1].arrayIndex+1}, 2),iFil);
 		}
 		mlModel.setField("filSpringArray", mlFilSpringArray);
 		// stickSpringArray
@@ -1084,28 +1095,22 @@ public class CModel {
 			int NFil = mlFilSpringArray.getSize();
 			filSpringArray = new ArrayList<CFilSpring>(NFil);
 			for(int iFil=0; iFil<NFil; iFil++) {
-				CFilSpring pFil = new CFilSpring();
-				pFil.arrayIndex = ((MLDouble)mlFilSpringArray.getField("arrayIndex", iFil)).getReal(0).intValue()-1;
+				CFilSpring pFil 		= new CFilSpring();
+				pFil.arrayIndex 		= ((MLDouble)mlFilSpringArray.getField("arrayIndex", iFil)).getReal(0).intValue()-1;
 				// bigSpring
-				CSpring bigSpring = new CSpring();
-				MLStructure mlBigSpring = (MLStructure)mlFilSpringArray.getField("bigSpring",iFil);
-				bigSpring.K = ((MLDouble)mlBigSpring.getField("K")).getReal(0);
-				bigSpring.restLength = ((MLDouble)mlBigSpring.getField("restLength")).getReal(0);
+				pFil.big_K 				= ((MLDouble)mlFilSpringArray.getField("big_K", iFil)).getReal(0);
+				pFil.big_restLength 	= ((MLDouble)mlFilSpringArray.getField("big_restLength", iFil)).getReal(0);
 				for(int iBall=0; iBall<2; iBall++) {
-					int jBall = ((MLDouble)mlBigSpring.getField("ballArrayIndex")).getReal(iBall).intValue()-1;
-					bigSpring.ballArray[iBall] = ballArray.get(jBall);	
+					int jBall = ((MLDouble)mlFilSpringArray.getField("big_ballArrayIndex", iFil)).getReal(iBall).intValue()-1;
+					pFil.big_ballArray[iBall] = ballArray.get(jBall);	
 				}
-				pFil.bigSpring = bigSpring;
 				// smallSpring
-				CSpring smallSpring = new CSpring();
-				MLStructure mlSmallSpring = (MLStructure)mlFilSpringArray.getField("smallSpring",iFil);
-				smallSpring.K = ((MLDouble)mlSmallSpring.getField("K")).getReal(0);
-				smallSpring.restLength = ((MLDouble)mlSmallSpring.getField("restLength")).getReal(0);
+				pFil.small_K = ((MLDouble)mlFilSpringArray.getField("small_K", iFil)).getReal(0);
+				pFil.small_restLength = ((MLDouble)mlFilSpringArray.getField("small_restLength", iFil)).getReal(0);
 				for(int iBall=0; iBall<2; iBall++) {
-					int jBall = ((MLDouble)mlSmallSpring.getField("ballArrayIndex")).getReal(iBall).intValue()-1;
-					smallSpring.ballArray[iBall] = ballArray.get(jBall);	
+					int jBall = ((MLDouble)mlFilSpringArray.getField("small_ballArrayIndex", iFil)).getReal(iBall).intValue()-1;
+					pFil.small_ballArray[iBall] = ballArray.get(jBall);	
 				}
-				pFil.smallSpring = smallSpring;
 				filSpringArray.add(pFil);
 			}
 			// stickSpringArray
@@ -1238,20 +1243,21 @@ public class CModel {
 
 			// Build filament springs
 			for(int iFil = 0; iFil<filSpringArray.size(); iFil++) {
+				CFilSpring pFil = filSpringArray.get(iFil);
 				for(int springType = 0; springType < 2; springType++) {
 					fid.println("// Filament spring no. " + iFil);
-					CSpring pSpring;
 					double[] colour = new double[3];
+					CBall pBall;
+					CBall pBallNext;
 					if(springType==0) {		// Set specific things for small spring and big spring
-						pSpring = filSpringArray.get(iFil).bigSpring;
 						colour[0] = 0; colour[1] = 0; colour[2] = 1;		// Big spring is blue
+						pBall 	= pFil.big_ballArray[0];
+						pBallNext = pFil.big_ballArray[1];
 					} else {
-						pSpring = filSpringArray.get(iFil).smallSpring;
 						colour[0] = 1; colour[1] = 0; colour[2] = 0;		// Small spring is red
+						pBall 	= pFil.small_ballArray[0];
+						pBallNext = pFil.small_ballArray[1];
 					}
-
-					CBall pBall = pSpring.ballArray[0];
-					CBall pBallNext = pSpring.ballArray[1];
 
 					fid.println("cylinder\n" +
 							"{\n" +

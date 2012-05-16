@@ -1,3 +1,5 @@
+// Purely used for cell-cell internal springs, not for filament springs anymore.
+
 package cell;
 
 public class CSpring {
@@ -10,8 +12,8 @@ public class CSpring {
 		this.restLength = restLength;
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
-//		ball0.pCell.springArray[0] = this;
-//		ball0.pCell.pModel.rodSpringArray.add(this);
+		ball0.pCell.springArray[0] = this;
+		ball0.pCell.pModel.rodSpringArray.add(this);
 	}
 	
 	public CSpring(CBall ball0, CBall ball1){
@@ -26,6 +28,8 @@ public class CSpring {
 		this.restLength = restLength;
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
+		ball0.pCell.springArray[0] = this;
+		ball0.pCell.pModel.rodSpringArray.add(this);
 	}
 	
 	public CSpring() {}
