@@ -10,8 +10,8 @@ public class CSpring {
 		this.restLength = restLength;
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
-		ball0.pCell.springArray[0] = this;
-		ball0.pCell.pModel.rodSpringArray.add(this);
+//		ball0.pCell.springArray[0] = this;
+//		ball0.pCell.pModel.rodSpringArray.add(this);
 	}
 	
 	public CSpring(CBall ball0, CBall ball1){
@@ -22,7 +22,10 @@ public class CSpring {
 			restLength = ball0.radius*ball0.pCell.pModel.aspect * 2 * ball0.mass/ball0.pCell.pModel.MCellMax;		// Note that with this mass will have to be set before spring is constructed
 		}
 		
-		new CSpring(ball0, ball1, ball0.pCell.pModel.Ks, restLength);	// Call method above
+		this.K = ball0.pCell.pModel.Ks;
+		this.restLength = restLength;
+		ballArray[0] = ball0;
+		ballArray[1] = ball1;
 	}
 	
 	public CSpring() {}

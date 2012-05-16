@@ -151,6 +151,9 @@ public class CModel {
 				if(!(new File(name)).exists()) {
 					new File(name).mkdir();
 				}
+				if(!(new File(name + "/output")).exists()) {
+					new File(name + "/output").mkdir();
+				}
 				PrintWriter fid = new PrintWriter(new FileWriter(name + "/" + "logfile.txt",true));		// True is for append // Not platform independent TODO
 				fid.println(string);
 				fid.close();
@@ -628,7 +631,7 @@ public class CModel {
 			for(CCell pStickCell : pCell.stickCellArray) {
 				if((pCell.type==0 && pStickCell.type!=0) || (pCell.type!=0 && pStickCell.type==0)) {
 					// The cell types are different on the other end of the spring
-					mass *= 1.2;
+//					mass *= 1.2;
 					break;
 				}
 			}
@@ -1321,7 +1324,6 @@ public class CModel {
 			E.printStackTrace();
 		} finally {
 			fid.close();
-			if((new File(fileName)).exists()) new File(fileName).delete();
 		}
 
 	}
@@ -1332,6 +1334,8 @@ public class CModel {
 		}
 		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + name + "/image/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
 		LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", setting.waitForFinish,setting.echoCommand);		// 1st true == wait for process to finish, 2nd true == tell command
+		String fileName = String.format("%s/output/pov.%04d.%04d.inc", name, movementIter,growthIter);
+		if((new File(fileName)).exists()) new File(fileName).delete();
 	}
 }
 

@@ -29,7 +29,9 @@ public class CCell {
 		} else {
 			new CBall(base0x, base0y, base0z, model.MCellInit/2, 0, this);		// Constructor adds it to the array
 			new CBall(base1x, base1y, base1z, model.MCellInit/2, 1, this);		// Constructor adds it to the array
-			new CSpring(ballArray[0],ballArray[1]);								// Constructor adds it to the array
+			CSpring pSpring = new CSpring(ballArray[0],ballArray[1]);								// Constructor adds it to the array
+			this.springArray[0]=pSpring;
+			pModel.rodSpringArray.add(pSpring);
 		}
 		model.cellArray.add(this);	
 	}
@@ -60,7 +62,10 @@ public class CCell {
 			double base1z = base0z + direction.z * distance;
 			
 			new CBall(base1x, base1y, base1z, model.MCellInit/2, 1, this);
-			new CSpring(ballArray[0],ballArray[1]);
+			CSpring pSpring = new CSpring(ballArray[0],ballArray[1]);
+			this.springArray[0]=pSpring;
+			pModel.rodSpringArray.add(pSpring);
+			
 		}
 		model.cellArray.add(this);
 	}
