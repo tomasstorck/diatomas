@@ -20,7 +20,7 @@ public class CBall {
 		vel = new Vector3d(0, 0, 0);
 		force = new Vector3d(0, 0, 0);
 
-		int NSave = (int)(pCell.pModel.movementTimeEnd/pCell.pModel.movementTimeStep-1);
+		int NSave = (int)(pCell.pModel.movementTimeStepEnd/pCell.pModel.movementTimeStep-1);
 		posSave = new Vector3d[NSave];
 		velSave = new Vector3d[NSave];
 //		forceSave = new Vector3d[NSave];

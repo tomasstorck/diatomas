@@ -13,7 +13,7 @@ public class Run {
 		if(model.growthIter==0 && model.movementIter==0) {
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				new CCell(rand.Int(model.NType+1), 	// 0, 1 or 2 by default (specified numer is exclusive)
+				new CCell(rand.Int(model.NType+1), 	// 0, 1 or 2 by default (specified number is exclusive)
 						(0.25*rand.Double()+0.25)*model.L.x, 		// Anywhere between 0 and Lx
 						1e-5, 										// Standard height
 						(0.25*rand.Double()+0.25)*model.L.z,		// Anywhere between 0 and Lz
@@ -23,14 +23,13 @@ public class Run {
 			model.Write(model.cellArray.size() + " initial cells created","iter");
 		}
 
-		while(model.growthIter<40) {
+		while(model.growthIter<50) {
 			// Reset the random seed
 			rand.Seed(model.randomSeed*(2+model.growthIter));				// + something because if growthIter == 0, randomSeed doesn't matter. 
-
 			// Movement
 			model.Write("Starting movement calculations","iter");
 			int nstp = model.Movement();
-			model.movementIter++;
+			model.movementIter += (int)(model.movementTimeStepEnd/model.movementTimeStep);
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
 
@@ -60,10 +59,10 @@ public class Run {
 			model.Write(NNewStick + " cell pairs sticked","iter");}				// Divided by two, as array is based on origin and other cell (see for loop)
 
 			// Plot
-			if(setting.enablePlot) {
-				model.Write("Writing POV files","iter");
-				model.POV_Write();
-				model.POV_Plot(); 
+			if(setting.plot) {
+				model.Write("Writing and rendering POV files","iter");
+				model.POV_Write(setting.plotIntermediate);
+				model.POV_Plot(setting.plotIntermediate); 
 			}
 			
 			// Grow cells

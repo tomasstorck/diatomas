@@ -50,7 +50,7 @@ public class CModel {
 	double growthMaxIter;
 	double movementTime;
 	double movementTimeStep;
-	double movementTimeEnd;
+	double movementTimeStepEnd;
 	int movementIter;
 	// Counters
 	static int NBall;
@@ -99,7 +99,7 @@ public class CModel {
 		growthMaxIter = 672;		// [-] where we'll stop
 		movementTime = 0;			// [s] initial time for movement (for ODE solver)
 		movementTimeStep = 2e-2;	// [s] output time step  for movement
-		movementTimeEnd	= 10e-2;	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
+		movementTimeStepEnd	= 10e-2;	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
 		movementIter = 0;			// [-] counter time iterations for movement
 		// Counters
 		NBall 	= 0;
@@ -258,7 +258,6 @@ public class CModel {
 
 		// Get the difference of the two closest points
 		Vector3d   dP = w.plus(u.times(sc)).minus(v.times(tc));  // = S1(sc) - S2(tc)
-		double dist = dP.length();
 
 		c1 = S1_P0.plus(u.times(sc));	// NOT NECESSARY... Just to check!!
 		c2 = S2_P0.plus(v.times(tc)); 	// NOT NECESSARY... Just to check!!
@@ -323,11 +322,11 @@ public class CModel {
 	////////////////////
 	public int Movement() throws Exception {
 		int nvar = 6*CModel.NBall;
-		int ntimes = (int) (movementTimeEnd/movementTimeStep);
+		int ntimes = (int) (movementTimeStepEnd/movementTimeStep);
 		double atol = 1.0e-6, rtol = atol;
 		double h1 = 0.00001, hmin = 0;
 		double t1 = movementTime; 
-		double t2 = t1 + movementTimeEnd;
+		double t2 = t1 + movementTimeStepEnd;
 		Vector ystart = new Vector(nvar,0.0);
 
 		int ii=0;											// Determine initial value vector
@@ -647,7 +646,7 @@ public class CModel {
 			for(CCell pStickCell : pCell.stickCellArray) {
 				if((pCell.type==0 && pStickCell.type!=0) || (pCell.type!=0 && pStickCell.type==0)) {
 					// The cell types are different on the other end of the spring
-//					mass *= 1.2;
+					mass *= 1.2;
 					break;
 				}
 			}
@@ -824,7 +823,7 @@ public class CModel {
 		mlModel.setField("MCellMax",			new MLDouble(null, new double[] {MCellMax}, 1));
 		mlModel.setField("movementIter",		new MLDouble(null, new double[] {movementIter}, 1));
 		mlModel.setField("movementTime",		new MLDouble(null, new double[] {movementTime}, 1));
-		mlModel.setField("movementTimeEnd",		new MLDouble(null, new double[] {movementTimeEnd}, 1));
+		mlModel.setField("movementTimeEnd",		new MLDouble(null, new double[] {movementTimeStepEnd}, 1));
 		mlModel.setField("movementTimeStep",	new MLDouble(null, new double[] {movementTimeStep}, 1));
 		mlModel.setField("name",				new MLChar(null, new String[] {name}, name.length()));
 		mlModel.setField("NBall",				new MLDouble(null, new double[] {NBall}, 1));
@@ -877,7 +876,7 @@ public class CModel {
 			mlBallArray.setField("vel", 		new MLDouble(null, new double[] {pBall.vel.x, pBall.vel.y, pBall.vel.z}, 3), iBall);
 //			mlBallArray.setField("force",	 	new MLDouble(null, new double[] {pBall.force.x, pBall.force.y, pBall.force.z}, 1), iBall);
 			// posSave and velSave
-			int NSave = (int)(movementTimeEnd/movementTimeStep)-1;
+			int NSave = (int)(movementTimeStepEnd/movementTimeStep)-1;
 			double[] posSave = new double[NSave*3];
 			double[] velSave = new double[NSave*3];
 			for(int ii=0; ii<NSave; ii++) {
@@ -978,7 +977,7 @@ public class CModel {
 			MCellMax 	= ((MLDouble)mlModel.getField("MCellMax")).getReal(0);
 			movementIter = ((MLDouble)mlModel.getField("movementIter")).getReal(0).intValue();
 			movementTime = ((MLDouble)mlModel.getField("movementTime")).getReal(0);
-			movementTimeEnd = ((MLDouble)mlModel.getField("movementTimeEnd")).getReal(0);
+			movementTimeStepEnd = ((MLDouble)mlModel.getField("movementTimeEnd")).getReal(0);
 			movementTimeStep = ((MLDouble)mlModel.getField("movementTimeStep")).getReal(0);
 			name 		= ((MLChar)mlModel.getField("name")).getString(0);
 			NBall		= ((MLDouble)mlModel.getField("NBall")).getReal(0).intValue();
@@ -1034,7 +1033,7 @@ public class CModel {
 //								((MLDouble)mlBallArray.getField("force", iBall)).getReal(2));
 				pBall.force = new Vector3d();
 				// posSave and velSave
-				int NSave = (int)(movementTimeEnd/movementTimeStep-1);
+				int NSave = (int)(movementTimeStepEnd/movementTimeStep-1);
 				pBall.posSave = new Vector3d[NSave];
 				pBall.velSave = new Vector3d[NSave];
 				for(int ii=0; ii<NSave; ii++) {
@@ -1159,189 +1158,221 @@ public class CModel {
 	///////////////////
 	// POV-Ray stuff //
 	///////////////////
-	public void POV_Write() {
-		String fileName = String.format("%s/output/pov.%04d.%04d.inc", name, movementIter,growthIter);
+	public void POV_Write(boolean plotIntermediate) {
+		int NSave;
+		if(plotIntermediate) 	NSave = ballArray.get(0).posSave.length;
+		else					NSave = 0;
+		plotIntermediate = false;		// Don't plot intermediate values for now, will revert later.
+		
+		//////////////////////////////
 		// Make output folder if it doesn't exist already
 		if(!(new File(name + "/output")).exists())	new File(name + "/output").mkdir();
 		PrintWriter fid=null;
-		try {
-			// Remove inc file if it already exists
-			if((new File(fileName)).exists()) new File(fileName).delete();
-			// Write new inc file
-			fid = new PrintWriter(new FileWriter(fileName,true));		// True is for append // Not platform independent TODO
-			// Build spheres and rods
-			for(int iCell=0; iCell<cellArray.size(); iCell++) {
-				CCell pCell = cellArray.get(iCell);
-				fid.println("// Cell no. " + iCell);
-				if(pCell.type == 0) {
-					// Spherical cell
-					CBall pBall = pCell.ballArray[0];
+			for(int ii=0; ii<NSave+1; ii++) {
+				try {
+					if(ii>0)	plotIntermediate=true;		// If this is not the first iteration, do the intermediate plotting 
+					String fileName = String.format("%s/output/pov.%04d.%04d.inc", name, movementIter-ii,growthIter);
+					// Remove inc file if it already exists
+					if((new File(fileName)).exists()) new File(fileName).delete();
+					// Write new inc file
+					fid = new PrintWriter(new FileWriter(fileName,true));		// True is for append // Not platform independent TODO
+					// Build spheres and rods
+					for(int iCell=0; iCell<cellArray.size(); iCell++) {
+						CCell pCell = cellArray.get(iCell);
+						fid.println("// Cell no. " + iCell);
+						if(pCell.type == 0) {
+							// Spherical cell
+							CBall pBall = pCell.ballArray[0];
 
-					fid.println("sphere\n" + 
-							"{\n" + 
-							String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) + 
-							String.format("\t%10.3f\n", pBall.radius*1e6) +
-							"\ttexture{\n" + 
-							"\t\tpigment{\n" +
-							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
-							"\t\t}\n" +
-							"\t\tfinish{\n" +
-							"\t\t\tambient .2\n" +
-							"\t\t\tdiffuse .6\n" +
-							"\t\t}\n" +
-							"\t}\n" +
-							"}\n");}
-				else if(pCell.type == 1 || pCell.type == 2) {	// Rod
-					CBall pBall = pCell.ballArray[0];
-					CBall pBallNext = pCell.ballArray[1];
+							fid.println("sphere\n" + 
+									"{\n" + 
+									(plotIntermediate ? 
+											String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.posSave[NSave-ii].x*1e6, pBall.posSave[NSave-ii].y*1e6, pBall.posSave[NSave-ii].z*1e6) : 
+												String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6)) +  
+												String.format("\t%10.3f\n", pBall.radius*1e6) +
+												"\ttexture{\n" + 
+												"\t\tpigment{\n" +
+												String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
+												"\t\t}\n" +
+												"\t\tfinish{\n" +
+												"\t\t\tambient .2\n" +
+												"\t\t\tdiffuse .6\n" +
+												"\t\t}\n" +
+												"\t}\n" +
+									"}\n");}
+						else if(pCell.type == 1 || pCell.type == 2) {	// Rod
+							CBall pBall = pCell.ballArray[0];
+							CBall pBallNext = pCell.ballArray[1];
 
-					fid.println("cylinder\n" +
-							"{\n" +
-							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
-							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
-							String.format("\t%10.3f\n", pBall.radius*1e6) +
-							"\ttexture{\n" +
-							"\t\tpigment{\n" +
-							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
-							"\t\t}\n" +
-							"\t\tfinish{\n" +
-							"\t\t\tambient .2\n" +
-							"\t\t\tdiffuse .6\n" +
-							"\t\t}\n" +
-							"\t}\n" +
-							"}\n" +
-							"sphere\n" +		// New sphere
-							"{\n" +
-							String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
-							String.format("\t%10.3f\n", pBall.radius*1e6) +
-							"\ttexture{\n" +
-							"\t\tpigment{\n" +
-							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
-							"\t\t}\n" +
-							"\t\tfinish{\n" +
-							"\t\t\tambient .2\n" +
-							"\t\t\tdiffuse .6\n" +
-							"\t\t}\n" +
-							"\t}\n" +
-							"}\n"+
-							"sphere\n" +		// New sphere
-							"{\n" +
-							String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
-							String.format("\t%10.3f\n", pBallNext.radius*1e6) +
-							"\ttexture{\n" +
-							"\t\tpigment{\n" +
-							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
-							"\t\t}\n" +
-							"\t\tfinish{\n" +
-							"\t\t\tambient .2\n" +
-							"\t\t\tdiffuse .6\n" +
-							"\t\t}\n" +
-							"\t}\n" +
-							"}\n");
-				}
-			}
-
-			// Build filament springs
-			for(int iFil = 0; iFil<filSpringArray.size(); iFil++) {
-				CFilSpring pFil = filSpringArray.get(iFil);
-				for(int springType = 0; springType < 2; springType++) {
-					fid.println("// Filament spring no. " + iFil);
-					double[] colour = new double[3];
-					CBall pBall;
-					CBall pBallNext;
-					if(springType==0) {		// Set specific things for small spring and big spring
-						colour[0] = 0; colour[1] = 0; colour[2] = 1;		// Big spring is blue
-						pBall 	= pFil.big_ballArray[0];
-						pBallNext = pFil.big_ballArray[1];
-					} else {
-						colour[0] = 1; colour[1] = 0; colour[2] = 0;		// Small spring is red
-						pBall 	= pFil.small_ballArray[0];
-						pBallNext = pFil.small_ballArray[1];
+							fid.println("cylinder\n" +		// Sphere-sphere connection
+									"{\n" +
+									(plotIntermediate ?
+											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.posSave[NSave-ii].x*1e6, pBall.posSave[NSave-ii].y*1e6, pBall.posSave[NSave-ii].z*1e6) +
+											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.posSave[NSave-ii].x*1e6, pBallNext.posSave[NSave-ii].y*1e6, pBallNext.posSave[NSave-ii].z*1e6) :
+												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
+												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6)) +
+												String.format("\t%10.3f\n", pBall.radius*1e6) +
+												"\ttexture{\n" +
+												"\t\tpigment{\n" +
+												String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
+												"\t\t}\n" +
+												"\t\tfinish{\n" +
+												"\t\t\tambient .2\n" +
+												"\t\t\tdiffuse .6\n" +
+												"\t\t}\n" +
+												"\t}\n" +
+												"}\n" +
+												"sphere\n" +			// First sphere
+												"{\n" +
+												(plotIntermediate ?
+														String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.posSave[NSave-ii].x*1e6, pBall.posSave[NSave-ii].y*1e6, pBall.posSave[NSave-ii].z*1e6) :
+															String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6)) +
+															String.format("\t%10.3f\n", pBall.radius*1e6) +
+															"\ttexture{\n" +
+															"\t\tpigment{\n" +
+															String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
+															"\t\t}\n" +
+															"\t\tfinish{\n" +
+															"\t\t\tambient .2\n" +
+															"\t\t\tdiffuse .6\n" +
+															"\t\t}\n" +
+															"\t}\n" +
+															"}\n"+
+															"sphere\n" +			// Second sphere
+															"{\n" +
+															(plotIntermediate ? 
+																	String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBallNext.posSave[NSave-ii].x*1e6, pBallNext.posSave[NSave-ii].y*1e6, pBallNext.posSave[NSave-ii].z*1e6) :
+																		String.format("\t < %10.3f,%10.3f,%10.3f > \n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6)) +
+																		String.format("\t%10.3f\n", pBallNext.radius*1e6) +
+																		"\ttexture{\n" +
+																		"\t\tpigment{\n" +
+																		String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", pCell.colour[0], pCell.colour[1], pCell.colour[2]) +
+																		"\t\t}\n" +
+																		"\t\tfinish{\n" +
+																		"\t\t\tambient .2\n" +
+																		"\t\t\tdiffuse .6\n" +
+																		"\t\t}\n" +
+																		"\t}\n" +
+									"}\n");
+						}
 					}
 
-					fid.println("cylinder\n" +
-							"{\n" +
-							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
-							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
-							String.format("\t%10.3f\n", pBall.radius*1e5) +
-							"\ttexture{\n" +
-							"\t\tpigment{\n" +
-							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", colour[0], colour[1], colour[2]) +
-							"\t\t}\n" +
-							"\t\tfinish{\n" +
-							"\t\t\tambient .2\n" +
-							"\t\t\tdiffuse .6\n" +
-							"\t\t}\n" +
-							"\t}\n" +
-							"}\n");
+					// Build filament springs
+					for(int iFil = 0; iFil<filSpringArray.size(); iFil++) {
+						CFilSpring pFil = filSpringArray.get(iFil);
+						for(int springType = 0; springType < 2; springType++) {
+							fid.println("// Filament spring no. " + iFil);
+							double[] colour = new double[3];
+							CBall pBall;
+							CBall pBallNext;
+							if(springType==0) {		// Set specific things for small spring and big spring
+								colour[0] = 0; colour[1] = 0; colour[2] = 1;		// Big spring is blue
+								pBall 	= pFil.big_ballArray[0];
+								pBallNext = pFil.big_ballArray[1];
+							} else {
+								colour[0] = 1; colour[1] = 0; colour[2] = 0;		// Small spring is red
+								pBall 	= pFil.small_ballArray[0];
+								pBallNext = pFil.small_ballArray[1];
+							}
+
+							fid.println("cylinder\n" +
+									"{\n" +
+									(plotIntermediate ? 
+											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.posSave[NSave-ii].x*1e6, pBall.posSave[NSave-ii].y*1e6, pBall.posSave[NSave-ii].z*1e6) +
+											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.posSave[NSave-ii].x*1e6, pBallNext.posSave[NSave-ii].y*1e6, pBallNext.posSave[NSave-ii].z*1e6) :
+												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
+												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6)) +
+												String.format("\t%10.3f\n", pBall.radius*1e5) +
+												"\ttexture{\n" +
+												"\t\tpigment{\n" +
+												String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", colour[0], colour[1], colour[2]) +
+												"\t\t}\n" +
+												"\t\tfinish{\n" +
+												"\t\t\tambient .2\n" +
+												"\t\t\tdiffuse .6\n" +
+												"\t\t}\n" +
+												"\t}\n" +
+									"}\n");
+						}
+					}
+
+					// Build stick spring array
+					for(int iStick = 0; iStick < stickSpringArray.size(); iStick++) {
+						fid.println("// Sticking spring no. " + iStick);
+						CStickSpring pSpring = stickSpringArray.get(iStick);
+						CBall pBall = pSpring.ballArray[0];
+						CBall pBallNext = pSpring.ballArray[1];
+
+						fid.println("cylinder\n" +
+								"{\n" +
+								(plotIntermediate ?
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.posSave[NSave-ii].x*1e6, pBall.posSave[NSave-ii].y*1e6, pBall.posSave[NSave-ii].z*1e6) +
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.posSave[NSave-ii].x*1e6, pBallNext.posSave[NSave-ii].y*1e6, pBallNext.posSave[NSave-ii].z*1e6) : 
+											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
+											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6)) +
+											String.format("\t%10.3f\n", pBall.radius*1e5) +
+											"\ttexture{\n" +
+											"\t\tpigment{\n" +
+											String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 0.0, 1.0, 0.0) +		//Sticking springs are green
+											"\t\t}\n" +
+											"\t\tfinish{\n" +
+											"\t\t\tambient .2\n" +
+											"\t\t\tdiffuse .6\n" +
+											"\t\t}\n" +
+											"\t}\n" +
+								"}\n");
+					}
+
+					//Build anchor spring array
+					for(int iAnchor = 1; iAnchor < anchorSpringArray.size(); iAnchor++) {
+						fid.println("// Anchor spring no. " + iAnchor);
+						CAnchorSpring pSpring = anchorSpringArray.get(iAnchor);
+						CBall pBall = pSpring.pBall;
+
+						if (!pSpring.anchor.equals(pBall.pos)) {		// else we get degenerate cylinders (i.e. height==0), POV doesn't like that
+							fid.println("cylinder\n" +
+									"{\n" +
+									(plotIntermediate ?
+											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.posSave[NSave-ii].x*1e6, pBall.posSave[NSave-ii].y*1e6, pBall.posSave[NSave-ii].z*1e6) :
+												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6)) +
+												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pSpring.anchor.x*1e6, pSpring.anchor.y*1e6, pSpring.anchor.z*1e6) +
+												String.format("\t%10.3f\n", pBall.radius*1e5) +	// Note 1e5 instead of 1e6 TODO
+												"\ttexture{\n" +
+												"\t\tpigment{\n" +
+												String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 1.0, 1.0, 0.0) +		//Anchoring springs are yellow
+												"\t\t}\n" +
+												"\t\tfinish{\n" +
+												"\t\t\tambient .2\n" +
+												"\t\t\tdiffuse .6\n" +
+												"\t\t}\n" +
+												"\t}\n" +
+									"}\n");
+						}
+					}
+					// Done with this time interval
+				} catch(IOException E) {
+					E.printStackTrace();
+				} finally {
+					fid.close();
 				}
 			}
-
-			// Build stick spring array
-			for(int iStick = 0; iStick < stickSpringArray.size(); iStick++) {
-				fid.println("// Sticking spring no. " + iStick);
-				CStickSpring pSpring = stickSpringArray.get(iStick);
-				CBall pBall = pSpring.ballArray[0];
-				CBall pBallNext = pSpring.ballArray[1];
-
-				fid.println("cylinder\n" +
-						"{\n" +
-						String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
-						String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBallNext.pos.x*1e6, pBallNext.pos.y*1e6, pBallNext.pos.z*1e6) +
-						String.format("\t%10.3f\n", pBall.radius*1e5) +
-						"\ttexture{\n" +
-						"\t\tpigment{\n" +
-						String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 0.0, 1.0, 0.0) +		//Sticking springs are green
-						"\t\t}\n" +
-						"\t\tfinish{\n" +
-						"\t\t\tambient .2\n" +
-						"\t\t\tdiffuse .6\n" +
-						"\t\t}\n" +
-						"\t}\n" +
-						"}\n");
-			}
-
-			//Build anchor spring array
-			for(int iAnchor = 1; iAnchor < anchorSpringArray.size(); iAnchor++) {
-				fid.println("// Anchor spring no. " + iAnchor);
-				CAnchorSpring pSpring = anchorSpringArray.get(iAnchor);
-				CBall pBall = pSpring.pBall;
-
-				if (!pSpring.anchor.equals(pBall.pos)) {		// else we get degenerate cylinders (i.e. height==0), POV doesn't like that
-					fid.println("cylinder\n" +
-							"{\n" +
-							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pBall.pos.x*1e6, pBall.pos.y*1e6, pBall.pos.z*1e6) +
-							String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pSpring.anchor.x*1e6, pSpring.anchor.y*1e6, pSpring.anchor.z*1e6) +
-							String.format("\t%10.3f\n", pBall.radius*1e5) +	// Note 1e5 instead of 1e6 TODO
-							"\ttexture{\n" +
-							"\t\tpigment{\n" +
-							String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 1.0, 1.0, 0.0) +		//Anchoring springs are yellow
-							"\t\t}\n" +
-							"\t\tfinish{\n" +
-							"\t\t\tambient .2\n" +
-							"\t\t\tdiffuse .6\n" +
-							"\t\t}\n" +
-							"\t}\n" +
-							"}\n");
-				}
-			}
-			// Done, clean up and catch errors
-		} catch(IOException E) {
-			E.printStackTrace();
-		} finally {
-			fid.close();
-		}
-
+		
 	}
 	
-	public void POV_Plot() {
+	public void POV_Plot(boolean plotIntermediate) {
 		if(!(new File(name + "/image")).exists()) {
 			new File(name + "/image").mkdir();
 		}
-		String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter) + "." + String.format("%04d",growthIter) + " +O../" + name + "/image/pov_" + String.format("m%04dg%04d", movementIter, growthIter) + " +A -J";
-		LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; cd ..", setting.waitForFinish,setting.echoCommand);		// 1st true == wait for process to finish, 2nd true == tell command
-		String fileName = String.format("%s/output/pov.%04d.%04d.inc", name, movementIter,growthIter);
-		if((new File(fileName)).exists()) new File(fileName).delete();
+		int NIter;
+		if(plotIntermediate)	NIter = 1+ballArray.get(0).posSave.length;
+		else					NIter = 1;
+		for(int ii=0; ii<NIter; ii++) {
+			String imageName = String.format("pov_m%04dg%04d", movementIter-ii, growthIter);
+			String incName = String.format("pov.%04d.%04d.inc", movementIter-ii,growthIter);
+			String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter-ii) + "." + String.format("%04d",growthIter) + " +O../" + name + "/image/" + imageName + " +A -J";
+			LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; rm ./output/" + incName + " ; cd ..", setting.waitForFinish,setting.echoCommand);
+//			if((new File(fileName)).exists()) new File(fileName).delete();
+		}
 	}
 }
 

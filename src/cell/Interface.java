@@ -22,11 +22,17 @@ public class Interface {
 				return;
 			}
 			//
-			if(arg.equalsIgnoreCase("enableplot")) 	{setting.enablePlot = true;} else
-			if(arg.equalsIgnoreCase("disableplot")) {setting.enablePlot = false;} else
+			if(arg.equalsIgnoreCase("enableplot")) 	{setting.plot = true;} else
+			if(arg.equalsIgnoreCase("disableplot")) {setting.plot = false;} else
 			//
-			if(arg.equalsIgnoreCase("disablestart")) {setting.enableStart = false;} else
-			if(arg.equalsIgnoreCase("enablestart")) {setting.enableStart = true;} else
+			if(arg.equalsIgnoreCase("disablestart")) {setting.start = false;} else
+			if(arg.equalsIgnoreCase("enablestart")) {setting.start = true;} else
+			//
+			if(arg.equalsIgnoreCase("enablewaitforfinish")) {setting.waitForFinish = true;} else
+			if(arg.equalsIgnoreCase("disablewaitforfinish")) {setting.waitForFinish = false;} else
+			//
+			if(arg.equalsIgnoreCase("enableechocommand")) {setting.echoCommand = true;} else
+			if(arg.equalsIgnoreCase("disableechocommand")) {setting.echoCommand = false;} else
 			//
 			if(arg.equalsIgnoreCase("defaultparameter")) {setting.defaultParameter = true;} else
 			if(arg.equalsIgnoreCase("load")) {
@@ -45,7 +51,7 @@ public class Interface {
 		}
 
 		// Start model if requested
-		if(setting.enableStart)	new Run(model);
+		if(setting.start)	new Run(model);
 		
 		// Render POV things
 		if(setting.postPlot) {
