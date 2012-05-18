@@ -637,14 +637,14 @@ public class CModel {
 		int newCell = 0;
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
-			CCell pCell = cellArray.get(iCell);
-			double mass = pCell.GetMass();
+			CCell pMother = cellArray.get(iCell);
+			double mass = pMother.GetMass();
 
 			// Random growth
 			mass *= (0.95+rand.Double()/5.0);
 			// Syntrophic growth
-			for(CCell pStickCell : pCell.stickCellArray) {
-				if((pCell.type==0 && pStickCell.type!=0) || (pCell.type!=0 && pStickCell.type==0)) {
+			for(CCell pStickCell : pMother.stickCellArray) {
+				if((pMother.type==0 && pStickCell.type!=0) || (pMother.type!=0 && pStickCell.type==0)) {
 					// The cell types are different on the other end of the spring
 					mass *= 1.2;
 					break;
@@ -654,98 +654,97 @@ public class CModel {
 			// Cell growth or division
 			if(mass>MCellMax) {
 				newCell++;
-				if(pCell.type==0) {
+				if(pMother.type==0) {
 					// Come up with a nice direction in which to place the new cell
 					Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());			// TODO make the displacement go into any direction			
 					direction.normalise();
-					double displacement = pCell.ballArray[0].radius;
+					double displacement = pMother.ballArray[0].radius;
 					// Make a new, displaced cell
-					CCell pNew = new CCell(0,															// Same type as pCell
-							pCell.ballArray[0].pos.x - displacement * direction.x,						// The new location is the old one plus some displacement					
-							pCell.ballArray[0].pos.y - displacement * direction.y,	
-							pCell.ballArray[0].pos.z - displacement * direction.z,
-							pCell.filament,this);														// Same filament boolean as pCell and pointer to the model
+					CCell pDaughter = new CCell(0,															// Same type as pCell
+							pMother.ballArray[0].pos.x - displacement * direction.x,						// The new location is the old one plus some displacement					
+							pMother.ballArray[0].pos.y - displacement * direction.y,	
+							pMother.ballArray[0].pos.z - displacement * direction.z,
+							pMother.filament,this);														// Same filament boolean as pCell and pointer to the model
 					// Set mass for both cells
-					pNew.SetMass(mass/2.0);		// Radius is updated in this method
-					pCell.SetMass(mass/2.0);
+					pDaughter.SetMass(mass/2.0);		// Radius is updated in this method
+					pMother.SetMass(mass/2.0);
 					// Set properties for new cell
-					pNew.ballArray[0].vel = 	new Vector3d(pCell.ballArray[0].vel);
-					pNew.ballArray[0].force = 	new Vector3d(pCell.ballArray[0].force);
-					pNew.colour =				pCell.colour;
-					pNew.mother = 				pCell;
+					pDaughter.ballArray[0].vel = 	new Vector3d(pMother.ballArray[0].vel);
+					pDaughter.ballArray[0].force = 	new Vector3d(pMother.ballArray[0].force);
+					pDaughter.colour =				pMother.colour;
+					pDaughter.mother = 				pMother;
 					// Displace old cell
-					pCell.ballArray[0].pos.plus(  direction.times( displacement )  );
+					pMother.ballArray[0].pos.plus(  direction.times( displacement )  );
 					// Contain cells to y dimension of domain
-					if(pCell.ballArray[0].pos.y < pCell.ballArray[0].radius) {pCell.ballArray[0].pos.y = pCell.ballArray[0].radius;};
-					if(pNew.ballArray[0].pos.y  < pNew.ballArray[0].radius)  {pNew.ballArray[0].pos.y = pNew.ballArray[0].radius;};
+					if(pMother.ballArray[0].pos.y 	< pMother.ballArray[0].radius) 		{pMother.ballArray[0].pos.y 	= pMother.ballArray[0].radius;};
+					if(pDaughter.ballArray[0].pos.y < pDaughter.ballArray[0].radius)  	{pDaughter.ballArray[0].pos.y 	= pDaughter.ballArray[0].radius;};
 					// Set filament springs
-					if(pNew.filament) {
-						pNew.Stick(pCell);		// but why? TODO
+					if(pDaughter.filament) {
+						pDaughter.Stick(pMother);		// but why? TODO
 					}
 				} else {
-					CBall pBall0 = pCell.ballArray[0];
-					CBall pBall1 = pCell.ballArray[1];
-					//Direction
-					Vector3d direction = pBall1.pos.minus( pBall0.pos );
+					CBall pMotherBall0 = pMother.ballArray[0];
+					CBall pMotherBall1 = pMother.ballArray[1];
+					// Direction
+					Vector3d direction = pMotherBall1.pos.minus( pMotherBall0.pos );
 					direction.normalise();
-					
-					double displacement; 																// Should be improved/made to make sense (TODO)
-					if(pCell.type==1) {
-						displacement = pBall0.radius*Math.pow(2.0,-0.666666);							// A very strange formula: compare our radius to the C++ equation for Rpos and you'll see it's the same
+					// Displacement
+					double displacement; 																		// Should be improved/made to make sense (TODO)
+					if(pMother.type==1) {
+						displacement = pMotherBall0.radius*Math.pow(2.0,-0.666666);								// A very strange formula: compare our radius to the C++ equation for Rpos and you'll see it's the same
 					} else {
-						displacement = pBall1.radius/2.0;
+						displacement = pMotherBall1.radius/2.0;
 					}
-					
 					// Make a new, displaced cell
-					Vector3d middle = pBall1.pos.plus(pBall0.pos).divide(2.0); 
-					CCell pNew = new CCell(pCell.type,													// Same type as pCell
-							middle.x+	  displacement*direction.x,										// First ball					
-							middle.y+1.01*displacement*direction.y,										// possible TODO, ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
+					Vector3d middle = pMotherBall1.pos.plus(pMotherBall0.pos).divide(2.0); 
+					CCell pDaughter = new CCell(pMother.type,													// Same type as pCell
+							middle.x+	  displacement*direction.x,												// First ball. First ball and second ball were swapped in MATLAB and possibly C++					
+							middle.y+1.01*displacement*direction.y,												// possible TODO, ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
 							middle.z+	  displacement*direction.z,
-							pBall1.pos.x,																// Second ball
-							pBall1.pos.y,
-							pBall1.pos.z,
-							pCell.filament,this);														// Same filament boolean as pCell and pointer to the model
+							pMotherBall1.pos.x,																	// Second ball
+							pMotherBall1.pos.y,
+							pMotherBall1.pos.z,
+							pMother.filament,this);																// Same filament boolean as pCell and pointer to the model
 					// Set mass for both cells
-					pNew.SetMass(mass/2.0);
-					pCell.SetMass(mass/2.0);
+					pDaughter.SetMass(mass/2.0);
+					pMother.SetMass(mass/2.0);
 					// Displace old cell, 2nd ball
-					pBall1.pos = middle.minus(direction.times(displacement));
-					pCell.springArray[0].ResetRestLength();
+					pMotherBall1.pos = middle.minus(direction.times(displacement));
+					pMother.springArray[0].ResetRestLength();
 					// Contain cells to y dimension of domain
 					for(int iBall=0; iBall<2; iBall++) {
-						if(pCell.ballArray[iBall].pos.y < pCell.ballArray[iBall].radius) {pCell.ballArray[0].pos.y = pCell.ballArray[0].radius;};
-						if( pNew.ballArray[iBall].pos.y <  pNew.ballArray[iBall].radius) { pNew.ballArray[0].pos.y =  pNew.ballArray[0].radius;};
+						if(pMother.ballArray[iBall].pos.y 		< pMother.ballArray[iBall].radius) 		{pMother.ballArray[0].pos.y 	= pMother.ballArray[0].radius;};
+						if( pDaughter.ballArray[iBall].pos.y 	< pDaughter.ballArray[iBall].radius) 	{pDaughter.ballArray[0].pos.y 	= pDaughter.ballArray[0].radius;};
 					}
 					// Set properties for new cell
 					for(int iBall=0; iBall<2; iBall++) {
-						pNew.ballArray[iBall].vel = 	new Vector3d(pCell.ballArray[iBall].vel);
-						pNew.ballArray[iBall].force = 	new Vector3d(pCell.ballArray[iBall].force);
+						pDaughter.ballArray[iBall].vel = 	new Vector3d(pMother.ballArray[iBall].vel);
+						pDaughter.ballArray[iBall].force = 	new Vector3d(pMother.ballArray[iBall].force);
 					}
-					pNew.colour =	pCell.colour;
-					pNew.mother = 	pCell;
-					pNew.springArray[0].restLength = pCell.springArray[0].restLength;
+					pDaughter.colour =	pMother.colour;
+					pDaughter.mother = 	pMother;
+					pDaughter.springArray[0].restLength = pMother.springArray[0].restLength;
 
 					// Set filament springs
-					if(pNew.filament) {
+					if(pDaughter.filament) {
 						for(CFilSpring pFil : filSpringArray) {
-							if( pFil.big_ballArray[0]== pBall0) {
-								pFil.big_ballArray[0] = pNew.ballArray[0];}
-							if( pFil.big_ballArray[1]== pBall0) {
-								pFil.big_ballArray[1] = pNew.ballArray[0];}
-							if( pFil.small_ballArray[0]== pBall1) {
-								pFil.small_ballArray[0] = pNew.ballArray[1];}
-							if( pFil.small_ballArray[1]== pBall1) {
-								pFil.small_ballArray[1] = pNew.ballArray[1];}
+							if( pFil.big_ballArray[0]== pMotherBall0) {
+								pFil.big_ballArray[0] = pDaughter.ballArray[0];}
+							if( pFil.big_ballArray[1]== pMotherBall0) {
+								pFil.big_ballArray[1] = pDaughter.ballArray[0];}
+							if( pFil.small_ballArray[0]== pMotherBall1) {
+								pFil.small_ballArray[0] = pDaughter.ballArray[1];}
+							if( pFil.small_ballArray[1]== pMotherBall1) {
+								pFil.small_ballArray[1] = pDaughter.ballArray[1];}
 						}
-						new CFilSpring(pCell,pNew);
+						new CFilSpring(pMother,pDaughter);
 					}
 				}
 
 			} else {		
 				// Simply increase mass and reset spring
-				pCell.SetMass(mass);
-				if(pCell.type>0) pCell.springArray[0].ResetRestLength();
+				pMother.SetMass(mass);
+				if(pMother.type>0) pMother.springArray[0].ResetRestLength();
 			}
 		}
 		return newCell;

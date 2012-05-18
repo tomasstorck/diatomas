@@ -7,18 +7,20 @@ import random.rand;
 public class Run {
 
 	public Run(CModel model) throws Exception{
+		// Change default parameters
+		
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
 		
 		if(model.growthIter==0 && model.movementIter==0) {
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				new CCell(rand.Int(model.NType+1), 	// 0, 1 or 2 by default (specified number is exclusive)
+				new CCell(rand.Int(model.NType+1), 					// 0, 1 or 2 by default (specified number is exclusive)
 						(0.25*rand.Double()+0.25)*model.L.x, 		// Anywhere between 0 and Lx
 						1e-5, 										// Standard height
 						(0.25*rand.Double()+0.25)*model.L.z,		// Anywhere between 0 and Lz
 						true,										// With filament
-						model);										// And a pointer to the model
+						model);										// And a pointer to the model1
 			}
 			model.Write(model.cellArray.size() + " initial cells created","iter");
 		}

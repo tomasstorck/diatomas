@@ -1,5 +1,8 @@
 package cell;
 
+import java.io.File;
+import java.io.FilenameFilter;
+
 public class Interface {
 
 	public static void main(String[] args) throws Exception{
@@ -25,8 +28,8 @@ public class Interface {
 			if(arg.equalsIgnoreCase("enableplot")) 	{setting.plot = true;} else
 			if(arg.equalsIgnoreCase("disableplot")) {setting.plot = false;} else
 			//
-			if(arg.equalsIgnoreCase("enableplotintermediate")) {setting.plotIntermediate = true;} else
-			if(arg.equalsIgnoreCase("disableplotintermediate")) {setting.plotIntermediate = false;} else
+			if(arg.equalsIgnoreCase("enableplotintermediate") || arg.equalsIgnoreCase("enableintermediateplot")) {setting.plotIntermediate = true;} else
+			if(arg.equalsIgnoreCase("disableplotintermediate") || arg.equalsIgnoreCase("disableintermediateplot")) {setting.plotIntermediate = false;} else
 			//
 			if(arg.equalsIgnoreCase("disablestart")) {setting.start = false;} else
 			if(arg.equalsIgnoreCase("enablestart")) {setting.start = true;} else
@@ -37,14 +40,18 @@ public class Interface {
 			if(arg.equalsIgnoreCase("enableechocommand")) {setting.echoCommand = true;} else
 			if(arg.equalsIgnoreCase("disableechocommand")) {setting.echoCommand = false;} else
 			//
-			if(arg.equalsIgnoreCase("defaultparameter")) {setting.defaultParameter = true;} else
+			if(arg.equalsIgnoreCase("enabledefaultparameter")) {setting.defaultParameter = true;} else
+			if(arg.equalsIgnoreCase("disabledefaultparameter")) {setting.defaultParameter = false;} else
+			//
 			if(arg.equalsIgnoreCase("load")) {
 				setting.defaultParameter = false;
 				ii++;			// Look at the next argument
 				model.Write("Loading " + args[ii], "iter");
-				model.Load(args[ii]);
+				model.Load(args[ii]);} else
 			//
-			} else {model.name = arg;}	// If not any of the above, it must be the name
+			if(arg.equalsIgnoreCase("enablepostplot")) {setting.postPlot = true;} else
+			if(arg.equalsIgnoreCase("disablepostplot")) {setting.postPlot = false;}
+			else {model.name = arg;}	// If not any of the above, it must be the name
 			//
 		}
 
@@ -52,13 +59,32 @@ public class Interface {
 		if(setting.defaultParameter == true) {
 			model.LoadDefaultParameters();
 		}
-
+		
 		// Start model if requested
 		if(setting.start)	new Run(model);
-		
+
 		// Render POV things
 		if(setting.postPlot) {
-			// TODO
+			// Open directory
+			String name = model.name;
+			File dir = new File(name + "/output/");
+			// Construct filter
+			FilenameFilter filter = new FilenameFilter() {
+			    public boolean accept(File dir, String name) {
+//			        return !name.startsWith(".");
+			    	return name.endsWith(".mat");
+			    }
+			};
+			// List filtered files
+			String[] files = dir.list(filter);
+			for(String fileName : files) { 
+				model.Write("Loading " + fileName,"",true);
+				model = null;
+				model = new CModel(name);
+				model.Load(name + "/output/" + fileName);
+				model.POV_Write(setting.plotIntermediate);
+				model.POV_Plot(setting.plotIntermediate);	
+			}
 		}
 	}
 }

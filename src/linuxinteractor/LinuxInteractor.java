@@ -26,9 +26,11 @@ public class LinuxInteractor {
 				// To capture output from the shell
 				InputStream shellIn = shell.getInputStream();
 
-				// Wait for the shell to finish and get the return code
-				int shellExitStatus = shell.waitFor();
-				System.out.println("Exit status " + shellExitStatus);
+//				// Wait for the shell to finish and get the return code
+//				int shellExitStatus = shell.waitFor();
+//				System.out.println("Exit status " + shellExitStatus);
+				// Wait for the shell to finish
+				shell.waitFor();
 
 				response = convertStreamToStr(shellIn);
 
