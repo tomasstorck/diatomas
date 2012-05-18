@@ -82,6 +82,8 @@ public class Interface {
 				model = null;
 				model = new CModel(name);
 				model.Load(name + "/output/" + fileName);
+				// Fix name if it was run from another folder
+				model.name = name;
 				model.POV_Write(setting.plotIntermediate);
 				model.POV_Plot(setting.plotIntermediate);	
 			}

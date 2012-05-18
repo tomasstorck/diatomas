@@ -27,7 +27,16 @@ public class Run {
 
 		while(true) {
 			// Reset the random seed
-			rand.Seed(model.randomSeed*(2+model.growthIter));				// + something because if growthIter == 0, randomSeed doesn't matter. 
+			rand.Seed(model.randomSeed*(2+model.growthIter));				// + something because if growthIter == 0, randomSeed doesn't matter.
+			
+			// Grow cells
+			{int newCell = model.GrowCell();
+			model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");}
+
+			// Advance growth
+			model.growthIter++;
+			model.growthTime += model.growthTimeStep;
+
 			// Movement
 			model.Write("Starting movement calculations","iter");
 			int nstp = model.Movement();
@@ -66,14 +75,6 @@ public class Run {
 				model.POV_Write(setting.plotIntermediate);
 				model.POV_Plot(setting.plotIntermediate); 
 			}
-			
-			// Grow cells
-			{int newCell = model.GrowCell();
-			model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");}
-			
-			// Advance growth
-			model.growthIter++;
-			model.growthTime += model.growthTimeStep;
 			
 			// And finally: save stuff
 			model.Write("Saving model as .mat file", "iter");
