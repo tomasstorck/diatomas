@@ -61,7 +61,8 @@ public class MatFileIncrementalWriter
     private WritableByteChannel channel = null;
     
     private boolean headerWritten = false;
-    private boolean isStillValid = false;
+    @SuppressWarnings("unused")
+	private boolean isStillValid = false;
     private Set<String> varNames = new TreeSet<String>();
 	/**
      * Creates a writer to a file given the filename.

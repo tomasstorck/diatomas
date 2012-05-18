@@ -44,6 +44,7 @@ import java.util.zip.InflaterInputStream;
  * @author Wojciech Gradkowski (<a href="mailto:wgradkowski@gmail.com">wgradkowski@gmail.com</a>)
  *
  */
+@SuppressWarnings("unused")
 public class MatFileReader
 {
     public static final int MEMORY_MAPPED_FILE = 1;
@@ -1034,7 +1035,7 @@ public class MatFileReader
                 buf.position( buf.position() + padding );
             }
         }
-        public byte[] readToByteArray() throws IOException
+		public byte[] readToByteArray() throws IOException
         {
             //allocate memory for array elements
             int elements = size/sizeOf();

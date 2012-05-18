@@ -788,14 +788,14 @@ public class CModel {
 			CCell pCell1 = collisionArray.get(ii+1);
 			// Check if already stuck, don't stick if that is the case
 			for(CStickSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
-				if((pSpring.ballArray[0].pCell.equals(pCell0) && pSpring.ballArray[0].pCell.equals(pCell1)) || (pSpring.ballArray[0].pCell.equals(pCell1) && pSpring.ballArray[0].pCell.equals(pCell0))) {
+				if((pSpring.ballArray[0].pCell.equals(pCell0) && pSpring.ballArray[1].pCell.equals(pCell1)) || (pSpring.ballArray[0].pCell.equals(pCell1) && pSpring.ballArray[1].pCell.equals(pCell0))) {
 					setStick = false;
-					break;										// We've found a duplicate, don't stick this one
 				}
 			}
 			if(setStick) {
 				pCell0.Stick(pCell1);
-				counter++;}
+				counter++;
+			}
 		}
 		return counter;
 	}
@@ -1165,6 +1165,7 @@ public class CModel {
 		plotIntermediate = false;		// Don't plot intermediate values for now, will revert later.
 		
 		//////////////////////////////
+		
 		// Make output folder if it doesn't exist already
 		if(!(new File(name + "/output")).exists())	new File(name + "/output").mkdir();
 		PrintWriter fid=null;
@@ -1176,6 +1177,24 @@ public class CModel {
 					if((new File(fileName)).exists()) new File(fileName).delete();
 					// Write new inc file
 					fid = new PrintWriter(new FileWriter(fileName,true));		// True is for append // Not platform independent TODO
+					// Include text, calibrated for tomas_persp_3D_java.pov 
+					fid.println("text \n{\n" +           
+					String.format("\tttf \"timrom.ttf\" \"Movement iter: %05d\" 0.05, 0.1*x\n",movementIter-ii) +
+				    "\tpigment {color rgb <0.000, 0.000, 0.000>  }\n" +     
+			        "\tscale <60,60,60>\n" + 
+			        "\ttranslate <-1200,1340,-75>\n" +  
+			        "\trotate <15,45,0>\n" +  
+			        "\tno_shadow" +
+					"}\n" +
+					"text \n{\n" +           
+					String.format("\tttf \"timrom.ttf\" \"Growth iter:     %05d\" 0.05, 0.1*x\n",growthIter) +
+				    "\tpigment {color rgb <0.000, 0.000, 0.000>  }\n" +     
+			        "\tscale <60,60,60>\n" + 
+			        "\ttranslate <-1200,1260,-75>\n" +  
+			        "\trotate <15,45,0>\n" +
+			        "\tno_shadow" +
+					"}\n");
+					
 					// Build spheres and rods
 					for(int iCell=0; iCell<cellArray.size(); iCell++) {
 						CCell pCell = cellArray.get(iCell);
@@ -1371,7 +1390,6 @@ public class CModel {
 			String incName = String.format("pov.%04d.%04d.inc", movementIter-ii,growthIter);
 			String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter-ii) + "." + String.format("%04d",growthIter) + " +O../" + name + "/image/" + imageName + " +A -J";
 			LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; rm ./output/" + incName + " ; cd ..", setting.waitForFinish,setting.echoCommand);
-//			if((new File(fileName)).exists()) new File(fileName).delete();
 		}
 	}
 }

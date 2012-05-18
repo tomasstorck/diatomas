@@ -25,6 +25,9 @@ public class Interface {
 			if(arg.equalsIgnoreCase("enableplot")) 	{setting.plot = true;} else
 			if(arg.equalsIgnoreCase("disableplot")) {setting.plot = false;} else
 			//
+			if(arg.equalsIgnoreCase("enableplotintermediate")) {setting.plotIntermediate = true;} else
+			if(arg.equalsIgnoreCase("disableplotintermediate")) {setting.plotIntermediate = false;} else
+			//
 			if(arg.equalsIgnoreCase("disablestart")) {setting.start = false;} else
 			if(arg.equalsIgnoreCase("enablestart")) {setting.start = true;} else
 			//
