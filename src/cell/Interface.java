@@ -3,7 +3,7 @@ package cell;
 import java.io.File;
 import java.io.FilenameFilter;
 
-public class Interface {
+public class Interface{
 
 	public static void main(String[] args) throws Exception{
 		System.out.println("DIATOMAS Java model");
@@ -51,18 +51,15 @@ public class Interface {
 			//
 			if(arg.equalsIgnoreCase("enablepostplot")) {setting.postPlot = true;} else
 			if(arg.equalsIgnoreCase("disablepostplot")) {setting.postPlot = false;}
-			else {model.name = arg;}	// If not any of the above, it must be the name
+			else {model.name=arg;}	// If not any of the above, it must be the name
 			//
 		}
-
-		// Set defaults if not called
-		if(setting.defaultParameter == true) {
-			model.LoadDefaultParameters();
-		}
 		
+		// Done analysing input arguments
+		// Set defaults if not called
+		if(setting.defaultParameter == true) model.LoadDefaultParameters();
 		// Start model if requested
 		if(setting.start)	new Run(model);
-
 		// Render POV things
 		if(setting.postPlot) {
 			// Open directory
@@ -77,6 +74,7 @@ public class Interface {
 			};
 			// List filtered files
 			String[] files = dir.list(filter);
+			if(files==null) throw new Exception("No files found in directory " + name + "/output/");
 			for(String fileName : files) { 
 				model.Write("Loading " + fileName,"",true);
 				model = null;

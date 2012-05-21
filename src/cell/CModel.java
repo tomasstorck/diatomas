@@ -770,10 +770,8 @@ public class CModel {
 	
 	public int BuildAnchor(ArrayList<CCell> collisionArray) {
 		// Make unique
-		for(CAnchorSpring pSpring : anchorSpringArray) {
-			collisionArray.remove(pSpring.pBall.pCell);
-			System.out.println("looped");
-		}
+		for(CAnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.pBall.pCell);
+		
 		// Anchor the non-stuck, collided cells to the ground
 		for(CCell pCell : collisionArray) pCell.Anchor();
 		return anchorSpringArray.size();

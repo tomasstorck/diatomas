@@ -12,6 +12,7 @@ public class CAnchorSpring {
 		pBall = ball;
 		anchor = new Vector3d(ball.pos.x, 0, ball.pos.z);
 		K = ball.pCell.pModel.Ka;
+		restLength = ball.radius;
 		ball.pCell.pModel.anchorSpringArray.add(this);
 	}
 	
