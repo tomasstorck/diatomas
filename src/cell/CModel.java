@@ -115,19 +115,19 @@ public class CModel {
 	///////////////////////
 	// Get and Set stuff //
 	///////////////////////
-	public CBall[] BallArray() {
-		CBall[] ballArray = new CBall[NBall];
-		int iBall = 0;
-		for(int iCell=0; iCell < cellArray.size(); iCell++) {
-			CCell cell = cellArray.get(iCell);
-			int NBallInCell = (cell.type==0) ? 1 : 2;
-			for(int iBallInCell=0; iBallInCell < NBallInCell; iBallInCell++) {
-				ballArray[iBall] = cell.ballArray[iBallInCell];
-				iBall++;
-			}
-		}
-		return ballArray;
-	}
+//	public CBall[] BallArray() {
+//		CBall[] ballArray = new CBall[NBall];
+//		int iBall = 0;
+//		for(int iCell=0; iCell < cellArray.size(); iCell++) {
+//			CCell cell = cellArray.get(iCell);
+//			int NBallInCell = (cell.type==0) ? 1 : 2;
+//			for(int iBallInCell=0; iBallInCell < NBallInCell; iBallInCell++) {
+//				ballArray[iBall] = cell.ballArray[iBallInCell];
+//				iBall++;
+//			}
+//		}
+//		return ballArray;
+//	}
 	
 	/////////////////
 	// Log writing //
@@ -188,11 +188,10 @@ public class CModel {
 	public ArrayList<CCell> DetectCellCollision_Simple() {				// Using ArrayList, no idea how big this one will get
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
 		
-		CBall[] ballArray = BallArray();
 		for(int iBall=0; iBall<NBall; iBall++) {						// If we stick to indexing, it'll be easier to determine which cells don't need to be analysed
-			CBall ball = ballArray[iBall];
+			CBall ball = ballArray.get(iBall);
 			for(int iBall2 = iBall+1; iBall2<NBall; iBall2++) {
-				CBall ball2 = ballArray[iBall2];
+				CBall ball2 = ballArray.get(iBall2);
 				if(ball.cell.arrayIndex!=ball2.cell.arrayIndex) {
 					Vector3d diff = ball2.pos.minus(ball.pos);
 					if(Math.abs(diff.length()) - ball.radius - ball2.radius < 0) {
@@ -330,7 +329,7 @@ public class CModel {
 		Vector ystart = new Vector(nvar,0.0);
 
 		int ii=0;											// Determine initial value vector
-		for(CBall ball : BallArray()) { 
+		for(CBall ball : ballArray) { 
 			ystart.set(ii++, ball.pos.x);
 			ystart.set(ii++, ball.pos.y);
 			ystart.set(ii++, ball.pos.z);
@@ -344,7 +343,7 @@ public class CModel {
 		int nstp = ode.integrate();
 		for(int iTime=0; iTime<out.nsave-1; iTime++) {		// Save all intermediate results to the save variables
 			int iVar = 0;
-			for(CBall ball : BallArray()) {
+			for(CBall ball : ballArray) {
 				ball.posSave[iTime].x = out.ysave.get(iVar++,iTime);
 				ball.posSave[iTime].y = out.ysave.get(iVar++,iTime);
 				ball.posSave[iTime].z = out.ysave.get(iVar++,iTime);
@@ -355,7 +354,7 @@ public class CModel {
 		}
 		{int iVar = 0;										// Only the final value is stored in the pos and vel variables
 		int iTime = out.nsave;
-		for(CBall ball : BallArray()) {
+		for(CBall ball : ballArray) {
 			ball.pos.x = out.ysave.get(iVar++,iTime);
 			ball.pos.y = out.ysave.get(iVar++,iTime);
 			ball.pos.z = out.ysave.get(iVar++,iTime);
@@ -369,7 +368,7 @@ public class CModel {
 	public Vector CalculateForces(double t, Vector yode) {	// This function gets called again and again --> not very efficient to import/export every time TODO
 		// Read data from y
 		int ii=0; 				// Where we are in yode
-		for(CBall ball : BallArray()) {
+		for(CBall ball : ballArray) {
 			ball.pos.x = 	yode.get(ii++);
 			ball.pos.y = 	yode.get(ii++);
 			ball.pos.z = 	yode.get(ii++);
@@ -520,7 +519,7 @@ public class CModel {
 			}
 		}
 		// Calculate gravity+bouyancy, normal forces and drag
-		for(CBall ball : BallArray()) {
+		for(CBall ball : ballArray) {
 			// Contact forces
 			double y = ball.pos.y;
 			double r = ball.radius;
@@ -618,7 +617,7 @@ public class CModel {
 		// Return results
 		Vector dydx = new Vector(yode.size());
 		ii=0;
-		for(CBall ball : BallArray()) {
+		for(CBall ball : ballArray) {
 				double M = ball.mass;
 				dydx.set(ii++,ball.vel.x);			// dpos/dt = v;
 				dydx.set(ii++,ball.vel.y);
