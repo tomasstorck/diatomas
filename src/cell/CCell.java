@@ -91,19 +91,19 @@ public class CCell {
 	}
 	
 
-	public boolean IsFilament(CCell pCell) {
-		if((mother!=null && mother.equals(pCell)) || (pCell.mother!=null && pCell.mother.equals(this))) return true;
+	public boolean IsFilament(CCell cell) {
+		if((mother!=null && mother.equals(cell)) || (cell.mother!=null && cell.mother.equals(this))) return true;
 		else return false;
 	}
 	
-	public void Stick(CCell pCell) {
+	public void Stick(CCell cell) {
 		// Determine how many sticking springs we need
 		int NSpring;
 		CCell pA, pB;
-		if(type == 0 && pCell.type == 0) 		{NSpring = 1; pA = this; 	pB = pCell;}	// Doesn't matter which one goes first
-		else if(type > 0 && pCell.type == 0) 	{NSpring = 2; pA = pCell; 	pB = this;}		// Sphere goes first (see indexing next paragraph)
-		else if(type == 0) 						{NSpring = 2; pA = this; 	pB = pCell;}	// Sphere goes first
-		else 									{NSpring = 4; pA = this; 	pB = pCell;} 	// Doesn't matter
+		if(type == 0 && cell.type == 0) 		{NSpring = 1; pA = this; 	pB = cell;}	// Doesn't matter which one goes first
+		else if(type > 0 && cell.type == 0) 	{NSpring = 2; pA = cell; 	pB = this;}		// Sphere goes first (see indexing next paragraph)
+		else if(type == 0) 						{NSpring = 2; pA = this; 	pB = cell;}	// Sphere goes first
+		else 									{NSpring = 4; pA = this; 	pB = cell;} 	// Doesn't matter
 		
 		CStickSpring[] stickArray = new CStickSpring[NSpring];
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, with input balls
@@ -128,13 +128,13 @@ public class CCell {
 //		for(int iSpring = 0; iSpring < stickArray.length; iSpring++) {		// Already done in constructor
 //			pModel.stickSpringArray.add(stickArray[iSpring]);
 //		}
-		this.stickCellArray.add(pCell);
-		pCell.stickCellArray.add(this);
+		this.stickCellArray.add(cell);
+		cell.stickCellArray.add(this);
 	}
 	
 	public void Stick(int otherCellIndex) {
-		CCell pCell = pModel.cellArray.get(otherCellIndex);
-		Stick(pCell);
+		CCell cell = pModel.cellArray.get(otherCellIndex);
+		Stick(cell);
 	}
 	
 	public double GetMass() {
@@ -161,8 +161,8 @@ public class CCell {
 	public ArrayList<CCell> StickCellArray() {			// Currently used only for loading. Using the maintained stickCellArray field is much more CPU efficient.
 		ArrayList<CCell> stickCellArray = new ArrayList<CCell>(1);
 		for(CStickSpring pSpring : pModel.stickSpringArray) {
-			CCell pCell = pSpring.ballArray[0].pCell;
-			if(this.equals(pCell)) stickCellArray.add(pCell);
+			CCell cell = pSpring.ballArray[0].cell;
+			if(this.equals(cell)) stickCellArray.add(cell);
 		}
 		return stickCellArray;
 	}

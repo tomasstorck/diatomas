@@ -29,12 +29,12 @@ public class CFilSpring {
 	/////////////////////////////
 	
 	public void ResetRestLength() {			// Note that only bigSpring is reset here, as was in C++ model (TODO)
-		CCell pCell = big_ballArray[0].pCell;
-		CCell pCell2 = big_ballArray[1].pCell;
-		if(pCell.type>0 && pCell2.type>0) {
-			double error = big_restLength - pCell.springArray[0].restLength - pCell2.springArray[0].restLength;
+		CCell cell = big_ballArray[0].cell;
+		CCell cell2 = big_ballArray[1].cell;
+		if(cell.type>0 && cell2.type>0) {
+			double error = big_restLength - cell.springArray[0].restLength - cell2.springArray[0].restLength;
 			if(error < 0) return;
-			big_restLength = 1.5*(pCell.springArray[0].restLength + pCell2.springArray[0].restLength);
+			big_restLength = 1.5*(cell.springArray[0].restLength + cell2.springArray[0].restLength);
 		}
 	}
 }
