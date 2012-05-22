@@ -34,9 +34,12 @@ public class Run {
 			
 			// Break anchor springs
 			// {} to make sure objects are destroyed when we're done (aka scope)
-			{ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak(); 
-			model.anchorSpringArray.removeAll(breakArray);
-			model.Write(breakArray.size() + " anchor springs broken","iter");
+			{ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak();	// Returns lonely anchors, without their siblings
+			int counter = 0;
+			for(CAnchorSpring pAnchor : breakArray) {
+				counter += pAnchor.UnAnchor();
+			}
+			model.Write(counter + " anchor springs broken","iter");
 			// Build anchor springs
 			model.Write("Detecting cell-floor collisions","iter");
 			ArrayList<CCell> collisionArray = model.DetectFloorCollision();		// Returns already anchored cells
