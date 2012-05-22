@@ -47,7 +47,6 @@ public class CModel {
 	double growthTime;
 	double growthTimeStep;
 	int  growthIter;
-	double growthMaxIter;
 	double movementTime;
 	double movementTimeStep;
 	double movementTimeStepEnd;
@@ -94,13 +93,12 @@ public class CModel {
 		MCellInit = 1e-11;			// kg
 		MCellMax = 2e-11; 			// max mass of cells before division
 		// Progress
-		growthTime = 0;				// [s] Current time for the growth
-		growthTimeStep = 900;		// [s] Time step for growth
+		growthTime = 0;				// [h] Current time for the growth
+		growthTimeStep = 1.0;		// [h] Time step for growth
 		growthIter = 0;				// [-] Counter time iterations for growth
-		growthMaxIter = 672;		// [-] where we'll stop
 		movementTime = 0;			// [s] initial time for movement (for ODE solver)
 		movementTimeStep = 2e-2;	// [s] output time step  for movement
-		movementTimeStepEnd	= 10e-2;	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
+		movementTimeStepEnd	= 10e-2;// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
 		movementIter = 0;			// [-] counter time iterations for movement
 		// Counters
 		NBall 	= 0;
@@ -805,7 +803,6 @@ public class CModel {
 		mlModel.setField("aspect", 				new MLDouble(null, new double[] {aspect}, 1));
 		mlModel.setField("G", 					new MLDouble(null, new double[] {G}, 1));
 		mlModel.setField("growthIter", 			new MLDouble(null, new double[] {growthIter}, 1));
-		mlModel.setField("growthMaxIter",		new MLDouble(null, new double[] {growthMaxIter}, 1));
 		mlModel.setField("growthTime",			new MLDouble(null, new double[] {growthTime}, 1));
 		mlModel.setField("growthTimeStep",		new MLDouble(null, new double[] {growthTimeStep}, 1));
 		mlModel.setField("K1",					new MLDouble(null, new double[] {Ki}, 1));
@@ -956,7 +953,6 @@ public class CModel {
 			aspect 		= ((MLDouble)mlModel.getField("aspect")).getReal(0);
 			G 			= ((MLDouble)mlModel.getField("G")).getReal(0);
 			growthIter 	= ((MLDouble)mlModel.getField("growthIter")).getReal(0).intValue();
-			growthMaxIter = ((MLDouble)mlModel.getField("growthMaxIter")).getReal(0);
 			growthTime 	= ((MLDouble)mlModel.getField("growthTime")).getReal(0);
 			growthTimeStep = ((MLDouble)mlModel.getField("growthTimeStep")).getReal(0);
 			Ki 			= ((MLDouble)mlModel.getField("K1")).getReal(0);
@@ -1176,15 +1172,15 @@ public class CModel {
 					fid = new PrintWriter(new FileWriter(fileName,true));		// True is for append // Not platform independent TODO
 					// Include text, calibrated for tomas_persp_3D_java.pov 
 					fid.println("text \n{\n" +           
-					String.format("\tttf \"timrom.ttf\" \"Movement iter: %05d\" 0.05, 0.1*x\n",movementIter-ii) +
+					String.format("\tttf \"timrom.ttf\" \"Movement time: %05.2f s\" 0.05, 0.1*x\n",(movementIter-ii)*movementTimeStep) +
 				    "\tpigment {color rgb <0.000, 0.000, 0.000>  }\n" +     
 			        "\tscale <60,60,60>\n" + 
 			        "\ttranslate <-1200,1340,-75>\n" +  
-			        "\trotate <15,45,0>\n" +  
+			        "\trotate <15,45,0>\n" +
 			        "\tno_shadow" +
-					"}\n" +
+					"}\n" + 
 					"text \n{\n" +           
-					String.format("\tttf \"timrom.ttf\" \"Growth iter:     %05d\" 0.05, 0.1*x\n",growthIter) +
+					String.format("\tttf \"timrom.ttf\" \"Growth time:     %06.2f h\" 0.05, 0.1*x\n",growthIter*growthTimeStep) +
 				    "\tpigment {color rgb <0.000, 0.000, 0.000>  }\n" +     
 			        "\tscale <60,60,60>\n" + 
 			        "\ttranslate <-1200,1260,-75>\n" +  
