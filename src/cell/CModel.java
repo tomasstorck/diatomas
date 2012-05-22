@@ -78,7 +78,7 @@ public class CModel {
 		Kc 		= 0.1e-4;			// collision
 		Ks 		= 0.5e-5;			// sticking
 		Ka 		= 0.5e-5;			// anchor
-		Kd 		= 1e-9;				// drag force coefficient
+		Kd 		= 0.1e-6;			// drag force coefficient
 		// Domain properties
 		G		= -9.8;				// [m/s2], acceleration due to gravity
 		rho_w	= 1000;				// [kg/m3], density of bulk liquid (water)
