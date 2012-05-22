@@ -72,19 +72,20 @@ public class CModel {
 	}
 	
 	public void LoadDefaultParameters() {
+		randomSeed = 1;
+		// Spring constants
 		Ki 		= 0.5e-2;			// internal cell spring
 		Kf 		= 0.1e-4;			// filament spring
 		Kw 		= 0.5e-5;			// wall spring
 		Kc 		= 0.1e-4;			// collision
 		Ks 		= 0.5e-5;			// sticking
 		Ka 		= 0.5e-5;			// anchor
-		Kd 		= 0.1e-6;			// drag force coefficient
+		Kd 		= 0.1e-7;			// drag force coefficient
 		// Domain properties
 		G		= -9.8;				// [m/s2], acceleration due to gravity
 		rho_w	= 1000;				// [kg/m3], density of bulk liquid (water)
 		rho_m	= 1100;				// [kg/m3], diatoma density
 		L 		= new Vector3d(1200e-6, 300e-6, 1200e-6);	// [m], Dimensions of domain
-		randomSeed = 0;
 		// Cell properties
 		NType 	= 2;				// Types of cell
 		NInitCell = 15;				// Initial number of cells
@@ -341,7 +342,7 @@ public class CModel {
 		feval dydt = new feval(this);
 		Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt);
 		int nstp = ode.integrate();
-		for(int iTime=0; iTime<out.nsave-1; iTime++) {		// Save all intermediate results to the save variables
+		for(int iTime=0; iTime<out.nsave; iTime++) {		// Save all intermediate results to the save variables
 			int iVar = 0;
 			for(CBall ball : ballArray) {
 				ball.posSave[iTime].x = out.ysave.get(iVar++,iTime);
@@ -1202,18 +1203,18 @@ public class CModel {
 							fid.println("sphere\n" + 
 									"{\n" + 
 									(plotIntermediate ? 
-											String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) : 
-												String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +  
-												String.format("\t%10.3f\n", ball.radius*1e6) +
-												"\ttexture{\n" + 
-												"\t\tpigment{\n" +
-												String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
-												"\t\t}\n" +
-												"\t\tfinish{\n" +
-												"\t\t\tambient .2\n" +
-												"\t\t\tdiffuse .6\n" +
-												"\t\t}\n" +
-												"\t}\n" +
+										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) : 
+										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +  
+									String.format("\t%10.3f\n", ball.radius*1e6) +
+									"\ttexture{\n" + 
+									"\t\tpigment{\n" +
+									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
+									"\t\t}\n" +
+									"\t\tfinish{\n" +
+									"\t\t\tambient .2\n" +
+									"\t\t\tdiffuse .6\n" +
+									"\t\t}\n" +
+									"\t}\n" +
 									"}\n");}
 						else if(cell.type == 1 || cell.type == 2) {	// Rod
 							CBall ball = cell.ballArray[0];
@@ -1222,52 +1223,52 @@ public class CModel {
 							fid.println("cylinder\n" +		// Sphere-sphere connection
 									"{\n" +
 									(plotIntermediate ?
-											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) +
-											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) :
-												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6) +
-												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
-												String.format("\t%10.3f\n", ball.radius*1e6) +
-												"\ttexture{\n" +
-												"\t\tpigment{\n" +
-												String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
-												"\t\t}\n" +
-												"\t\tfinish{\n" +
-												"\t\t\tambient .2\n" +
-												"\t\t\tdiffuse .6\n" +
-												"\t\t}\n" +
-												"\t}\n" +
-												"}\n" +
-												"sphere\n" +			// First sphere
-												"{\n" +
-												(plotIntermediate ?
-														String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) :
-															String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +
-															String.format("\t%10.3f\n", ball.radius*1e6) +
-															"\ttexture{\n" +
-															"\t\tpigment{\n" +
-															String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
-															"\t\t}\n" +
-															"\t\tfinish{\n" +
-															"\t\t\tambient .2\n" +
-															"\t\t\tdiffuse .6\n" +
-															"\t\t}\n" +
-															"\t}\n" +
-															"}\n"+
-															"sphere\n" +			// Second sphere
-															"{\n" +
-															(plotIntermediate ? 
-																	String.format("\t < %10.3f,%10.3f,%10.3f > \n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) :
-																		String.format("\t < %10.3f,%10.3f,%10.3f > \n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
-																		String.format("\t%10.3f\n", ballNext.radius*1e6) +
-																		"\ttexture{\n" +
-																		"\t\tpigment{\n" +
-																		String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
-																		"\t\t}\n" +
-																		"\t\tfinish{\n" +
-																		"\t\t\tambient .2\n" +
-																		"\t\t\tdiffuse .6\n" +
-																		"\t\t}\n" +
-																		"\t}\n" +
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) +
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) :
+									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6) +
+									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
+									String.format("\t%10.3f\n", ball.radius*1e6) +
+									"\ttexture{\n" +
+									"\t\tpigment{\n" +
+									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
+									"\t\t}\n" +
+									"\t\tfinish{\n" +
+									"\t\t\tambient .2\n" +
+									"\t\t\tdiffuse .6\n" +
+									"\t\t}\n" +
+									"\t}\n" +
+									"}\n" +
+									"sphere\n" +			// First sphere
+									"{\n" +
+									(plotIntermediate ?
+										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) :
+										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +
+									String.format("\t%10.3f\n", ball.radius*1e6) +
+									"\ttexture{\n" +
+									"\t\tpigment{\n" +
+									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
+									"\t\t}\n" +
+									"\t\tfinish{\n" +
+									"\t\t\tambient .2\n" +
+									"\t\t\tdiffuse .6\n" +
+									"\t\t}\n" +
+									"\t}\n" +
+									"}\n"+
+									"sphere\n" +			// Second sphere
+									"{\n" +
+									(plotIntermediate ? 
+										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) :
+										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
+									String.format("\t%10.3f\n", ballNext.radius*1e6) +
+									"\ttexture{\n" +
+									"\t\tpigment{\n" +
+									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
+									"\t\t}\n" +
+									"\t\tfinish{\n" +
+									"\t\t\tambient .2\n" +
+									"\t\t\tdiffuse .6\n" +
+									"\t\t}\n" +
+									"\t}\n" +
 									"}\n");
 						}
 					}
@@ -1293,20 +1294,20 @@ public class CModel {
 							fid.println("cylinder\n" +
 									"{\n" +
 									(plotIntermediate ? 
-											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) +
-											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) :
-												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6) +
-												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
-												String.format("\t%10.3f\n", ball.radius*1e5) +
-												"\ttexture{\n" +
-												"\t\tpigment{\n" +
-												String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", colour[0], colour[1], colour[2]) +
-												"\t\t}\n" +
-												"\t\tfinish{\n" +
-												"\t\t\tambient .2\n" +
-												"\t\t\tdiffuse .6\n" +
-												"\t\t}\n" +
-												"\t}\n" +
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) +
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) :
+									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6) +
+									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
+									String.format("\t%10.3f\n", ball.radius*1e5) +
+									"\ttexture{\n" +
+									"\t\tpigment{\n" +
+									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", colour[0], colour[1], colour[2]) +
+									"\t\t}\n" +
+									"\t\tfinish{\n" +
+									"\t\t\tambient .2\n" +
+									"\t\t\tdiffuse .6\n" +
+									"\t\t}\n" +
+									"\t}\n" +
 									"}\n");
 						}
 					}
@@ -1321,20 +1322,20 @@ public class CModel {
 						fid.println("cylinder\n" +
 								"{\n" +
 								(plotIntermediate ?
-										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) +
-										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) : 
-											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6) +
-											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
-											String.format("\t%10.3f\n", ball.radius*1e5) +
-											"\ttexture{\n" +
-											"\t\tpigment{\n" +
-											String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 0.0, 1.0, 0.0) +		//Sticking springs are green
-											"\t\t}\n" +
-											"\t\tfinish{\n" +
-											"\t\t\tambient .2\n" +
-											"\t\t\tdiffuse .6\n" +
-											"\t\t}\n" +
-											"\t}\n" +
+									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) +
+									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) : 
+								String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6) +
+								String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
+								String.format("\t%10.3f\n", ball.radius*1e5) +
+								"\ttexture{\n" +
+								"\t\tpigment{\n" +
+								String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 0.0, 1.0, 0.0) +		//Sticking springs are green
+								"\t\t}\n" +
+								"\t\tfinish{\n" +
+								"\t\t\tambient .2\n" +
+								"\t\t\tdiffuse .6\n" +
+								"\t\t}\n" +
+								"\t}\n" +
 								"}\n");
 					}
 
@@ -1348,19 +1349,19 @@ public class CModel {
 							fid.println("cylinder\n" +
 									"{\n" +
 									(plotIntermediate ?
-											String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) :
-												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +
-												String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pSpring.anchor.x*1e6, pSpring.anchor.y*1e6, pSpring.anchor.z*1e6) +
-												String.format("\t%10.3f\n", ball.radius*1e5) +	// Note 1e5 instead of 1e6 TODO
-												"\ttexture{\n" +
-												"\t\tpigment{\n" +
-												String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 1.0, 1.0, 0.0) +		//Anchoring springs are yellow
-												"\t\t}\n" +
-												"\t\tfinish{\n" +
-												"\t\t\tambient .2\n" +
-												"\t\t\tdiffuse .6\n" +
-												"\t\t}\n" +
-												"\t}\n" +
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) :
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +
+									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pSpring.anchor.x*1e6, pSpring.anchor.y*1e6, pSpring.anchor.z*1e6) +
+									String.format("\t%10.3f\n", ball.radius*1e5) +	// Note 1e5 instead of 1e6 TODO
+									"\ttexture{\n" +
+									"\t\tpigment{\n" +
+									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 1.0, 1.0, 0.0) +		//Anchoring springs are yellow
+									"\t\t}\n" +
+									"\t\tfinish{\n" +
+									"\t\t\tambient .2\n" +
+									"\t\t\tdiffuse .6\n" +
+									"\t\t}\n" +
+									"\t}\n" +
 									"}\n");
 						}
 					}
