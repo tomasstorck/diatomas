@@ -334,8 +334,8 @@ public class CModel {
 			ystart.set(ii++, ball.pos.y);
 			ystart.set(ii++, ball.pos.z);
 			ystart.set(ii++, ball.vel.x);
-			ystart.set(ii++, ball.vel.x);
-			ystart.set(ii++, ball.vel.x);
+			ystart.set(ii++, ball.vel.y);
+			ystart.set(ii++, ball.vel.z);
 		}
 		Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
 		feval dydt = new feval(this);
