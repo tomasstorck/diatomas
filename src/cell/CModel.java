@@ -23,7 +23,7 @@ public class CModel {
 	// Model properties
 	String name;
 	// Spring constants
-	double K1;
+	double Ki;
 	double Kf;
 	double Kw;
 	double Kc;
@@ -72,7 +72,7 @@ public class CModel {
 	}
 	
 	public void LoadDefaultParameters() {
-		K1 		= 0.5e-2;			// Cell spring
+		Ki 		= 0.5e-2;			// internal cell spring
 		Kf 		= 0.1e-4;			// filament spring
 		Kw 		= 0.5e-5;			// wall spring
 		Kc 		= 0.1e-4;			// collision
@@ -807,7 +807,7 @@ public class CModel {
 		mlModel.setField("growthMaxIter",		new MLDouble(null, new double[] {growthMaxIter}, 1));
 		mlModel.setField("growthTime",			new MLDouble(null, new double[] {growthTime}, 1));
 		mlModel.setField("growthTimeStep",		new MLDouble(null, new double[] {growthTimeStep}, 1));
-		mlModel.setField("K1",					new MLDouble(null, new double[] {K1}, 1));
+		mlModel.setField("K1",					new MLDouble(null, new double[] {Ki}, 1));
 		mlModel.setField("Ka",					new MLDouble(null, new double[] {Ka}, 1));
 		mlModel.setField("Kc",					new MLDouble(null, new double[] {Kc}, 1));
 		mlModel.setField("Kd",					new MLDouble(null, new double[] {Kd}, 1));
@@ -958,7 +958,7 @@ public class CModel {
 			growthMaxIter = ((MLDouble)mlModel.getField("growthMaxIter")).getReal(0);
 			growthTime 	= ((MLDouble)mlModel.getField("growthTime")).getReal(0);
 			growthTimeStep = ((MLDouble)mlModel.getField("growthTimeStep")).getReal(0);
-			K1 			= ((MLDouble)mlModel.getField("K1")).getReal(0);
+			Ki 			= ((MLDouble)mlModel.getField("K1")).getReal(0);
 			Ka 			= ((MLDouble)mlModel.getField("Ka")).getReal(0);
 			Kc 			= ((MLDouble)mlModel.getField("Kc")).getReal(0);
 			Kd 			= ((MLDouble)mlModel.getField("Kd")).getReal(0);
