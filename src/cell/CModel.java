@@ -525,10 +525,10 @@ public class CModel {
 			if(y<r){
 				ball.force.y += Kw*(r-y);
 			}
-			// Gravity and buoyancy
-			if(y>r) {			// Only if not already at the floor 
-				ball.force.y += G * ((rho_m-rho_w)/rho_w) * ball.mass ;  //let the ball fall 
-			}
+//			// Gravity and buoyancy
+//			if(y>r) {			// Only if not already at the floor 
+//				ball.force.y += G * ((rho_m-rho_w)/rho_w) * ball.mass ;  //let the ball fall 
+//			}
 			// Velocity damping
 			ball.force.x -= Kd*ball.vel.x;
 			ball.force.y -= Kd*ball.vel.y;
@@ -1180,7 +1180,7 @@ public class CModel {
 			        "\tno_shadow" +
 					"}\n" + 
 					"text \n{\n" +           
-					String.format("\tttf \"timrom.ttf\" \"Growth time:     %06.2f h\" 0.05, 0.1*x\n",growthIter*growthTimeStep) +
+					String.format("\tttf \"timrom.ttf\" \"Growth time:     %05.1f h\" 0.05, 0.1*x\n",growthIter*growthTimeStep) +
 				    "\tpigment {color rgb <0.000, 0.000, 0.000>  }\n" +     
 			        "\tscale <60,60,60>\n" + 
 			        "\ttranslate <-1200,1260,-75>\n" +  
