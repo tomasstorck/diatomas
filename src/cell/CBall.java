@@ -20,7 +20,7 @@ public class CBall {
 		vel = new Vector3d(0, 0, 0);
 		force = new Vector3d(0, 0, 0);
 
-		int NSave = (int)(cell.pModel.movementTimeStepEnd/cell.pModel.movementTimeStep);	// -1 for not saving the final value, +1 for saving the initial value
+		int NSave = (int)(cell.model.movementTimeStepEnd/cell.model.movementTimeStep);	// -1 for not saving the final value, +1 for saving the initial value
 		posSave = new Vector3d[NSave];
 		velSave = new Vector3d[NSave];
 //		forceSave = new Vector3d[NSave];
@@ -36,8 +36,8 @@ public class CBall {
 		this.cellBallArrayIndex = cellBallArrayIndex;
 //		cell.pModel.ballArray.add(this);
 		cell.ballArray[cellBallArrayIndex] = this;
-		this.arrayIndex = cell.pModel.ballArray.size(); 
-		cell.pModel.ballArray.add(this);
+		this.arrayIndex = cell.model.ballArray.size(); 
+		cell.model.ballArray.add(this);
 		CModel.NBall++;
 		// Update the radius
 		this.radius = Radius();
@@ -61,11 +61,11 @@ public class CBall {
 	
 	public double Radius() {							// Doing this here might save some calculations on the long run
 		if (cell.type == 0) {
-			return Math.pow(0.75 * mass/(Math.PI * this.cell.pModel.rho_m), .333333);
+			return Math.pow(0.75 * mass/(Math.PI * this.cell.model.rho_m), .333333);
 		} else if(cell.type == 1) {					// type == 1 is variable radius balls
-			return Math.pow(mass 					/ (2*Math.PI*cell.pModel.rho_m*cell.pModel.aspect), .333333);		// FIXME: original code: Rpos=pow((sBall->mass/PI/pModel->RHO_M/aspect),0.333333333333);
+			return Math.pow(mass 					/ (2*Math.PI*cell.model.rho_m*cell.model.aspect), .333333);		// FIXME: original code: Rpos=pow((sBall->mass/PI/pModel->RHO_M/aspect),0.333333333333);
 		} else if(cell.type == 2) {					// type == 2 is fixed radius balls
-			return Math.pow(cell.pModel.MCellMax	/ (2*Math.PI*cell.pModel.rho_m*cell.pModel.aspect), .333333);		// TODO: this is constant, would making it static help here?
+			return Math.pow(cell.model.MCellMax	/ (2*Math.PI*cell.model.rho_m*cell.model.aspect), .333333);		// TODO: this is constant, would making it static help here?
 		} else {
 			return -1;		// Error
 		}

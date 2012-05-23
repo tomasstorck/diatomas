@@ -13,16 +13,16 @@ public class CSpring {
 		ballArray[1] = ball1;
 		this.restLength = restLength;
 		ball0.cell.springArray[0] = this;
-		ball0.cell.pModel.rodSpringArray.add(this);
+		ball0.cell.model.rodSpringArray.add(this);
 	}
 	
 	public CSpring(CBall ball0, CBall ball1){
-		this.K = ball0.cell.pModel.Ki;
+		this.K = ball0.cell.model.Ki;
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
 		this.ResetRestLength();
 		ball0.cell.springArray[0] = this;
-		ball0.cell.pModel.rodSpringArray.add(this);
+		ball0.cell.model.rodSpringArray.add(this);
 	}
 	
 	public CSpring() {}
@@ -31,7 +31,7 @@ public class CSpring {
 	
 	public double ResetRestLength() {
 		// If type == 1 based on mass, type==2 based on max mass
-		CModel pModel = ballArray[0].cell.pModel;
+		CModel pModel = ballArray[0].cell.model;
 		if(ballArray[0].cell.type == 1) {
 			restLength = ballArray[0].radius*pModel.aspect*2;  
 		} else if(ballArray[0].cell.type == 2) {

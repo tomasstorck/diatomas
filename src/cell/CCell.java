@@ -13,7 +13,7 @@ public class CCell {
 	ArrayList<CCell> stickCellArray = new ArrayList<CCell>();  
 	CCell mother;
 	int arrayIndex;
-	CModel pModel;
+	CModel model;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -22,7 +22,7 @@ public class CCell {
 		this.filament = filament;
 		colour[0] = rand.Double(); colour[1] = rand.Double(); colour[2] = rand.Double();
 		arrayIndex = model.cellArray.size();			// +1 because it's the next, -1 because index in Java is 0-based
-		pModel = model;
+		this.model = model;
 		
 		if(type==0) { // Leaves ballArray and springArray, and mother
 			ballArray[0] = new CBall(base0x, base0y, base0z, model.MCellInit,   0, this);
@@ -39,7 +39,7 @@ public class CCell {
 		this.filament = filament;
 		colour[0] = rand.Double(); colour[1] = rand.Double(); colour[2] = rand.Double();
 		arrayIndex = model.cellArray.size();			// +1 because it's the next, -1 because index in Java is 0-based
-		pModel = model;
+		this.model = model;
 		
 		if(type==0) { // Leaves ballArray and springArray, and mother
 			new CBall(base0x, base0y, base0z, model.MCellInit,   0, this);
@@ -133,7 +133,7 @@ public class CCell {
 	}
 	
 	public void Stick(int otherCellIndex) {
-		CCell cell = pModel.cellArray.get(otherCellIndex);
+		CCell cell = model.cellArray.get(otherCellIndex);
 		Stick(cell);
 	}
 	
@@ -160,7 +160,7 @@ public class CCell {
 	
 	public ArrayList<CCell> StickCellArray() {			// Currently used only for loading. Using the maintained stickCellArray field is much more CPU efficient.
 		ArrayList<CCell> stickCellArray = new ArrayList<CCell>(1);
-		for(CStickSpring pSpring : pModel.stickSpringArray) {
+		for(CStickSpring pSpring : model.stickSpringArray) {
 			CCell cell0 = pSpring.ballArray[0].cell;
 			CCell cell1 = pSpring.ballArray[1].cell;
 			if(this.equals(cell0) && !stickCellArray.contains(cell1)) {		// 2nd if argument makes sure we don't get duplicates (this'll happen when we encounter siblings)

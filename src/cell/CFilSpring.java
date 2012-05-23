@@ -14,14 +14,14 @@ public class CFilSpring {
 	
 	public CFilSpring(CCell parent, CCell daughter) {
 		big_ballArray	= new CBall[]{daughter.ballArray[1],parent.ballArray[0]};
-		big_K = parent.pModel.Kf;
+		big_K = parent.model.Kf;
 		big_restLength 	= 3*daughter.springArray[0].restLength;
 		small_ballArray	= new CBall[]{daughter.ballArray[0],parent.ballArray[1]};
-		small_K = parent.pModel.Kf;
+		small_K = parent.model.Kf;
 		small_restLength = 1.05*(parent.ballArray[1].radius + daughter.ballArray[1].radius);
-		arrayIndex = parent.pModel.filSpringArray.size();
+		arrayIndex = parent.model.filSpringArray.size();
 		// Add to filSpringArray
-		parent.pModel.filSpringArray.add(this);
+		parent.model.filSpringArray.add(this);
 	}
 
 	public CFilSpring() {}		// Empty constructor for loading. Doesn't add to filSpringArray!

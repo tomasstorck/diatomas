@@ -991,7 +991,7 @@ public class CModel {
 									((MLDouble)mlCellArray.getField("colour", iCell)).getReal(1),
 									((MLDouble)mlCellArray.getField("colour", iCell)).getReal(2)};
 				cell.filament 	= ((MLDouble)mlCellArray.getField("filament", iCell)).getReal(0)==1 ? true : false;
-				cell.pModel	= this;
+				cell.model	= this;
 				cell.type		= ((MLDouble)mlCellArray.getField("type", iCell)).getReal(0).intValue();
 				if(mlCellArray.getField("motherIndex", iCell).isEmpty()) {
 					cell.mother = null;

@@ -11,9 +11,9 @@ public class CAnchorSpring {
 	public CAnchorSpring(CBall ball) {		// Note that siblingArray is not assigned here
 		this.ball = ball;
 		anchor = new Vector3d(ball.pos.x, 0, ball.pos.z);
-		K = ball.cell.pModel.Ka;
+		K = ball.cell.model.Ka;
 		restLength = ball.radius;
-		ball.cell.pModel.anchorSpringArray.add(this);
+		ball.cell.model.anchorSpringArray.add(this);
 	}
 	
 	public CAnchorSpring() {}				// Note that this constructor does NOT add the anchor spring to the model!
@@ -21,10 +21,10 @@ public class CAnchorSpring {
 	/////////////////////
 	
 	public int UnAnchor() {
-		this.ball.cell.pModel.anchorSpringArray.remove(this);
+		this.ball.cell.model.anchorSpringArray.remove(this);
 		int counter=1;
 		for(int ii=0; ii<siblingArray.length; ii++) {
-			this.ball.cell.pModel.anchorSpringArray.remove(this.siblingArray[ii]);
+			this.ball.cell.model.anchorSpringArray.remove(this.siblingArray[ii]);
 			counter++;
 		}
 		return counter;
