@@ -870,7 +870,7 @@ public class CModel {
 			mlBallArray.setField("vel", 		new MLDouble(null, new double[] {ball.vel.x, ball.vel.y, ball.vel.z}, 3), iBall);
 //			mlBallArray.setField("force",	 	new MLDouble(null, new double[] {ball.force.x, ball.force.y, ball.force.z}, 1), iBall);
 			// posSave and velSave
-			int NSave = (int)(movementTimeStepEnd/movementTimeStep)-1;
+			int NSave = (int)(movementTimeStepEnd/movementTimeStep);			// -1 for not last index, +1 for initial position and velocity
 			double[] posSave = new double[NSave*3];
 			double[] velSave = new double[NSave*3];
 			for(int ii=0; ii<NSave; ii++) {
@@ -1026,7 +1026,7 @@ public class CModel {
 //								((MLDouble)mlBallArray.getField("force", iBall)).getReal(2));
 				ball.force = new Vector3d();
 				// posSave and velSave
-				int NSave = (int)(movementTimeStepEnd/movementTimeStep-1);
+				int NSave = (int)(movementTimeStepEnd/movementTimeStep);		// -1 for not last index, +1 for initial values 
 				ball.posSave = new Vector3d[NSave];
 				ball.velSave = new Vector3d[NSave];
 				for(int ii=0; ii<NSave; ii++) {
@@ -1077,7 +1077,9 @@ public class CModel {
 			}
 			for(int iAnchor=0; iAnchor<NAnchor; iAnchor++) {	// Additional for loop to assign siblings
 				CAnchorSpring pAnchor = anchorSpringArray.get(iAnchor);
+				
 				if(pAnchor.ball.cell.type!=0) {
+					pAnchor.siblingArray = new CAnchorSpring[1];
 					int iSibling = ((MLDouble)mlAnchorSpringArray.getField("siblingArrayIndex", iAnchor)).getReal(0).intValue()-1;
 					pAnchor.siblingArray[0] = anchorSpringArray.get(iSibling); 
 				}

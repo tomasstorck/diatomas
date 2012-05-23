@@ -161,8 +161,14 @@ public class CCell {
 	public ArrayList<CCell> StickCellArray() {			// Currently used only for loading. Using the maintained stickCellArray field is much more CPU efficient.
 		ArrayList<CCell> stickCellArray = new ArrayList<CCell>(1);
 		for(CStickSpring pSpring : pModel.stickSpringArray) {
-			CCell cell = pSpring.ballArray[0].cell;
-			if(this.equals(cell)) stickCellArray.add(cell);
+			CCell cell0 = pSpring.ballArray[0].cell;
+			CCell cell1 = pSpring.ballArray[1].cell;
+			if(this.equals(cell0) && !stickCellArray.contains(cell1)) {		// 2nd if argument makes sure we don't get duplicates (this'll happen when we encounter siblings)
+				stickCellArray.add(cell1);	// Add the other cell
+			}
+			if(this.equals(cell1) && !stickCellArray.contains(cell0)) {
+				stickCellArray.add(cell0);
+			}
 		}
 		return stickCellArray;
 	}
