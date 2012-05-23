@@ -14,13 +14,13 @@ public class Odeint<Stepper extends StepperBase> {
 	boolean dense;					// whether or not we want a dense output, i.e. values at certain x points
 //	NRvector y,dydx;		// actual derivative values
 	Vector ystart;		// initial values
-	Output<StepperDopr853> out;		// The out structure, see way below // TODO make generic
+	Output<StepperDopr853> out;		// The out structure, see way below
 	feval derivs; 					// feval object containing information about the derivatives, including method to calculate them
-	StepperDopr853 s;				// Our stepper // TODO make generic
+	StepperDopr853 s;				// Our stepper
 
-	public Odeint(Vector ystartt, double xx1, double xx2, 	// initial values, intial integration interval point, end of interval 
-			double atol, double rtol, double h1, double hminn,			// absolute tolerance, relative tolerance, initial stepsize, minimum stepsize allowed
-			Output<StepperDopr853> outt, feval derivss) {							// derivss should be a Dtype (=feval), I think FIXME
+	public Odeint(Vector ystartt, double xx1, double xx2, 			// initial values, intial integration interval point, end of interval 
+			double atol, double rtol, double h1, double hminn,		// absolute tolerance, relative tolerance, initial stepsize, minimum stepsize allowed
+			Output<StepperDopr853> outt, feval derivss) {			// derivss should be a Dtype (=feval)
 		nvar	= ystartt.size();
 		ystart	= ystartt;			// Should be a ref based on C++ code
 		nok 	= 0;
@@ -39,7 +39,7 @@ public class Odeint<Stepper extends StepperBase> {
 		double h = SIGN(h1,x2-x1);
 		s = new StepperDopr853(y, dydx, x, h, atol, rtol, dense); // A Stepper object. No matter what, it'll contain the properties defined in StepperBase (see extend at the top)	// TODO make generic
 				
-		EPS = Double.MIN_VALUE;		// Not sure about this, FIXME
+		EPS = Double.MIN_VALUE;		// Should be correct, though this is a much smaller number than in C++
 		for (int i = 0; i < nvar; i++)
 			y.set(i,ystart.get(i));
 		out.init(s.neqn, x1, x2);	// Initialise intermediate values object

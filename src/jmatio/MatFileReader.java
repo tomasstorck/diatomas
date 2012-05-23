@@ -437,7 +437,6 @@ public class MatFileReader
             @Override
             public synchronized int read() throws IOException
             {
-                // TODO Auto-generated method stub
                 throw new RuntimeException("Not yet implemented");
             } 
             public synchronized int read(byte[] bytes, int off, int len) throws IOException {
@@ -800,58 +799,6 @@ public class MatFileReader
                 }
                 mlArray = sparse;
                 break;
-//            case MLArray.mxOPAQUE_CLASS:
-//                //read ir (row indices)
-//                tag = new ISMatTag(buf);
-//                bytes = new byte[tag.size];
-////                //buf.get(bytes);
-//                System.out.println( "Class name: " + new String(tag.readToCharArray()));
-//                System.out.println( "Array name: " + name );
-//                System.out.println( "Array type: " + type);
-//                
-//                byte[] nn = new byte[dims.length];
-//                for ( int i = 0; i < dims.length; i++ )
-//                {
-//                    nn[i] = (byte)dims[i];
-//                }
-//                System.out.println( "Array name: " + new String ( nn ) );
-//                
-//                readData(buf);
-//                
-//                mlArray = null;
-//                break;
-//            case MLArray.mxUINT8_CLASS:
-//                tag = new ISMatTag(buf);
-//                //System.out.println( "Array name: " + name );
-//                System.out.println( "Array type: " + type);
-//                System.out.println( "Array size: " + tag);
-//                System.out.println( "Array flags: " + Arrays.toString(flags));
-//                System.out.println( "Array attributes: " + attributes);
-//                
-//                
-//                char[] chars = tag.readToCharArray();
-//                byte[] bytes = new byte[chars.length];
-//                for ( int i = 0; i < chars.length; i++ )
-//                {
-//                    bytes[i] = (byte)chars[i];
-//                }
-//                try
-//                {
-//                    ObjectInputStream ois = new ObjectInputStream( new ByteArrayInputStream(bytes) );
-//                    System.out.println( ois.readObject() );
-//                }
-//                catch (Exception e)
-//                {
-//                    System.out.println(chars);
-//                    //System.out.println(Arrays.toString(chars));
-//                    // TODO Auto-generated catch block
-//                    //e.printStackTrace();
-//                    
-//                }
-//                mlArray = null;
-//                
-//                
-//                break;
             default:
                 throw new MatlabIOException("Incorrect matlab array class: " + MLArray.typeToString(type) );
                

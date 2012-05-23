@@ -52,7 +52,6 @@ public class Matrix {	// It's NOT a template class anymore
 	public void set(Matrix rhs) {		// Assignment
 		if(this!=rhs) {
 			if(nn!=rhs.nn || mm!=rhs.mm){
-				// if(v!=null) delete[] v; TODO
 				nn = rhs.nn;
 				mm = rhs.mm;
 				if(nn*mm>0) {
@@ -84,7 +83,6 @@ public class Matrix {	// It's NOT a template class anymore
 	
 	public void assign(int newn, int newm, double a) {		// Resize to newn, assign constant values
 		if(newn!=nn || newm!=mm) {
-			// if(v!=null) delete[] v; TODO
 			nn = newn;
 			mm = newm;
 			if(nn*mm>0) {

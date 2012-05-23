@@ -15,7 +15,6 @@ public class MLEmptyArray extends MLArray
     public MLEmptyArray(String name, int[] dims, int type, int attributes)
     {
         super(name, dims, type, attributes);
-        // TODO Auto-generated constructor stub
     }
 
 }

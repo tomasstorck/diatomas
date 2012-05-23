@@ -49,7 +49,7 @@ public class Vector {	// It's NOT a template class, but fixed double
 	/////////////////////////////////////////////////////////////////
 	
 	public void append(double a) {
-		if(nn+1 >= v.length) this.resize((int) (nn*scale));			// Does this slow down the code too much? TODO
+		if(nn+1 >= v.length) this.resize((int) (nn*scale));			// Check if we need to resize
 		v[nn] = a;
 	}
 	

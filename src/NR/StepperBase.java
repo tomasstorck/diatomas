@@ -16,7 +16,7 @@ public class StepperBase {
 		
 		public StepperBase(Vector yy, Vector dydxx, double xx, 
 				double hh, double atoll, double rtoll, boolean dens) {
-			x = xx;				// Should be a reference FIXME
+			x = xx;				// Is a reference in C++, now replaced by a single, localised double. What was a pointer now refers to this one directly
 			y = yy;				// Is a reference
 			dydx = dydxx;		// Is a reference
 			h = hh;
@@ -31,7 +31,7 @@ public class StepperBase {
 		
 		public StepperBase(double x, Vector y, Vector dydx) {};
 		
-		// "Forward declare" the functions  below, they'll be overwritten by <Stepper>, perhaps we can work around this TODO
+		// "Forward declare" the functions  below, they'll be overwritten by the actual Stepper
 		public void step(double h, feval derivs) throws Exception {}
 		public void dy(double h, feval derivs) {}
 		public void prepare_dense(double h, Vector dydxnew, feval derivs) {}

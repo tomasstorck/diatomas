@@ -40,7 +40,7 @@ public class Output<Stepper extends StepperBase> {
 
 	void resize() {										// Resize storage arrays by a factor 2, keeping the saved data (unlike NR* resize())
 		int kold=kmax;
-		kmax *= resizeFactor;							// Can we find a better factor? (TODO)
+		kmax *= resizeFactor;
 		Vector tempvec = new Vector(xsave);				// Copy this guy so we can extract values later on
 		// Fill xsave
 		xsave.resize(kmax);								// Note that this is the other resize method, WITH arguments and defined in NR* classes   
@@ -56,7 +56,6 @@ public class Output<Stepper extends StepperBase> {
 		xsave.set(count,xout);
 		for(int i=0; i<nvar; i++) ysave.set(i, count, s.dense_out(i,xout,h));
 		count++;
-//		pModel.movement_time = xout; // Important? FIXME
 	}
 
 	void save(double x, Vector y) {					// Save y to ysave (non-dense)

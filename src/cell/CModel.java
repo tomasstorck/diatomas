@@ -306,7 +306,7 @@ public class CModel {
 		while(iSpring < stickSpringArray.size()) {
 			CStickSpring pSpring = stickSpringArray.get(iSpring);
 			double al = (pSpring.ballArray[1].pos.minus(  pSpring.ballArray[0].pos)  ).length();		// al = Actual Length
-			if(al < minStretch*pSpring.restLength || al > maxStretch*pSpring.restLength) {				// TODO might be nice to just break overstretched springs
+			if(al < minStretch*pSpring.restLength || al > maxStretch*pSpring.restLength) {
 				breakArray.add(pSpring);
 //				breakArray.addAll(pSpring.siblingArray);												// We'll do this in StickBreak
 			}
@@ -678,7 +678,7 @@ public class CModel {
 					if(pDaughter.ballArray[0].pos.y < pDaughter.ballArray[0].radius)  	{pDaughter.ballArray[0].pos.y 	= pDaughter.ballArray[0].radius;};
 					// Set filament springs
 					if(pDaughter.filament) {
-						pDaughter.Stick(pMother);		// but why? TODO
+						pDaughter.Stick(pMother);		// Because there are no filaments for two spherical cells
 					}
 				} else {
 					CBall pMotherBall0 = pMother.ballArray[0];
@@ -687,7 +687,7 @@ public class CModel {
 					Vector3d direction = pMotherBall1.pos.minus( pMotherBall0.pos );
 					direction.normalise();
 					// Displacement
-					double displacement; 																		// Should be improved/made to make sense (TODO)
+					double displacement; 																		
 					if(pMother.type==1) {
 						displacement = pMotherBall0.radius*Math.pow(2.0,-0.666666);								// A very strange formula: compare our radius to the C++ equation for Rpos and you'll see it's the same
 					} else {
@@ -697,7 +697,7 @@ public class CModel {
 					Vector3d middle = pMotherBall1.pos.plus(pMotherBall0.pos).divide(2.0); 
 					CCell pDaughter = new CCell(pMother.type,													// Same type as cell
 							middle.x+	  displacement*direction.x,												// First ball. First ball and second ball were swapped in MATLAB and possibly C++					
-							middle.y+1.01*displacement*direction.y,												// possible TODO, ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
+							middle.y+1.01*displacement*direction.y,												// ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
 							middle.z+	  displacement*direction.z,
 							pMotherBall1.pos.x,																	// Second ball
 							pMotherBall1.pos.y,
@@ -1350,7 +1350,7 @@ public class CModel {
 										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) :
 										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +
 									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pSpring.anchor.x*1e6, pSpring.anchor.y*1e6, pSpring.anchor.z*1e6) +
-									String.format("\t%10.3f\n", ball.radius*1e5) +	// Note 1e5 instead of 1e6 TODO
+									String.format("\t%10.3f\n", ball.radius*1e5) +	// 1e5 because it is a spring
 									"\ttexture{\n" +
 									"\t\tpigment{\n" +
 									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 1.0, 1.0, 0.0) +		//Anchoring springs are yellow

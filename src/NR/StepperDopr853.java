@@ -38,7 +38,7 @@ public class StepperDopr853 extends StepperBase {
 		rcont7 = new Vector(n);
 		rcont8 = new Vector(n);
 		
-		EPS 	= Double.MIN_VALUE; // correct? FIXME
+		EPS 	= Double.MIN_VALUE;
 	}
 	
 	Vector yerr2;
@@ -78,7 +78,7 @@ public class StepperDopr853 extends StepperBase {
 					scale=Math.max(safe*Math.pow(err,-alpha),minscale);
 					h *= scale;
 				}else{
-					h = 0.5*h;										// We don't know what to scale with --> scale by 0.5.		// THIS IS THE PROBLEM: H IS NOT RETURNED BUT CHANGED LOCALLY FIXME
+					h = 0.5*h;										// We don't know what to scale with --> scale by 0.5. this.h is read from other files. 
 				}
 				reject=true;
 				return false;
@@ -203,7 +203,7 @@ public class StepperDopr853 extends StepperBase {
 		double sk,deno;
 		for (int i=0;i<n;i++) {
 			sk = atol+rtol*Math.max(Math.abs(y.get(i)),Math.abs(yout.get(i)));
-			err2 += Math.pow(yerr.get(i)/sk,2);	// Optimise? TODO
+			err2 += Math.pow(yerr.get(i)/sk,2);	// Optimise? Probably not worth the time.
 			err += Math.pow(yerr2.get(i)/sk,2);
 		}
 		deno=err+0.01*err2;
