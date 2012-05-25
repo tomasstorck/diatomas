@@ -654,7 +654,7 @@ public class CModel {
 				newCell++;
 				if(pMother.type==0) {
 					// Come up with a nice direction in which to place the new cell
-					Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());			// TODO make the displacement go into any direction			
+					Vector3d direction = new Vector3d(rand.Double()-0.5,rand.Double()-0.5,rand.Double()-0.5);			
 					direction.normalise();
 					double displacement = pMother.ballArray[0].radius;
 					// Make a new, displaced cell

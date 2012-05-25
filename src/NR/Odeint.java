@@ -37,7 +37,7 @@ public class Odeint<Stepper extends StepperBase> {
 		Vector y 		= new Vector(nvar);
 		Vector dydx	= new Vector(nvar);	// The derivative values, not as complicated as derivs
 		double h = SIGN(h1,x2-x1);
-		s = new StepperDopr853(y, dydx, x, h, atol, rtol, dense); // A Stepper object. No matter what, it'll contain the properties defined in StepperBase (see extend at the top)	// TODO make generic
+		s = new StepperDopr853(y, dydx, x, h, atol, rtol, dense); // A Stepper object. No matter what, it'll contain the properties defined in StepperBase (see extend at the top)
 				
 		EPS = Double.MIN_VALUE;		// Should be correct, though this is a much smaller number than in C++
 		for (int i = 0; i < nvar; i++)
