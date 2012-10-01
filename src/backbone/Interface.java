@@ -1,7 +1,9 @@
-package cell;
+package backbone;
 
 import java.io.File;
 import java.io.FilenameFilter;
+
+import cell.CModel;
 
 public class Interface{
 
@@ -18,8 +20,13 @@ public class Interface{
 				System.out.println("Usage: java -jar diatomas.jar [arguments]");
 				System.out.println("where arguments can be any of the following:");
 				System.out.println("help || --help || ? || /?\t\t Show this help text");
+				System.out.println("enableEchoCommand || disableEchoCommand\t\t Echoes or silences the command line functions ran from the model");
 				System.out.println("enablePlot || disablePlot\t\t Enable or disable plotting");
-				System.out.println("defaultParameter\t\t\t Load default parameters for the model");
+				System.out.println("enablePlotIntermediate || disablePlotIntermediate\t Enable or disable plotting of intermediate movement steps");
+				System.out.println("enablePostPlot || disablePostPlot\t\t Runs or does not run a postPlot after starting the model. Can be combined with *IntermediatePlot. Be sure to disableStart if you just want to postPlot");
+				System.out.println("enableStart || disableStart\t\t Starts the model automatically after looping through the arguments, or not");
+				System.out.println("enableWaitForFinish || disableWaitForFinish\t When calling command line arguments from the model, waits for them to finish running or continues with the model");
+				System.out.println("withComsol || withoutComsol\t\t Enable or disable the use of COMSOL. Enable: use backbone file WithComsol.java, otherwise use WithoutComsol.java");
 				System.out.println("load [path/filename.extension]\t Load the speficied file instead of the default parameters");
 				System.out.println("*\t\t\t\t Any unrecognised arguments are assumed to be model names");
 				return;
@@ -40,11 +47,10 @@ public class Interface{
 			if(arg.equalsIgnoreCase("enableechocommand")) {setting.echoCommand = true;} else
 			if(arg.equalsIgnoreCase("disableechocommand")) {setting.echoCommand = false;} else
 			//
-			if(arg.equalsIgnoreCase("enabledefaultparameter")) {setting.defaultParameter = true;} else
-			if(arg.equalsIgnoreCase("disabledefaultparameter")) {setting.defaultParameter = false;} else
+			if(arg.equalsIgnoreCase("withcomsol")) {setting.withComsol = true;} else
+			if(arg.equalsIgnoreCase("withoutcomsol")) {setting.withComsol = false;} else
 			//
 			if(arg.equalsIgnoreCase("load")) {
-				setting.defaultParameter = false;
 				ii++;			// Look at the next argument
 				model.Write("Loading " + args[ii], "iter");
 				model.Load(args[ii]);} else
@@ -56,10 +62,15 @@ public class Interface{
 		}
 		
 		// Done analysing input arguments
-		// Set defaults if not called
-		if(setting.defaultParameter == true) model.LoadDefaultParameters();
+		
 		// Start model if requested
-		if(setting.start)	new Run(model);
+		if(setting.start) {
+			System.out.print("Loading w/ arguments: ");
+			for(int ii=0; ii<args.length; ii++) 	System.out.print(args[ii] + " ");
+			System.out.println();
+			if(setting.withComsol) 				WithComsol.Run(model);
+			else								WithoutComsol.Run(model);
+		}
 		// Render POV things
 		if(setting.postPlot) {
 			// Open directory
@@ -68,7 +79,6 @@ public class Interface{
 			// Construct filter
 			FilenameFilter filter = new FilenameFilter() {
 			    public boolean accept(File dir, String name) {
-//			        return !name.startsWith(".");
 			    	return name.endsWith(".mat");
 			    }
 			};

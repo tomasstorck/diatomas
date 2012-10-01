@@ -1,9 +1,11 @@
-package cell;
+package NR;
 
 public class Vector3d {
-	double x;
-	double y;
-	double z;
+	public double x;
+	public double y;
+	public double z;
+	
+	///////////////////////////////////////////////////////////////////
 	
 	public Vector3d(double x, double y, double z) {
 		this.x = x;
@@ -82,6 +84,30 @@ public class Vector3d {
 		return plus;
 	}
 	
+	public void subtract(double n) {
+		this.x -= n;
+		this.y -= n;
+		this.z -= n;
+	}
+	
+	public void subtract(Vector3d v) {
+		this.x -= v.x;
+		this.y -= v.y;
+		this.z -= v.z;
+	}
+
+	public void add(double n) {
+		this.x += n;
+		this.y += n;
+		this.z += n;
+	}
+	
+	public void add(Vector3d v) {
+		this.x += v.x;
+		this.y += v.y;
+		this.z += v.z;
+	}
+	
 	public Vector3d times(double number) {
 		double newx = this.x * number;
 		double newy = this.y * number;
@@ -101,13 +127,30 @@ public class Vector3d {
 		
 		return divide;
 	}
-
-	///////////////////////
-	// Vector operations //
-	///////////////////////
+	
+	////////////////////////////
+	// Vector multiplications //
+	////////////////////////////
 	public double dot(Vector3d u) {
 		return this.x*u.x + this.y*u.y + this.z*u.z;
 	}
 	
+	public Vector3d cross(Vector3d u) {
+		double x = this.y*u.z - this.z*u.y;
+		double y = this.z*u.x - this.x*u.z;
+		double z = this.x*u.y - this.y*u.x;
+		return new Vector3d(x,y,z);
+	}
+
+	////////////////////////////
+	// Vector projections     //
+	////////////////////////////
+	public double comp(Vector3d u) {		// Scalar projection of u onto this, not the other way around
+		return this.dot(u) / this.length();
+	}
+	
+	public Vector3d proj(Vector3d u) {
+		return this.times(this.dot(u) / (this.length()*this.length()));		// i.e. (a dot b over length(a)^2 times a) or (comp of b onto a times a over length(a))
+	}
 	
 }

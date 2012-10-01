@@ -1,6 +1,6 @@
 package cell;
 
-// Import Java stuff
+import interactor.Interactor;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,56 +10,100 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import backbone.setting;
 import random.rand;
-
-// Import MATLAB IO stuff
 import jmatio.*;
-import linuxinteractor.LinuxInteractor;
-
-// Import NR stuff
 import NR.*;
 
 public class CModel {
 	// Model properties
-	String name;
+	public String name;
+	public int randomSeed = 1;
+	public boolean sticking = true;
+	public boolean anchoring = false;
+	public boolean filament = false;
+	public boolean gravity = false;
 	// Spring constants
-	double Ki;
-	double Kf;
-	double Kw;
-	double Kc;
-	double Ks;
-	double Ka;
-	double Kd;
+	public double Kr = 1e5;						// internal cell spring (per ball)
+	public double Kf = 3e4;						// filament spring (per ball average)
+	public double Kw = 2e5;						// wall spring (per ball)
+	public double Kc = 1e7;						// collision (per ball)
+	public double Ks = 1e4;						// sticking (per ball average)
+	public double Kan= 1e4;						// anchor (per BALL)
 	// Domain properties
-	double G;
-	double rho_w;
-	double rho_m;
-	Vector3d L;
-	int randomSeed;
-	// Cell properties
-	int NType;
-	int NInitCell;
-	double aspect;
+	public double Kd = 1e3;						// drag force coefficient (per BALL)
+	public double G		= -9.8;					// [m/s2], acceleration due to gravity
+	public double rhoWater = 1000;					// [kg/m3], density of bulk liquid (water)
+	public double rhoX	= 1100;						// [kg/m3], diatoma density
+	public double MWX 	= 24.6e-3;					// [kg/mol], composition CH1.8O0.5N0.2
+	public Vector3d L 	= new Vector3d(60e-6, 15e-6, 60e-6);	// [m], Dimensions of domain
+	// Model biomass properties
+	public int NXComp = 6;							// Types of biomass
+	public int NdComp = 5;							// d for dynamic compound (e.g. total Ac)
+	public int NcComp = 8;							// c for concentration (or virtual compound, e.g. Ac-)
+	public int NAcidDiss = 4; 						// Number of acid dissociation reactions
+	public int NInitCell = 15;						// Initial number of cells
+	public int[] cellType = {1, 3};				// Cell types used by default
+//	public double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
+	public double[] aspect	= {0.0, 0.0, 4.0, 2.0, 5.0, 3.0};	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 	// Ball properties
-	double MCellInit;
-	double MCellMax;
+	public double[] MCellInit = {2.66e-16, 1.71e-14, 1.87e-15, 2.88e-14, 1.87e-15, 2.88e-14};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
+	public double[] MBallInit = {MCellInit[0], MCellInit[1], MCellInit[2]/2.0, MCellInit[3]/2.0, MCellInit[4]/2.0, MCellInit[5]/2.0};				// [Cmol] initial mass of one ball in the cell
+	public double[] MCellMax = {MCellInit[0]*2.0, MCellInit[1]*2.0, MCellInit[2]*2.0, MCellInit[3]*2.0, MCellInit[4]*2.0, MCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
 	// Progress
-	double growthTime;
-	double growthTimeStep;
-	int  growthIter;
-	double movementTime;
-	double movementTimeStep;
-	double movementTimeStepEnd;
-	int movementIter;
-	// Counters
-	static int NBall;
+	public double growthTime = 0.0;				// [s] Current time for the growth
+	public double growthTimeStep = 3600.0;			// [s] Time step for growth
+	public int growthIter = 0;						// [-] Counter time iterations for growth
+	public double movementTime = 0.0;				// [s] initial time for movement (for ODE solver)
+	public double movementTimeStep = 2e-2;			// [s] output time step  for movement
+	public double movementTimeStepEnd = 10e-2;		// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
+	public int movementIter = 0;					// [-] counter time iterations for movement
 	// Arrays
-	ArrayList<CCell> cellArray;
-	ArrayList<CBall> ballArray;
-	ArrayList<CSpring> rodSpringArray;
-	ArrayList<CStickSpring> stickSpringArray;
-	ArrayList<CFilSpring> filSpringArray;
-	ArrayList<CAnchorSpring> anchorSpringArray;
+	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
+	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
+	public ArrayList<CRodSpring> rodSpringArray = new ArrayList<CRodSpring>(NInitCell);
+	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
+	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(NInitCell);
+	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
+	// === COMSOL STUFF ===
+	// Biomass, assuming Cmol and composition CH1.8O0.5N0.2 (i.e. MW = 24.6 g/mol)
+	//							type 0					type 1					type 2					type 3					type 4					type 5
+	// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
+	public double[] SMX = {	7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
+	public double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						// [microM]
+	public double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400)};		// [mol (Cmol*s)-1] type==0 from Robinson 1984, assuming yield, growth on NaAc. type!=0 from Scholten 2000;
+	public String[] rateEquation = {
+			Double.toString(qMax[0]) + "*c2/(K0+c2)",					// type==0
+			Double.toString(qMax[0]) + "*c2/(K0+c2)",					// type==1
+			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==2
+			Double.toString(qMax[2]) + "*(c3*d3^4)/(K2+c3*d3^4)",		// type==3;
+			Double.toString(qMax[2]) + "*(c3*d3^4)/(K2+c3*d3^4)",		// type==4;
+			Double.toString(qMax[2]) + "*(c3*d3^4)/(K2+c3*d3^4)"};		// type==5;
+	// 	 pH calculations
+	//							HPro		CO2			HCO3-		HAc
+	//							0,			1,			2,			3
+	public double[] Ka = {		1.34e-5,	4.6e-7,		4.69e-11, 	1.61e-5};								// From Wikipedia 120811. CO2 and H2CO3 --> HCO3- + H+;
+	public String[] pHEquation = {																			// pH calculations
+			"c2+c4+c5+c7-c0", 
+			"c2*c0/Ka0-c1", 
+			"d0-c1-c2", 
+			"c4*c0/Ka1-c3", 
+			"c5*c0/Ka2-c4", 
+			"d1-c3-c4-c5", 
+			"c7*c0/Ka3-c6", 
+			"d2-c6-c7"}; 	
+
+	// Diffusion
+	// 							ProT, 		CO2T,				AcT,				H2, 				CH4
+	//							0,    		1,   				2, 					3,   				4
+ 	public double[] BCConc = new double[]{
+ 								13.50,		0.0, 				0.0,				0.0,				0.0	};			// [mol m-3]. equivalent to 1 [kg HPro m-3], neglecting Pro concentration
+	public double[] D = new double[]{	
+								1.060e-9,	1.92e-9,			1.21e-9,			4.500e-9,			1.88e-9};		// [m2 s-1]. Diffusion mass transfer Cussler 2nd edition. Methane through Witherspoon 1965
+	public double[][] SMdiffusion = {
+							{	0.0,		-1.0,				0.0,				-4.0,				(1.0-SMX[0])*1.0},		// XComp == 0 (sphere)
+							{	-1.0,		(1.0-SMX[1])*1.0,	(1.0-SMX[1])*1.0,	(1.0-SMX[1])*3.0,	0.0				},		// XComp == 1 (rod)
+							{	-1.0,		(1.0-SMX[2])*1.0,	(1.0-SMX[2])*1.0,	(1.0-SMX[2])*3.0,	0.0				}};		// XComp == 2 (rod);
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -69,64 +113,6 @@ public class CModel {
 	public CModel(String name) {	// Default constructor, includes default values
 		this.name  = name;
 	}
-	
-	public void LoadDefaultParameters() {
-		randomSeed = 1;
-		// Spring constants
-		Ki 		= 0.5e-2;			// internal cell spring
-		Kf 		= 0.1e-4;			// filament spring
-		Kw 		= 0.5e-5;			// wall spring
-		Kc 		= 0.1e-4;			// collision
-		Ks 		= 0.5e-5;			// sticking
-		Ka 		= 0.5e-5;			// anchor
-		Kd 		= 0.1e-7;			// drag force coefficient
-		// Domain properties
-		G		= -9.8;				// [m/s2], acceleration due to gravity
-		rho_w	= 1000;				// [kg/m3], density of bulk liquid (water)
-		rho_m	= 1100;				// [kg/m3], diatoma density
-		L 		= new Vector3d(1200e-6, 300e-6, 1200e-6);	// [m], Dimensions of domain
-		// Cell properties
-		NType 	= 2;				// Types of cell
-		NInitCell = 15;				// Initial number of cells
-		aspect	= 2;				// Aspect ratio of cells
-		// Ball properties
-		MCellInit = 1e-11;			// kg
-		MCellMax = 2e-11; 			// max mass of cells before division
-		// Progress
-		growthTime = 0;				// [h] Current time for the growth
-		growthTimeStep = 1.0;		// [h] Time step for growth
-		growthIter = 0;				// [-] Counter time iterations for growth
-		movementTime = 0;			// [s] initial time for movement (for ODE solver)
-		movementTimeStep = 2e-2;	// [s] output time step  for movement
-		movementTimeStepEnd	= 10e-2;// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
-		movementIter = 0;			// [-] counter time iterations for movement
-		// Counters
-		NBall 	= 0;
-		// Arrays
-		ballArray = new ArrayList<CBall>(2*NInitCell);
-		cellArray = new ArrayList<CCell>(NInitCell);
-		rodSpringArray = new ArrayList<CSpring>(NInitCell);
-		stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
-		filSpringArray = new ArrayList<CFilSpring>(NInitCell);
-		anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
-	}
-	
-	///////////////////////
-	// Get and Set stuff //
-	///////////////////////
-//	public CBall[] BallArray() {
-//		CBall[] ballArray = new CBall[NBall];
-//		int iBall = 0;
-//		for(int iCell=0; iCell < cellArray.size(); iCell++) {
-//			CCell cell = cellArray.get(iCell);
-//			int NBallInCell = (cell.type==0) ? 1 : 2;
-//			for(int iBallInCell=0; iBallInCell < NBallInCell; iBallInCell++) {
-//				ballArray[iBall] = cell.ballArray[iBallInCell];
-//				iBall++;
-//			}
-//		}
-//		return ballArray;
-//	}
 	
 	/////////////////
 	// Log writing //
@@ -138,7 +124,7 @@ public class CModel {
 		// Extract format from input arguments
 		String prefix = "   ";
 		String suffix = "";
-		if(format.equalsIgnoreCase("iter")) 	{suffix = " (" + movementIter + "/" + growthIter + ")";} 	else
+		if(format.equalsIgnoreCase("iter")) 	{suffix = " (" + growthIter + "/" + movementIter + ")";} 	else
 			if(format.equalsIgnoreCase("warning")) 	{prefix = " WARNING: ";} 									else
 				if(format.equalsIgnoreCase("error")) 	{prefix = " ERROR: ";}
 		String string = dateFormat.format(cal.getTime()) + prefix + message + suffix;
@@ -153,7 +139,7 @@ public class CModel {
 				if(!(new File(name + "/output")).exists()) {
 					new File(name + "/output").mkdir();
 				}
-				PrintWriter fid = new PrintWriter(new FileWriter(name + "/" + "logfile.txt",true));		// True is for append // Not platform independent TODO
+				PrintWriter fid = new PrintWriter(new FileWriter(name + "/" + "logfile.txt",true));		// True is for append
 				fid.println(string);
 				fid.close();
 			} catch(IOException E) {
@@ -169,13 +155,13 @@ public class CModel {
 	//////////////////////////
 	// Collision detection  //
 	//////////////////////////
-	public ArrayList<CCell> DetectFloorCollision() {
+	public ArrayList<CCell> DetectFloorCollision(double touchFactor) {				// actual distance < dist*radius--> collision    
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
 		for(CCell cell : cellArray) {
-			int NBall = (cell.type==0) ? 1 : 2;	// Figure out number of balls based on type
+			int NBall = (cell.type<2) ? 1 : 2;	// Figure out number of balls based on type
 			for(int iBall=0; iBall<NBall; iBall++) {
 				CBall ball = cell.ballArray[iBall];
-				if(ball.pos.y - ball.radius < 0) {
+				if(ball.pos.y - touchFactor*ball.radius < 0) {
 					collisionCell.add(cell);
 					break;
 				}
@@ -184,16 +170,16 @@ public class CModel {
 		return collisionCell;
 	}
 	
-	public ArrayList<CCell> DetectCellCollision_Simple() {				// Using ArrayList, no idea how big this one will get
+	public ArrayList<CCell> DetectCellCollision_Simple(double touchFactor) {			// Using ArrayList, no idea how big this one will get
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
 		
-		for(int iBall=0; iBall<NBall; iBall++) {						// If we stick to indexing, it'll be easier to determine which cells don't need to be analysed
+		for(int iBall=0; iBall<ballArray.size(); iBall++) {						// If we stick to indexing, it'll be easier to determine which cells don't need to be analysed
 			CBall ball = ballArray.get(iBall);
-			for(int iBall2 = iBall+1; iBall2<NBall; iBall2++) {
+			for(int iBall2 = iBall+1; iBall2<ballArray.size(); iBall2++) {
 				CBall ball2 = ballArray.get(iBall2);
-				if(ball.cell.arrayIndex!=ball2.cell.arrayIndex) {
+				if(ball.cell.Index()!=ball2.cell.Index()) {
 					Vector3d diff = ball2.pos.minus(ball.pos);
-					if(Math.abs(diff.length()) - ball.radius - ball2.radius < 0) {
+					if(Math.abs(diff.length()) - touchFactor*(ball.radius+ball2.radius) < 0) {
 						collisionCell.add(ball.cell);
 						collisionCell.add(ball2.cell);
 					}
@@ -203,89 +189,78 @@ public class CModel {
 		return collisionCell;
 	}
 	
-	public returnObject DetectCellCollision_Ericson(Vector3d S1_P0, Vector3d S1_P1, Vector3d S2_P0, Vector3d S2_P1) {
-	    Vector3d   u = S1_P1.minus(S1_P0);		// d1(Ericson)
-	    Vector3d   v = S2_P1.minus(S2_P0);		// d2(Ericson)
-	    Vector3d   w = S1_P0.minus(S2_P0);		// r (Ericson)
-
-	    double    a = u.dot(u);			// always >= 0	Called a(Ericson)
-	    double    b = u.dot(v);			//				Called b(Ericson)
-	    double    c = v.dot(v);			// always >= 0	Called e(Ericson)
-	    double    d = u.dot(w);			//				Called c(Ericson)
-	    double    e = v.dot(w);			//				Called f(Ericson)
-	    
-		double    D = a*c - b*b;		// always >= 0	Called denom(Ericson)
-
-		Vector3d c1, c2;
-		double sc, tc;
-		double n, tnom;
-
-		if (D != 0.0){
-			n = (b*e - d*c)/D;
-			if (n<0.0)
-				sc = 0.0;
-			else if (n>1.0)
-				sc = 1.0;
-			else sc = n;
-		} else sc = 0.0; 			//Arbitrary sc
-
-		tc = (b*sc + e)/c;
-		tnom = b*sc + e;
-
-		if (tnom < 0.0){
-			tc = 0.0;
-			
-			n = -d/a;
-			if (n<0.0)
-				sc = 0.0;
-			else if (n>1.0)
-				sc = 1.0;
-			else sc = n;
-
-		} else if (tnom > c) {
-			tc = 1.0;
-
-			n = b - d;
-			if (n<0.0)
-				sc = 0.0;
-			else if (n>1.0)
-				sc = 1.0;
-			else sc = n;
-
-		} else tc = tnom/c;
-
+	// Ericson collision detection
+	
+	private double Clamp(double n, double min, double max) {
+		if(n<min)	return min;
+		if(n>max) 	return max;
+		return n;
+	}
+		
+	// Collision detection rod-rod
+	public EricsonObject DetectLinesegLineseg(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {		// This is line segment - line segment collision detection. 
+		// Rewritten 120912 because of strange results with the original function
+		// Computes closest points C1 and C2 of S1(s) = P1+s*(Q1-P1) and S2(t) = P2+t*(Q2-P2)
+		Vector3d d1 = q1.minus(p1);		// Direction of S1
+		Vector3d d2 = q2.minus(p2);		// Direction of S2
+		Vector3d r = p1.minus(p2);
+		double a = d1.dot(d1);			// Squared length of S1, >0
+		double e = d2.dot(d2);			// Squared length of S2, >0
+		double f = d2.dot(r);
+		double c = d1.dot(r);
+		double b = d1.dot(d2);
+		double denom = a*e-b*b;			// Always >0
+		
+		// If segments are not parallel, compute closts point on L1 to L2 and clamp to segment S1, otherwise pick arbitrary s (=0)
+		double s;
+		if(denom!=0.0) {
+			s = Clamp((b*f-c*e) /  denom, 0.0, 1.0);
+		} else	s = 0.0;
+		// Compute point on L2 closest to S1(s) using t = ((P1+D1*s) - P2).dot(D2) / D2.dot(D2) = (b*s + f) / e
+		double t = (b*s + f) / e;
+		
+		// If t is in [0,1] done. Else Clamp(t), recompute s for the new value of t using s = ((P2+D2*t) - P1).dot(D1) / D1.dot(D1) = (t*b - c) / a and clamp s to [0,1]
+		if(t<0.0) {
+			t = 0.0;
+			s = Clamp(-c/a, 0.0, 1.0);
+		} else if (t>1.0) {
+			t = 1.0;
+			s = Clamp((b-c)/a, 0.0, 1.0);
+		}
+		
+		Vector3d c1 = p1.plus(d1.times(s));
+		Vector3d c2 = p2.plus(d2.times(t));
+		
 		// Get the difference of the two closest points
-		Vector3d   dP = w.plus(u.times(sc)).minus(v.times(tc));  // = S1(sc) - S2(tc)
-
-		c1 = S1_P0.plus(u.times(sc));	// NOT NECESSARY... Just to check!!
-		c2 = S2_P0.plus(v.times(tc)); 	// NOT NECESSARY... Just to check!!
-
-		returnObject R = new returnObject(dP, dP.length(), sc, tc, c1, c2);
-		return R;
+//		Vector3d dP = r.plus(c1.times(s)).minus(c2.times(t));  // = S1(sc) - S2(tc)
+		Vector3d dP = c1.minus(c2);  // = S1(sc) - S2(tc)
+		
+		double dist2 = (c1.minus(c2)).dot(c1.minus(c2));
+		
+		return new EricsonObject(dP, Math.sqrt(dist2), s, t, c1, c2);
 	}
 	
-	public returnObject DetectCellCollision_Ericson(Vector3d S1_P0, Vector3d S1_P1, Vector3d S2_P0) {
-		Vector3d ab = S1_P1.minus(S1_P0);  	// line
-		Vector3d w = S2_P0.minus(S1_P0);	//point-line
+	// Collision detection ball-rod
+	public EricsonObject DetectLinesegPoint(Vector3d p1, Vector3d q1, Vector3d p2) {
+		Vector3d ab = q1.minus(p1);  	// line
+		Vector3d w = p2.minus(p1);	//point-line
 		//Project c onto ab, computing parameterized position d(t) = a + t*(b-a)
 		double rpos = w.dot(ab)/ab.dot(ab);
 		//if outside segment, clamp t and therefore d to the closest endpoint
-		if ( rpos<0.0f ) rpos = 0.0f;
-		if ( rpos>1.0f ) rpos = 1.0f;
+		if ( rpos<0.0 ) rpos = 0.0;
+		if ( rpos>1.0 ) rpos = 1.0;
 		//compute projected position from the clamped t
-		Vector3d d = S1_P0.plus(ab.times(rpos));
-		//calculate the vector c --> d
-		Vector3d dP = d.minus(S2_P0);
-		returnObject R = new returnObject(dP, dP.length(), rpos);	// Defined at the end of the model class
+		Vector3d d = p1.plus(ab.times(rpos));
+		//calculate the vector p2 --> d
+		Vector3d dP = d.minus(p2);
+		EricsonObject R = new EricsonObject(dP, dP.length(), rpos);	// Defined at the end of the model class
 		return R;
 	}
 	
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
-	public ArrayList<CAnchorSpring> DetectAnchorBreak() {
-		double maxStretch = 1.2; 
-		double minStretch = 0.8;
+	public ArrayList<CAnchorSpring> DetectAnchorBreak(double minStretch, double maxStretch) {
 		ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 		
 		for(CAnchorSpring pSpring : anchorSpringArray) {
@@ -297,9 +272,7 @@ public class CModel {
 		return breakArray;
 	}
 	
-	public ArrayList<CStickSpring> DetectStickBreak() {
-		double maxStretch = 1.2; 
-		double minStretch = 0.8;
+	public ArrayList<CStickSpring> DetectStickBreak(double minStretch, double maxStretch) {
 		ArrayList<CStickSpring> breakArray = new ArrayList<CStickSpring>();
 		
 		int iSpring = 0;
@@ -319,7 +292,7 @@ public class CModel {
 	// Movement stuff //
 	////////////////////
 	public int Movement() throws Exception {
-		int nvar = 6*CModel.NBall;
+		int nvar = 6*ballArray.size();
 		int ntimes = (int) (movementTimeStepEnd/movementTimeStep);
 		double atol = 1.0e-6, rtol = atol;
 		double h1 = 0.00001, hmin = 0;
@@ -364,7 +337,7 @@ public class CModel {
 		return nstp;
 	}
 	
-	public Vector CalculateForces(double t, Vector yode) {	// This function gets called again and again --> not very efficient to import/export every time TODO
+	public Vector CalculateForces(double t, Vector yode) {	// This function gets called again and again --> not very efficient to import/export every time OPTIMISE
 		// Read data from y
 		int ii=0; 				// Where we are in yode
 		for(CBall ball : ballArray) {
@@ -379,137 +352,116 @@ public class CModel {
 			ball.force.z = 0;
 		}
 		// Collision forces
-		double R2, H2;			// rest length, check distance 
+		double R2, H2;			// sum of radii of two balls, check distance 
 		for(int iCell=0; iCell<cellArray.size(); iCell++) {
-			CCell cell = cellArray.get(iCell);
-			CBall ball = cell.ballArray[0];
+			CCell cell0 = cellArray.get(iCell);
+			CBall c0b0 = cell0.ballArray[0];
 			// Base collision on the cell type
-			if(cell.type==0) {
+			if(cell0.type<2) {
 				// Check for all remaining cells
 				for(int jCell=iCell+1; jCell<cellArray.size(); jCell++) {
-					Vector3d S1_P0 = new Vector3d(ball.pos);
-					CCell cellNext = cellArray.get(jCell);
+					CCell cell1 = cellArray.get(jCell);
 					// Check for a sticking spring, if there is one let it do the work
-					if(!cell.stickCellArray.equals(cellNext)) {
-						CBall ballNext = cellNext.ballArray[0];
-						R2 = ball.radius + ballNext.radius;
-						H2 = aspect * R2 + R2;
-						if(cellNext.type==0) {		// The other cell is a ball too
+					if(!cell0.stickCellArray.equals(cell1)) {
+						CBall c1b0 = cell1.ballArray[0];
+						R2 = c0b0.radius + c1b0.radius;
+						Vector3d dirn = c0b0.pos.minus(c1b0.pos);
+						double dist = dirn.length();							// Mere estimation for ball-rod
+						if(cell1.type<2) {		// The other cell is a ball too
 							// do a simple collision detection
-							Vector3d S2_P0 = new Vector3d(ballNext.pos);
-							Vector3d dirn = S1_P0.minus(S2_P0);
-							double rpos = dirn.length();
-							if(rpos<R2) {
+							if(dist<R2) {
 								// We have a collision
 								dirn.normalise();
-								rpos = R2-rpos;
-								dirn = dirn.times(Kc*rpos);
+								double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
+								Vector3d Fs = dirn.times(Kc*MBallAvg*(R2*1.01-dist));	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
 								// Add forces
-								ball.force.plus(dirn);
-								ballNext.force.minus(dirn);
+								c0b0.force = c0b0.force.plus(Fs);
+								c1b0.force = c1b0.force.minus(Fs);
 							}
-						} else {					// type != 0 --> the other cell is a rod
-							// do a sphere-rod collision detection
-							CBall ballNext2 = cellNext.ballArray[1];
-							returnObject R = DetectCellCollision_Ericson(ballNext.pos, ballNext2.pos, ball.pos);
-							Vector3d dP = R.dP;
-							double dist = R.dist;
-							double sc = R.sc;
-							
-							if(dist<R2) {	// Collision
-								// don't stick, done during growth
-								double f = Kc/dist*(dist-R2);
-								double Fsx = f*dP.x;
-								double Fsy = f*dP.y;
-								double Fsz = f*dP.z;
-								// Add these elastic forces to the cells
-								double sc1 = 1-sc;
-								// both balls in rod
-								ballNext.force.x -= sc1*Fsx;
-								ballNext.force.y -= sc1*Fsy;
-								ballNext.force.z -= sc1*Fsz;
-								ballNext2.force.x -= sc*Fsx;
-								ballNext2.force.y -= sc*Fsy;
-								ballNext2.force.z -= sc*Fsz;
-								// ball in sphere
-								ball.force.x += Fsx;
-								ball.force.y += Fsy;
-								ball.force.z += Fsz;
+						} else {												// this cell is a ball, the other cell is a rod
+							H2 = aspect[cell1.type]*2.0*c1b0.radius + R2;		// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							if(dist<H2) {										// Simplified CD
+								// do a sphere-rod collision detection
+								CBall c1b1 = cell1.ballArray[1];
+								EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
+								Vector3d dP = C.dP;
+								dist = C.dist;									// Make distance more accurate
+								double sc = C.sc;
+								if(dist<R2) {									// Collision
+									// don't stick, done during growth
+									double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
+									double f = Kc*MBallAvg / dist*(dist-R2*1.01);
+									Vector3d Fs = dP.times(f);
+									// Add these elastic forces to the cells
+									double sc1 = 1-sc;
+									// both balls in rod
+									c1b0.force.subtract(Fs.times(sc1));
+									c1b1.force.subtract(Fs.times(sc));
+									// ball in sphere
+									c0b0.force.add(Fs);
+								}
 							}
 						}
 					}
 				}
-			} else {	// cell.type != 0
-				CBall ball2 = cell.ballArray[1];
+			} else {	// cell.type > 1
+				CBall c0b1 = cell0.ballArray[1];
 				for(int jCell = iCell+1; jCell<cellArray.size(); jCell++) {
-					CCell cellNext = cellArray.get(jCell);
+					CCell cell1 = cellArray.get(jCell);
+					CBall c1b0 = cell1.ballArray[0];
+					R2 = c0b0.radius + c1b0.radius;
+					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
+					double dist = dirn.length();								// Mere estimation for ball-rod
 					// check for sticking spring and let it do the work later on if it's there
-					if(!cell.stickCellArray.equals(cellNext)) {
-						CBall ballNext = cellNext.ballArray[0];
-						R2 = ball.radius + ballNext.radius; 
-						if(cellNext.type==0) {
-							// do a sphere-rod collision detection
-							returnObject R = DetectCellCollision_Ericson(ball.pos, ball2.pos, ballNext.pos); 
-							Vector3d dP = R.dP;
-							double dist = R.dist;
-							double sc = R.sc;
-							
-							if(dist < R2) {
-								double f = Kc/dist*(dist-R2);
-								double Fsx = f*dP.x;
-								double Fsy = f*dP.y;
-								double Fsz = f*dP.z;
-								// Add these elastic forces to the cells
-								double sc1 = 1-sc;
-								// both balls in rod
-								ball.force.x -= sc1*Fsx;
-								ball.force.y -= sc1*Fsy;
-								ball.force.z -= sc1*Fsz;
-								ball2.force.x -= sc*Fsx;
-								ball2.force.y -= sc*Fsy;
-								ball2.force.z -= sc*Fsz;
-								// ball in sphere
-								ballNext.force.x += Fsx;
-								ballNext.force.y += Fsy;
-								ballNext.force.z += Fsz;
+					if(!cell0.stickCellArray.equals(cell1)) {
+						if(cell1.type<2) {										// This cell is a rod, the Next is a ball
+							H2 = aspect[cell0.type]*2.0*c0b0.radius + R2;		// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							if(dist<H2) {
+								// do a rod-sphere collision detection
+								EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
+								Vector3d dP = C.dP;
+								dist = C.dist;
+								double sc = C.sc;
+								if(dist < R2) {
+									double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
+									double f = Kc*MBallAvg / dist*(dist-R2*1.01);
+									Vector3d Fs = dP.times(f);
+									// Add these elastic forces to the cells
+									double sc1 = 1-sc;
+									// both balls in rod
+									c0b0.force.subtract(Fs.times(sc1));
+									c0b1.force.subtract(Fs.times(sc));
+									// ball in sphere
+									c1b0.force.add(Fs);
+								}
 							}
-						} else {	// type != 0 --> the other cell is a rod. This is where it gets tricky
-							Vector3d S1_P0 = new Vector3d(ball.pos);
-							Vector3d S1_P1 = new Vector3d(ball2.pos);
-							CBall ballNext2 = cellNext.ballArray[1];
-							Vector3d S2_P0 = new Vector3d(ballNext.pos);
-							Vector3d S2_P1 = new Vector3d(ballNext2.pos);
-							H2 = aspect*R2*3;
-							if(Math.abs(S2_P0.x - S1_P0.x) < H2 && Math.abs(S2_P0.y - S1_P0.y) < H2 && Math.abs(S2_P0.z - S1_P0.z) < H2) {
+						} else {	// type>1 --> the other cell is a rod too. This is where it gets tricky
+							Vector3d c0b0pos = new Vector3d(c0b0.pos);
+							Vector3d c0b1pos = new Vector3d(c0b1.pos);
+							Vector3d c1b0pos = new Vector3d(c1b0.pos);
+							CBall c1b1 = cell1.ballArray[1];
+							Vector3d c1b1pos = new Vector3d(c1b1.pos);
+							H2 = aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
+							if(dist<H2) {
 								// calculate the distance between the two diatoma segments
-								returnObject R = DetectCellCollision_Ericson(S1_P0, S1_P1, S2_P0, S2_P1);
-								Vector3d dP = R.dP;
-								double dist = R.dist;
+								EricsonObject R = DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
+								Vector3d dP = R.dP;					// dP is vector from closest point 2 --> 1
+								dist = R.dist;
 								double sc = R.sc;
 								double tc = R.tc;
-								
-								if(dist<R2 && !cell.IsFilament(cellNext)) {
-									double f = Kc/dist*(dist-R2);
-									double Fsx = f*dP.x;
-									double Fsy = f*dP.y;
-									double Fsz = f*dP.z;
+								if(dist<R2) {					//  120910 removed: && !cell.IsFilament(cellNext)
+									double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
+									double f = Kc*MBallAvg / dist*(dist-R2*1.01);
+									Vector3d Fs = dP.times(f);
 									// Add these elastic forces to the cells
 									double sc1 = 1-sc;
 									double tc1 = 1-tc;
 									// both balls in 1st rod
-									ball.force.x -= sc1*Fsx;
-									ball.force.y -= sc1*Fsy;
-									ball.force.z -= sc1*Fsz;
-									ball2.force.x -= sc*Fsx;
-									ball2.force.y -= sc*Fsy;
-									ball2.force.z -= sc*Fsz;
+									c0b0.force.subtract(Fs.times(sc1));
+									c0b1.force.subtract(Fs.times(sc));
 									// both balls in 1st rod
-									ballNext.force.x += tc1*Fsx;
-									ballNext.force.y += tc1*Fsy;
-									ballNext.force.z += tc1*Fsz;
-									ballNext2.force.x += tc*Fsx;
-									ballNext2.force.y += tc*Fsy;
-									ballNext2.force.z += tc*Fsz;
+									c1b0.force.add(Fs.times(tc1));
+									c1b1.force.add(Fs.times(tc));
 								}
 							}
 						}
@@ -521,96 +473,97 @@ public class CModel {
 		for(CBall ball : ballArray) {
 			// Contact forces
 			double y = ball.pos.y;
+//			double z = ball.pos.z;
 			double r = ball.radius;
 			if(y<r){
-				ball.force.y += Kw*(r-y);
+				ball.force.y += Kw*MBallInit[ball.cell.type]*(r-y);
 			}
-//			// Gravity and buoyancy
-//			if(y>r) {			// Only if not already at the floor 
-//				ball.force.y += G * ((rho_m-rho_w)/rho_w) * ball.mass ;  //let the ball fall 
-//			}
+			// Gravity and buoyancy
+			if(gravity) {
+				if(y>r*1.1) {			// Only if not already at the floor plus a tiny bit 
+					ball.force.y += G * ((rhoX-rhoWater)/rhoWater) * ball.mass ;  //let the ball fall 
+				}	
+			}
+			
 			// Velocity damping
-			ball.force.x -= Kd*ball.vel.x;
-			ball.force.y -= Kd*ball.vel.y;
-			ball.force.z -= Kd*ball.vel.z;
+			ball.force.subtract(ball.vel.times(Kd*MBallInit[ball.cell.type]));
 		}
 		
 		// Elastic forces between springs within cells (CSpring in type>0)
-		for(CSpring pSpring : rodSpringArray) {
+		for(CRodSpring rod : rodSpringArray) {
+			CBall ball0 = rod.ballArray[0];
+			CBall ball1 = rod.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = pSpring.ballArray[1].pos.minus(pSpring.ballArray[0].pos);
+			Vector3d diff = ball1.pos.minus(ball0.pos);
 			double dn = diff.length();
 			// Get force
-			double f = pSpring.K/dn * (dn - pSpring.restLength);
+			double f = rod.K/dn * (dn - rod.restLength);
 			// Hooke's law
-			double Fsx = f*diff.x;
-			double Fsy = f*diff.y;
-			double Fsz = f*diff.z;
+			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			pSpring.ballArray[0].force.x += Fsx;
-			pSpring.ballArray[0].force.y += Fsy;
-			pSpring.ballArray[0].force.z += Fsz;
-			pSpring.ballArray[1].force.x -= Fsx;
-			pSpring.ballArray[1].force.y -= Fsy;
-			pSpring.ballArray[1].force.z -= Fsz;
+			ball0.force.add(Fs);
+			ball1.force.subtract(Fs);			// Ah, made mistake here before (120921)!
+		}
+		
+		// Anchoring springs elastic forces (CAnchorSpring in anchorSpringArray)
+		for(CAnchorSpring spring : anchorSpringArray) {
+			CBall ball = spring.ball;
+			// find difference vector and distance dn between balls (euclidian distance) 
+			Vector3d diff = spring.anchor.minus(ball.pos);
+			double dn = diff.length();
+			// Get force
+			double f = spring.K/dn * (dn - spring.restLength);
+			// Hooke's law
+			Vector3d Fs = diff.times(f);
+			// apply forces on balls
+			ball.force.add(Fs);
 		}
 		
 		// Sticking springs elastic forces (CStickSpring in stickSpringArray)
-		for(CStickSpring pStick : stickSpringArray) {
+		for(CStickSpring stick : stickSpringArray) {
+			CBall ball0 = stick.ballArray[0];
+			CBall ball1 = stick.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = pStick.ballArray[1].pos.minus(pStick.ballArray[0].pos);
+			Vector3d diff = ball1.pos.minus(ball0.pos);
 			double dn = diff.length();
 			// Get force
-			double f = pStick.K/dn * (dn - pStick.restLength);
+			double f = stick.K/dn * (dn - stick.restLength);
 			// Hooke's law
-			double Fsx = f*diff.x;
-			double Fsy = f*diff.y;
-			double Fsz = f*diff.z;
+			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			pStick.ballArray[0].force.x += Fsx;
-			pStick.ballArray[0].force.y += Fsy;
-			pStick.ballArray[0].force.z += Fsz;
-			pStick.ballArray[1].force.x -= Fsx;
-			pStick.ballArray[1].force.y -= Fsy;
-			pStick.ballArray[1].force.z -= Fsz;
+			ball0.force.add(Fs);
+			ball1.force.subtract(Fs);
 		}
 		
 		// Filament spring elastic force (CFilSpring in filSpringArray)
-		for(CFilSpring pFil : filSpringArray) {
+		for(CFilSpring fil : filSpringArray) {
+			CBall sb0 = fil.small_ballArray[0];
+			CBall sb1 = fil.small_ballArray[1];
+			CBall bb0 = fil.big_ballArray[0];
+			CBall bb1 = fil.big_ballArray[1];
 			// === big spring ===
 			{// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = pFil.big_ballArray[1].pos.minus(pFil.big_ballArray[0].pos);
+			Vector3d diff = bb1.pos.minus(bb0.pos);
 			double dn = diff.length();
 			// Get force
-			double f = pFil.big_K/dn * (dn - pFil.big_restLength);
+			double f = fil.big_K/dn * (dn - fil.big_restLength);
 			// Hooke's law
-			double Fsx = f*diff.x;
-			double Fsy = f*diff.y;
-			double Fsz = f*diff.z;
+			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			pFil.big_ballArray[0].force.x += Fsx;
-			pFil.big_ballArray[0].force.y += Fsy;
-			pFil.big_ballArray[0].force.z += Fsz;
-			pFil.big_ballArray[1].force.x -= Fsx;
-			pFil.big_ballArray[1].force.y -= Fsy;
-			pFil.big_ballArray[1].force.z -= Fsz;}
+			bb0.force.add(Fs);
+			bb1.force.subtract(Fs);}
 			// === small spring ===
 			{// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = pFil.small_ballArray[1].pos.minus(pFil.small_ballArray[0].pos);
+			Vector3d diff = sb1.pos.minus(sb0.pos);
 			double dn = diff.length();
 			// Get force
-			double f = pFil.small_K/dn * (dn - pFil.small_restLength);
+			double f = fil.small_K/dn * (dn - fil.small_restLength);
 			// Hooke's law
-			double Fsx = f*diff.x;
-			double Fsy = f*diff.y;
-			double Fsz = f*diff.z;
+			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			pFil.small_ballArray[0].force.x += Fsx;
-			pFil.small_ballArray[0].force.y += Fsy;
-			pFil.small_ballArray[0].force.z += Fsz;
-			pFil.small_ballArray[1].force.x -= Fsx;
-			pFil.small_ballArray[1].force.y -= Fsy;
-			pFil.small_ballArray[1].force.z -= Fsz;}
+			sb0.force.add(Fs);
+			sb1.force.subtract(Fs);
+			}
 		}
 		
 		// Return results
@@ -631,121 +584,177 @@ public class CModel {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public int GrowCell() {
+	public int GrowthSimple() {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int newCell = 0;
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
-			CCell pMother = cellArray.get(iCell);
-			double mass = pMother.GetMass();
+			CCell mother = cellArray.get(iCell);
+			double mass = mother.GetMass();
+
+			// Random growth
+			mass *= (0.95+rand.Double()/5.0);
+			mother.SetMass(mass);
+			
+			// Cell growth or division
+			if(mother.GetMass()>MCellMax[mother.type]) {
+				newCell++;
+				GrowCell(mother);
+			}	
+		}
+		return newCell;
+	}
+	
+	public int GrowthSyntrophy() {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+		int newCell = 0;
+		int NCell = cellArray.size();
+		for(int iCell=0; iCell<NCell; iCell++){
+			CCell mother = cellArray.get(iCell);
+			double mass = mother.GetMass();
 
 			// Random growth
 			mass *= (0.95+rand.Double()/5.0);
 			// Syntrophic growth
-			for(CCell pStickCell : pMother.stickCellArray) {
-				if((pMother.type==0 && pStickCell.type!=0) || (pMother.type!=0 && pStickCell.type==0)) {
+			for(CCell stickCell : mother.stickCellArray) {
+				if((mother.type<2 && stickCell.type>1) || (mother.type>1 && stickCell.type<2)) {
 					// The cell types are different on the other end of the spring
 					mass *= 1.2;
 					break;
 				}
 			}
+			mother.SetMass(mass);
 			
 			// Cell growth or division
-			if(mass>MCellMax) {
+			if(mother.GetMass()>MCellMax[mother.type]) {
 				newCell++;
-				if(pMother.type==0) {
-					// Come up with a nice direction in which to place the new cell
-					Vector3d direction = new Vector3d(rand.Double()-0.5,rand.Double()-0.5,rand.Double()-0.5);			
-					direction.normalise();
-					double displacement = pMother.ballArray[0].radius;
-					// Make a new, displaced cell
-					CCell pDaughter = new CCell(0,															// Same type as cell
-							pMother.ballArray[0].pos.x - displacement * direction.x,						// The new location is the old one plus some displacement					
-							pMother.ballArray[0].pos.y - displacement * direction.y,	
-							pMother.ballArray[0].pos.z - displacement * direction.z,
-							pMother.filament,this);														// Same filament boolean as cell and pointer to the model
-					// Set mass for both cells
-					pDaughter.SetMass(mass/2.0);		// Radius is updated in this method
-					pMother.SetMass(mass/2.0);
-					// Set properties for new cell
-					pDaughter.ballArray[0].vel = 	new Vector3d(pMother.ballArray[0].vel);
-					pDaughter.ballArray[0].force = 	new Vector3d(pMother.ballArray[0].force);
-					pDaughter.colour =				pMother.colour;
-					pDaughter.mother = 				pMother;
-					// Displace old cell
-					pMother.ballArray[0].pos.plus(  direction.times( displacement )  );
-					// Contain cells to y dimension of domain
-					if(pMother.ballArray[0].pos.y 	< pMother.ballArray[0].radius) 		{pMother.ballArray[0].pos.y 	= pMother.ballArray[0].radius;};
-					if(pDaughter.ballArray[0].pos.y < pDaughter.ballArray[0].radius)  	{pDaughter.ballArray[0].pos.y 	= pDaughter.ballArray[0].radius;};
-					// Set filament springs
-					if(pDaughter.filament) {
-						pDaughter.Stick(pMother);		// Because there are no filaments for two spherical cells
-					}
-				} else {
-					CBall pMotherBall0 = pMother.ballArray[0];
-					CBall pMotherBall1 = pMother.ballArray[1];
-					// Direction
-					Vector3d direction = pMotherBall1.pos.minus( pMotherBall0.pos );
-					direction.normalise();
-					// Displacement
-					double displacement; 																		
-					if(pMother.type==1) {
-						displacement = pMotherBall0.radius*Math.pow(2.0,-0.666666);								// A very strange formula: compare our radius to the C++ equation for Rpos and you'll see it's the same
-					} else {
-						displacement = pMotherBall1.radius/2.0;
-					}
-					// Make a new, displaced cell
-					Vector3d middle = pMotherBall1.pos.plus(pMotherBall0.pos).divide(2.0); 
-					CCell pDaughter = new CCell(pMother.type,													// Same type as cell
-							middle.x+	  displacement*direction.x,												// First ball. First ball and second ball were swapped in MATLAB and possibly C++					
-							middle.y+1.01*displacement*direction.y,												// ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
-							middle.z+	  displacement*direction.z,
-							pMotherBall1.pos.x,																	// Second ball
-							pMotherBall1.pos.y,
-							pMotherBall1.pos.z,
-							pMother.filament,this);																// Same filament boolean as cell and pointer to the model
-					// Set mass for both cells
-					pDaughter.SetMass(mass/2.0);
-					pMother.SetMass(mass/2.0);
-					// Displace old cell, 2nd ball
-					pMotherBall1.pos = middle.minus(direction.times(displacement));
-					pMother.springArray[0].ResetRestLength();
-					// Contain cells to y dimension of domain
-					for(int iBall=0; iBall<2; iBall++) {
-						if(pMother.ballArray[iBall].pos.y 		< pMother.ballArray[iBall].radius) 		{pMother.ballArray[0].pos.y 	= pMother.ballArray[0].radius;};
-						if( pDaughter.ballArray[iBall].pos.y 	< pDaughter.ballArray[iBall].radius) 	{pDaughter.ballArray[0].pos.y 	= pDaughter.ballArray[0].radius;};
-					}
-					// Set properties for new cell
-					for(int iBall=0; iBall<2; iBall++) {
-						pDaughter.ballArray[iBall].vel = 	new Vector3d(pMother.ballArray[iBall].vel);
-						pDaughter.ballArray[iBall].force = 	new Vector3d(pMother.ballArray[iBall].force);
-					}
-					pDaughter.colour =	pMother.colour;
-					pDaughter.mother = 	pMother;
-					pDaughter.springArray[0].restLength = pMother.springArray[0].restLength;
-
-					// Set filament springs
-					if(pDaughter.filament) {
-						for(CFilSpring pFil : filSpringArray) {
-							if( pFil.big_ballArray[0]== pMotherBall0) {
-								pFil.big_ballArray[0] = pDaughter.ballArray[0];}
-							if( pFil.big_ballArray[1]== pMotherBall0) {
-								pFil.big_ballArray[1] = pDaughter.ballArray[0];}
-							if( pFil.small_ballArray[0]== pMotherBall1) {
-								pFil.small_ballArray[0] = pDaughter.ballArray[1];}
-							if( pFil.small_ballArray[1]== pMotherBall1) {
-								pFil.small_ballArray[1] = pDaughter.ballArray[1];}
-						}
-						new CFilSpring(pMother,pDaughter);
-					}
-				}
-
-			} else {		
-				// Simply increase mass and reset spring
-				pMother.SetMass(mass);
-				if(pMother.type>0) pMother.springArray[0].ResetRestLength();
+				GrowCell(mother);
 			}
 		}
 		return newCell;
+	}
+	
+	public int GrowthFlux() {
+		int newCell=0;
+		int NCell = cellArray.size();
+		for(int iCell=0; iCell<NCell; iCell++){
+			CCell mother = cellArray.get(iCell);
+			// Obtain mol increase based on flux
+			double molIn = mother.q * mother.GetMass() * growthTimeStep * SMX[mother.type];
+			// Grow mother cell
+			mother.SetMass(mother.GetMass()+molIn);
+			// divide mother cell if ready 
+			if(mother.GetMass()>MCellMax[mother.type]) {
+				newCell++;
+				GrowCell(mother);
+			}
+		}
+		return newCell;
+	}
+	
+	public CCell GrowCell(CCell mother) {
+		double mass = mother.GetMass();
+		CCell daughter;
+		if(mother.type<2) {
+			// Come up with a nice direction in which to place the new cell
+			Vector3d direction = new Vector3d(rand.Double()-0.5,rand.Double()-0.5,rand.Double()-0.5);			
+			direction.normalise();
+			double displacement = mother.ballArray[0].radius;
+			// Make a new, displaced cell
+			daughter = new CCell(mother.type,																// Same type as cell
+					mother.ballArray[0].pos.x - displacement * direction.x,						// The new location is the old one plus some displacement					
+					mother.ballArray[0].pos.y - displacement * direction.y,	
+					mother.ballArray[0].pos.z - displacement * direction.z,
+					mother.filament,
+					mother.colour,
+					this);														// Same filament boolean as cell and pointer to the model
+			// Set mass for both cells
+			daughter.SetMass(mass/2.0);		// Radius is updated in this method
+			mother.SetMass(mass/2.0);
+			// Set properties for new cell
+			daughter.ballArray[0].vel = 	new Vector3d(mother.ballArray[0].vel);
+			daughter.ballArray[0].force = 	new Vector3d(mother.ballArray[0].force);
+			daughter.colour =				mother.colour;							// copy of reference
+			daughter.mother = 				mother;
+			daughter.q = 				mother.q;
+			// Displace old cell
+			mother.ballArray[0].pos = mother.ballArray[0].pos.plus(  direction.times( displacement )  );
+			// Contain cells to y dimension of domain
+			if(mother.ballArray[0].pos.y 	< mother.ballArray[0].radius) 		{mother.ballArray[0].pos.y 	= mother.ballArray[0].radius;};
+			if(daughter.ballArray[0].pos.y < daughter.ballArray[0].radius)  	{daughter.ballArray[0].pos.y 	= daughter.ballArray[0].radius;};
+			// Set filament springs
+			if(daughter.filament) {
+				daughter.Stick(mother);		// Because there are no filaments for two spherical cells
+			}
+		} else {
+			CBall motherBall0 = mother.ballArray[0];
+			CBall motherBall1 = mother.ballArray[1];
+			// Direction
+			Vector3d direction = motherBall1.pos.minus( motherBall0.pos );
+			direction.normalise();
+			// Displacement
+			double displacement; 																		
+//			if(mother.type<4) {
+//				displacement = motherBall0.radius*Math.pow(2.0,-0.666666);								// A very strange formula: compare our radius to the C++ equation for Rpos and you'll see it's the same
+//			} else {
+				displacement = motherBall1.radius/2.0;
+//			}
+			// Make a new, displaced cell
+			Vector3d middle = motherBall1.pos.plus(motherBall0.pos).divide(2.0); 
+			daughter = new CCell(mother.type,													// Same type as cell
+					middle.x+	  displacement*direction.x,										// First ball. First ball and second ball were swapped in MATLAB and possibly C++					
+					middle.y+1.01*displacement*direction.y,										// ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
+					middle.z+	  displacement*direction.z,
+					motherBall1.pos.x,															// Second ball
+					motherBall1.pos.y,
+					motherBall1.pos.z,
+					mother.filament,
+					mother.colour,
+					this);																		// Same filament boolean as cell and pointer to the model
+			// Set mass for both cells
+			daughter.SetMass(mass/2.0);
+			mother.SetMass(mass/2.0);
+			// Displace old cell, 2nd ball
+			motherBall1.pos = middle.minus(direction.times(displacement));
+			mother.springArray[0].ResetRestLength();
+			// Contain cells to y dimension of domain
+			for(int iBall=0; iBall<2; iBall++) {
+				if(mother.ballArray[iBall].pos.y 		< mother.ballArray[iBall].radius) 		{mother.ballArray[0].pos.y 	= mother.ballArray[0].radius;};
+				if( daughter.ballArray[iBall].pos.y 	< daughter.ballArray[iBall].radius) 	{daughter.ballArray[0].pos.y 	= daughter.ballArray[0].radius;};
+			}
+			// Set properties for new cell
+			for(int iBall=0; iBall<2; iBall++) {
+				daughter.ballArray[iBall].vel = 	new Vector3d(mother.ballArray[iBall].vel);
+				daughter.ballArray[iBall].force = 	new Vector3d(mother.ballArray[iBall].force);
+			}
+			daughter.colour =	mother.colour;
+			daughter.mother = 	mother;
+			daughter.motherIndex = mother.Index();
+			daughter.springArray[0].restLength = mother.springArray[0].restLength;
+
+			// Set filament springs
+			if(daughter.filament) {
+				for(CFilSpring fil : filSpringArray) {
+					boolean found=false;
+					if( fil.big_ballArray[0] == motherBall0) {
+						fil.set(daughter.ballArray[0],0);
+						found = true;}
+					if( fil.big_ballArray[1] == motherBall0) {
+						fil.set(daughter.ballArray[0],1);
+						found = true;}
+					if( fil.small_ballArray[0] == motherBall1) {
+						fil.set(daughter.ballArray[1],2);
+						found = true;}
+					if( fil.small_ballArray[1] == motherBall1) {
+						fil.set(daughter.ballArray[1],3);
+						found = true;}
+					if(found) {
+						fil.ResetSmall();
+						fil.ResetBig();
+					}
+				}
+				new CFilSpring(mother,daughter);
+			}
+		}
+		return daughter;
 	}
 	
 	////////////////////////////
@@ -760,9 +769,9 @@ public class CModel {
 			cell1.stickCellArray.remove(cell0);
 			// Remove springs from model stickSpringArray
 			stickSpringArray.remove(pSpring);
-			stickSpringArray.remove(pSpring.siblingArray[0]);
-			stickSpringArray.remove(pSpring.siblingArray[1]);
-			stickSpringArray.remove(pSpring.siblingArray[2]);
+			for(int ii=0; ii<pSpring.siblingArray.length; ii++) {
+				stickSpringArray.remove(pSpring.siblingArray[ii]);
+			}
 		}
 	}
 	
@@ -795,168 +804,203 @@ public class CModel {
 		return counter;
 	}
 	
-	////////////////////////////
-	// Saving, loading things //
-	////////////////////////////
+	////////////////////////////////////////////
+	// Saving, loading things, reconstructing //
+	////////////////////////////////////////////
 	public void Save() {
 		MLStructure mlModel = new MLStructure("model", new int[] {1,1});
-		mlModel.setField("aspect", 				new MLDouble(null, new double[] {aspect}, 1));
-		mlModel.setField("G", 					new MLDouble(null, new double[] {G}, 1));
-		mlModel.setField("growthIter", 			new MLDouble(null, new double[] {growthIter}, 1));
-		mlModel.setField("growthTime",			new MLDouble(null, new double[] {growthTime}, 1));
-		mlModel.setField("growthTimeStep",		new MLDouble(null, new double[] {growthTimeStep}, 1));
-		mlModel.setField("K1",					new MLDouble(null, new double[] {Ki}, 1));
-		mlModel.setField("Ka",					new MLDouble(null, new double[] {Ka}, 1));
-		mlModel.setField("Kc",					new MLDouble(null, new double[] {Kc}, 1));
-		mlModel.setField("Kd",					new MLDouble(null, new double[] {Kd}, 1));
-		mlModel.setField("Kf",					new MLDouble(null, new double[] {Kf}, 1));
-		mlModel.setField("Ks",					new MLDouble(null, new double[] {Ks}, 1));
-		mlModel.setField("Kw",					new MLDouble(null, new double[] {Kw}, 1));
-		mlModel.setField("L",					new MLDouble(null, new double[] {L.x, L.y, L.z}, 3));
-		mlModel.setField("MCellInit",			new MLDouble(null, new double[] {MCellInit}, 1));
-		mlModel.setField("MCellMax",			new MLDouble(null, new double[] {MCellMax}, 1));
-		mlModel.setField("movementIter",		new MLDouble(null, new double[] {movementIter}, 1));
-		mlModel.setField("movementTime",		new MLDouble(null, new double[] {movementTime}, 1));
-		mlModel.setField("movementTimeEnd",		new MLDouble(null, new double[] {movementTimeStepEnd}, 1));
-		mlModel.setField("movementTimeStep",	new MLDouble(null, new double[] {movementTimeStep}, 1));
-		mlModel.setField("name",				new MLChar(null, new String[] {name}, name.length()));
-		mlModel.setField("NBall",				new MLDouble(null, new double[] {NBall}, 1));
-		mlModel.setField("NInitCell",			new MLDouble(null, new double[] {NInitCell}, 1));
-		mlModel.setField("NType",				new MLDouble(null, new double[] {NType}, 1));
-		mlModel.setField("randomSeed",			new MLDouble(null, new double[] {randomSeed}, 1));
-		mlModel.setField("rho_m",				new MLDouble(null, new double[] {rho_m}, 1));
-		mlModel.setField("rho_w",				new MLDouble(null, new double[] {rho_w}, 1));
-		
-		// anchorSpringArray
-		int NAnchor = anchorSpringArray.size();
-		MLStructure mlAnchorSpringArray = new MLStructure(null, new int[] {NAnchor,1});
-		for(int iAnchor=0; iAnchor<NAnchor; iAnchor++) {
-			CAnchorSpring pAnchor = anchorSpringArray.get(iAnchor);
-			mlAnchorSpringArray.setField("anchor", 			new MLDouble(null, new double[] {pAnchor.anchor.x, pAnchor.anchor. y, pAnchor.anchor.z}, 3),iAnchor);
-			mlAnchorSpringArray.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pAnchor.ball.arrayIndex+1}, 1),iAnchor);		// +1 for 0 vs 1 based indexing in Java vs MATLAB
-			mlAnchorSpringArray.setField("K",				new MLDouble(null, new double[] {pAnchor.K}, 1),iAnchor);
-			mlAnchorSpringArray.setField("restLength",		new MLDouble(null, new double[] {pAnchor.restLength}, 1),iAnchor);
-			mlAnchorSpringArray.setField("arrayIndex", new MLDouble(null, new double[] {anchorSpringArray.indexOf(pAnchor)+1}, 1),iAnchor);
-			if(pAnchor.ball.cell.type!=0) {
-				mlAnchorSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {anchorSpringArray.indexOf(pAnchor.siblingArray[0])+1}, 1),iAnchor);
-			} else {
-				mlAnchorSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {}, 1),iAnchor);
-			}
-		}
-		mlModel.setField("anchorSpringArray", mlAnchorSpringArray);
+		int N;
+		double[] arrayIndex;
+		// Model properties
+		mlModel.setField("name",                          new MLChar(null, new String[] {name}, 1));                                      	
+		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {randomSeed}, 1));                              	
+		mlModel.setField("sticking",                      new MLDouble(null, new double[] {sticking?1:0}, 1));                            			mlModel.setField("anchoring",                     new MLDouble(null, new double[] {anchoring?1:0}, 1));                           			mlModel.setField("filament",                      new MLDouble(null, new double[] {filament?1:0}, 1));                            			mlModel.setField("gravity",                       new MLDouble(null, new double[] {gravity?1:0}, 1));                             			// Spring constants
+		mlModel.setField("Kr",                            new MLDouble(null, new double[] {Kr}, 1));                                      	// internal cell spring (per ball)
+		mlModel.setField("Kf",                            new MLDouble(null, new double[] {Kf}, 1));                                      	// filament spring (per ball average)
+		mlModel.setField("Kw",                            new MLDouble(null, new double[] {Kw}, 1));                                      	// wall spring (per ball)
+		mlModel.setField("Kc",                            new MLDouble(null, new double[] {Kc}, 1));                                      	// collision (per ball)
+		mlModel.setField("Ks",                            new MLDouble(null, new double[] {Ks}, 1));                                      	// sticking (per ball average)
+		mlModel.setField("Kan",                           new MLDouble(null, new double[] {Kan}, 1));                                     	// anchor (per BALL)
+		// Domain properties
+		mlModel.setField("Kd",                            new MLDouble(null, new double[] {Kd}, 1));                                      	// drag force coefficient (per BALL)
+		mlModel.setField("G",                             new MLDouble(null, new double[] {G}, 1));                                       	// [m/s2], acceleration due to gravity
+		mlModel.setField("rhoWater",                      new MLDouble(null, new double[] {rhoWater}, 1));                                	// [kg/m3], density of bulk liquid (water)
+		mlModel.setField("rhoX",                          new MLDouble(null, new double[] {rhoX}, 1));                                    	// [kg/m3], diatoma density
+		mlModel.setField("MWX",                           new MLDouble(null, new double[] {MWX}, 1));                                     	// [kg/mol], composition CH1.8O0.5N0.2
+		mlModel.setField("L",                             new MLDouble(null, new double[] {L.x, L.y, L.z}, 3));                           	
+		// Model biomass properties
+		mlModel.setField("NXComp",                        new MLDouble(null, new double[] {NXComp}, 1));                                  	// Types of biomass
+		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {NdComp}, 1));                                  	// d for dynamic compound (e.g. total Ac)
+		mlModel.setField("NcComp",                        new MLDouble(null, new double[] {NcComp}, 1));                                  	// c for concentration (or virtual compound, e.g. Ac-)
+		mlModel.setField("NAcidDiss",                     new MLDouble(null, new double[] {NAcidDiss}, 1));                               	// Number of acid dissociation reactions
+		mlModel.setField("NInitCell",                     new MLDouble(null, new double[] {NInitCell}, 1));                               	// Initial number of cells
+		//
+		double[] DcellType = new double[cellType.length];		for(int ii=0; ii<cellType.length; ii++)		DcellType[ii] = cellType[ii];		mlModel.setField("cellType",                      new MLDouble(null, DcellType, cellType.length));                                	// Cell types used by default
+		//
+		//	public double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
+		mlModel.setField("aspect",                        new MLDouble(null, aspect, aspect.length));                                     	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
+		// Ball properties
+		mlModel.setField("MCellInit",                     new MLDouble(null, MCellInit, MCellInit.length));                               	// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
+		mlModel.setField("MBallInit",                     new MLDouble(null, MBallInit, MBallInit.length));                               	// [Cmol] initial mass of one ball in the cell
+		mlModel.setField("MCellMax",                      new MLDouble(null, MCellMax, MCellMax.length));                                 	// [Cmol] max mass of cells before division;
+		// Progress
+		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {growthTime}, 1));                              	// [s] Current time for the growth
+		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {growthTimeStep}, 1));                          	// [s] Time step for growth
+		mlModel.setField("growthIter",                    new MLDouble(null, new double[] {growthIter}, 1));                              	// [-] Counter time iterations for growth
+		mlModel.setField("movementTime",                  new MLDouble(null, new double[] {movementTime}, 1));                            	// [s] initial time for movement (for ODE solver)
+		mlModel.setField("movementTimeStep",              new MLDouble(null, new double[] {movementTimeStep}, 1));                        	// [s] output time step  for movement
+		mlModel.setField("movementTimeStepEnd",           new MLDouble(null, new double[] {movementTimeStepEnd}, 1));                     	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
+		mlModel.setField("movementIter",                  new MLDouble(null, new double[] {movementIter}, 1));                            	// [-] counter time iterations for movement
+		// Arrays
+
 		// cellArray
-		int Ncell = cellArray.size();
-		MLStructure mlCellArray = new MLStructure(null, new int[] {Ncell,1});
-		for(int iCell=0; iCell<Ncell; iCell++) {
-			CCell cell = cellArray.get(iCell);
-			mlCellArray.setField("cellArrayIndex", 	new MLDouble(null, new double[] {cell.arrayIndex+1}, 1), iCell);
-			mlCellArray.setField("colour", 			new MLDouble(null, new double[] {cell.colour[0], cell.colour[1], cell.colour[2]}, 3), iCell);
-			mlCellArray.setField("filament", 		new MLDouble(null, new double[] {cell.filament?1:0}, 1), iCell);
-			mlCellArray.setField("type", 			new MLDouble(null, new double[] {cell.type}, 1), iCell);
-			if(cell.mother!=null) {
-				mlCellArray.setField("motherIndex", 	new MLDouble(null, new double[] {cell.mother.arrayIndex+1}, 1), iCell);
-			} else {
-				mlCellArray.setField("motherIndex", 	new MLDouble(null, new double[] {}, 1), iCell);
-			}
+		N = cellArray.size();
+		MLStructure mlcellArray = new MLStructure(null, new int[] {cellArray.size() ,1});
+		for(int ii=0; ii<N; ii++) {
+			CCell obj = cellArray.get(ii);
+			mlcellArray.setField("type",                      new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
+			mlcellArray.setField("filament",                  new MLDouble(null, new double[] {obj.filament?1:0}, 1), ii);                    	
+			mlcellArray.setField("colour",                    new MLDouble(null, obj.colour, obj.colour.length), ii);                         	
+			
+			arrayIndex = new double[obj.ballArray.length];
+			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index()+1;
+			mlcellArray.setField("ballArray",                 new MLDouble(null, arrayIndex, 1), ii);                                         	// Note that this ballArray has the same name as CModel's
+			
+			arrayIndex = new double[obj.springArray.length];
+			for(int jj=0; jj<obj.springArray.length; jj++)	arrayIndex[jj] = obj.springArray[jj].Index()+1;
+			mlcellArray.setField("springArray",               new MLDouble(null, arrayIndex, 1), ii);                                         	
+			
+			arrayIndex = new double[obj.stickCellArray.size()];
+			for(int jj=0; jj<obj.stickCellArray.size(); jj++)	arrayIndex[jj] = obj.stickCellArray.get(jj).Index()+1;
+			mlcellArray.setField("stickCellArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
+			mlcellArray.setField("motherIndex",               new MLDouble(null, new double[] {obj.motherIndex}, 1), ii);                     	
+			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.q}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
 		}
-		mlModel.setField("cellArray", mlCellArray);
-		
+		mlModel.setField("cellArray", mlcellArray);
+
 		// ballArray
-		int NBall = ballArray.size();
-		MLStructure mlBallArray = new MLStructure(null,new int[] {NBall,1});
-		for(int iBall=0; iBall<NBall; iBall++) {
-			CBall ball = ballArray.get(iBall);
-			mlBallArray.setField("pos", 		new MLDouble(null, new double[] {ball.pos.x, ball.pos.y, ball.pos.z}, 3), iBall);
-			mlBallArray.setField("vel", 		new MLDouble(null, new double[] {ball.vel.x, ball.vel.y, ball.vel.z}, 3), iBall);
-//			mlBallArray.setField("force",	 	new MLDouble(null, new double[] {ball.force.x, ball.force.y, ball.force.z}, 1), iBall);
-			// posSave and velSave
-			int NSave = (int)(movementTimeStepEnd/movementTimeStep);			// -1 for not last index, +1 for initial position and velocity
-			double[] posSave = new double[NSave*3];
-			double[] velSave = new double[NSave*3];
-			for(int ii=0; ii<NSave; ii++) {
-				posSave[ii] 		= ball.posSave[ii].x; 	velSave[ii] 		= ball.velSave[ii].x;
-				posSave[ii+NSave] 	= ball.posSave[ii].y; 	velSave[ii+NSave] 	= ball.velSave[ii].y;
-				posSave[ii+2*NSave] = ball.posSave[ii].z; 	velSave[ii+2*NSave] = ball.velSave[ii].z;
-			}
-			mlBallArray.setField("posSave", 	new MLDouble(null, posSave, NSave), iBall);
-			mlBallArray.setField("velSave", 	new MLDouble(null, velSave, NSave), iBall);
-			//
-			mlBallArray.setField("arrayIndex", new MLDouble(null, new double[] {ball.arrayIndex+1}, 1), iBall);
-			mlBallArray.setField("cellArrayIndex", new MLDouble(null, new double[] {ball.cell.arrayIndex+1}, 1), iBall);
-			mlBallArray.setField("cellBallArrayIndex", new MLDouble(null, new double[] {ball.cellBallArrayIndex+1}, 1), iBall);
-			mlBallArray.setField("mass", 		new MLDouble(null, new double[] {ball.mass}, 1), iBall);
-//			mlBallArray.setField("radius", 		new MLDouble(null, new double[] {ball.radius}, 1), iBall);
+		N = ballArray.size();
+		MLStructure mlballArray = new MLStructure(null, new int[] {ballArray.size() ,1});
+		for(int ii=0; ii<N; ii++) {
+			CBall obj = ballArray.get(ii);
+			mlballArray.setField("mass",                      new MLDouble(null, new double[] {obj.mass}, 1), ii);                            	
+			mlballArray.setField("radius",                    new MLDouble(null, new double[] {obj.radius}, 1), ii);                          	// Will put in method
+			mlballArray.setField("pos",                       new MLDouble(null, new double[] {obj.pos.x, obj.pos.y, obj.pos.z}, 3), ii);     	
+			mlballArray.setField("vel",                       new MLDouble(null, new double[] {obj.vel.x, obj.vel.y, obj.vel.z}, 3), ii);     	
+			mlballArray.setField("force",                     new MLDouble(null, new double[] {obj.force.x, obj.force.y, obj.force.z}, 3), ii);	
+			mlballArray.setField("cellIndex",                 new MLDouble(null, new double[] {obj.cellIndex}, 1), ii);                       	
 		}
-		mlModel.setField("ballArray", mlBallArray);
-		
+		mlModel.setField("ballArray", mlballArray);
+
 		// rodSpringArray
-		int NRod = rodSpringArray.size();
-		MLStructure mlRodSpringArray = new MLStructure(null, new int[] {NRod,1});
-		for(int iRod=0; iRod<NRod; iRod++) {
-			CSpring pRod = rodSpringArray.get(iRod);
-			mlRodSpringArray.setField("ballArrayIndex",	new MLDouble(null, new double[] {pRod.ballArray[0].arrayIndex+1, pRod.ballArray[1].arrayIndex+1}, 2),iRod);
-			mlRodSpringArray.setField("K",				new MLDouble(null, new double[] {pRod.K}, 1),iRod);
-			mlRodSpringArray.setField("restLength",		new MLDouble(null, new double[] {pRod.restLength}, 1),iRod);	
+		N = rodSpringArray.size();
+		MLStructure mlrodSpringArray = new MLStructure(null, new int[] {rodSpringArray.size() ,1});
+		for(int ii=0; ii<N; ii++) {
+			CRodSpring obj = rodSpringArray.get(ii);
+			
+			arrayIndex = new double[obj.ballArray.length];
+			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index()+1;
+			mlrodSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
+			mlrodSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
+			mlrodSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 		}
-		mlModel.setField("rodSpringArray", mlRodSpringArray);
-		
-		// filSpringArray
-		int NFil 	= filSpringArray.size();
-		MLStructure mlFilSpringArray  = new MLStructure(null, new int[] {NFil,1});
-		for(int iFil=0; iFil<NFil; iFil++) {
-			CFilSpring pFil = filSpringArray.get(iFil);
-			mlFilSpringArray.setField("arrayIndex", 		new MLDouble(null, new double[] {pFil.arrayIndex+1}, 1),iFil);
-			mlFilSpringArray.setField("big_K", 				new MLDouble(null, new double[] {pFil.big_K}, 1),iFil);
-			mlFilSpringArray.setField("big_restLength", 	new MLDouble(null, new double[] {pFil.big_restLength}, 1),iFil);
-			mlFilSpringArray.setField("big_ballArrayIndex", new MLDouble(null, new double[] {pFil.big_ballArray[0].arrayIndex+1, 	pFil.big_ballArray[1].arrayIndex+1}, 2),iFil);
-			mlFilSpringArray.setField("small_K", 			new MLDouble(null, new double[] {pFil.small_K}, 1),iFil);
-			mlFilSpringArray.setField("small_restLength", 	new MLDouble(null, new double[] {pFil.small_restLength}, 1),iFil);
-			mlFilSpringArray.setField("small_ballArrayIndex",new MLDouble(null, new double[] {pFil.small_ballArray[0].arrayIndex+1, pFil.small_ballArray[1].arrayIndex+1}, 2),iFil);
-		}
-		mlModel.setField("filSpringArray", mlFilSpringArray);
+		mlModel.setField("rodSpringArray", mlrodSpringArray);
+
 		// stickSpringArray
-		int NStick = stickSpringArray.size();
-		MLStructure mlStickSpringArray = new MLStructure(null, new int[] {NStick,1});
-		for(int iStick=0; iStick<NStick; iStick++) {
-			CStickSpring pStick = stickSpringArray.get(iStick);
-			mlStickSpringArray.setField("ballArrayIndex", 	new MLDouble(null, new double[] {pStick.ballArray[0].arrayIndex+1, pStick.ballArray[1].arrayIndex+1}, 2), iStick);
-			mlStickSpringArray.setField("K",				new MLDouble(null, new double[] {pStick.K}, 1), iStick);
-			mlStickSpringArray.setField("restLength",		new MLDouble(null, new double[] {pStick.restLength}, 1), iStick);
-			mlStickSpringArray.setField("stickArrayIndex", 	new MLDouble(null, new double[] {stickSpringArray.indexOf(pStick)+1}, 1), iStick);
-			if(pStick.ballArray[0].cell.type==0 && pStick.ballArray[1].cell.type==0) {
-				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {}, 1), iStick);	// only spheres, no siblings
-			} else if(pStick.ballArray[0].cell.type==0 ^ pStick.ballArray[1].cell.type==0) {	// exactly one (XOR) rod one sphere, so 1 sibling
-				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {stickSpringArray.indexOf(pStick.siblingArray[0])+1}, 1), iStick);
-			} else {																			// both are two rod, so  3 siblings
-				mlStickSpringArray.setField("siblingArrayIndex", new MLDouble(null, new double[] {stickSpringArray.indexOf(pStick.siblingArray[0])+1, 
-																									stickSpringArray.indexOf(pStick.siblingArray[1])+1, 
-																									stickSpringArray.indexOf(pStick.siblingArray[2])+1}, 3), iStick);
-			}
+		N = stickSpringArray.size();
+		MLStructure mlstickSpringArray = new MLStructure(null, new int[] {stickSpringArray.size() ,1});
+		for(int ii=0; ii<N; ii++) {
+			CStickSpring obj = stickSpringArray.get(ii);
+			
+			arrayIndex = new double[obj.ballArray.length];
+			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index()+1;
+			mlstickSpringArray.setField("ballArray",          new MLDouble(null, arrayIndex, 1), ii);                                         	
+			mlstickSpringArray.setField("K",                  new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
+			mlstickSpringArray.setField("restLength",         new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
+			
+			arrayIndex = new double[obj.siblingArray.length];
+			for(int jj=0; jj<obj.siblingArray.length; jj++)	arrayIndex[jj] = obj.siblingArray[jj].Index()+1;
+			mlstickSpringArray.setField("siblingArray",       new MLDouble(null, arrayIndex, 1), ii);                                         	
+			mlstickSpringArray.setField("NSibling",           new MLDouble(null, new double[] {obj.NSibling}, 1), ii);                        	
 		}
-		mlModel.setField("stickSpringArray", mlStickSpringArray);
+		mlModel.setField("stickSpringArray", mlstickSpringArray);
+
+		// filSpringArray
+		N = filSpringArray.size();
+		MLStructure mlfilSpringArray = new MLStructure(null, new int[] {filSpringArray.size() ,1});
+		for(int ii=0; ii<N; ii++) {
+			CFilSpring obj = filSpringArray.get(ii);
+			
+			arrayIndex = new double[obj.big_ballArray.length];
+			for(int jj=0; jj<obj.big_ballArray.length; jj++)	arrayIndex[jj] = obj.big_ballArray[jj].Index()+1;
+			mlfilSpringArray.setField("big_ballArray",        new MLDouble(null, arrayIndex, 1), ii);                                         	
+			mlfilSpringArray.setField("big_K",                new MLDouble(null, new double[] {obj.big_K}, 1), ii);                           	
+			mlfilSpringArray.setField("big_restLength",       new MLDouble(null, new double[] {obj.big_restLength}, 1), ii);                  	
+			
+			arrayIndex = new double[obj.small_ballArray.length];
+			for(int jj=0; jj<obj.small_ballArray.length; jj++)	arrayIndex[jj] = obj.small_ballArray[jj].Index()+1;
+			mlfilSpringArray.setField("small_ballArray",      new MLDouble(null, arrayIndex, 1), ii);                                         	
+			mlfilSpringArray.setField("small_K",              new MLDouble(null, new double[] {obj.small_K}, 1), ii);                         	
+			mlfilSpringArray.setField("small_restLength",     new MLDouble(null, new double[] {obj.small_restLength}, 1), ii);                	
+		}
+		mlModel.setField("filSpringArray", mlfilSpringArray);
+
+		// anchorSpringArray
+		N = anchorSpringArray.size();
+		MLStructure mlanchorSpringArray = new MLStructure(null, new int[] {anchorSpringArray.size() ,1});
+		for(int ii=0; ii<N; ii++) {
+			CAnchorSpring obj = anchorSpringArray.get(ii);
+			mlanchorSpringArray.setField("anchor",            new MLDouble(null, new double[] {obj.anchor.x, obj.anchor.y, obj.anchor.z}, 3), ii);	
+			mlanchorSpringArray.setField("K",                 new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
+			mlanchorSpringArray.setField("restLength",        new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
+			
+			arrayIndex = new double[obj.siblingArray.length];
+			for(int jj=0; jj<obj.siblingArray.length; jj++)	arrayIndex[jj] = obj.siblingArray[jj].Index()+1;
+			mlanchorSpringArray.setField("siblingArray",      new MLDouble(null, arrayIndex, 1), ii);                                         	
+		}
+		mlModel.setField("anchorSpringArray", mlanchorSpringArray);
+		// === COMSOL STUFF ===
+		// Biomass, assuming Cmol and composition CH1.8O0.5N0.2 (i.e. MW = 24.6 g/mol)
+		//							type 0					type 1					type 2					type 3					type 4					type 5
+		// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
+		mlModel.setField("SMX",                           new MLDouble(null, SMX, SMX.length));                                           	// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
+		mlModel.setField("K",                             new MLDouble(null, K, K.length));                                               	// [microM]
+		mlModel.setField("qMax",                          new MLDouble(null, qMax, qMax.length));                                         	// [mol (Cmol*s)-1] type==0 from Robinson 1984, assuming yield, growth on NaAc. type!=0 from Scholten 2000;
+		mlModel.setField("rateEquation",                  new MLChar(null, rateEquation));                                                	
+		// 	 pH calculations
+		//							HPro		CO2			HCO3-		HAc
+		//							0,			1,			2,			3
+		mlModel.setField("Ka",                            new MLDouble(null, Ka, Ka.length));                                             	// From Wikipedia 120811. CO2 and H2CO3 --> HCO3- + H+;
+		mlModel.setField("pHEquation",                    new MLChar(null, pHEquation));                                                  	// pH calculations
+		// Diffusion
+		// 							ProT, 		CO2T,				AcT,				H2, 				CH4
+		//							0,    		1,   				2, 					3,   				4
+		mlModel.setField("BCConc",                        new MLDouble(null, BCConc, BCConc.length));                                     	
+		mlModel.setField("D",                             new MLDouble(null, D, D.length));                                               	
+		mlModel.setField("SMdiffusion",                   new MLDouble(null, SMdiffusion));                                               
+
 		// Create a list and add mlModel
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);
 		list.add(mlModel);
-		
 		try {
-			new MatFileWriter(name + "/output/" + String.format("m%04dg%04d", movementIter, growthIter) + ".mat",list);
+			new MatFileWriter(name + "/output/" + String.format("m%04dg%04d", growthIter, movementIter) + ".mat",list);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public void Load(String fileName) {
 		try {
 			MatFileReader mlFile = new MatFileReader(fileName);
 			MLStructure mlModel = (MLStructure)mlFile.getMLArray("model");
 			
-			aspect 		= ((MLDouble)mlModel.getField("aspect")).getReal(0);
+//			aspect 		= ((MLDouble)mlModel.getField("aspect")).getReal(0);
 			G 			= ((MLDouble)mlModel.getField("G")).getReal(0);
 			growthIter 	= ((MLDouble)mlModel.getField("growthIter")).getReal(0).intValue();
 			growthTime 	= ((MLDouble)mlModel.getField("growthTime")).getReal(0);
 			growthTimeStep = ((MLDouble)mlModel.getField("growthTimeStep")).getReal(0);
-			Ki 			= ((MLDouble)mlModel.getField("K1")).getReal(0);
-			Ka 			= ((MLDouble)mlModel.getField("Ka")).getReal(0);
+			Kr 			= ((MLDouble)mlModel.getField("Ki")).getReal(0);
+			Kan 			= ((MLDouble)mlModel.getField("Ka")).getReal(0);
 			Kc 			= ((MLDouble)mlModel.getField("Kc")).getReal(0);
 			Kd 			= ((MLDouble)mlModel.getField("Kd")).getReal(0);
 			Kf 			= ((MLDouble)mlModel.getField("Kf")).getReal(0);
@@ -966,19 +1010,29 @@ public class CModel {
 									((MLDouble)mlModel.getField("L")).getReal(0),
 									((MLDouble)mlModel.getField("L")).getReal(1),
 									((MLDouble)mlModel.getField("L")).getReal(2));
-			MCellInit	= ((MLDouble)mlModel.getField("MCellInit")).getReal(0);
-			MCellMax 	= ((MLDouble)mlModel.getField("MCellMax")).getReal(0);
+//			MCellInit	= ((MLDouble)mlModel.getField("MCellInit")).getReal(0);
+//			MCellMax 	= ((MLDouble)mlModel.getField("MCellMax")).getReal(0);
+			K[0] 			= ((MLDouble)mlModel.getField("K")).getReal(0);
+			K[1] 			= ((MLDouble)mlModel.getField("K")).getReal(1);
+//			K[2] 			= ((MLDouble)mlModel.getField("K")).getReal(2);
+//			rMax0 		= ((MLDouble)mlModel.getField("rMax1")).getReal(0);
+//			rMax1 		= ((MLDouble)mlModel.getField("rMax2")).getReal(0);
+//			BCConc 		= new double[]{	((MLDouble)mlModel.getField("BCConc")).getReal(0),
+//							((MLDouble)mlModel.getField("BCConc")).getReal(1),
+//							((MLDouble)mlModel.getField("BCConc")).getReal(2)};
+//			D 			= new double[]{	((MLDouble)mlModel.getField("D")).getReal(0),
+//							((MLDouble)mlModel.getField("D")).getReal(1),
+//							((MLDouble)mlModel.getField("D")).getReal(2)};
 			movementIter = ((MLDouble)mlModel.getField("movementIter")).getReal(0).intValue();
 			movementTime = ((MLDouble)mlModel.getField("movementTime")).getReal(0);
 			movementTimeStepEnd = ((MLDouble)mlModel.getField("movementTimeEnd")).getReal(0);
 			movementTimeStep = ((MLDouble)mlModel.getField("movementTimeStep")).getReal(0);
 			name 		= ((MLChar)mlModel.getField("name")).getString(0);
-			NBall		= ((MLDouble)mlModel.getField("NBall")).getReal(0).intValue();
 			NInitCell 	= ((MLDouble)mlModel.getField("NInitCell")).getReal(0).intValue();
-			NType 		= ((MLDouble)mlModel.getField("NType")).getReal(0).intValue();
+			NXComp = ((MLDouble)mlModel.getField("NXComp")).getReal(0).intValue();
 			randomSeed 	= ((MLDouble)mlModel.getField("randomSeed")).getReal(0).intValue();
-			rho_m 		= ((MLDouble)mlModel.getField("rho_m")).getReal(0);
-			rho_w 		= ((MLDouble)mlModel.getField("rho_w")).getReal(0);
+			rhoX 		= ((MLDouble)mlModel.getField("rho_m")).getReal(0);
+			rhoWater 		= ((MLDouble)mlModel.getField("rho_w")).getReal(0);
 			
 			// cellArray
 			MLStructure mlCellArray = (MLStructure)mlModel.getField("cellArray");
@@ -986,7 +1040,7 @@ public class CModel {
 			cellArray	 	= new ArrayList<CCell>(NCell);
 			for(int iCell=0; iCell<NCell; iCell++) {
 				CCell cell = new CCell();
-				cell.arrayIndex = ((MLDouble)mlCellArray.getField("cellArrayIndex", iCell)).getReal(0).intValue()-1;
+				cell.q	= ((MLDouble)mlCellArray.getField("cellArrayIndex", iCell)).getReal(0).doubleValue();
 				cell.colour	= new double[]{((MLDouble)mlCellArray.getField("colour", iCell)).getReal(0),
 									((MLDouble)mlCellArray.getField("colour", iCell)).getReal(1),
 									((MLDouble)mlCellArray.getField("colour", iCell)).getReal(2)};
@@ -1007,8 +1061,7 @@ public class CModel {
 			ballArray	 	= new ArrayList<CBall>(NBall);
 			for(int iBall=0; iBall < NBall; iBall++) {
 				CBall ball = new CBall();
-				ball.arrayIndex = ((MLDouble)mlBallArray.getField("arrayIndex",iBall)).getReal(0).intValue()-1;
-				ball.cellBallArrayIndex = ((MLDouble)mlBallArray.getField("cellBallArrayIndex",iBall)).getReal(0).intValue()-1;
+//				ball.ballArrayIndex = ((MLDouble)mlBallArray.getField("cellBallArrayIndex",iBall)).getReal(0).intValue()-1;
 				ball.cell = cellArray.get(((MLDouble)mlBallArray.getField("cellArrayIndex",iBall)).getReal(0).intValue()-1);
 				ball.mass 	= ((MLDouble)mlBallArray.getField("mass",iBall)).getReal(0);
 				ball.radius = ball.Radius();
@@ -1020,10 +1073,6 @@ public class CModel {
 								((MLDouble)mlBallArray.getField("vel", iBall)).getReal(0),
 								((MLDouble)mlBallArray.getField("vel", iBall)).getReal(1),
 								((MLDouble)mlBallArray.getField("vel", iBall)).getReal(2));
-//				ball.force = new Vector3d(
-//								((MLDouble)mlBallArray.getField("force", iBall)).getReal(0),
-//								((MLDouble)mlBallArray.getField("force", iBall)).getReal(1),
-//								((MLDouble)mlBallArray.getField("force", iBall)).getReal(2));
 				ball.force = new Vector3d();
 				// posSave and velSave
 				int NSave = (int)(movementTimeStepEnd/movementTimeStep);		// -1 for not last index, +1 for initial values 
@@ -1045,10 +1094,10 @@ public class CModel {
 			
 			// rodSpringArray
 			int NRod = ((MLStructure)mlModel.getField("rodSpringArray")).getSize();
-			rodSpringArray = new ArrayList<CSpring>(NRod);
+			rodSpringArray = new ArrayList<CRodSpring>(NRod);
 			MLStructure mlRodSpringArray = (MLStructure)mlModel.getField("rodSpringArray");
 			for(int iRod=0; iRod<NRod; iRod++) {
-				CSpring pRod= new CSpring();
+				CRodSpring pRod= new CRodSpring();
 				// ballArray
 				for(int iBall=0; iBall<2; iBall++) {
 					int jBall = ((MLDouble)mlRodSpringArray.getField("ballArrayIndex",iRod)).getReal(iBall).intValue()-1;
@@ -1090,7 +1139,6 @@ public class CModel {
 			filSpringArray = new ArrayList<CFilSpring>(NFil);
 			for(int iFil=0; iFil<NFil; iFil++) {
 				CFilSpring pFil 		= new CFilSpring();
-				pFil.arrayIndex 		= ((MLDouble)mlFilSpringArray.getField("arrayIndex", iFil)).getReal(0).intValue()-1;
 				// bigSpring
 				pFil.big_K 				= ((MLDouble)mlFilSpringArray.getField("big_K", iFil)).getReal(0);
 				pFil.big_restLength 	= ((MLDouble)mlFilSpringArray.getField("big_restLength", iFil)).getReal(0);
@@ -1138,13 +1186,13 @@ public class CModel {
 				cell.stickCellArray = stickCellArray;
 			}
 			// each cell's springArray
-			for(CSpring pRod : rodSpringArray) {
+			for(CRodSpring pRod : rodSpringArray) {
 				pRod.ballArray[0].cell.springArray[0] = pRod;
 			}
 			// each cell's ballArray
-			for(CBall ball : ballArray) {
-				ball.cell.ballArray[ball.cellBallArrayIndex] = ball;
-			}
+//			for(CBall ball : ballArray) {
+//				ball.cell.ballArray[ball.ballArrayIndex] = ball;
+//			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -1161,31 +1209,85 @@ public class CModel {
 		
 		//////////////////////////////
 		
+		double textscale;
+		Vector3d pos1;
+		Vector3d pos2;
+		Vector3d LPOV;
+		
+		// Define scale
+		if(setting.POVScale == 1) {
+			textscale = 0.7;
+			pos1 = new Vector3d(-13.0,15.0,0);
+			pos2 = new Vector3d(-13.0,14.0,0);
+			LPOV = new Vector3d(20,20,20);
+			
+		} else {
+			textscale = 2.0;
+			pos1 = new Vector3d(-40.0,45.0,0);
+			pos2 = new Vector3d(-40.0,42.0,0);
+			LPOV = new Vector3d(60,60,60);
+		}
+		
 		// Make output folder if it doesn't exist already
 		if(!(new File(name + "/output")).exists())	new File(name + "/output").mkdir();
 		PrintWriter fid=null;
 			for(int ii=0; ii<NSave+1; ii++) {
 				try {
-					if(ii>0)	plotIntermediate=true;		// If this is not the first iteration, do the intermediate plotting 
-					String fileName = String.format("%s/output/pov.%04d.%04d.inc", name, movementIter-ii,growthIter);
+					if(ii!=NSave){
+						plotIntermediate=true;		// If this is not the first iteration, do the intermediate plotting 
+					} else {
+						plotIntermediate=false;
+					}
+					String fileName = String.format("%s/output/pov_g%04dm%04d_%02d.pov", name, growthIter, movementIter, ii);
 					// Remove inc file if it already exists
 					if((new File(fileName)).exists()) new File(fileName).delete();
 					// Write new inc file
-					fid = new PrintWriter(new FileWriter(fileName,true));		// True is for append // Not platform independent TODO
-					// Include text, calibrated for tomas_persp_3D_java.pov 
-					fid.println("text \n{\n" +           
-					String.format("\tttf \"timrom.ttf\" \"Movement time: %05.2f s\" 0.05, 0.1*x\n",(movementIter-ii)*movementTimeStep) +
+					fid = new PrintWriter(new FileWriter(fileName,true));		// True is for append
+					
+					// Create camera, background and lighting based on L
+					fid.println(String.format("#declare Lx = %f;",LPOV.x));
+					fid.println(String.format("#declare Ly = %f;",LPOV.y));
+					fid.println(String.format("#declare Lz = %f;\n",LPOV.z));
+					fid.println("camera {\n" +
+			    	"\tlocation <-1*Lx, 0.9*Ly,-1.0*Lz>\n" +
+			    	"\tlook_at  <Lx/2, 0, Lz/2>\n" +
+			        "\tangle 50\n" +
+			    	"}\n");
+					fid.println("background { color rgb <1, 1, 1> }\n");
+					fid.println("light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }");		// Why 3x? OPTIMISE
+					fid.println("light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }");
+					fid.println("light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }\n");
+					
+					// Create plane
+					fid.println("union {\n" +
+					"\tbox {\n" +
+					"\t\t<-Lx, 0, -Lz>,\t\t// Position: in the middle\n" +
+				    "\t\t<2*Lx, 0, 2*Lz>\t\t// Size: 2*L\n" +
+				    "\t\ttexture {\n" +
+				    "\t\t\tpigment{\n" + 
+				    "\t\t\t\tcolor rgb <0.2, 0.2, 0.2>\n" +
+				    "\t\t\t}\n" +
+				    "\t\t\tfinish {\n" +
+				    "\t\t\t\tambient .2\n" +
+				    "\t\t\t\tdiffuse .6\n" +
+				    "\t\t\t}\n" +       
+				    "\t\t}\n" +
+				    "\t}\n");
+					
+					// Include text, calibrated for tomas_persp_3D_java.pov
+					fid.println("text {\n" +           
+					String.format("\tttf \"timrom.ttf\" \"Movement time: %05.2f s\" 0.05, 0.1*x\n",movementIter*movementTimeStepEnd+ii*movementTimeStep) +
 				    "\tpigment {color rgb <0.000, 0.000, 0.000>  }\n" +     
-			        "\tscale <60,60,60>\n" + 
-			        "\ttranslate <-1200,1340,-75>\n" +  
+			        String.format("\tscale <%f,%f,%f>\n", textscale, textscale, textscale) + 
+			        String.format("\ttranslate <%f,%f,%f>\n", pos1.x, pos1.y, pos1.z) +  
 			        "\trotate <15,45,0>\n" +
 			        "\tno_shadow" +
 					"}\n" + 
-					"text \n{\n" +           
-					String.format("\tttf \"timrom.ttf\" \"Growth time:     %05.1f h\" 0.05, 0.1*x\n",growthIter*growthTimeStep) +
+					"text {\n" +           
+					String.format("\tttf \"timrom.ttf\" \"Growth time:     %05.1f h\" 0.05, 0.1*x\n",growthIter*growthTimeStep/3600.0) +		// divided by 3600 to go from [s] --> [h]
 				    "\tpigment {color rgb <0.000, 0.000, 0.000>  }\n" +     
-			        "\tscale <60,60,60>\n" + 
-			        "\ttranslate <-1200,1260,-75>\n" +  
+				    String.format("\tscale <%f,%f,%f>\n", textscale, textscale, textscale) + 
+			        String.format("\ttranslate <%f,%f,%f>\n", pos2.x, pos2.y, pos2.z) +  
 			        "\trotate <15,45,0>\n" +
 			        "\tno_shadow" +
 					"}\n");
@@ -1194,14 +1296,14 @@ public class CModel {
 					for(int iCell=0; iCell<cellArray.size(); iCell++) {
 						CCell cell = cellArray.get(iCell);
 						fid.println("// Cell no. " + iCell);
-						if(cell.type == 0) {
+						if(cell.type<2) {
 							// Spherical cell
 							CBall ball = cell.ballArray[0];
 
 							fid.println("sphere\n" + 
 									"{\n" + 
 									(plotIntermediate ? 
-										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) : 
+										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.posSave[ii].x*1e6, ball.posSave[ii].y*1e6, ball.posSave[ii].z*1e6) : 
 										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +  
 									String.format("\t%10.3f\n", ball.radius*1e6) +
 									"\ttexture{\n" + 
@@ -1214,15 +1316,15 @@ public class CModel {
 									"\t\t}\n" +
 									"\t}\n" +
 									"}\n");}
-						else if(cell.type == 1 || cell.type == 2) {	// Rod
+						else if(cell.type>1) {	// Rod
 							CBall ball = cell.ballArray[0];
 							CBall ballNext = cell.ballArray[1];
 
 							fid.println("cylinder\n" +		// Sphere-sphere connection
 									"{\n" +
 									(plotIntermediate ?
-										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) +
-										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) :
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[ii].x*1e6, ball.posSave[ii].y*1e6, ball.posSave[ii].z*1e6) +
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[ii].x*1e6, ballNext.posSave[ii].y*1e6, ballNext.posSave[ii].z*1e6) :
 									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6) +
 									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
 									String.format("\t%10.3f\n", ball.radius*1e6) +
@@ -1239,7 +1341,7 @@ public class CModel {
 									"sphere\n" +			// First sphere
 									"{\n" +
 									(plotIntermediate ?
-										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) :
+										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.posSave[ii].x*1e6, ball.posSave[ii].y*1e6, ball.posSave[ii].z*1e6) :
 										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +
 									String.format("\t%10.3f\n", ball.radius*1e6) +
 									"\ttexture{\n" +
@@ -1255,7 +1357,7 @@ public class CModel {
 									"sphere\n" +			// Second sphere
 									"{\n" +
 									(plotIntermediate ? 
-										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) :
+										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ballNext.posSave[ii].x*1e6, ballNext.posSave[ii].y*1e6, ballNext.posSave[ii].z*1e6) :
 										String.format("\t < %10.3f,%10.3f,%10.3f > \n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
 									String.format("\t%10.3f\n", ballNext.radius*1e6) +
 									"\ttexture{\n" +
@@ -1292,8 +1394,8 @@ public class CModel {
 							fid.println("cylinder\n" +
 									"{\n" +
 									(plotIntermediate ? 
-										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) +
-										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) :
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[ii].x*1e6, ball.posSave[ii].y*1e6, ball.posSave[ii].z*1e6) +
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[ii].x*1e6, ballNext.posSave[ii].y*1e6, ballNext.posSave[ii].z*1e6) :
 									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6) +
 									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
 									String.format("\t%10.3f\n", ball.radius*1e5) +
@@ -1320,11 +1422,11 @@ public class CModel {
 						fid.println("cylinder\n" +
 								"{\n" +
 								(plotIntermediate ?
-									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) +
-									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[NSave-ii].x*1e6, ballNext.posSave[NSave-ii].y*1e6, ballNext.posSave[NSave-ii].z*1e6) : 
+									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[ii].x*1e6, ball.posSave[ii].y*1e6, ball.posSave[ii].z*1e6) +
+									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.posSave[ii].x*1e6, ballNext.posSave[ii].y*1e6, ballNext.posSave[ii].z*1e6) : 
 								String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6) +
 								String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ballNext.pos.x*1e6, ballNext.pos.y*1e6, ballNext.pos.z*1e6)) +
-								String.format("\t%10.3f\n", ball.radius*1e5) +
+								String.format("\t%10.3f\n", ball.radius*1e5) +									// 1e5 == 1/10 of the actual ball radius
 								"\ttexture{\n" +
 								"\t\tpigment{\n" +
 								String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 0.0, 1.0, 0.0) +		//Sticking springs are green
@@ -1347,7 +1449,7 @@ public class CModel {
 							fid.println("cylinder\n" +
 									"{\n" +
 									(plotIntermediate ?
-										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[NSave-ii].x*1e6, ball.posSave[NSave-ii].y*1e6, ball.posSave[NSave-ii].z*1e6) :
+										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.posSave[ii].x*1e6, ball.posSave[ii].y*1e6, ball.posSave[ii].z*1e6) :
 										String.format("\t<%10.3f,%10.3f,%10.3f>,\n", ball.pos.x*1e6, ball.pos.y*1e6, ball.pos.z*1e6)) +
 									String.format("\t<%10.3f,%10.3f,%10.3f>,\n", pSpring.anchor.x*1e6, pSpring.anchor.y*1e6, pSpring.anchor.z*1e6) +
 									String.format("\t%10.3f\n", ball.radius*1e5) +	// 1e5 because it is a spring
@@ -1363,7 +1465,12 @@ public class CModel {
 									"}\n");
 						}
 					}
-					// Done with this time interval
+					
+					// Finalise the file
+					fid.println("\ttranslate <0,0,0>\n" +
+					"\trotate <0,0,0>\n");
+					fid.println("}\n");						// Yes, we actually need this bracket
+					
 				} catch(IOException E) {
 					E.printStackTrace();
 				} finally {
@@ -1373,7 +1480,8 @@ public class CModel {
 		
 	}
 	
-	public void POV_Plot(boolean plotIntermediate) {
+	public void POV_Plot(boolean plotIntermediate) throws Exception {
+//		if(growthIter<16) return;
 		if(!(new File(name + "/image")).exists()) {
 			new File(name + "/image").mkdir();
 		}
@@ -1381,15 +1489,15 @@ public class CModel {
 		if(plotIntermediate)	NIter = 1+ballArray.get(0).posSave.length;
 		else					NIter = 1;
 		for(int ii=0; ii<NIter; ii++) {
-			String imageName = String.format("pov_m%04dg%04d", movementIter-ii, growthIter);
-			String incName = String.format("pov.%04d.%04d.inc", movementIter-ii,growthIter);
-			String input = "povray ../pov/tomas_persp_3D_java.pov +W1024 +H768 +K" + String.format("%04d",movementIter-ii) + "." + String.format("%04d",growthIter) + " +O../" + name + "/image/" + imageName + " +A -J";
-			LinuxInteractor.executeCommand("cd " + name + " ; " + input + " ; rm ./output/" + incName + " ; cd ..", setting.waitForFinish,setting.echoCommand);
+			String imageName = String.format("pov_g%04dm%04d_%02d", growthIter, movementIter, ii);
+			String povName = String.format("pov_g%04dm%04d_%02d.pov", growthIter, movementIter, ii);
+			String input = "povray ./output/" + povName + " +W1024 +H768 +O../" + name + "/image/" + imageName + " +A -J";
+			Interactor.executeCommand("cd " + name + " ; " + input + " ; rm ./output/" + povName + " ; cd ..", setting.waitForFinish,setting.echoCommand);
 		}
 	}
 }
 
-class returnObject {		// Used for collision detection multiple return
+class EricsonObject {		// Used for collision detection multiple return
 	Vector3d dP;
 	double dist;
 	double sc;
@@ -1397,13 +1505,13 @@ class returnObject {		// Used for collision detection multiple return
 	Vector3d c1;
 	Vector3d c2;
 	
-	returnObject(Vector3d dP, double dist, double sc) {
+	EricsonObject(Vector3d dP, double dist, double sc) {
 		this.dP = dP;
 		this.dist = dist; 
 		this.sc = sc;
 	}
 	
-	returnObject(Vector3d dP, double dist, double sc, double tc, Vector3d c1, Vector3d c2) {
+	EricsonObject(Vector3d dP, double dist, double sc, double tc, Vector3d c1, Vector3d c2) {
 		this.dP = dP;
 		this.dist = dist; 
 		this.sc = sc;

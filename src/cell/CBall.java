@@ -1,19 +1,25 @@
 package cell;
 
+import java.util.ArrayList;
+
+import NR.Vector3d;
+
 public class CBall {
-	double mass;
-	double radius;	// Will put in method
-	Vector3d pos;
-	Vector3d vel;
-	Vector3d force;
-	Vector3d[] posSave;
-	Vector3d[] velSave;
-//	Vector3d[] forceSave;
-	int cellBallArrayIndex;
-	int arrayIndex;
-	CCell cell;
+	public double mass;
+	public 	double radius;	// Will put in method
+	public Vector3d pos;
+	public Vector3d vel;
+	public Vector3d force;
+	public Vector3d[] posSave;
+	public Vector3d[] velSave;
+//	public int index;
+	public CCell cell;
+	public int cellIndex;
+//	public int ballArrayIndex;
 	
-	public CBall(double posx, double posy, double posz, double mass, int cellBallArrayIndex, CCell cell){	// Create a new ball, make it belong to cell
+	///////////////////////////////////////////////////////////////////
+	
+	public CBall(double posx, double posy, double posz, double mass, int ballArrayIndex, CCell cell){	// Create a new ball, make it belong to cell
 		this.cell = cell;
 		
 		pos = new Vector3d(posx, posy, posz);
@@ -32,45 +38,36 @@ public class CBall {
 		
 		this.mass = mass;
 		
-		// Add ball to ballArrays
-		this.cellBallArrayIndex = cellBallArrayIndex;
-//		cell.pModel.ballArray.add(this);
-		cell.ballArray[cellBallArrayIndex] = this;
-		this.arrayIndex = cell.model.ballArray.size(); 
+		// Add ball to required arrays
+//		this.ballArrayIndex = ballArrayIndex;
+		cell.ballArray[ballArrayIndex] = this;
 		cell.model.ballArray.add(this);
-		CModel.NBall++;
+		this.cellIndex = cell.Index();
 		// Update the radius
 		this.radius = Radius();
 	}
-	
-//	public CBall(Vector pos, int ballArrayIndex, CCell cell){																	// Same as above, but from Vector pos
-//		pos = new Vector(pos.x, pos.y, pos.z);
-//		vel = new Vector(0, 0, 0);
-//		force = new Vector(0, 0, 0);
-//		
-//		// Add ball to cell's ballArary
-//		cell = cell;
-//		this.ballArrayIndex = ballArrayIndex;
-//		cell.ballArray[ballArrayIndex] = this;
-//	
-//	}
-	
+		
 	public CBall() {} 				// Empty constructor for loading. Doesn't add the ball to any ball arrays!
 	
 	/////////////////////////////////////////////////////
 	
-	public double Radius() {							// Doing this here might save some calculations on the long run
-		final double Type2Radius = Math.pow(cell.model.MCellMax		/ (2*Math.PI*cell.model.rho_m*cell.model.aspect), .333333);
-		if (cell.type == 0) {
-			return Math.pow(0.75 * mass/(Math.PI * this.cell.model.rho_m), .333333);
-		} else if(cell.type == 1) {					// type == 1 is variable radius balls
-			return Math.pow(mass 					/ (2*Math.PI*cell.model.rho_m*cell.model.aspect), .333333);		// FIXME: original code: Rpos=pow((sBall->mass/PI/pModel->RHO_M/aspect),0.333333333333);
-		} else if(cell.type == 2) {					// type == 2 is fixed radius balls
-			return Type2Radius;
-		} else {
-			return -1;		// Error
+	public double Radius() {		// Note that rho is in kg m-3 but cell mass is in Cmol
+		if (cell.type<2) {
+			return Math.pow( 							mass*cell.model.MWX / (Math.PI * cell.model.rhoX * 4.0/3.0), .333333);
+		} else if(cell.type<4) {	// type == 2 || 3 is variable radius balls
+			return Math.pow( 				 	  2.0*mass * cell.model.MWX / (Math.PI * cell.model.rhoX * (2.0*cell.model.aspect[cell.type] + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
+		} else {									// type == 4 || 5 is fixed radius (variable length) rod
+			return Math.pow( cell.model.MCellMax[cell.type]*cell.model.MWX / (Math.PI * cell.model.rhoX * (2.0*cell.model.aspect[cell.type] + 4.0/3.0)), .333333);			// Static
 		}
 		
+	}
+	
+	public int Index() {
+		ArrayList<CBall> array = this.cell.model.ballArray;
+		for(int index=0; index<array.size(); index++) {
+			if(array.get(index).equals(this))	return index;
+		}
+		return -1;			// Error
 	}
 }
 

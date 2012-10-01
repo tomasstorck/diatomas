@@ -1,6 +1,6 @@
-package linuxinteractor;
+package interactor;
 
-// Stolen from: 
+// Linux part stolen from: 
 // http://singztechmusings.wordpress.com/2011/06/21/getting-started-with-javas-processbuilder-a-sample-utility-class-to-interact-with-linux-from-java-program/
 
 import java.io.BufferedReader;
@@ -11,12 +11,19 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 
-public class LinuxInteractor {
+public class Interactor {
 	public static String executeCommand(String command, boolean waitForResponse, boolean showCommand) {
 		String response = "";
-		ProcessBuilder pb = new ProcessBuilder("bash", "-c", command);
+		ProcessBuilder pb;
+		if(System.getProperty("os.name").startsWith("Windows",0)) {
+			command = command.replace("/","\\");		// Convert from Unix file separators to Windows (important: note that in the model you should ALWAYS use /). \\ because backslash needs to be escaped.
+			pb = new ProcessBuilder("cmd", "/C", command);
+		} else {
+			pb = new ProcessBuilder("bash", "-c", command);
+		}
+				
 		pb.redirectErrorStream(true);
-		if(showCommand) {System.out.println("Linux command: " + command);}
+		if(showCommand) {System.out.println("Command: " + command);}
 
 		try {
 			Process shell = pb.start();
@@ -38,10 +45,10 @@ public class LinuxInteractor {
 			}
 		}
 		catch (IOException e) {
-			System.out.println("Error occured while executing Linux command. Error Description: " + e.getMessage());
+			System.out.println("Error occured while executing command. Error Description: " + e.getMessage());
 		}
 		catch (InterruptedException e) {
-			System.out.println("Error occured while executing Linux command. Error Description: " + e.getMessage());
+			System.out.println("Error occured while executing command. Error Description: " + e.getMessage());
 		}
 		return response;
 	}

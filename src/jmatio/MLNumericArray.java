@@ -61,7 +61,7 @@ public abstract class MLNumericArray<T extends Number> extends MLArray
      */
     public MLNumericArray(String name, int type, T[] vals, int m )
     {
-        this(name, new int[] {  m, vals.length/m }, type, 0);
+        this(name, new int[] {  m, (m==0?0:vals.length/m) }, type, 0);
         //fill the array
         for ( int i = 0; i < vals.length; i++ )
         {
