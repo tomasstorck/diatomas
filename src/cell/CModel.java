@@ -70,15 +70,16 @@ public class CModel {
 	//							type 0					type 1					type 2					type 3					type 4					type 5
 	// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
 	public double[] SMX = {	7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
-	public double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						// [microM]
-	public double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400)};		// [mol (Cmol*s)-1] type==0 from Robinson 1984, assuming yield, growth on NaAc. type!=0 from Scholten 2000;
+	public double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						// [microM] FIXME
+	public double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400)};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc. S.f. from Scholten 2000;
 	public String[] rateEquation = {
-			Double.toString(qMax[0]) + "*c2/(K0+c2)",					// type==0
-			Double.toString(qMax[0]) + "*c2/(K0+c2)",					// type==1
-			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==2
-			Double.toString(qMax[2]) + "*(c3*d3^4)/(K2+c3*d3^4)",		// type==3;
-			Double.toString(qMax[2]) + "*(c3*d3^4)/(K2+c3*d3^4)",		// type==4;
-			Double.toString(qMax[2]) + "*(c3*d3^4)/(K2+c3*d3^4)"};		// type==5;
+			Double.toString(qMax[0]) + "*(c3*d3^4)/(K0+c3*d3^4)",		// type==2
+			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==3;
+			Double.toString(qMax[2]) + "*c2/(K2+c2)",					// type==0
+			Double.toString(qMax[3]) + "*c2/(K3+c2)",					// type==1
+			Double.toString(qMax[4]) + "*c2/(K4+c2)",					// type==0
+			Double.toString(qMax[5]) + "*c2/(K5+c2)"};					// type==1
+			
 	// 	 pH calculations
 	//							HPro		CO2			HCO3-		HAc
 	//							0,			1,			2,			3
@@ -101,9 +102,12 @@ public class CModel {
 	public double[] D = new double[]{	
 								1.060e-9,	1.92e-9,			1.21e-9,			4.500e-9,			1.88e-9};		// [m2 s-1]. Diffusion mass transfer Cussler 2nd edition. Methane through Witherspoon 1965
 	public double[][] SMdiffusion = {
-							{	0.0,		-1.0,				0.0,				-4.0,				(1.0-SMX[0])*1.0},		// XComp == 0 (sphere)
-							{	-1.0,		(1.0-SMX[1])*1.0,	(1.0-SMX[1])*1.0,	(1.0-SMX[1])*3.0,	0.0				},		// XComp == 1 (rod)
-							{	-1.0,		(1.0-SMX[2])*1.0,	(1.0-SMX[2])*1.0,	(1.0-SMX[2])*3.0,	0.0				}};		// XComp == 2 (rod);
+							{	0.0,		-1.0,				0.0,				-4.0,				(1.0-SMX[0])*1.0},		// XComp == 0 (small sphere)
+							{	0.0,		-1.0,				0.0,				-4.0,				(1.0-SMX[1])*1.0},		// XComp == 1 (big sphere)
+							{	-1.0,		(1.0-SMX[2])*1.0,	(1.0-SMX[2])*1.0,	(1.0-SMX[2])*3.0,	0.0				},		// XComp == 2 (small rod, variable W)
+							{	-1.0,		(1.0-SMX[3])*1.0,	(1.0-SMX[3])*1.0,	(1.0-SMX[3])*3.0,	0.0				},		// XComp == 3 (big rod, variable W)
+							{	-1.0,		(1.0-SMX[4])*1.0,	(1.0-SMX[4])*1.0,	(1.0-SMX[4])*3.0,	0.0				},		// XComp == 4 (small rod, fixed W)
+							{	-1.0,		(1.0-SMX[5])*1.0,	(1.0-SMX[5])*1.0,	(1.0-SMX[5])*3.0,	0.0				}};		// XComp == 5 (big rod, fixed W);
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -640,9 +644,10 @@ public class CModel {
 			// Obtain mol increase based on flux
 			double molIn = mother.q * mother.GetMass() * growthTimeStep * SMX[mother.type];
 			// Grow mother cell
-			mother.SetMass(mother.GetMass()+molIn);
+			double newMass = mother.GetMass()+molIn;
+			mother.SetMass(newMass);
 			// divide mother cell if ready 
-			if(mother.GetMass()>MCellMax[mother.type]) {
+			if(mother.GetMass()>newMass) {
 				newCell++;
 				GrowCell(mother);
 			}

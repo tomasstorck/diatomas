@@ -12,5 +12,6 @@ public class setting {
 	// Linux interactor
 	public static boolean waitForFinish = true;
 	public static boolean echoCommand = false;
-	
+	// COMSOL
+	public static int port = 2036;
 }

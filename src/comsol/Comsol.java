@@ -172,7 +172,7 @@ public class Comsol {
 	         .set("pt" + Integer.toString(3*cell.Index()+1) + "(1)", new int[]{1});
 	    model.geom("geom1").feature(wpName).selection("vertex3")
 	         .set("pt" + Integer.toString(3*cell.Index()+2) + "(1)", new int[]{1});
-//	    model.geom("geom1").run(wpName);
+//	    model.geom("geom1").run(wpName);1
 	    
 	    // Create rectangle in WP
 	    String rectName = "rect" + Integer.toString(cell.Index());
@@ -198,7 +198,7 @@ public class Comsol {
 //	    model.geom("geom1").feature(wpName).geom().run(filName);
 //	    model.geom("geom1").run(wpName);
 
-	    // Revolve WP around z axis
+	    // Revolve WP around X axis
 	    String name = "rod" + Integer.toString(cell.Index());
 	    model.geom("geom1").feature().create(name, "Revolve");
 	    model.geom("geom1").feature(name).set("angtype", "full");
@@ -234,6 +234,13 @@ public class Comsol {
 	    	if(ball.pos.z < minZ) 	minZ = ball.pos.z - ball.radius;
 	    	if(ball.pos.z > maxZ) 	maxZ = ball.pos.z + ball.radius;
 	    }
+	    // Additional code to take the max of the max (i.e. box of Lmax x Lmax x Lmax instead of Lxmax x Lymax x Lzmax), remove if you want to undo
+	    if(maxX - minX < maxY - minY)		minX = minY; maxX = maxY;
+	    if(maxX - minX < maxZ - minZ)		minX = minZ; maxX = maxZ;
+	    if(maxY - minY < maxX - minX)		minY = minX; maxY = maxX;
+	    if(maxY - minY < maxZ - minZ)		minY = minZ; maxY = maxZ;
+	    if(maxZ - minZ < maxX - minX)		minZ = minX; maxZ = maxX;
+	    if(maxZ - minZ < maxY - minY)		minZ = minY; maxZ = maxY;
 	    
 	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxX) + "-" + Double.toString(minX) + ")", 0);
 	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxY) + "-" + Double.toString(minY) + ")", 1);
@@ -284,7 +291,7 @@ public class Comsol {
 		model.physics("chds").feature().create(flName, "Fluxes", 2);
 	    model.physics("chds").feature(flName).selection().named("geom1_" + name + "_bnd");
 	    for(int ii=0; ii<diatomas.NdComp; ii++) {
-	    	if(diatomas.SMdiffusion[cell.type][ii]>1) {
+	    	if(diatomas.SMdiffusion[cell.type][ii]!=0.0) {
 	    		model.physics("chds").feature(flName).set("species", ii+1, "1");
 		    	model.physics("chds").feature(flName).set("N0", ii+1, "q" + Integer.toString(cell.type) + " * " + Double.toString(cell.GetMass()) + "/" + Double.toString(cell.SurfaceArea()) + " * " + diatomas.SMdiffusion[cell.type][ii]);	
 	    	}

@@ -28,6 +28,7 @@ public class Interface{
 				System.out.println("enableWaitForFinish || disableWaitForFinish\t When calling command line arguments from the model, waits for them to finish running or continues with the model");
 				System.out.println("withComsol || withoutComsol\t\t Enable or disable the use of COMSOL. Enable: use backbone file WithComsol.java, otherwise use WithoutComsol.java");
 				System.out.println("load [path/filename.extension]\t Load the speficied file instead of the default parameters");
+				System.out.println("port [comsol server port]\t\t\t\t Use port [comsol server port] to start COMSOL server");
 				System.out.println("*\t\t\t\t Any unrecognised arguments are assumed to be model names");
 				return;
 			}
@@ -54,6 +55,10 @@ public class Interface{
 				ii++;			// Look at the next argument
 				model.Write("Loading " + args[ii], "iter");
 				model.Load(args[ii]);} else
+			//
+			if(arg.equalsIgnoreCase("port")) {
+				ii++;			// Look at the next argument
+				setting.port = Integer.parseInt(args[ii]);} else
 			//
 			if(arg.equalsIgnoreCase("enablepostplot")) {setting.postPlot = true;} else
 			if(arg.equalsIgnoreCase("disablepostplot")) {setting.postPlot = false;}
