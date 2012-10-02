@@ -26,7 +26,7 @@ public class Comsol {
 	
 	public void Initialise() throws FlException {
 		// Create model, initialise geometry, mesh, study and physics
-//		ModelUtil.initStandalone(false);
+		ModelUtil.initStandalone(false);
 		model = ModelUtil.create("Model");
 	    model.modelPath("/home/tomas/Desktop");
 	    model.modelNode().create("mod1");
@@ -94,22 +94,18 @@ public class Comsol {
    		model.physics("dode").feature("dode1")
    			.set("f", CfList);
    		
-//		// Set initial values (TODO this code is not well automated and assumes only BCConc[0] is non-zero) 	// UPDATE
-//		model.physics("dode").feature("init1").set("c0", "sqrt(" + Double.toString(diatomas.BCConc[0]) + "*Ka0)");
-//		model.physics("dode").feature("init1").set("c1", "1-sqrt(" + Double.toString(diatomas.BCConc[0]) + "*Ka0)");
-//		model.physics("dode").feature("init1").set("c2", "sqrt(" + Double.toString(diatomas.BCConc[0]) + "*Ka0)");
+		// Set initial values (TODO this code is not well automated and assumes only d0[0] is non-zero) 	// UPDATE
+		model.physics("dode").feature("init1").set("c0", "sqrt(" + Double.toString(diatomas.BCConc[0]) + "*Ka0)");
+		model.physics("dode").feature("init1").set("c1", "1-sqrt(" + Double.toString(diatomas.BCConc[0]) + "*Ka0)");
+		model.physics("dode").feature("init1").set("c2", "sqrt(" + Double.toString(diatomas.BCConc[0]) + "*Ka0)");
    		
    		// Set equations 		// UPDATE
    		model.physics("dode").feature("aleq1")
    			.set("f", diatomas.pHEquation);
 
 	    String[][] odef = new String[diatomas.NcComp][1];
-//	    String[][] odeda = new String[NRow*NRow][1];
 	    for(int iRow=0; iRow<diatomas.NcComp; iRow++) {
 	    	odef[iRow][0] = "0";
-//	    	for(int iRow2=0; iRow2<NRow; iRow2++) {
-//	    		odeda[iRow*NRow+iRow2][0] = "0";
-//	    	}
 	    }	    
 	    model.physics("dode").feature("dode1")						// Disable ODE stuff (1/2)
 	         .set("f", odef);
@@ -140,7 +136,6 @@ public class Comsol {
 	    model.geom("geom1").feature(name).set("r", Double.toString(cell.ballArray[0].radius));
 	    model.geom("geom1").feature(name).set("createselection", "on");		// Allows us to add something by selection name
 	    model.geom("geom1").feature(name).set("pos", new String[]{Double.toString(cell.ballArray[0].pos.x), Double.toString(cell.ballArray[0].pos.y), Double.toString(cell.ballArray[0].pos.z)});
-//	    model.geom("geom1").run(name);
 
 	    // Update the model information
 	    NSphere++;
@@ -152,15 +147,12 @@ public class Comsol {
 		String pointName = "pt" + Integer.toString(3*cell.Index());
 	    model.geom("geom1").feature().create(pointName, "Point");
 	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[0].pos.x)},{Double.toString(cell.ballArray[0].pos.y)},{Double.toString(cell.ballArray[0].pos.z)}});
-//	    model.geom("geom1").run(pointName);
 	    pointName = "pt" + Integer.toString(3*cell.Index()+1);
 	    model.geom("geom1").feature().create(pointName, "Point");
 	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z)}});
-//	    model.geom("geom1").run(pointName);
 	    pointName = "pt" + Integer.toString(3*cell.Index()+2);
 	    model.geom("geom1").feature().create(pointName, "Point");
 	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z+cell.ballArray[0].radius)}}); 	// Not sure why +radius here, but it's in the C++ code
-//	    model.geom("geom1").run(pointName);
 	    
 	    // Create WP
 	    String wpName = "wp" + Integer.toString(cell.Index());
@@ -172,7 +164,6 @@ public class Comsol {
 	         .set("pt" + Integer.toString(3*cell.Index()+1) + "(1)", new int[]{1});
 	    model.geom("geom1").feature(wpName).selection("vertex3")
 	         .set("pt" + Integer.toString(3*cell.Index()+2) + "(1)", new int[]{1});
-//	    model.geom("geom1").run(wpName);1
 	    
 	    // Create rectangle in WP
 	    String rectName = "rect" + Integer.toString(cell.Index());
@@ -185,7 +176,6 @@ public class Comsol {
 	         .setIndex("size", Double.toString(cell.ballArray[0].radius), 1);			// We're revolving --> half the actual height
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
 	         .setIndex("pos", Double.toString(-cell.ballArray[0].radius), 0);			// Move the cell on the x axis, so that the centre of the ball is aligned with the origin 
-//	    model.geom("geom1").feature(wpName).geom().run(rectName);
 
 	    // Fillet the rectangle
 	    String filName = "fil" + Integer.toString(cell.Index());
@@ -195,8 +185,6 @@ public class Comsol {
 	         .selection("point").set(rectName + "(1)", new int[]{3, 4});
 	    model.geom("geom1").feature(wpName).geom().feature(filName)
 	         .set("radius", Double.toString(cell.ballArray[0].radius));
-//	    model.geom("geom1").feature(wpName).geom().run(filName);
-//	    model.geom("geom1").run(wpName);
 
 	    // Revolve WP around X axis
 	    String name = "rod" + Integer.toString(cell.Index());
@@ -207,7 +195,6 @@ public class Comsol {
 	    model.geom("geom1").feature(name).selection("input")
         	 .set(new String[]{wpName});
 	    model.geom("geom1").feature(name).set("createselection", "on");	// Make sure we can select this object later on
-//	    model.geom("geom1").run(name);
 	
 	    // Update model information
 	    NRod++;
@@ -234,6 +221,10 @@ public class Comsol {
 	    	if(ball.pos.z < minZ) 	minZ = ball.pos.z - ball.radius;
 	    	if(ball.pos.z > maxZ) 	maxZ = ball.pos.z + ball.radius;
 	    }
+	    model.geom("geom1").feature("blk1").setIndex("pos", "(" + Double.toString(maxX) + "+" + Double.toString(minX) + ")" + "/2.0", 0);
+	    model.geom("geom1").feature("blk1").setIndex("pos", "(" + Double.toString(maxY) + "+" + Double.toString(minY) + ")" + "/2.0", 1);
+	    model.geom("geom1").feature("blk1").setIndex("pos", "(" + Double.toString(maxZ) + "+" + Double.toString(minZ) + ")" + "/2.0", 2);
+	    
 	    // Additional code to take the max of the max (i.e. box of Lmax x Lmax x Lmax instead of Lxmax x Lymax x Lzmax), remove if you want to undo
 	    if(maxX - minX < maxY - minY)		minX = minY; maxX = maxY;
 	    if(maxX - minX < maxZ - minZ)		minX = minZ; maxX = maxZ;
@@ -246,9 +237,6 @@ public class Comsol {
 	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxY) + "-" + Double.toString(minY) + ")", 1);
 	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxZ) + "-" + Double.toString(minZ) + ")", 2);
 	    model.geom("geom1").feature("blk1").set("base", "center");
-	    model.geom("geom1").feature("blk1").setIndex("pos", "(" + Double.toString(maxX) + "+" + Double.toString(minX) + ")" + "/2.0", 0);
-	    model.geom("geom1").feature("blk1").setIndex("pos", "(" + Double.toString(maxY) + "+" + Double.toString(minY) + ")" + "/2.0", 1);
-	    model.geom("geom1").feature("blk1").setIndex("pos", "(" + Double.toString(maxZ) + "+" + Double.toString(minZ) + ")" + "/2.0", 2);
 	    model.geom("geom1").feature("blk1").set("createselection", "on");
 
 	    model.physics("chds").feature().create("conc1", "Concentration", 2);

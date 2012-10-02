@@ -9,8 +9,6 @@ import random.rand;
 
 public class WithComsol {
 
-	//OUTDATED FIXME
-	
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
 //		model.cellType = new int[]{1,5};
@@ -80,7 +78,7 @@ public class WithComsol {
 		boolean overlap = false;
 		
 		// Start server and connect
-		model.Write("\tStarting server and connecting model to localhost:" + setting.port, "iter");
+		model.Write("Starting server and connecting model to localhost:" + setting.port, "iter");
 //		Server.Stop(false);
 		Server.Start(setting.port);
 		Server.Connect(setting.port);
