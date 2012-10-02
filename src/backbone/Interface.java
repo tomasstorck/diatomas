@@ -13,61 +13,44 @@ public class Interface{
 		CModel model = new CModel("default");
 
 		int NArg = args.length;
-		for(int ii=0; ii<NArg; ii++) {
+		for(int ii=0; ii<NArg; ii+=2) {
 			String arg = args[ii];
 			//
 			if(arg.equalsIgnoreCase("help") || arg.equalsIgnoreCase("--help") || arg.equalsIgnoreCase("?") || arg.equalsIgnoreCase("/?")) {
-				System.out.println("Usage: java -jar diatomas.jar [arguments]");
-				System.out.println("where arguments can be any of the following:");
+				System.out.println("Usage: java -jar diatomas.jar [option0] [value0] [option1] [value1] ...");
+				System.out.println("where [value] be a number (where 0 == false, 1 == true) or sometimes string and [option] can be any of the following:");
 				System.out.println("help || --help || ? || /?\t\t Show this help text");
-				System.out.println("enableEchoCommand || disableEchoCommand\t\t Echoes or silences the command line functions ran from the model");
-				System.out.println("enablePlot || disablePlot\t\t Enable or disable plotting");
-				System.out.println("enablePlotIntermediate || disablePlotIntermediate\t Enable or disable plotting of intermediate movement steps");
-				System.out.println("enablePostPlot || disablePostPlot\t\t Runs or does not run a postPlot after starting the model. Can be combined with *IntermediatePlot. Be sure to disableStart if you just want to postPlot");
-				System.out.println("enableStart || disableStart\t\t Starts the model automatically after looping through the arguments, or not");
-				System.out.println("enableWaitForFinish || disableWaitForFinish\t When calling command line arguments from the model, waits for them to finish running or continues with the model");
-				System.out.println("withComsol || withoutComsol\t\t Enable or disable the use of COMSOL. Enable: use backbone file WithComsol.java, otherwise use WithoutComsol.java");
+				System.out.println("comsol \t\t\t Enable or disable the use of COMSOL. Enable: use backbone file WithComsol.java, otherwise use WithoutComsol.java");
+				System.out.println("echoCommand \t\t Echoes or silences the command line functions ran from the model");
+				System.out.println("plot \t\t\t Enable or disable plotting");
+				System.out.println("plotIntermediate \t\t Enable or disable plotting of intermediate movement steps");
+				System.out.println("postPlot \t\t\t Runs or does not run a postPlot after starting the model. Can be combined with *IntermediatePlot. Be sure to disable start if you just want to postPlot");
+				System.out.println("start \t\t\t Starts the model automatically after looping through the arguments, or not");
+				System.out.println("waitForFinish || disableWaitForFinish\t When calling command line arguments from the model, waits for them to finish running or continues with the model");
 				System.out.println("load [path/filename.extension]\t Load the speficied file instead of the default parameters");
 				System.out.println("port [comsol server port]\t\t\t\t Use port [comsol server port] to start COMSOL server");
 				System.out.println("*\t\t\t\t Any unrecognised arguments are assumed to be model names");
 				return;
 			}
 			//
-			if(arg.equalsIgnoreCase("enableplot")) 	{setting.plot = true;} else
-			if(arg.equalsIgnoreCase("disableplot")) {setting.plot = false;} else
-			//
-			if(arg.equalsIgnoreCase("enableplotintermediate") || arg.equalsIgnoreCase("enableintermediateplot")) {setting.plotIntermediate = true;} else
-			if(arg.equalsIgnoreCase("disableplotintermediate") || arg.equalsIgnoreCase("disableintermediateplot")) {setting.plotIntermediate = false;} else
-			//
-			if(arg.equalsIgnoreCase("disablestart")) {setting.start = false;} else
-			if(arg.equalsIgnoreCase("enablestart")) {setting.start = true;} else
-			//
-			if(arg.equalsIgnoreCase("enablewaitforfinish")) {setting.waitForFinish = true;} else
-			if(arg.equalsIgnoreCase("disablewaitforfinish")) {setting.waitForFinish = false;} else
-			//
-			if(arg.equalsIgnoreCase("enableechocommand")) {setting.echoCommand = true;} else
-			if(arg.equalsIgnoreCase("disableechocommand")) {setting.echoCommand = false;} else
-			//
-			if(arg.equalsIgnoreCase("withcomsol")) {setting.withComsol = true;} else
-			if(arg.equalsIgnoreCase("withoutcomsol")) {setting.withComsol = false;} else
-			//
-			if(arg.equalsIgnoreCase("load")) {
-				ii++;			// Look at the next argument
+			if(arg.equalsIgnoreCase("comsol")) 				{setting.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;} 
+			if(arg.equalsIgnoreCase("plot")) 				{setting.plot = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("plotintermediate")) 	{setting.plotIntermediate = (Integer.parseInt(args[ii+1])==1)?true:false;	continue;}
+			if(arg.equalsIgnoreCase("start"))				{setting.start = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("waitforfinish")) 		{setting.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
+			if(arg.equalsIgnoreCase("echocommand")) 		{setting.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			if(arg.equalsIgnoreCase("load")){
 				model.Write("Loading " + args[ii], "iter");
-				model.Load(args[ii]);} else
-			//
-			if(arg.equalsIgnoreCase("port")) {
-				ii++;			// Look at the next argument
-				setting.port = Integer.parseInt(args[ii]);} else
-			//
-			if(arg.equalsIgnoreCase("enablepostplot")) {setting.postPlot = true;} else
-			if(arg.equalsIgnoreCase("disablepostplot")) {setting.postPlot = false;}
-			else {model.name=arg;}	// If not any of the above, it must be the name
-			//
+				model.Load(args[ii+1]);
+				continue;}
+			if(arg.equalsIgnoreCase("port")) 				{setting.port = Integer.parseInt(args[ii+1]);									continue;}
+			if(arg.equalsIgnoreCase("postplot")) 			{setting.postPlot = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			// If not any of the above, it must be the name
+			model.name=arg;
+			ii--;				// subtract 1 from ii because we don't want to ignore the argument after this name
 		}
 		
 		// Done analysing input arguments
-		
 		// Start model if requested
 		if(setting.start) {
 			System.out.print("Loading w/ arguments: ");
