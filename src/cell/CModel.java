@@ -968,8 +968,8 @@ public class CModel {
 		//							type 0					type 1					type 2					type 3					type 4					type 5
 		// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
 		mlModel.setField("SMX",                           new MLDouble(null, SMX, SMX.length));                                           	// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
-		mlModel.setField("K",                             new MLDouble(null, K, K.length));                                               	// [microM]
-		mlModel.setField("qMax",                          new MLDouble(null, qMax, qMax.length));                                         	// [mol (Cmol*s)-1] type==0 from Robinson 1984, assuming yield, growth on NaAc. type!=0 from Scholten 2000;
+		mlModel.setField("K",                             new MLDouble(null, K, K.length));                                               	// [microM] FIXME
+		mlModel.setField("qMax",                          new MLDouble(null, qMax, qMax.length));                                         	// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc. S.f. from Scholten 2000;
 		mlModel.setField("rateEquation",                  new MLChar(null, rateEquation));                                                	
 		// 	 pH calculations
 		//							HPro		CO2			HCO3-		HAc
@@ -987,12 +987,12 @@ public class CModel {
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);
 		list.add(mlModel);
 		try {
-			new MatFileWriter(name + "/output/" + String.format("m%04dg%04d", growthIter, movementIter) + ".mat",list);
+			new MatFileWriter(name + "/output/" + String.format("g%04dm%04d", growthIter, movementIter) + ".mat",list);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void Load(String fileName) {
 		try {
 			MatFileReader mlFile = new MatFileReader(fileName);
