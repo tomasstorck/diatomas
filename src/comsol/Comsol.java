@@ -225,17 +225,17 @@ public class Comsol {
 	    model.geom("geom1").feature("blk1").setIndex("pos", "(" + Double.toString(maxY) + "+" + Double.toString(minY) + ")" + "/2.0", 1);
 	    model.geom("geom1").feature("blk1").setIndex("pos", "(" + Double.toString(maxZ) + "+" + Double.toString(minZ) + ")" + "/2.0", 2);
 	    
-	    // Additional code to take the max of the max (i.e. box of Lmax x Lmax x Lmax instead of Lxmax x Lymax x Lzmax), remove if you want to undo
-	    if(maxX - minX < maxY - minY)		minX = minY; maxX = maxY;
-	    if(maxX - minX < maxZ - minZ)		minX = minZ; maxX = maxZ;
-	    if(maxY - minY < maxX - minX)		minY = minX; maxY = maxX;
-	    if(maxY - minY < maxZ - minZ)		minY = minZ; maxY = maxZ;
-	    if(maxZ - minZ < maxX - minX)		minZ = minX; maxZ = maxX;
-	    if(maxZ - minZ < maxY - minY)		minZ = minY; maxZ = maxY;
+//	    // Additional code to take the max of the max (i.e. box of Lmax x Lmax x Lmax instead of Lxmax x Lymax x Lzmax), remove if you want to undo
+//	    if(maxX - minX < maxY - minY)		minX = minY; maxX = maxY;
+//	    if(maxX - minX < maxZ - minZ)		minX = minZ; maxX = maxZ;
+//	    if(maxY - minY < maxX - minX)		minY = minX; maxY = maxX;
+//	    if(maxY - minY < maxZ - minZ)		minY = minZ; maxY = maxZ;
+//	    if(maxZ - minZ < maxX - minX)		minZ = minX; maxZ = maxX;
+//	    if(maxZ - minZ < maxY - minY)		minZ = minY; maxZ = maxY;
 	    
-	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxX) + "-" + Double.toString(minX) + ")", 0);
-	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxY) + "-" + Double.toString(minY) + ")", 1);
-	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxZ) + "-" + Double.toString(minZ) + ")", 2);
+	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxX) + "-" + Double.toString(minX) + ") + 10.0e-6", 0);
+	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxY) + "-" + Double.toString(minY) + ") + 10.0e-6", 1);
+	    model.geom("geom1").feature("blk1").setIndex("size", Double.toString(BCMultiplier) + "*(" + Double.toString(maxZ) + "-" + Double.toString(minZ) + ") + 10.0e-6", 2);
 	    model.geom("geom1").feature("blk1").set("base", "center");
 	    model.geom("geom1").feature("blk1").set("createselection", "on");
 

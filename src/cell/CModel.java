@@ -73,12 +73,12 @@ public class CModel {
 	public double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						// [microM] FIXME
 	public double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400)};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc. S.f. from Scholten 2000;
 	public String[] rateEquation = {
-			Double.toString(qMax[0]) + "*(c3*d3^4)/(K0+c3*d3^4)",		// type==2
-			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==3;
-			Double.toString(qMax[2]) + "*c2/(K2+c2)",					// type==0
-			Double.toString(qMax[3]) + "*c2/(K3+c2)",					// type==1
-			Double.toString(qMax[4]) + "*c2/(K4+c2)",					// type==0
-			Double.toString(qMax[5]) + "*c2/(K5+c2)"};					// type==1
+			Double.toString(qMax[0]) + "*(c3*d3^4)/(K0+c3*d3^4)",		// type==0
+			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==1
+			Double.toString(qMax[2]) + "*c2/(K2+c2)",					// type==2
+			Double.toString(qMax[3]) + "*c2/(K3+c2)",					// type==3
+			Double.toString(qMax[4]) + "*c2/(K4+c2)",					// type==4
+			Double.toString(qMax[5]) + "*c2/(K5+c2)"};					// type==5
 			
 	// 	 pH calculations
 	//							HPro		CO2			HCO3-		HAc
@@ -281,13 +281,12 @@ public class CModel {
 		
 		int iSpring = 0;
 		while(iSpring < stickSpringArray.size()) {
-			CStickSpring pSpring = stickSpringArray.get(iSpring);
-			double al = (pSpring.ballArray[1].pos.minus(  pSpring.ballArray[0].pos)  ).length();		// al = Actual Length
-			if(al < minStretch*pSpring.restLength || al > maxStretch*pSpring.restLength) {
-				breakArray.add(pSpring);
-//				breakArray.addAll(pSpring.siblingArray);												// We'll do this in StickBreak
+			CStickSpring spring = stickSpringArray.get(iSpring);
+			double al = (spring.ballArray[1].pos.minus(  spring.ballArray[0].pos)  ).length();		// al = Actual Length
+			if(al < minStretch*spring.restLength || al > maxStretch*spring.restLength) {
+				breakArray.add(spring);
 			}
-			iSpring += pSpring.NSibling+1;
+			iSpring += spring.NSibling+1;
 		}
 		return breakArray;
 	} 

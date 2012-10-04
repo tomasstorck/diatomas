@@ -12,7 +12,7 @@ public class WithoutComsol {
 
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
-//		model.cellType = new int[]{1,5};
+		model.cellType = new int[]{1,5};
 		/////
 //		model.L 	= new Vector3d(20e-6, 5e-6, 20e-6);		// [m], Dimensions of domain
 //		setting.POVScale = 1;
@@ -102,7 +102,7 @@ public class WithoutComsol {
 				// Break stick springs
 				ArrayList<CStickSpring> breakArray = model.DetectStickBreak(0.6,1.4);		// Returns all springs that'll be broken (<rl*first argument, >rl*second argument). Should not contain any duplicates in the form of siblingsprings
 				model.BreakStick(breakArray);
-				model.Write(breakArray.size() + " cell pairs broken","iter");
+				model.Write(breakArray.size() + " sticking springs broken","iter");
 				// Build stick springs
 				model.Write("Detecting cell-cell collisions","iter");
 				ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple(1.1);	 // Note that this one returns already stuck and duplicate cells
@@ -117,6 +117,11 @@ public class WithoutComsol {
 			if(!overlap) {
 				model.Write("Growing cells", "iter");
 				int newCell = model.GrowthSimple();
+				
+				// Advance growth
+				model.growthIter++;
+				model.growthTime += model.growthTimeStep;
+				
 				model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");
 
 				model.Write("Resetting springs","iter");
@@ -127,9 +132,7 @@ public class WithoutComsol {
 //					fil.ResetSmall();
 					fil.ResetBig();
 				}
-				// Advance growth
-				model.growthIter++;
-				model.growthTime += model.growthTimeStep;
+				
 			}
 			
 			// Movement

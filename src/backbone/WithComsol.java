@@ -29,6 +29,7 @@ public class WithComsol {
 //		model.Kd = 50.0*model.Kd;
 //		model.Kr = 0.1*model.Kr;
 		/////
+		model.growthTimeStep = 24.0*3600.0;
 		
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
@@ -107,7 +108,7 @@ public class WithComsol {
 				// Break stick springs
 				ArrayList<CStickSpring> breakArray = model.DetectStickBreak(0.6,1.4);		// Returns all springs that'll be broken (<rl*first argument, >rl*second argument). Should not contain any duplicates in the form of siblingsprings
 				model.BreakStick(breakArray);
-				model.Write(breakArray.size() + " cell pairs broken","iter");
+				model.Write(breakArray.size() + " sticking springs broken","iter");
 				// Build stick springs
 				model.Write("Detecting cell-cell collisions","iter");
 				ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple(1.1);	 // Note that this one returns already stuck and duplicate cells
@@ -151,6 +152,11 @@ public class WithComsol {
 			if(!overlap) {
 				model.Write("Growing cells", "iter");
 				int newCell = model.GrowthFlux();
+				
+				// Advance growth
+				model.growthIter++;
+				model.growthTime += model.growthTimeStep;
+
 				model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");
 
 				model.Write("Resetting springs","iter");
@@ -158,12 +164,9 @@ public class WithComsol {
 					rod.ResetRestLength();
 				}
 				for(CFilSpring fil : model.filSpringArray) 	{
-					//								fil.ResetSmall();
+//					fil.ResetSmall();
 					fil.ResetBig();
 				}
-				// Advance growth
-				model.growthIter++;
-				model.growthTime += model.growthTimeStep;
 			}
 
 			// Movement
