@@ -12,7 +12,8 @@ public class CCell {
 	public double[] colour = 	new double[3];
 	public CBall[] ballArray = 	new CBall[1];							// Note that this ballArray has the same name as CModel's
 	public CRodSpring[] springArray = new CRodSpring[0];
-	public ArrayList<CCell> stickCellArray = new ArrayList<CCell>();  
+	public ArrayList<CCell> stickCellArray = new ArrayList<CCell>();
+	public CAnchorSpring[] anchorSpringArray = new CAnchorSpring[0];
 	public CCell mother;
 	public int motherIndex;
 //	public int index;
@@ -95,17 +96,17 @@ public class CCell {
 	
 	public void Anchor() {
 		int NBall = (type<2) ? 1 : 2;
-		CAnchorSpring[] anchorArray = new CAnchorSpring[NBall];
+		anchorSpringArray = new CAnchorSpring[NBall];
 		for(int iBall = 0; iBall < NBall; iBall++) {
-			anchorArray[iBall] = new CAnchorSpring(ballArray[iBall]);
+			anchorSpringArray[iBall] = new CAnchorSpring(ballArray[iBall]);
 		}
 		
 		// Define siblings, just hardcode, saves time (for me)
 		if(NBall > 1) {
-			anchorArray[0].siblingArray = new CAnchorSpring[1];
-			anchorArray[1].siblingArray = new CAnchorSpring[1];
-			anchorArray[0].siblingArray[0] = anchorArray[1];
-			anchorArray[1].siblingArray[0] = anchorArray[0];
+			anchorSpringArray[0].siblingArray = new CAnchorSpring[1];
+			anchorSpringArray[1].siblingArray = new CAnchorSpring[1];
+			anchorSpringArray[0].siblingArray[0] = anchorSpringArray[1];
+			anchorSpringArray[1].siblingArray[0] = anchorSpringArray[0];
 		}
 	}
 	

@@ -30,6 +30,10 @@ public class CModel {
 	public double Kc = 1e7;						// collision (per ball)
 	public double Ks = 1e4;						// sticking (per ball average)
 	public double Kan= 1e4;						// anchor (per BALL)
+	public double stretchLimAnchor = 0.4;			// Maximum tension and compression (1-this value) for anchoring springs
+	public double formLimAnchor = 1.1;				// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
+	public double stretchLimStick = 0.4;			// Maximum tension and compression (1-this value) for sticking springs
+	public double formLimStick = 1.1; 				// Multiplication factor for rest length to form sticking springs. 
 	// Domain properties
 	public double Kd = 1e3;						// drag force coefficient (per BALL)
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
@@ -364,7 +368,7 @@ public class CModel {
 				// Check for all remaining cells
 				for(int jCell=iCell+1; jCell<cellArray.size(); jCell++) {
 					CCell cell1 = cellArray.get(jCell);
-					// Check for a sticking spring, if there is one let it do the work
+					// Check for a sticking spring, if there is one let it do the work instead
 					if(!cell0.stickCellArray.equals(cell1)) {
 						CBall c1b0 = cell1.ballArray[0];
 						R2 = c0b0.radius + c1b0.radius;
@@ -492,7 +496,7 @@ public class CModel {
 			ball.force.subtract(ball.vel.times(Kd*MBallInit[ball.cell.type]));
 		}
 		
-		// Elastic forces between springs within cells (CSpring in type>0)
+		// Elastic forces between springs within cells (CRodSpring in type>1)
 		for(CRodSpring rod : rodSpringArray) {
 			CBall ball0 = rod.ballArray[0];
 			CBall ball1 = rod.ballArray[1];
@@ -505,21 +509,43 @@ public class CModel {
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
 			ball0.force.add(Fs);
-			ball1.force.subtract(Fs);			// Ah, made mistake here before (120921)!
+			ball1.force.subtract(Fs);
 		}
 		
 		// Anchoring springs elastic forces (CAnchorSpring in anchorSpringArray)
-		for(CAnchorSpring spring : anchorSpringArray) {
-			CBall ball = spring.ball;
-			// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = spring.anchor.minus(ball.pos);
-			double dn = diff.length();
-			// Get force
-			double f = spring.K/dn * (dn - spring.restLength);
-			// Hooke's law
-			Vector3d Fs = diff.times(f);
-			// apply forces on balls
-			ball.force.add(Fs);
+//		int NBreak = 0;
+//		int NForm = 0;
+		// See what we need to anchor or break
+		for(CCell cell : cellArray) {
+			CBall ball0 = cell.ballArray[0];
+			CBall ball1 = (cell.type>2) ? ball1 = cell.ballArray[1] : null;
+			
+			if(cell.anchorSpringArray.length>0) { 		// This cell is already anchored
+				for(CAnchorSpring spring : cell.anchorSpringArray) {
+					// Break anchor?
+					Vector3d diff = spring.anchor.minus(spring.ball.pos);
+					double dn = diff.length();
+					if(dn > spring.restLength*(1+stretchLimAnchor) || dn < spring.restLength*(1-stretchLimAnchor)) {		// too much tension || compression --> break the spring
+//						NBreak += spring.UnAnchor();
+						spring.UnAnchor();
+					} else {																								// not too much tension --> calculate forces
+						// Get force
+						double f = spring.K/dn * (dn - spring.restLength);
+						// Hooke's law
+						Vector3d Fs = diff.times(f);
+						// apply forces on balls
+						spring.ball.force.add(Fs);
+					}
+				}
+			} else {									// Cell is not yet anchored
+				// Form anchor?
+				boolean formBall0 = (ball0.pos.y < ball0.radius*formLimAnchor) ? true : false;
+				boolean formBall1 = false;
+				if(cell.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
+				if(formBall0 || formBall1) {
+					cell.Anchor();					
+				}
+			}
 		}
 		
 		// Sticking springs elastic forces (CStickSpring in stickSpringArray)
@@ -825,6 +851,10 @@ public class CModel {
 		mlModel.setField("Kc",                            new MLDouble(null, new double[] {Kc}, 1));                                      	// collision (per ball)
 		mlModel.setField("Ks",                            new MLDouble(null, new double[] {Ks}, 1));                                      	// sticking (per ball average)
 		mlModel.setField("Kan",                           new MLDouble(null, new double[] {Kan}, 1));                                     	// anchor (per BALL)
+		mlModel.setField("stretchLimAnchor",              new MLDouble(null, new double[] {stretchLimAnchor}, 1));                        	// Maximum tension and compression (1-this value) for anchoring springs
+		mlModel.setField("formLimAnchor",                 new MLDouble(null, new double[] {formLimAnchor}, 1));                           	// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
+		mlModel.setField("stretchLimStick",               new MLDouble(null, new double[] {stretchLimStick}, 1));                         	// Maximum tension and compression (1-this value) for sticking springs
+		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {formLimStick}, 1));                            	// Multiplication factor for rest length to form sticking springs.
 		// Domain properties
 		mlModel.setField("Kd",                            new MLDouble(null, new double[] {Kd}, 1));                                      	// drag force coefficient (per BALL)
 		mlModel.setField("G",                             new MLDouble(null, new double[] {G}, 1));                                       	// [m/s2], acceleration due to gravity

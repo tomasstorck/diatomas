@@ -82,30 +82,14 @@ public class WithoutComsol {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.movementIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
 
-			if(model.anchoring) {
-				// Break anchor springs
-				// {} to make sure objects are destroyed when we're done (aka scope)
-				ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak(0.6,1.4);	// Returns lonely anchors, without their siblings
-				int counter = 0;
-				for(CAnchorSpring anchor : breakArray) {
-					counter += anchor.UnAnchor();
-				}
-				model.Write(counter + " anchor springs broken","iter");
-				// Build anchor springs
-				model.Write("Detecting cell-floor collisions","iter");
-				ArrayList<CCell> collisionArray = model.DetectFloorCollision(1.1);		// Returns already anchored cells
-				int NNewAnchor = model.BuildAnchor(collisionArray);
-				model.Write(NNewAnchor + " anchor springs built","iter");
-			}
-
 			if(model.sticking) {
 				// Break stick springs
-				ArrayList<CStickSpring> breakArray = model.DetectStickBreak(0.6,1.4);		// Returns all springs that'll be broken (<rl*first argument, >rl*second argument). Should not contain any duplicates in the form of siblingsprings
+				ArrayList<CStickSpring> breakArray = model.DetectStickBreak(1-model.stretchLimStick,1+model.stretchLimStick);		// Returns all springs that'll be broken (<rl*first argument, >rl*second argument). Should not contain any duplicates in the form of siblingsprings
 				model.BreakStick(breakArray);
 				model.Write(breakArray.size() + " sticking springs broken","iter");
 				// Build stick springs
 				model.Write("Detecting cell-cell collisions","iter");
-				ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple(1.1);	 // Note that this one returns already stuck and duplicate cells
+				ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple(model.formLimStick);	 // Note that this one returns already stuck and duplicate cells
 				model.Write("Building new sticking springs","iter");
 				int NNewStick = model.BuildStick(collisionArray);
 				model.Write(NNewStick + " cell pairs sticked","iter");				// Divided by two, as array is based on origin and other cell (see for loop)
