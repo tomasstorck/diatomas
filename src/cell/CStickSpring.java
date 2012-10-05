@@ -31,7 +31,8 @@ public class CStickSpring {
 	
 	public CStickSpring() {}								// Empty constructor for model loading. Note that the stickSpring is not automatically added to the array
 	
-	public int UnStick() {									// Also removes siblings 
+	public int UnStick() {									// Also removes siblings
+		int count = 0;
 		CCell cell0 = ballArray[0].cell;
 		CCell cell1 = ballArray[1].cell;
 		// UnStick from cell's stickCellArray
@@ -40,14 +41,14 @@ public class CStickSpring {
 		// from cell's AND model's stickSpringArray
 		cell0.stickSpringArray.remove(this);
 		cell1.stickSpringArray.remove(this);
-		cell0.model.stickSpringArray.remove(this);
+		count += (cell0.model.stickSpringArray.remove(this))?1:0;// Add one to counter if successfully removed
 		for(CStickSpring sibling : siblingArray) {
 			cell0.stickSpringArray.remove(sibling);
 			cell1.stickSpringArray.remove(sibling);
-			cell0.model.stickSpringArray.remove(sibling);
+			count += (cell0.model.stickSpringArray.remove(sibling))?1:0;
 		}
 		
-		return 1+siblingArray.length;
+		return count;
 	}
 	
 	//////////////////////////////////////////////////////////////////////

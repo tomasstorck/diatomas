@@ -137,11 +137,12 @@ public class CCell {
 		}
 		
 		CStickSpring[] stickArray = new CStickSpring[NSpring];
-		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, with input balls
+		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
 			CStickSpring spring 	= new CStickSpring(	pA.ballArray[iSpring/2],	// 0, 0, 1, 1, ...
 														pB.ballArray[iSpring%2]); 	// 0, 1, 0, 1, ...
 			stickArray[iSpring] = spring;
-			stickSpringArray.add(spring);
+			this.stickSpringArray.add(spring);
+			cell.stickSpringArray.add(spring);
 		}
 		
 		// Define siblings
@@ -156,35 +157,12 @@ public class CCell {
 			}
 		}
 		
-		//All done, add the cells to each other's stickCellArray 
-//		for(int iSpring = 0; iSpring < stickArray.length; iSpring++) {		// Already done in constructor
-//			pModel.stickSpringArray.add(stickArray[iSpring]);
-//		}
 		this.stickCellArray.add(cell);
 		cell.stickCellArray.add(this);
 		
 		return NSpring;
 	}
-	
-	public void Stick(int otherCellIndex) {
-		CCell cell = model.cellArray.get(otherCellIndex);
-		Stick(cell);
-	}
-	
-	public void UnStick(CCell cell) {			// Less efficient than CStickSpring. Don't use!!! OPTIMISE
-		// Remove springs from both cell' AND from the model's stickSpringArray 
-		for(CStickSpring spring : this.stickSpringArray) {
-			if((spring.ballArray[0].cell==this && spring.ballArray[1].cell==cell) || (spring.ballArray[0].cell==cell && spring.ballArray[1].cell==this)) {
-				this.stickSpringArray.remove(spring);
-				cell.stickSpringArray.remove(spring);
-				stickSpringArray.remove(spring);
-			}
-		}
-		// Remove cells from each other's stickCellArray 
-		this.stickCellArray.remove(cell);
-		cell.stickCellArray.remove(this);
-	}
-	
+			
 	public double GetMass() {
 		int NBall = (type<2) ? 1 : 2;
 		double mass = 0; 

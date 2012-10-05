@@ -69,11 +69,18 @@ public class WithoutComsol {
 //				cell.Anchor();
 			}
 			boolean overlap = true;
+			int[] NSpring = {0,0,0,0};
 			while(overlap) {
 				model.Movement();
+				// We want to save the number of springs formed and broken
+				NSpring[0] += Assistant.NAnchorBreak;
+				NSpring[1] += Assistant.NAnchorForm;
+				NSpring[2] += Assistant.NStickBreak;
+				NSpring[3] += Assistant.NStickForm;
 				if(model.DetectCellCollision_Simple(1.0).isEmpty()) 	overlap = false;
 			}
 			model.Write(model.cellArray.size() + " initial non-overlapping cells created","iter");
+			model.Write((NSpring[1]-NSpring[0]) + " anchor and " + (NSpring[3]-NSpring[2]) + " sticking springs formed", "iter");
 		}
 		
 		boolean overlap = false;
@@ -112,7 +119,8 @@ public class WithoutComsol {
 			model.movementIter++;
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
-			model.Write(Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + " (" + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ") anchor and " + Assistant.NStickBreak + "/" + Assistant.NStickForm + " (" + (Assistant.NStickForm-Assistant.NStickBreak) + ") sticking springs broken/formed", "iter");
+			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
+			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Simple(1.0);
 			if(!overlapCellArray.isEmpty()) {
 				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");

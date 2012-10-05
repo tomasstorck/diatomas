@@ -30,9 +30,9 @@ public class CModel {
 	public double Kc = 1e7;						// collision (per ball)
 	public double Ks = 1e4;						// sticking (per ball average)
 	public double Kan= 1e4;						// anchor (per BALL)
-	public double stretchLimAnchor = 0.4;			// Maximum tension and compression (1-this value) for anchoring springs
+	public double[] stretchLimAnchor = {0.6, 1.4};			// Maximum tension and compression (1-this value) for anchoring springs
 	public double formLimAnchor = 1.1;				// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-	public double stretchLimStick = 0.4;			// Maximum tension and compression (1-this value) for sticking springs
+	public double[] stretchLimStick = {0.6, 1.4};			// Maximum tension and compression (1-this value) for sticking springs
 	public double formLimStick = 1.1; 				// Multiplication factor for rest length to form sticking springs. 
 	// Domain properties
 	public double Kd = 1e3;						// drag force coefficient (per BALL)
@@ -347,9 +347,9 @@ public class CModel {
 		return nstp;
 	}
 	
-	public Vector CalculateForces(double t, Vector yode) {	// This function gets called again and again --> not very efficient to import/export every time OPTIMISE
+	public Vector CalculateForces(double t, Vector yode) {	
 		// Read data from y
-		int ii=0; 				// Where we are in yode
+		{int ii=0; 				// Where we are in yode
 		for(CBall ball : ballArray) {
 			ball.pos.x = 	yode.get(ii++);
 			ball.pos.y = 	yode.get(ii++);
@@ -360,8 +360,8 @@ public class CModel {
 			ball.force.x = 0;	// Clear forces for first use
 			ball.force.y = 0;
 			ball.force.z = 0;
-		}
-		// Collision forces 
+		}}
+		// Collision forces INCLUDING stick spring formation
 		for(int iCell=0; iCell<cellArray.size(); iCell++) {
 			CCell cell0 = cellArray.get(iCell);
 			CBall c0b0 = cell0.ballArray[0];
@@ -394,14 +394,14 @@ public class CModel {
 						}
 					} else {												// this cell is a ball, the other cell is a rod
 						double H2 = aspect[cell1.type]*2.0*c1b0.radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dist<H2*(1+formLimStick)) {						// This might be interesting: could be either sticking or collision
+						if(dist<H2*formLimStick) {						// This might be interesting: could be either sticking or collision
 							// do a sphere-rod collision detection
 							CBall c1b1 = cell1.ballArray[1];
 							EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 							Vector3d dP = C.dP;
 							dist = C.dist;									// Make distance more accurate
 							double sc = C.sc;
-							if(dist<R2*(1+formLimStick)) {
+							if(dist<R2*formLimStick) {
 								// Stick
 								if(!stuck){
 									Assistant.NStickForm += cell0.Stick(cell1);
@@ -436,13 +436,13 @@ public class CModel {
 					boolean stuck = (cell0.stickCellArray.contains(cell1)) ? true : false;
 					if(cell1.type<2) {										// This cell is a rod, the Next is a ball
 						double H2 = aspect[cell0.type]*2.0*c0b0.radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dist<H2*(1+formLimStick)) {
+						if(dist<H2*formLimStick) {
 							// do a rod-sphere collision detection
 							EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
 							Vector3d dP = C.dP;
 							dist = C.dist;
 							double sc = C.sc;
-							if(dist<R2*(1+formLimStick)) {
+							if(dist<R2*formLimStick) {
 								// Stick
 								if(!stuck) {
 									Assistant.NStickForm += cell0.Stick(cell1);
@@ -470,14 +470,14 @@ public class CModel {
 						CBall c1b1 = cell1.ballArray[1];
 						Vector3d c1b1pos = new Vector3d(c1b1.pos);
 						double H2 = aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
-						if(dist<H2*(1+formLimStick)) {
+						if(dist<H2*formLimStick) {
 							// calculate the distance between the two diatoma segments
 							EricsonObject R = DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
 							Vector3d dP = R.dP;					// dP is vector from closest point 2 --> 1
 							dist = R.dist;
 							double sc = R.sc;
 							double tc = R.tc;
-							if(dist<R2*(1+formLimStick)) {			//  120910 removed: && !cell.IsFilament(cellNext)
+							if(dist<R2*formLimStick) {			//  120910 removed: && !cell.IsFilament(cellNext)
 								if(!stuck) {
 									Assistant.NStickForm += cell0.Stick(cell1);
 								}
@@ -542,14 +542,14 @@ public class CModel {
 			// See what we need to anchor or break
 			for(CCell cell : cellArray) {
 				CBall ball0 = cell.ballArray[0];
-				CBall ball1 = (cell.type>2) ? ball1 = cell.ballArray[1] : null;
+				CBall ball1 = (cell.type>1) ? ball1 = cell.ballArray[1] : null;
 				
 				if(cell.anchorSpringArray.length>0) { 		// This cell is already anchored
 					for(CAnchorSpring spring : cell.anchorSpringArray) {
 						// Break anchor?
 						Vector3d diff = spring.anchor.minus(spring.ball.pos);
 						double dn = diff.length();
-						if(dn > spring.restLength*(1+stretchLimAnchor) || dn < spring.restLength*(1-stretchLimAnchor)) {		// too much tension || compression --> break the spring
+						if(dn < spring.restLength*stretchLimAnchor[0] || dn > spring.restLength*stretchLimAnchor[1]) {			// too much tension || compression --> break the spring
 							Assistant.NAnchorBreak += spring.UnAnchor();
 						} else {																								// not too much tension --> calculate forces
 							// Get force
@@ -572,29 +572,35 @@ public class CModel {
 			}
 		}
 		
-//		// Sticking springs elastic forces (CStickSpring in stickSpringArray) AND breakage
-//		// Formation of sticking springs is taken care of through collision detection
-//		for(CStickSpring stick : stickSpringArray) {		// Empty if sticking is disabled, so no need to add an extra if statement for disabled sticking
-//			CBall ball0 = stick.ballArray[0];
-//			CBall ball1 = stick.ballArray[1];
-//			// find difference vector and distance dn between balls (euclidian distance) 
-//			Vector3d diff = ball1.pos.minus(ball0.pos);
-//			double dn = diff.length();
-//			// Break stick?
-//			if(dn<stick.restLength*(1-stretchLimStick) || dn>stick.restLength*(1+stretchLimStick)) {
-//				Assistant.NStickBreak += stick.UnStick();
-//			// Apply forces if not broken
-//			} else {
-//				// Get force
-//				double f = stick.K/dn * (dn - stick.restLength);
-//				// Hooke's law
-//				Vector3d Fs = diff.times(f);
-//				// apply forces on balls
-//				ball0.force.add(Fs);
-//				ball1.force.subtract(Fs);
-//
-//			}
-//		}
+		// Sticking springs elastic forces (CStickSpring in stickSpringArray) AND breakage
+		// Formation of sticking springs is taken care of through collision detection
+		ArrayList<CStickSpring> unStickArray = new ArrayList<CStickSpring>(); 
+		for(int jj=0; jj<stickSpringArray.size(); jj++) {		// Empty if sticking is disabled, so no need to add an extra if statement for disabled sticking
+			CStickSpring stick = stickSpringArray.get(jj);
+			CBall ball0 = stick.ballArray[0];
+			CBall ball1 = stick.ballArray[1];
+			// find difference vector and distance dn between balls (euclidian distance) 
+			Vector3d diff = ball1.pos.minus(ball0.pos);
+			double dn = diff.length();
+			// Break stick?
+			if(dn<stick.restLength*stretchLimStick[0] || dn>stick.restLength*stretchLimStick[1]) {
+				unStickArray.add(stick);
+				for(CStickSpring sibling : stick.siblingArray) {		// Don't worry about duplicates 
+					unStickArray.add(sibling);
+				}
+			// Apply forces if not broken
+			} else {
+				// Get force
+				double f = stick.K/dn * (dn - stick.restLength);
+				// Hooke's law
+				Vector3d Fs = diff.times(f);
+				// apply forces on balls
+				ball0.force.add(Fs);
+				ball1.force.subtract(Fs);
+			}
+		}
+		// UnStick() collected array
+		for(CStickSpring stick : unStickArray)		Assistant.NStickBreak += stick.UnStick();
 		
 		// Filament spring elastic force (CFilSpring in filSpringArray)
 		for(CFilSpring fil : filSpringArray) {
@@ -629,7 +635,7 @@ public class CModel {
 		
 		// Return results
 		Vector dydx = new Vector(yode.size());
-		ii=0;
+		int ii=0;
 		for(CBall ball : ballArray) {
 				double M = ball.mass;
 				dydx.set(ii++,ball.vel.x);			// dpos/dt = v;
@@ -883,9 +889,9 @@ public class CModel {
 		mlModel.setField("Kc",                            new MLDouble(null, new double[] {Kc}, 1));                                      	// collision (per ball)
 		mlModel.setField("Ks",                            new MLDouble(null, new double[] {Ks}, 1));                                      	// sticking (per ball average)
 		mlModel.setField("Kan",                           new MLDouble(null, new double[] {Kan}, 1));                                     	// anchor (per BALL)
-		mlModel.setField("stretchLimAnchor",              new MLDouble(null, new double[] {stretchLimAnchor}, 1));                        	// Maximum tension and compression (1-this value) for anchoring springs
+		mlModel.setField("stretchLimAnchor",              new MLDouble(null, stretchLimAnchor, stretchLimAnchor.length));                 	// Maximum tension and compression (1-this value) for anchoring springs
 		mlModel.setField("formLimAnchor",                 new MLDouble(null, new double[] {formLimAnchor}, 1));                           	// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-		mlModel.setField("stretchLimStick",               new MLDouble(null, new double[] {stretchLimStick}, 1));                         	// Maximum tension and compression (1-this value) for sticking springs
+		mlModel.setField("stretchLimStick",               new MLDouble(null, stretchLimStick, stretchLimStick.length));                   	// Maximum tension and compression (1-this value) for sticking springs
 		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {formLimStick}, 1));                            	// Multiplication factor for rest length to form sticking springs.
 		// Domain properties
 		mlModel.setField("Kd",                            new MLDouble(null, new double[] {Kd}, 1));                                      	// drag force coefficient (per BALL)
@@ -939,6 +945,14 @@ public class CModel {
 			arrayIndex = new double[obj.stickCellArray.size()];
 			for(int jj=0; jj<obj.stickCellArray.size(); jj++)	arrayIndex[jj] = obj.stickCellArray.get(jj).Index()+1;
 			mlcellArray.setField("stickCellArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
+			
+			arrayIndex = new double[obj.stickSpringArray.size()];
+			for(int jj=0; jj<obj.stickSpringArray.size(); jj++)	arrayIndex[jj] = obj.stickSpringArray.get(jj).Index()+1;
+			mlcellArray.setField("stickSpringArray",          new MLDouble(null, arrayIndex, 1), ii);                                         	
+			
+			arrayIndex = new double[obj.anchorSpringArray.length];
+			for(int jj=0; jj<obj.anchorSpringArray.length; jj++)	arrayIndex[jj] = obj.anchorSpringArray[jj].Index()+1;
+			mlcellArray.setField("anchorSpringArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlcellArray.setField("motherIndex",               new MLDouble(null, new double[] {obj.motherIndex}, 1), ii);                     	
 			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.q}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
 		}
@@ -1054,6 +1068,7 @@ public class CModel {
 			e.printStackTrace();
 		}
 	}
+
 
 	public void Load(String fileName) {
 		try {

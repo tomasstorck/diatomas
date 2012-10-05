@@ -21,7 +21,9 @@ public class CAnchorSpring {
 		anchor = new Vector3d(ball.pos.x, 0, ball.pos.z);
 		K = ball.cell.model.Kan*model.MBallInit[ball.cell.type];
 		restLength = Math.max(ball.pos.y,ball.radius*1.01);			// Whatever is largest: distance ball-floor or radius plus a little push
+		
 		ball.cell.model.anchorSpringArray.add(this);
+		// CAnchorSpring is added to the cell from where this function is called 
 	}
 	
 	public CAnchorSpring() {}				// Note that this constructor does NOT add the anchor spring to the model!
@@ -29,15 +31,16 @@ public class CAnchorSpring {
 	/////////////////////
 	
 	public int UnAnchor() {
+		int count = 0;
 		CModel model = this.ball.cell.model;
-		model.anchorSpringArray.remove(this);
+		count += (model.anchorSpringArray.remove(this))?1:0;
 		for(int ii=0; ii<siblingArray.length; ii++) {
-			model.anchorSpringArray.remove(this.siblingArray[ii]);
+			count += (model.anchorSpringArray.remove(this.siblingArray[ii]))?1:0;
 		}
 		
 		this.ball.cell.anchorSpringArray = new CAnchorSpring[0];
 		
-		return 1+siblingArray.length;
+		return count;
 	}
 	
 	//////////////////////
