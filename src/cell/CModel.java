@@ -299,6 +299,9 @@ public class CModel {
 	// Movement stuff //
 	////////////////////
 	public int Movement() throws Exception {
+		// Reset counter
+		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NStickBreak = Assistant.NStickForm = 0;
+		
 		int nvar = 6*ballArray.size();
 		int ntimes = (int) (movementTimeStepEnd/movementTimeStep);
 		double atol = 1.0e-6, rtol = atol;
@@ -358,9 +361,9 @@ public class CModel {
 			ball.force.y = 0;
 			ball.force.z = 0;
 		}
-		// Collision forces
-		double R2, H2;			// sum of radii of two balls, check distance 
+		// Collision forces 
 		for(int iCell=0; iCell<cellArray.size(); iCell++) {
+			double R2, H2;			// sum of radii of two balls, check distance
 			CCell cell0 = cellArray.get(iCell);
 			CBall c0b0 = cell0.ballArray[0];
 			// Base collision on the cell type
@@ -512,7 +515,9 @@ public class CModel {
 			ball1.force.subtract(Fs);
 		}
 		
-		// Anchoring springs elastic forces (CAnchorSpring in anchorSpringArray)
+		///////////////
+		// Anchoring //
+		///////////////
 		// See what we need to anchor or break
 		for(CCell cell : cellArray) {
 			CBall ball0 = cell.ballArray[0];
@@ -540,12 +545,82 @@ public class CModel {
 				boolean formBall1 = false;
 				if(cell.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
 				if(formBall0 || formBall1) {
-					Assistant.NAnchorForm = cell.Anchor();					
+					Assistant.NAnchorForm += cell.Anchor();					
 				}
 			}
 		}
 		
-		// Sticking springs elastic forces (CStickSpring in stickSpringArray)
+		//////////////
+		// Sticking //
+		//////////////
+		for(int jj=0; jj<cellArray.size(); jj++) {
+			CCell cell0 = cellArray.get(jj);
+			for(int kk=jj+1; kk<cellArray.size(); kk++) {
+				CCell cell1 = cellArray.get(kk);
+				// Find first correct spring (if any)
+				CELL_STICKARRAY:		// I know, but I need it
+					for(CStickSpring spring : cell0.stickSpringArray) {
+						for(CBall ball : spring.ballArray) {
+							if(ball.cell.equals(cell1)) {				// Found the correct sticking spring!
+								// Now find its siblings as well
+								int NSpring = 1 + spring.NSibling;
+								CStickSpring[] springArray = new CStickSpring[NSpring];
+								springArray[0] = spring;
+								for(int ll=0; ll<spring.NSibling; ll++) {
+									springArray[1+ll] = spring.siblingArray[ll]; 
+								}
+								for(CStickSpring spring2 : springArray) {
+									// Break stick?
+									Vector3d diff = spring2.ballArray[1].pos.minus(spring2.ballArray[0].pos);
+									double dn = diff.length();
+									if(dn > spring2.restLength*(1+stretchLimStick) || dn < spring2.restLength*(1-stretchLimStick)) {
+										Assistant.NStickBreak += spring2.UnStick();			// Also takes care of its siblings...
+										break CELL_STICKARRAY;		// ... so no need to continue checking the siblings or any other cell as it can only be stuck to a single cell one
+									}
+								}
+								// Found the correct spring AND it doesn't break, so it (and its siblings) exert a force
+								for(CStickSpring spring2 : springArray) {
+									Vector3d diff = spring2.ballArray[1].pos.minus(spring2.ballArray[0].pos);
+									double dn = diff.length();
+									// Get force
+									double f = spring2.K/dn * (dn - spring2.restLength);
+									// Hooke's law
+									Vector3d Fs = diff.times(f);
+									// apply forces on balls
+									spring2.ballArray[0].force.add(Fs);
+									spring2.ballArray[1].force.subtract(Fs);
+								}
+							}
+						}
+					}
+				// Did not find a match for these cells. Can we stick them?
+				double R2 = cell0.ballArray[0].radius + cell1.ballArray[0].radius;
+				double dist = (cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos)).length();
+				if(cell0.type>1 && cell1.type>1) {
+					double H2 = aspect[cell1.type]*2.0*cell1.ballArray[0].radius + R2;		// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+					if(dist<H2) {
+						EricsonObject C = DetectLinesegLineseg(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos, cell1.ballArray[1].pos);
+						dist = C.dist;						
+					} else continue;
+				} else if(!(cell0.type<2 && cell1.type<2)) {
+					double H2 = aspect[cell0.type]*2.0*cell0.ballArray[0].radius + aspect[cell1.type]*2.0*cell1.ballArray[0].radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
+					if(dist<H2) {
+						EricsonObject C;
+						if(cell0.type>1) {
+							C = DetectLinesegPoint(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos);
+						} else {
+							C = DetectLinesegPoint(cell1.ballArray[0].pos, cell1.ballArray[1].pos, cell0.ballArray[0].pos);						
+						}
+						dist = C.dist;
+					} else continue;
+				}
+				// If both are sphere, no need to update dist
+				if(dist<R2*formLimStick) {
+					Assistant.NStickForm += cell0.Stick(cell1);			// Adds vice versa as well
+				}
+			}
+		}
+		
 		for(CStickSpring stick : stickSpringArray) {
 			CBall ball0 = stick.ballArray[0];
 			CBall ball1 = stick.ballArray[1];
@@ -560,6 +635,7 @@ public class CModel {
 			ball0.force.add(Fs);
 			ball1.force.subtract(Fs);
 		}
+		////////////
 		
 		// Filament spring elastic force (CFilSpring in filSpringArray)
 		for(CFilSpring fil : filSpringArray) {
@@ -1144,24 +1220,24 @@ public class CModel {
 			anchorSpringArray = new ArrayList<CAnchorSpring>(NAnchor);
 			MLStructure mlAnchorSpringArray = (MLStructure)mlModel.getField("anchorSpringArray");
 			for(int iAnchor=0; iAnchor<NAnchor; iAnchor++) {
-				CAnchorSpring pAnchor = new CAnchorSpring();
-				pAnchor.anchor 	= new Vector3d(
+				CAnchorSpring spring = new CAnchorSpring();
+				spring.anchor 	= new Vector3d(
 									((MLDouble)mlAnchorSpringArray.getField("anchor",iAnchor)).getReal(0),
 									((MLDouble)mlAnchorSpringArray.getField("anchor",iAnchor)).getReal(1),
 									((MLDouble)mlAnchorSpringArray.getField("anchor",iAnchor)).getReal(2));
-				pAnchor.K		= ((MLDouble)mlAnchorSpringArray.getField("K",iAnchor)).getReal(0);
+				spring.K		= ((MLDouble)mlAnchorSpringArray.getField("K",iAnchor)).getReal(0);
 				int iBall		= ((MLDouble)mlAnchorSpringArray.getField("ballArrayIndex",iAnchor)).getReal(0).intValue()-1;
-				pAnchor.ball 	= ballArray.get(iBall);
-				pAnchor.restLength = ((MLDouble)mlAnchorSpringArray.getField("restLength",iAnchor)).getReal(0);
-				anchorSpringArray.add(pAnchor);
+				spring.ball 	= ballArray.get(iBall);
+				spring.restLength = ((MLDouble)mlAnchorSpringArray.getField("restLength",iAnchor)).getReal(0);
+				anchorSpringArray.add(spring);
 			}
 			for(int iAnchor=0; iAnchor<NAnchor; iAnchor++) {	// Additional for loop to assign siblings
-				CAnchorSpring pAnchor = anchorSpringArray.get(iAnchor);
+				CAnchorSpring spring = anchorSpringArray.get(iAnchor);
 				
-				if(pAnchor.ball.cell.type!=0) {
-					pAnchor.siblingArray = new CAnchorSpring[1];
+				if(spring.ball.cell.type!=0) {
+					spring.siblingArray = new CAnchorSpring[1];
 					int iSibling = ((MLDouble)mlAnchorSpringArray.getField("siblingArrayIndex", iAnchor)).getReal(0).intValue()-1;
-					pAnchor.siblingArray[0] = anchorSpringArray.get(iSibling); 
+					spring.siblingArray[0] = anchorSpringArray.get(iSibling); 
 				}
 			}
 			// filSpringArray

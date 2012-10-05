@@ -29,13 +29,15 @@ public class CAnchorSpring {
 	/////////////////////
 	
 	public int UnAnchor() {
-		this.ball.cell.model.anchorSpringArray.remove(this);
-		int counter=1;
+		CModel model = this.ball.cell.model;
+		model.anchorSpringArray.remove(this);
 		for(int ii=0; ii<siblingArray.length; ii++) {
-			this.ball.cell.model.anchorSpringArray.remove(this.siblingArray[ii]);
-			counter++;
+			model.anchorSpringArray.remove(this.siblingArray[ii]);
 		}
-		return counter;
+		
+		this.ball.cell.anchorSpringArray = new CAnchorSpring[0];
+		
+		return 1+siblingArray.length;
 	}
 	
 	//////////////////////

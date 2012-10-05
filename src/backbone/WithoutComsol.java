@@ -82,19 +82,6 @@ public class WithoutComsol {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.movementIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
 
-			if(model.sticking) {
-				// Break stick springs
-				ArrayList<CStickSpring> breakArray = model.DetectStickBreak(1-model.stretchLimStick,1+model.stretchLimStick);		// Returns all springs that'll be broken (<rl*first argument, >rl*second argument). Should not contain any duplicates in the form of siblingsprings
-				model.BreakStick(breakArray);
-				model.Write(breakArray.size() + " sticking springs broken","iter");
-				// Build stick springs
-				model.Write("Detecting cell-cell collisions","iter");
-				ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple(model.formLimStick);	 // Note that this one returns already stuck and duplicate cells
-				model.Write("Building new sticking springs","iter");
-				int NNewStick = model.BuildStick(collisionArray);
-				model.Write(NNewStick + " cell pairs sticked","iter");				// Divided by two, as array is based on origin and other cell (see for loop)
-			}
-			
 			// COMSOL was here
 			
 			// Grow cells
@@ -125,6 +112,7 @@ public class WithoutComsol {
 			model.movementIter++;
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
+			model.Write(Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + " (" + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ") anchor and " + Assistant.NStickBreak + "/" + Assistant.NStickForm + " (" + (Assistant.NStickForm-Assistant.NStickBreak) + ") sticking springs broken/formed", "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Simple(1.0);
 			if(!overlapCellArray.isEmpty()) {
 				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
