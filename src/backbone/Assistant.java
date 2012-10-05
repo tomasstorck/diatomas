@@ -1,6 +1,6 @@
 package backbone;
 
-public class setting {
+public class Assistant {
 	// Plotting
 	public static boolean plot = true;
 	public static boolean start = true;
@@ -13,4 +13,9 @@ public class setting {
 	public static boolean echoCommand = false;
 	// COMSOL
 	public static int port = 2036;
+	// Counter
+	public static int NAnchorBreak = 0;
+	public static int NAnchorForm = 0;
+	public static int NStickBreak = 0;
+	public static int NStickForm = 0;
 }

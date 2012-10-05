@@ -137,10 +137,10 @@ public class WithoutComsol {
 			}
 
 			// Plot
-			if(setting.plot) {
+			if(Assistant.plot) {
 				model.Write("Writing and rendering POV files","iter");
-				model.POV_Write(setting.plotIntermediate);
-				model.POV_Plot(setting.plotIntermediate); 
+				model.POV_Write(Assistant.plotIntermediate);
+				model.POV_Plot(Assistant.plotIntermediate); 
 			}
 			
 			// And finally: save stuff

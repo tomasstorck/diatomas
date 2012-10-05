@@ -79,10 +79,10 @@ public class WithComsol {
 		boolean overlap = false;
 		
 		// Start server and connect
-		model.Write("Starting server and connecting model to localhost:" + setting.port, "iter");
+		model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
 //		Server.Stop(false);
-		Server.Start(setting.port);
-		Server.Connect(setting.port);
+		Server.Start(Assistant.port);
+		Server.Connect(Assistant.port);
 		
 		while(true) {
 			// Reset the random seed
@@ -187,10 +187,10 @@ public class WithComsol {
 			}
 
 			// Plot
-			if(setting.plot) {
+			if(Assistant.plot) {
 				model.Write("Writing and rendering POV files","iter");
-				model.POV_Write(setting.plotIntermediate);
-				model.POV_Plot(setting.plotIntermediate); 
+				model.POV_Write(Assistant.plotIntermediate);
+				model.POV_Plot(Assistant.plotIntermediate); 
 			}
 
 			// And finally: save stuff

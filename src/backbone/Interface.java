@@ -33,18 +33,18 @@ public class Interface{
 				return;
 			}
 			//
-			if(arg.equalsIgnoreCase("comsol")) 				{setting.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;} 
-			if(arg.equalsIgnoreCase("plot")) 				{setting.plot = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("plotintermediate")) 	{setting.plotIntermediate = (Integer.parseInt(args[ii+1])==1)?true:false;	continue;}
-			if(arg.equalsIgnoreCase("start"))				{setting.start = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("waitforfinish")) 		{setting.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
-			if(arg.equalsIgnoreCase("echocommand")) 		{setting.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			if(arg.equalsIgnoreCase("comsol")) 				{Assistant.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;} 
+			if(arg.equalsIgnoreCase("plot")) 				{Assistant.plot = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("plotintermediate")) 	{Assistant.plotIntermediate = (Integer.parseInt(args[ii+1])==1)?true:false;	continue;}
+			if(arg.equalsIgnoreCase("start"))				{Assistant.start = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
+			if(arg.equalsIgnoreCase("echocommand")) 		{Assistant.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("load")){
 				model.Write("Loading " + args[ii], "iter");
 				model.Load(args[ii+1]);
 				continue;}
-			if(arg.equalsIgnoreCase("port")) 				{setting.port = Integer.parseInt(args[ii+1]);									continue;}
-			if(arg.equalsIgnoreCase("postplot")) 			{setting.postPlot = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
+			if(arg.equalsIgnoreCase("postplot")) 			{Assistant.postPlot = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			// If not any of the above, it must be the name
 			model.name=arg;
 			ii--;				// subtract 1 from ii because we don't want to ignore the argument after this name
@@ -52,15 +52,15 @@ public class Interface{
 		
 		// Done analysing input arguments
 		// Start model if requested
-		if(setting.start) {
+		if(Assistant.start) {
 			System.out.print("Loading w/ arguments: ");
 			for(int ii=0; ii<args.length; ii++) 	System.out.print(args[ii] + " ");
 			System.out.println();
-			if(setting.withComsol) 				WithComsol.Run(model);
+			if(Assistant.withComsol) 				WithComsol.Run(model);
 			else								WithoutComsol.Run(model);
 		}
 		// Render POV things
-		if(setting.postPlot) {
+		if(Assistant.postPlot) {
 			// Open directory
 			String name = model.name;
 			File dir = new File(name + "/output/");
@@ -80,8 +80,8 @@ public class Interface{
 				model.Load(name + "/output/" + fileName);
 				// Fix name if it was run from another folder
 				model.name = name;
-				model.POV_Write(setting.plotIntermediate);
-				model.POV_Plot(setting.plotIntermediate);	
+				model.POV_Write(Assistant.plotIntermediate);
+				model.POV_Plot(Assistant.plotIntermediate);	
 			}
 		}
 	}

@@ -94,7 +94,7 @@ public class CCell {
 		return -1;
 	}
 	
-	public void Anchor() {
+	public int Anchor() {
 		int NBall = (type<2) ? 1 : 2;
 		anchorSpringArray = new CAnchorSpring[NBall];
 		for(int iBall = 0; iBall < NBall; iBall++) {
@@ -108,6 +108,8 @@ public class CCell {
 			anchorSpringArray[0].siblingArray[0] = anchorSpringArray[1];
 			anchorSpringArray[1].siblingArray[0] = anchorSpringArray[0];
 		}
+		
+		return NBall;
 	}
 	
 

@@ -10,7 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import backbone.setting;
+import backbone.Assistant;
 import random.rand;
 import jmatio.*;
 import NR.*;
@@ -513,8 +513,6 @@ public class CModel {
 		}
 		
 		// Anchoring springs elastic forces (CAnchorSpring in anchorSpringArray)
-//		int NBreak = 0;
-//		int NForm = 0;
 		// See what we need to anchor or break
 		for(CCell cell : cellArray) {
 			CBall ball0 = cell.ballArray[0];
@@ -526,8 +524,7 @@ public class CModel {
 					Vector3d diff = spring.anchor.minus(spring.ball.pos);
 					double dn = diff.length();
 					if(dn > spring.restLength*(1+stretchLimAnchor) || dn < spring.restLength*(1-stretchLimAnchor)) {		// too much tension || compression --> break the spring
-//						NBreak += spring.UnAnchor();
-						spring.UnAnchor();
+						Assistant.NAnchorBreak += spring.UnAnchor();
 					} else {																								// not too much tension --> calculate forces
 						// Get force
 						double f = spring.K/dn * (dn - spring.restLength);
@@ -543,7 +540,7 @@ public class CModel {
 				boolean formBall1 = false;
 				if(cell.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
 				if(formBall0 || formBall1) {
-					cell.Anchor();					
+					Assistant.NAnchorForm = cell.Anchor();					
 				}
 			}
 		}
@@ -1249,7 +1246,7 @@ public class CModel {
 		Vector3d LPOV;
 		
 		// Define scale
-		if(setting.POVScale == 1) {
+		if(Assistant.POVScale == 1) {
 			textscale = 0.7;
 			pos1 = new Vector3d(-13.0,15.0,0);
 			pos2 = new Vector3d(-13.0,14.0,0);
@@ -1526,7 +1523,7 @@ public class CModel {
 			String imageName = String.format("pov_g%04dm%04d_%02d", growthIter, movementIter, ii);
 			String povName = String.format("pov_g%04dm%04d_%02d.pov", growthIter, movementIter, ii);
 			String input = "povray ./output/" + povName + " +W1024 +H768 +O../" + name + "/image/" + imageName + " +A -J";
-			Interactor.executeCommand("cd " + name + " ; " + input + " ; rm ./output/" + povName + " ; cd ..", setting.waitForFinish,setting.echoCommand);
+			Interactor.executeCommand("cd " + name + " ; " + input + " ; rm ./output/" + povName + " ; cd ..", Assistant.waitForFinish,Assistant.echoCommand);
 		}
 	}
 }
