@@ -363,7 +363,6 @@ public class CModel {
 		}
 		// Collision forces 
 		for(int iCell=0; iCell<cellArray.size(); iCell++) {
-			double R2, H2;			// sum of radii of two balls, check distance
 			CCell cell0 = cellArray.get(iCell);
 			CBall c0b0 = cell0.ballArray[0];
 			// Base collision on the cell type
@@ -371,15 +370,19 @@ public class CModel {
 				// Check for all remaining cells
 				for(int jCell=iCell+1; jCell<cellArray.size(); jCell++) {
 					CCell cell1 = cellArray.get(jCell);
-					// Check for a sticking spring, if there is one let it do the work instead
-					if(!cell0.stickCellArray.equals(cell1)) {
-						CBall c1b0 = cell1.ballArray[0];
-						R2 = c0b0.radius + c1b0.radius;
-						Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-						double dist = dirn.length();							// Mere estimation for ball-rod
-						if(cell1.type<2) {		// The other cell is a ball too
-							// do a simple collision detection
-							if(dist<R2) {
+					CBall c1b0 = cell1.ballArray[0];
+					double R2 = c0b0.radius + c1b0.radius;
+					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
+					double dist = dirn.length();							// Mere estimation for ball-rod
+					boolean stuck = (cell0.stickCellArray.contains(cell1)) ? true : false;  
+					if(cell1.type<2) {										// The other cell is a ball too
+						if(dist<R2*formLimStick) {							// Close enough to form a sticking spring
+							// Form a sticking spring if not already stuck
+							if(!stuck) {
+								Assistant.NStickForm += cell0.Stick(cell1);
+							}
+							// do a simple collision detection if close enough
+							if(dist<R2) {									// Nested because always < R2*formLimStick (assuming that's >1.0)
 								// We have a collision
 								dirn.normalise();
 								double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
@@ -388,16 +391,23 @@ public class CModel {
 								c0b0.force = c0b0.force.plus(Fs);
 								c1b0.force = c1b0.force.minus(Fs);
 							}
-						} else {												// this cell is a ball, the other cell is a rod
-							H2 = aspect[cell1.type]*2.0*c1b0.radius + R2;		// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-							if(dist<H2) {										// Simplified CD
-								// do a sphere-rod collision detection
-								CBall c1b1 = cell1.ballArray[1];
-								EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
-								Vector3d dP = C.dP;
-								dist = C.dist;									// Make distance more accurate
-								double sc = C.sc;
-								if(dist<R2) {									// Collision
+						}
+					} else {												// this cell is a ball, the other cell is a rod
+						double H2 = aspect[cell1.type]*2.0*c1b0.radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+						if(dist<H2*(1+formLimStick)) {						// This might be interesting: could be either sticking or collision
+							// do a sphere-rod collision detection
+							CBall c1b1 = cell1.ballArray[1];
+							EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
+							Vector3d dP = C.dP;
+							dist = C.dist;									// Make distance more accurate
+							double sc = C.sc;
+							if(dist<R2*(1+formLimStick)) {
+								// Stick
+								if(!stuck){
+									Assistant.NStickForm += cell0.Stick(cell1);
+								}
+								// Collision detection
+								if(dist<R2) {
 									// don't stick, done during growth
 									double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
 									double f = Kc*MBallAvg / dist*(dist-R2*1.01);
@@ -409,29 +419,35 @@ public class CModel {
 									c1b1.force.subtract(Fs.times(sc));
 									// ball in sphere
 									c0b0.force.add(Fs);
-								}
+								}	
 							}
 						}
 					}
+
 				}
 			} else {	// cell.type > 1
 				CBall c0b1 = cell0.ballArray[1];
 				for(int jCell = iCell+1; jCell<cellArray.size(); jCell++) {
 					CCell cell1 = cellArray.get(jCell);
 					CBall c1b0 = cell1.ballArray[0];
-					R2 = c0b0.radius + c1b0.radius;
+					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					double dist = dirn.length();								// Mere estimation for ball-rod
-					// check for sticking spring and let it do the work later on if it's there
-					if(!cell0.stickCellArray.equals(cell1)) {
-						if(cell1.type<2) {										// This cell is a rod, the Next is a ball
-							H2 = aspect[cell0.type]*2.0*c0b0.radius + R2;		// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-							if(dist<H2) {
-								// do a rod-sphere collision detection
-								EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
-								Vector3d dP = C.dP;
-								dist = C.dist;
-								double sc = C.sc;
+					double dist = dirn.length();							// Mere estimation for ball-rod
+					boolean stuck = (cell0.stickCellArray.contains(cell1)) ? true : false;
+					if(cell1.type<2) {										// This cell is a rod, the Next is a ball
+						double H2 = aspect[cell0.type]*2.0*c0b0.radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+						if(dist<H2*(1+formLimStick)) {
+							// do a rod-sphere collision detection
+							EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
+							Vector3d dP = C.dP;
+							dist = C.dist;
+							double sc = C.sc;
+							if(dist<R2*(1+formLimStick)) {
+								// Stick
+								if(!stuck) {
+									Assistant.NStickForm += cell0.Stick(cell1);
+								}
+								// Collision detection
 								if(dist < R2) {
 									double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
 									double f = Kc*MBallAvg / dist*(dist-R2*1.01);
@@ -443,23 +459,29 @@ public class CModel {
 									c0b1.force.subtract(Fs.times(sc));
 									// ball in sphere
 									c1b0.force.add(Fs);
-								}
+								}	
 							}
-						} else {	// type>1 --> the other cell is a rod too. This is where it gets tricky
-							Vector3d c0b0pos = new Vector3d(c0b0.pos);
-							Vector3d c0b1pos = new Vector3d(c0b1.pos);
-							Vector3d c1b0pos = new Vector3d(c1b0.pos);
-							CBall c1b1 = cell1.ballArray[1];
-							Vector3d c1b1pos = new Vector3d(c1b1.pos);
-							H2 = aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
-							if(dist<H2) {
-								// calculate the distance between the two diatoma segments
-								EricsonObject R = DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
-								Vector3d dP = R.dP;					// dP is vector from closest point 2 --> 1
-								dist = R.dist;
-								double sc = R.sc;
-								double tc = R.tc;
-								if(dist<R2) {					//  120910 removed: && !cell.IsFilament(cellNext)
+							
+						}
+					} else {	// type>1 --> the other cell is a rod too. This is where it gets tricky
+						Vector3d c0b0pos = new Vector3d(c0b0.pos);
+						Vector3d c0b1pos = new Vector3d(c0b1.pos);
+						Vector3d c1b0pos = new Vector3d(c1b0.pos);
+						CBall c1b1 = cell1.ballArray[1];
+						Vector3d c1b1pos = new Vector3d(c1b1.pos);
+						double H2 = aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
+						if(dist<H2*(1+formLimStick)) {
+							// calculate the distance between the two diatoma segments
+							EricsonObject R = DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
+							Vector3d dP = R.dP;					// dP is vector from closest point 2 --> 1
+							dist = R.dist;
+							double sc = R.sc;
+							double tc = R.tc;
+							if(dist<R2*(1+formLimStick)) {			//  120910 removed: && !cell.IsFilament(cellNext)
+								if(!stuck) {
+									Assistant.NStickForm += cell0.Stick(cell1);
+								}
+								if(dist<R2) {
 									double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
 									double f = Kc*MBallAvg / dist*(dist-R2*1.01);
 									Vector3d Fs = dP.times(f);
@@ -515,127 +537,64 @@ public class CModel {
 			ball1.force.subtract(Fs);
 		}
 		
-		///////////////
-		// Anchoring //
-		///////////////
-		// See what we need to anchor or break
-		for(CCell cell : cellArray) {
-			CBall ball0 = cell.ballArray[0];
-			CBall ball1 = (cell.type>2) ? ball1 = cell.ballArray[1] : null;
-			
-			if(cell.anchorSpringArray.length>0) { 		// This cell is already anchored
-				for(CAnchorSpring spring : cell.anchorSpringArray) {
-					// Break anchor?
-					Vector3d diff = spring.anchor.minus(spring.ball.pos);
-					double dn = diff.length();
-					if(dn > spring.restLength*(1+stretchLimAnchor) || dn < spring.restLength*(1-stretchLimAnchor)) {		// too much tension || compression --> break the spring
-						Assistant.NAnchorBreak += spring.UnAnchor();
-					} else {																								// not too much tension --> calculate forces
-						// Get force
-						double f = spring.K/dn * (dn - spring.restLength);
-						// Hooke's law
-						Vector3d Fs = diff.times(f);
-						// apply forces on balls
-						spring.ball.force.add(Fs);
+		// Anchoring springs
+		if(anchoring) {
+			// See what we need to anchor or break
+			for(CCell cell : cellArray) {
+				CBall ball0 = cell.ballArray[0];
+				CBall ball1 = (cell.type>2) ? ball1 = cell.ballArray[1] : null;
+				
+				if(cell.anchorSpringArray.length>0) { 		// This cell is already anchored
+					for(CAnchorSpring spring : cell.anchorSpringArray) {
+						// Break anchor?
+						Vector3d diff = spring.anchor.minus(spring.ball.pos);
+						double dn = diff.length();
+						if(dn > spring.restLength*(1+stretchLimAnchor) || dn < spring.restLength*(1-stretchLimAnchor)) {		// too much tension || compression --> break the spring
+							Assistant.NAnchorBreak += spring.UnAnchor();
+						} else {																								// not too much tension --> calculate forces
+							// Get force
+							double f = spring.K/dn * (dn - spring.restLength);
+							// Hooke's law
+							Vector3d Fs = diff.times(f);
+							// apply forces on balls
+							spring.ball.force.add(Fs);
+						}
 					}
-				}
-			} else {									// Cell is not yet anchored
-				// Form anchor?
-				boolean formBall0 = (ball0.pos.y < ball0.radius*formLimAnchor) ? true : false;
-				boolean formBall1 = false;
-				if(cell.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
-				if(formBall0 || formBall1) {
-					Assistant.NAnchorForm += cell.Anchor();					
+				} else {									// Cell is not yet anchored
+					// Form anchor?
+					boolean formBall0 = (ball0.pos.y < ball0.radius*formLimAnchor) ? true : false;
+					boolean formBall1 = false;
+					if(cell.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
+					if(formBall0 || formBall1) {
+						Assistant.NAnchorForm += cell.Anchor();					
+					}
 				}
 			}
 		}
 		
-		//////////////
-		// Sticking //
-		//////////////
-		for(int jj=0; jj<cellArray.size(); jj++) {
-			CCell cell0 = cellArray.get(jj);
-			for(int kk=jj+1; kk<cellArray.size(); kk++) {
-				CCell cell1 = cellArray.get(kk);
-				// Find first correct spring (if any)
-				CELL_STICKARRAY:		// I know, but I need it
-					for(CStickSpring spring : cell0.stickSpringArray) {
-						for(CBall ball : spring.ballArray) {
-							if(ball.cell.equals(cell1)) {				// Found the correct sticking spring!
-								// Now find its siblings as well
-								int NSpring = 1 + spring.NSibling;
-								CStickSpring[] springArray = new CStickSpring[NSpring];
-								springArray[0] = spring;
-								for(int ll=0; ll<spring.NSibling; ll++) {
-									springArray[1+ll] = spring.siblingArray[ll]; 
-								}
-								for(CStickSpring spring2 : springArray) {
-									// Break stick?
-									Vector3d diff = spring2.ballArray[1].pos.minus(spring2.ballArray[0].pos);
-									double dn = diff.length();
-									if(dn > spring2.restLength*(1+stretchLimStick) || dn < spring2.restLength*(1-stretchLimStick)) {
-										Assistant.NStickBreak += spring2.UnStick();			// Also takes care of its siblings...
-										break CELL_STICKARRAY;		// ... so no need to continue checking the siblings or any other cell as it can only be stuck to a single cell one
-									}
-								}
-								// Found the correct spring AND it doesn't break, so it (and its siblings) exert a force
-								for(CStickSpring spring2 : springArray) {
-									Vector3d diff = spring2.ballArray[1].pos.minus(spring2.ballArray[0].pos);
-									double dn = diff.length();
-									// Get force
-									double f = spring2.K/dn * (dn - spring2.restLength);
-									// Hooke's law
-									Vector3d Fs = diff.times(f);
-									// apply forces on balls
-									spring2.ballArray[0].force.add(Fs);
-									spring2.ballArray[1].force.subtract(Fs);
-								}
-							}
-						}
-					}
-				// Did not find a match for these cells. Can we stick them?
-				double R2 = cell0.ballArray[0].radius + cell1.ballArray[0].radius;
-				double dist = (cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos)).length();
-				if(cell0.type>1 && cell1.type>1) {
-					double H2 = aspect[cell1.type]*2.0*cell1.ballArray[0].radius + R2;		// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-					if(dist<H2) {
-						EricsonObject C = DetectLinesegLineseg(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos, cell1.ballArray[1].pos);
-						dist = C.dist;						
-					} else continue;
-				} else if(!(cell0.type<2 && cell1.type<2)) {
-					double H2 = aspect[cell0.type]*2.0*cell0.ballArray[0].radius + aspect[cell1.type]*2.0*cell1.ballArray[0].radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
-					if(dist<H2) {
-						EricsonObject C;
-						if(cell0.type>1) {
-							C = DetectLinesegPoint(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos);
-						} else {
-							C = DetectLinesegPoint(cell1.ballArray[0].pos, cell1.ballArray[1].pos, cell0.ballArray[0].pos);						
-						}
-						dist = C.dist;
-					} else continue;
-				}
-				// If both are sphere, no need to update dist
-				if(dist<R2*formLimStick) {
-					Assistant.NStickForm += cell0.Stick(cell1);			// Adds vice versa as well
-				}
-			}
-		}
-		
-		for(CStickSpring stick : stickSpringArray) {
-			CBall ball0 = stick.ballArray[0];
-			CBall ball1 = stick.ballArray[1];
-			// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = ball1.pos.minus(ball0.pos);
-			double dn = diff.length();
-			// Get force
-			double f = stick.K/dn * (dn - stick.restLength);
-			// Hooke's law
-			Vector3d Fs = diff.times(f);
-			// apply forces on balls
-			ball0.force.add(Fs);
-			ball1.force.subtract(Fs);
-		}
-		////////////
+//		// Sticking springs elastic forces (CStickSpring in stickSpringArray) AND breakage
+//		// Formation of sticking springs is taken care of through collision detection
+//		for(CStickSpring stick : stickSpringArray) {		// Empty if sticking is disabled, so no need to add an extra if statement for disabled sticking
+//			CBall ball0 = stick.ballArray[0];
+//			CBall ball1 = stick.ballArray[1];
+//			// find difference vector and distance dn between balls (euclidian distance) 
+//			Vector3d diff = ball1.pos.minus(ball0.pos);
+//			double dn = diff.length();
+//			// Break stick?
+//			if(dn<stick.restLength*(1-stretchLimStick) || dn>stick.restLength*(1+stretchLimStick)) {
+//				Assistant.NStickBreak += stick.UnStick();
+//			// Apply forces if not broken
+//			} else {
+//				// Get force
+//				double f = stick.K/dn * (dn - stick.restLength);
+//				// Hooke's law
+//				Vector3d Fs = diff.times(f);
+//				// apply forces on balls
+//				ball0.force.add(Fs);
+//				ball1.force.subtract(Fs);
+//
+//			}
+//		}
 		
 		// Filament spring elastic force (CFilSpring in filSpringArray)
 		for(CFilSpring fil : filSpringArray) {
