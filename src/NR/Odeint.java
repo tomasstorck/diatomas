@@ -2,6 +2,8 @@
 
 package NR;
 
+import cell.CModel;
+
 public class Odeint<Stepper extends StepperBase> {
 	static int MAXSTP = 5000000;	// == 5e6, but int doesn't like e.
 	double EPS;						// tolerance
@@ -56,7 +58,8 @@ public class Odeint<Stepper extends StepperBase> {
 			if(s.hdid==s.h) {						// Did we succeed? Mark that down.
 				++nok;
 				// What else do we want to do after a successful step --> model specific! Remove this if solver applied to other model
-				// FIXME
+				CModel.AnchorUnAnchor();
+				CModel.StickUnStick();
 			} else {
 				++nbad;
 			}

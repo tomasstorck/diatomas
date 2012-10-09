@@ -17,7 +17,7 @@ import NR.*;
 
 public class CModel {
 	// Model properties
-	public static String name;
+	public static String name = "default";
 	public static int randomSeed = 1;
 	public static boolean sticking = true;
 	public static boolean anchoring = false;
@@ -508,6 +508,7 @@ public class CModel {
 			ball1.force.subtract(Fs);
 		}
 		
+		// Apply forces due to anchor springs
 		for(CAnchorSpring spring : anchorSpringArray) {
 			Vector3d diff = spring.anchor.minus(spring.ball.pos);
 			double dn = diff.length();
@@ -635,7 +636,7 @@ public class CModel {
 				} else {					// Not stuck --> can we stick them?
 					double R2 = c0b0.radius + c1b0.radius;
 					if(cell0.type<2 && cell1.type<2) {							// both spheres
-						if(dist<R2*formLimStick)	cell0.Stick(cell1);
+						if(dist<R2*formLimStick)		Assistant.NStickForm += cell0.Stick(cell1);
 					} else if(cell0.type<2) {									// 1st sphere, 2nd rod
 						double H2 = aspect[cell1.type]*2.0*c1b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 						if(dist<H2*formLimStick) {
