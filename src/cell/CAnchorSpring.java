@@ -16,13 +16,12 @@ public class CAnchorSpring {
 	///////////////////////////////////////////////////////////////////
 	
 	public CAnchorSpring(CBall ball) {		// Note that siblingArray is not assigned here
-		CModel model = ball.cell.model;
 		this.ball = ball;
 		anchor = new Vector3d(ball.pos.x, 0, ball.pos.z);
-		K = ball.cell.model.Kan*model.nBallInit[ball.cell.type];
+		K = CModel.Kan*CModel.nBallInit[ball.cell.type];
 		restLength = Math.max(ball.pos.y,ball.radius*1.01);			// Whatever is largest: distance ball-floor or radius plus a little push
 		
-		ball.cell.model.anchorSpringArray.add(this);
+		CModel.anchorSpringArray.add(this);
 		// CAnchorSpring is added to the cell from where this function is called 
 	}
 	
@@ -32,10 +31,9 @@ public class CAnchorSpring {
 	
 	public int UnAnchor() {
 		int count = 0;
-		CModel model = this.ball.cell.model;
-		count += (model.anchorSpringArray.remove(this))?1:0;
+		count += (CModel.anchorSpringArray.remove(this))?1:0;
 		for(int ii=0; ii<siblingArray.length; ii++) {
-			count += (model.anchorSpringArray.remove(this.siblingArray[ii]))?1:0;
+			count += (CModel.anchorSpringArray.remove(this.siblingArray[ii]))?1:0;
 		}
 		
 		this.ball.cell.anchorSpringArray = new CAnchorSpring[0];
@@ -46,7 +44,7 @@ public class CAnchorSpring {
 	//////////////////////
 	
 	public int Index() {
-		ArrayList<CAnchorSpring> array = this.ball.cell.model.anchorSpringArray;
+		ArrayList<CAnchorSpring> array = CModel.anchorSpringArray;
 		for(int index=0; index<array.size(); index++) {
 			if(array.equals(this))	return index;
 		}

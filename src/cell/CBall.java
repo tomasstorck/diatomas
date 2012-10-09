@@ -26,7 +26,7 @@ public class CBall {
 		vel = new Vector3d(0, 0, 0);
 		force = new Vector3d(0, 0, 0);
 
-		int NSave = (int)(cell.model.movementTimeStepEnd/cell.model.movementTimeStep);	// -1 for not saving the final value, +1 for saving the initial value
+		int NSave = (int)(CModel.movementTimeStepEnd/CModel.movementTimeStep);	// -1 for not saving the final value, +1 for saving the initial value
 		posSave = new Vector3d[NSave];
 		velSave = new Vector3d[NSave];
 //		forceSave = new Vector3d[NSave];
@@ -41,7 +41,7 @@ public class CBall {
 		// Add ball to required arrays
 //		this.ballArrayIndex = ballArrayIndex;
 		cell.ballArray[ballArrayIndex] = this;
-		cell.model.ballArray.add(this);
+		CModel.ballArray.add(this);
 		this.cellIndex = cell.Index();
 		// Update the radius
 		this.radius = Radius();
@@ -53,17 +53,17 @@ public class CBall {
 	
 	public double Radius() {		// Note that rho is in kg m-3 but cell mass is in Cmol
 		if (cell.type<2) {
-			return Math.pow( 							n*cell.model.MWX / (Math.PI * cell.model.rhoX * 4.0/3.0), .333333);
+			return Math.pow( 							n*CModel.MWX / (Math.PI * CModel.rhoX * 4.0/3.0), .333333);
 		} else if(cell.type<4) {	// type == 2 || 3 is variable radius balls
-			return Math.pow( 				 	  2.0*n * cell.model.MWX / (Math.PI * cell.model.rhoX * (2.0*cell.model.aspect[cell.type] + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
+			return Math.pow( 				 	  2.0*n * CModel.MWX / (Math.PI * CModel.rhoX * (2.0*CModel.aspect[cell.type] + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
 		} else {									// type == 4 || 5 is fixed radius (variable length) rod
-			return Math.pow( cell.model.nCellMax[cell.type]*cell.model.MWX / (Math.PI * cell.model.rhoX * (2.0*cell.model.aspect[cell.type] + 4.0/3.0)), .333333);			// Static
+			return Math.pow( CModel.nCellMax[cell.type]*CModel.MWX / (Math.PI * CModel.rhoX * (2.0*CModel.aspect[cell.type] + 4.0/3.0)), .333333);			// Static
 		}
 		
 	}
 	
 	public int Index() {
-		ArrayList<CBall> array = this.cell.model.ballArray;
+		ArrayList<CBall> array = CModel.ballArray;
 		for(int index=0; index<array.size(); index++) {
 			if(array.get(index).equals(this))	return index;
 		}

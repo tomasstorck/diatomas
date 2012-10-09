@@ -11,16 +11,13 @@ import com.comsol.util.exceptions.FlException;
 
 
 public class Comsol {
-	CModel diatomas;			// the Java model
 	Model model;				// The COMSOL model
 	
 	int NSphere = 0;
 	int NRod = 0;
 	ArrayList<String> cellList = new ArrayList<String>();   
 	
-	public Comsol(CModel diatomas) {
-		this.diatomas = diatomas;
-	}
+	public Comsol() {}
 	
 	//////////////////////////////////
 	
@@ -33,21 +30,21 @@ public class Comsol {
 	    model.geom().create("geom1", 3);
 	    	    
 	    // Make list with parameters
-	    for(int ii=0; ii<diatomas.NXComp; ii++) {		// Set acid dissociation constants, Ka[]
-	    	model.param().set("K" + Integer.toString(ii), Double.toString(diatomas.K[ii]));
+	    for(int ii=0; ii<CModel.NXComp; ii++) {		// Set acid dissociation constants, Ka[]
+	    	model.param().set("K" + Integer.toString(ii), Double.toString(CModel.K[ii]));
 	    }
-	    for(int ii=0; ii<diatomas.NAcidDiss; ii++) {		// Set acid dissociation constants, Ka[]
-	    	model.param().set("Ka" + Integer.toString(ii), Double.toString(diatomas.Ka[ii]));
+	    for(int ii=0; ii<CModel.NAcidDiss; ii++) {		// Set acid dissociation constants, Ka[]
+	    	model.param().set("Ka" + Integer.toString(ii), Double.toString(CModel.Ka[ii]));
 	    }
-	    for(int ii=0; ii<diatomas.NdComp; ii++) {		// Set diffusion coefficients, D[]
-	    	model.param().set("D" + Integer.toString(ii), Double.toString(diatomas.D[ii]));
+	    for(int ii=0; ii<CModel.NdComp; ii++) {		// Set diffusion coefficients, D[]
+	    	model.param().set("D" + Integer.toString(ii), Double.toString(CModel.D[ii]));
 	    }
 	    
 	    // Make list with variables (simple functions)			// UPDATE
 	    model.variable().create("var1");
 	    model.variable("var1").model("mod1");
-	    for(int ii=0; ii<diatomas.NXComp; ii++) {
-	    	model.variable("var1").set("q" + Integer.toString(ii), diatomas.rateEquation[ii]);
+	    for(int ii=0; ii<CModel.NXComp; ii++) {
+	    	model.variable("var1").set("q" + Integer.toString(ii), CModel.rateEquation[ii]);
 	    }
 	    
 	    // Create mesh
@@ -57,8 +54,8 @@ public class Comsol {
 		model.mesh("mesh1").run();	
 		
 		// Define physics
-		String dString[][] = new String[1][diatomas.NdComp];
-		for(int ii=0; ii<diatomas.NdComp; ii++) {
+		String dString[][] = new String[1][CModel.NdComp];
+		for(int ii=0; ii<CModel.NdComp; ii++) {
 			dString[0][ii] = "d" + Integer.toString(ii);
 		}
 		model.physics()
@@ -72,16 +69,16 @@ public class Comsol {
 
 	    // Disable convection, set diffusion coefficients and set initial concentrations
 	    model.physics("chds").prop("Convection").set("Convection", 1, "0");				// Disable convection
-	    for(int ii=0; ii<diatomas.NdComp; ii++) {	 
+	    for(int ii=0; ii<CModel.NdComp; ii++) {	 
 	    	model.physics("chds").feature("cdm1")
 	        	 .set("D_" + Integer.toString(ii), new String[]{"D" + Integer.toString(ii), "0", "0", "0", "D" + Integer.toString(ii), "0", "0", "0", "D" + Integer.toString(ii)});		// Set diffusion coefficients. Note underscore, so careful with further simplification
-	    	model.physics("chds").feature("init1").set("d" + Integer.toString(ii), 1, Double.toString(diatomas.BCConc[ii]));		// Set initial concentrations
+	    	model.physics("chds").feature("init1").set("d" + Integer.toString(ii), 1, Double.toString(CModel.BCConc[ii]));		// Set initial concentrations
 	    }
 	    
 	    // Define ODE/DAE equations for acid dissociation
-	    String CName[] = new String[diatomas.NcComp];
-	    String CfList[][] = new String[diatomas.NcComp][1];
-	    for(int ii=0; ii<diatomas.NcComp; ii++) {
+	    String CName[] = new String[CModel.NcComp];
+	    String CfList[][] = new String[CModel.NcComp][1];
+	    for(int ii=0; ii<CModel.NcComp; ii++) {
 	    	CName[ii] = "c" + Integer.toString(ii);
 	    	CfList[ii][0] = "0";
 	    }
@@ -95,16 +92,16 @@ public class Comsol {
    			.set("f", CfList);
    		
 		// Set initial values (TODO this code is not well automated and assumes only d0[0] is non-zero) 	// UPDATE
-		model.physics("dode").feature("init1").set("c0", "sqrt(" + Double.toString(diatomas.BCConc[0]) + "*Ka0)");
-		model.physics("dode").feature("init1").set("c1", "1-sqrt(" + Double.toString(diatomas.BCConc[0]) + "*Ka0)");
-		model.physics("dode").feature("init1").set("c2", "sqrt(" + Double.toString(diatomas.BCConc[0]) + "*Ka0)");
+		model.physics("dode").feature("init1").set("c0", "sqrt(" + Double.toString(CModel.BCConc[0]) + "*Ka0)");
+		model.physics("dode").feature("init1").set("c1", "1-sqrt(" + Double.toString(CModel.BCConc[0]) + "*Ka0)");
+		model.physics("dode").feature("init1").set("c2", "sqrt(" + Double.toString(CModel.BCConc[0]) + "*Ka0)");
    		
    		// Set equations 		// UPDATE
    		model.physics("dode").feature("aleq1")
-   			.set("f", diatomas.pHEquation);
+   			.set("f", CModel.pHEquation);
 
-	    String[][] odef = new String[diatomas.NcComp][1];
-	    for(int iRow=0; iRow<diatomas.NcComp; iRow++) {
+	    String[][] odef = new String[CModel.NcComp][1];
+	    for(int iRow=0; iRow<CModel.NcComp; iRow++) {
 	    	odef[iRow][0] = "0";
 	    }	    
 	    model.physics("dode").feature("dode1")						// Disable ODE stuff (1/2)
@@ -213,7 +210,7 @@ public class Comsol {
 	    double maxY = 0;
 	    double minZ = 10;
 	    double maxZ = 0;
-	    for(CBall ball : diatomas.ballArray) {
+	    for(CBall ball : CModel.ballArray) {
 	    	if(ball.pos.x < minX) 	minX = ball.pos.x - ball.radius;		// Using radius because initially balls might be in the same plane
 	    	if(ball.pos.x > maxX) 	maxX = ball.pos.x + ball.radius;
 	    	if(ball.pos.y < minY) 	minY = ball.pos.y - ball.radius;
@@ -242,9 +239,9 @@ public class Comsol {
 	    model.physics("chds").feature().create("conc1", "Concentration", 2);
 	    model.physics("chds").feature("conc1").selection()
 	         .named("geom1_blk1_bnd");
-	    for(int ii=0; ii<diatomas.NdComp; ii++) {		// -NType because biomass is not modelled in COMSOL
+	    for(int ii=0; ii<CModel.NdComp; ii++) {		// -NType because biomass is not modelled in COMSOL
 	    	model.physics("chds").feature("conc1").set("species", ii+1, "1");
-	    	model.physics("chds").feature("conc1").set("c0", ii+1, Double.toString(diatomas.BCConc[ii]));
+	    	model.physics("chds").feature("conc1").set("c0", ii+1, Double.toString(CModel.BCConc[ii]));
 	    }
 	    
 	    // Subtract cells from this block
@@ -278,10 +275,10 @@ public class Comsol {
 		flName = "fl" + Integer.toString(cell.Index());
 		model.physics("chds").feature().create(flName, "Fluxes", 2);
 	    model.physics("chds").feature(flName).selection().named("geom1_" + name + "_bnd");
-	    for(int ii=0; ii<diatomas.NdComp; ii++) {
-	    	if(diatomas.SMdiffusion[cell.type][ii]!=0.0) {
+	    for(int ii=0; ii<CModel.NdComp; ii++) {
+	    	if(CModel.SMdiffusion[cell.type][ii]!=0.0) {
 	    		model.physics("chds").feature(flName).set("species", ii+1, "1");
-		    	model.physics("chds").feature(flName).set("N0", ii+1, "q" + Integer.toString(cell.type) + " * " + Double.toString(cell.GetMass()) + "/" + Double.toString(cell.SurfaceArea()) + " * " + diatomas.SMdiffusion[cell.type][ii]);	
+		    	model.physics("chds").feature(flName).set("N0", ii+1, "q" + Integer.toString(cell.type) + " * " + Double.toString(cell.GetMass()) + "/" + Double.toString(cell.SurfaceArea()) + " * " + CModel.SMdiffusion[cell.type][ii]);	
 	    	}
 	    }
 	}
@@ -308,7 +305,7 @@ public class Comsol {
 	}
 	
 	public void Save() throws IOException {
-		model.save(System.getProperty("user.dir") + "/" + diatomas.name + "/output/" + String.format("g%04dm%04d", diatomas.growthIter, diatomas.movementIter));		// No 2nd arguments --> save as .mph
+		model.save(System.getProperty("user.dir") + "/" + CModel.name + "/output/" + String.format("g%04dm%04d", CModel.growthIter, CModel.movementIter));		// No 2nd arguments --> save as .mph
 	}
 	
 	//////////////////////////////////

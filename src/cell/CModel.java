@@ -17,66 +17,66 @@ import NR.*;
 
 public class CModel {
 	// Model properties
-	public String name;
-	public int randomSeed = 1;
-	public boolean sticking = true;
-	public boolean anchoring = false;
-	public boolean filament = false;
-	public boolean gravity = false;
+	public static String name;
+	public static int randomSeed = 1;
+	public static boolean sticking = true;
+	public static boolean anchoring = false;
+	public static boolean filament = false;
+	public static boolean gravity = false;
 	// Spring constants
-	public double Kr 	= 1e5;					// internal cell spring (per ball)
-	public double Kf 	= 3e4;					// filament spring (per ball average)
-	public double Kw 	= 2e5;					// wall spring (per ball)
-	public double Kc 	= 1e7;					// collision (per ball)
-	public double Ks 	= 1e4;					// sticking (per ball average)
-	public double Kan	= 1e4;					// anchor (per BALL)
-	public double[] stretchLimAnchor = {0.6, 1.4};			// Maximum tension and compression (1-this value) for anchoring springs
-	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-	public double[] stretchLimStick = {0.6, 1.4};			// Maximum tension and compression (1-this value) for sticking springs
-	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
+	public static double Kr 	= 1e5;					// internal cell spring (per ball)
+	public static double Kf 	= 3e4;					// filament spring (per ball average)
+	public static double Kw 	= 2e5;					// wall spring (per ball)
+	public static double Kc 	= 1e7;					// collision (per ball)
+	public static double Ks 	= 1e4;					// sticking (per ball average)
+	public static double Kan	= 1e4;					// anchor (per BALL)
+	public static double[] stretchLimAnchor = {0.6, 1.4};			// Maximum tension and compression (1-this value) for anchoring springs
+	public static double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
+	public static double[] stretchLimStick = {0.6, 1.4};			// Maximum tension and compression (1-this value) for sticking springs
+	public static double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	// Domain properties
-	public double Kd 	= 1e3;						// drag force coefficient (per BALL)
-	public double G		= -9.8;					// [m/s2], acceleration due to gravity
-	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
-	public double rhoX	= 1020;					// [kg/m3], diatoma density
-	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
-	public Vector3d L 	= new Vector3d(60e-6, 15e-6, 60e-6);	// [m], Dimensions of domain
+	public static double Kd 	= 1e3;						// drag force coefficient (per BALL)
+	public static double G		= -9.8;					// [m/s2], acceleration due to gravity
+	public static double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
+	public static double rhoX	= 1020;					// [kg/m3], diatoma density
+	public static double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
+	public static Vector3d L 	= new Vector3d(60e-6, 15e-6, 60e-6);	// [m], Dimensions of domain
 	// Model biomass properties
-	public int NXComp = 6;						// Types of biomass
-	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
-	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
-	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
-	public int NInitCell = 15;					// Initial number of cells
-	public int[] cellType = {1, 5};				// Cell types used by default
-//	public double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
-	public double[] aspect	= {0.0, 0.0, 4.0, 2.0, 5.0, 3.0};	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
+	public static int NXComp = 6;						// Types of biomass
+	public static int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
+	public static int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
+	public static int NAcidDiss = 4; 					// Number of acid dissociation reactions
+	public static int NInitCell = 15;					// Initial number of cells
+	public static int[] cellType = {1, 5};				// Cell types used by default
+//	public static double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
+	public static double[] aspect	= {0.0, 0.0, 4.0, 2.0, 5.0, 3.0};	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 	// Ball properties
-	public double[] nCellInit = {2.66e-16, 1.71e-14, 1.87e-15, 2.88e-14, 1.87e-15, 2.88e-14};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
-	public double[] nBallInit = {nCellInit[0], nCellInit[1], nCellInit[2]/2.0, nCellInit[3]/2.0, nCellInit[4]/2.0, nCellInit[5]/2.0};				// [Cmol] initial mass of one ball in the cell
-	public double[] nCellMax = {nCellInit[0]*2.0, nCellInit[1]*2.0, nCellInit[2]*2.0, nCellInit[3]*2.0, nCellInit[4]*2.0, nCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
+	public static double[] nCellInit = {2.66e-16, 1.71e-14, 1.87e-15, 2.88e-14, 1.87e-15, 2.88e-14};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
+	public static double[] nBallInit = {nCellInit[0], nCellInit[1], nCellInit[2]/2.0, nCellInit[3]/2.0, nCellInit[4]/2.0, nCellInit[5]/2.0};				// [Cmol] initial mass of one ball in the cell
+	public static double[] nCellMax = {nCellInit[0]*2.0, nCellInit[1]*2.0, nCellInit[2]*2.0, nCellInit[3]*2.0, nCellInit[4]*2.0, nCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
 	// Progress
-	public double growthTime = 0.0;				// [s] Current time for the growth
-	public double growthTimeStep = 3600.0;		// [s] Time step for growth
-	public int growthIter = 0;					// [-] Counter time iterations for growth
-	public double movementTime = 0.0;			// [s] initial time for movement (for ODE solver)
-	public double movementTimeStep = 2e-2;		// [s] output time step  for movement
-	public double movementTimeStepEnd = 10e-2;	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
-	public int movementIter = 0;				// [-] counter time iterations for movement
+	public static double growthTime = 0.0;				// [s] Current time for the growth
+	public static double growthTimeStep = 3600.0;		// [s] Time step for growth
+	public static int growthIter = 0;					// [-] Counter time iterations for growth
+	public static double movementTime = 0.0;			// [s] initial time for movement (for ODE solver)
+	public static double movementTimeStep = 2e-2;		// [s] output time step  for movement
+	public static double movementTimeStepEnd = 10e-2;	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
+	public static int movementIter = 0;				// [-] counter time iterations for movement
 	// Arrays
-	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
-	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
-	public ArrayList<CRodSpring> rodSpringArray = new ArrayList<CRodSpring>(NInitCell);
-	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
-	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(NInitCell);
-	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
+	public static ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
+	public static ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
+	public static ArrayList<CRodSpring> rodSpringArray = new ArrayList<CRodSpring>(NInitCell);
+	public static ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
+	public static ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(NInitCell);
+	public static ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
 	// === COMSOL STUFF ===
 	// Biomass, assuming Cmol and composition CH1.8O0.5N0.2 (i.e. MW = 24.6 g/mol)
 	//							type 0					type 1					type 2					type 3					type 4					type 5
 	// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
-	public double[] SMX = {		7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
-	public double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						// [microM] FIXME
-	public double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
-	public String[] rateEquation = {
+	public static double[] SMX = {		7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
+	public static double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						// [microM] FIXME
+	public static double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
+	public static String[] rateEquation = {
 			Double.toString(qMax[0]) + "*(c3*d3^4)/(K0+c3*d3^4)",		// type==0
 			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==1
 			Double.toString(qMax[2]) + "*c2/(K2+c2)",					// type==2
@@ -87,8 +87,8 @@ public class CModel {
 	// 	 pH calculations
 	//							HPro		CO2			HCO3-		HAc
 	//							0,			1,			2,			3
-	public double[] Ka = {		1.34e-5,	4.6e-7,		4.69e-11, 	1.61e-5};								// From Wikipedia 120811. CO2 and H2CO3 --> HCO3- + H+;
-	public String[] pHEquation = {																			// pH calculations
+	public static double[] Ka = {		1.34e-5,	4.6e-7,		4.69e-11, 	1.61e-5};								// From Wikipedia 120811. CO2 and H2CO3 --> HCO3- + H+;
+	public static String[] pHEquation = {																			// pH calculations
 			"c2+c4+c5+c7-c0", 
 			"c2*c0/Ka0-c1", 
 			"d0-c1-c2", 
@@ -101,11 +101,11 @@ public class CModel {
 	// Diffusion
 	// 							ProT, 		CO2T,				AcT,				H2, 				CH4
 	//							0,    		1,   				2, 					3,   				4
- 	public double[] BCConc = new double[]{
+ 	public static double[] BCConc = new double[]{
  								13.50,		0.0, 				0.0,				0.0,				0.0	};			// [mol m-3]. equivalent to 1 [kg HPro m-3], neglecting Pro concentration
-	public double[] D = new double[]{	
+	public static double[] D = new double[]{	
 								1.060e-9,	1.92e-9,			1.21e-9,			4.500e-9,			1.88e-9};		// [m2 s-1]. Diffusion mass transfer Cussler 2nd edition. Methane through Witherspoon 1965
-	public double[][] SMdiffusion = {
+	public static double[][] SMdiffusion = {
 							{	0.0,		-1.0,				0.0,				-4.0,				(1.0-SMX[0])*1.0},		// XComp == 0 (small sphere)
 							{	0.0,		-1.0,				0.0,				-4.0,				(1.0-SMX[1])*1.0},		// XComp == 1 (big sphere)
 							{	-1.0,		(1.0-SMX[2])*1.0,	(1.0-SMX[2])*1.0,	(1.0-SMX[2])*3.0,	0.0				},		// XComp == 2 (small rod, variable W)
@@ -118,14 +118,14 @@ public class CModel {
 	//////////////////
 	// Constructors //
 	//////////////////
-	public CModel(String name) {	// Default constructor, includes default values
-		this.name  = name;
+	private CModel(String name) {	// Default constructor, includes default values
+		CModel.name  = name;
 	}
 	
 	/////////////////
 	// Log writing //
 	/////////////////
-	public void Write(String message, String format, boolean suppressFileOutput) {
+	public static void Write(String message, String format, boolean suppressFileOutput) {
 		// Construct date and time
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Calendar cal = Calendar.getInstance();
@@ -156,14 +156,14 @@ public class CModel {
 		}
 	}
 	
-	public void Write(String message, String format) {
+	public static void Write(String message, String format) {
 		Write(message,format,false);
 	}
 	
 	//////////////////////////
 	// Collision detection  //
 	//////////////////////////
-	public ArrayList<CCell> DetectFloorCollision(double touchFactor) {				// actual distance < dist*radius--> collision    
+	public static ArrayList<CCell> DetectFloorCollision(double touchFactor) {				// actual distance < dist*radius--> collision    
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
 		for(CCell cell : cellArray) {
 			int NBall = (cell.type<2) ? 1 : 2;	// Figure out number of balls based on type
@@ -178,7 +178,7 @@ public class CModel {
 		return collisionCell;
 	}
 	
-	public ArrayList<CCell> DetectCellCollision_Simple(double touchFactor) {			// Using ArrayList, no idea how big this one will get
+	public static ArrayList<CCell> DetectCellCollision_Simple(double touchFactor) {			// Using ArrayList, no idea how big this one will get
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
 		
 		for(int iBall=0; iBall<ballArray.size(); iBall++) {						// If we stick to indexing, it'll be easier to determine which cells don't need to be analysed
@@ -199,14 +199,14 @@ public class CModel {
 	
 	// Ericson collision detection
 	
-	private double Clamp(double n, double min, double max) {
+	private static double Clamp(double n, double min, double max) {
 		if(n<min)	return min;
 		if(n>max) 	return max;
 		return n;
 	}
 		
 	// Collision detection rod-rod
-	public EricsonObject DetectLinesegLineseg(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {		// This is line segment - line segment collision detection. 
+	public static EricsonObject DetectLinesegLineseg(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {		// This is line segment - line segment collision detection. 
 		// Rewritten 120912 because of strange results with the original function
 		// Computes closest points C1 and C2 of S1(s) = P1+s*(Q1-P1) and S2(t) = P2+t*(Q2-P2)
 		Vector3d d1 = q1.minus(p1);		// Direction of S1
@@ -249,7 +249,7 @@ public class CModel {
 	}
 	
 	// Collision detection ball-rod
-	public EricsonObject DetectLinesegPoint(Vector3d p1, Vector3d q1, Vector3d p2) {
+	public static EricsonObject DetectLinesegPoint(Vector3d p1, Vector3d q1, Vector3d p2) {
 		Vector3d ab = q1.minus(p1);  	// line
 		Vector3d w = p2.minus(p1);	//point-line
 		//Project c onto ab, computing parameterized position d(t) = a + t*(b-a)
@@ -268,7 +268,7 @@ public class CModel {
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
-	public ArrayList<CAnchorSpring> DetectAnchorBreak(double minStretch, double maxStretch) {
+	public static ArrayList<CAnchorSpring> DetectAnchorBreak(double minStretch, double maxStretch) {
 		ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 		
 		for(CAnchorSpring pSpring : anchorSpringArray) {
@@ -280,7 +280,7 @@ public class CModel {
 		return breakArray;
 	}
 	
-	public ArrayList<CStickSpring> DetectStickBreak(double minStretch, double maxStretch) {
+	public static ArrayList<CStickSpring> DetectStickBreak(double minStretch, double maxStretch) {
 		ArrayList<CStickSpring> breakArray = new ArrayList<CStickSpring>();
 		
 		int iSpring = 0;
@@ -298,7 +298,7 @@ public class CModel {
 	////////////////////
 	// Movement stuff //
 	////////////////////
-	public int Movement() throws Exception {
+	public static int Movement() throws Exception {
 		// Reset counter
 		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NStickBreak = Assistant.NStickForm = 0;
 		
@@ -320,7 +320,7 @@ public class CModel {
 			ystart.set(ii++, ball.vel.z);
 		}
 		Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
-		feval dydt = new feval(this);
+		feval dydt = new feval();
 		Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt);
 		int nstp = ode.integrate();
 		for(int iTime=0; iTime<out.nsave; iTime++) {		// Save all intermediate results to the save variables
@@ -347,7 +347,7 @@ public class CModel {
 		return nstp;
 	}
 	
-	public Vector CalculateForces(double t, Vector yode) {	
+	public static Vector CalculateForces(double t, Vector yode) {	
 		// Read data from y
 		{int ii=0; 				// Where we are in yode
 		for(CBall ball : ballArray) {
@@ -583,7 +583,7 @@ public class CModel {
 	}
 	
 
-	public void AnchorUnAnchor() {
+	public static void AnchorUnAnchor() {
 		// See what we need to anchor or break
 		for(CCell cell : cellArray) {
 			CBall ball0 = cell.ballArray[0];
@@ -610,7 +610,7 @@ public class CModel {
 		}
 	}
 	
-	public void StickUnStick() {
+	public static void StickUnStick() {
 		for(int ii=0; ii<cellArray.size(); ii++) {
 			CCell cell0 = cellArray.get(ii);
 			for(int jj=ii+1; jj<cellArray.size(); jj++) {
@@ -691,7 +691,7 @@ public class CModel {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public int GrowthSimple() {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+	public static int GrowthSimple() {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int newCell = 0;
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -711,7 +711,7 @@ public class CModel {
 		return newCell;
 	}
 	
-	public int GrowthSyntrophy() {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+	public static int GrowthSyntrophy() {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int newCell = 0;
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -739,7 +739,7 @@ public class CModel {
 		return newCell;
 	}
 	
-	public int GrowthFlux() {
+	public static int GrowthFlux() {
 		int newCell=0;
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -758,7 +758,7 @@ public class CModel {
 		return newCell;
 	}
 	
-	public CCell GrowCell(CCell mother) {
+	public static CCell GrowCell(CCell mother) {
 		double mass = mother.GetMass();
 		CCell daughter;
 		if(mother.type<2) {
@@ -772,8 +772,7 @@ public class CModel {
 					mother.ballArray[0].pos.y - displacement * direction.y,	
 					mother.ballArray[0].pos.z - displacement * direction.z,
 					mother.filament,
-					mother.colour,
-					this);														// Same filament boolean as cell and pointer to the model
+					mother.colour);														// Same filament boolean as cell and pointer to the model
 			// Set mass for both cells
 			daughter.SetMass(mass/2.0);		// Radius is updated in this method
 			mother.SetMass(mass/2.0);
@@ -815,8 +814,7 @@ public class CModel {
 					motherBall1.pos.y,
 					motherBall1.pos.z,
 					mother.filament,
-					mother.colour,
-					this);																		// Same filament boolean as cell and pointer to the model
+					mother.colour);																		// Same filament boolean as cell and pointer to the model
 			// Set mass for both cells
 			daughter.SetMass(mass/2.0);
 			mother.SetMass(mass/2.0);
@@ -868,7 +866,7 @@ public class CModel {
 	////////////////////////////
 	// Anchor and Stick stuff //
 	////////////////////////////
-	public void BreakStick(ArrayList<CStickSpring> breakArray) {
+	public static void BreakStick(ArrayList<CStickSpring> breakArray) {
 		for(CStickSpring pSpring : breakArray) {
 			CCell cell0 = pSpring.ballArray[0].cell;
 			CCell cell1 = pSpring.ballArray[1].cell;
@@ -883,7 +881,7 @@ public class CModel {
 		}
 	}
 	
-	public int BuildAnchor(ArrayList<CCell> collisionArray) {
+	public static int BuildAnchor(ArrayList<CCell> collisionArray) {
 		// Make unique
 		for(CAnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.ball.cell);
 		
@@ -892,7 +890,7 @@ public class CModel {
 		return anchorSpringArray.size();
 	}
 	
-	public int BuildStick(ArrayList<CCell> collisionArray) {
+	public static int BuildStick(ArrayList<CCell> collisionArray) {
 		int counter = 0;
 		for(int ii=0; ii<collisionArray.size(); ii+=2) {		// For loop works per duo
 			boolean setStick = true;
@@ -915,7 +913,7 @@ public class CModel {
 	////////////////////////////////////////////
 	// Saving, loading things, reconstructing //
 	////////////////////////////////////////////
-	public void Save() {
+	public static void Save() {
 		MLStructure mlModel = new MLStructure("model", new int[] {1,1});
 		int N;
 		double[] arrayIndex;
@@ -949,7 +947,7 @@ public class CModel {
 		//
 		double[] DcellType = new double[cellType.length];		for(int ii=0; ii<cellType.length; ii++)		DcellType[ii] = cellType[ii];		mlModel.setField("cellType",                      new MLDouble(null, DcellType, cellType.length));                                	// Cell types used by default
 		//
-		//	public double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
+		//	public static double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
 		mlModel.setField("aspect",                        new MLDouble(null, aspect, aspect.length));                                     	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 		// Ball properties
 		mlModel.setField("MCellInit",                     new MLDouble(null, nCellInit, nCellInit.length));                               	// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
@@ -1110,7 +1108,7 @@ public class CModel {
 	}
 
 
-	public void Load(String fileName) {
+	public static void Load(String fileName) {
 		try {
 			MatFileReader mlFile = new MatFileReader(fileName);
 			MLStructure mlModel = (MLStructure)mlFile.getMLArray("model");
@@ -1166,7 +1164,6 @@ public class CModel {
 									((MLDouble)mlCellArray.getField("colour", iCell)).getReal(1),
 									((MLDouble)mlCellArray.getField("colour", iCell)).getReal(2)};
 				cell.filament 	= ((MLDouble)mlCellArray.getField("filament", iCell)).getReal(0)==1 ? true : false;
-				cell.model	= this;
 				cell.type		= ((MLDouble)mlCellArray.getField("type", iCell)).getReal(0).intValue();
 				if(mlCellArray.getField("motherIndex", iCell).isEmpty()) {
 					cell.mother = null;
@@ -1322,7 +1319,7 @@ public class CModel {
 	///////////////////
 	// POV-Ray stuff //
 	///////////////////
-	public void POV_Write(boolean plotIntermediate) {
+	public static void POV_Write(boolean plotIntermediate) {
 		int NSave;
 		if(plotIntermediate) 	NSave = ballArray.get(0).posSave.length;
 		else					NSave = 0;
@@ -1601,7 +1598,7 @@ public class CModel {
 		
 	}
 	
-	public void POV_Plot(boolean plotIntermediate) throws Exception {
+	public static void POV_Plot(boolean plotIntermediate) throws Exception {
 //		if(growthIter<16) return;
 		if(!(new File(name + "/image")).exists()) {
 			new File(name + "/image").mkdir();

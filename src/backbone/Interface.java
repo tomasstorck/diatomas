@@ -10,8 +10,6 @@ public class Interface{
 	public static void main(String[] args) throws Exception{
 		System.out.println("DIATOMAS Java model");
 
-		CModel model = new CModel("default");
-
 		int NArg = args.length;
 		for(int ii=0; ii<NArg; ii+=2) {
 			String arg = args[ii];
@@ -40,13 +38,13 @@ public class Interface{
 			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("echocommand")) 		{Assistant.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("load")){
-				model.Write("Loading " + args[ii], "iter");
-				model.Load(args[ii+1]);
+				CModel.Write("Loading " + args[ii], "iter");
+				CModel.Load(args[ii+1]);
 				continue;}
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
 			if(arg.equalsIgnoreCase("postplot")) 			{Assistant.postPlot = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			// If not any of the above, it must be the name
-			model.name=arg;
+			CModel.name=arg;
 			ii--;				// subtract 1 from ii because we don't want to ignore the argument after this name
 		}
 		
@@ -56,13 +54,13 @@ public class Interface{
 			System.out.print("Loading w/ arguments: ");
 			for(int ii=0; ii<args.length; ii++) 	System.out.print(args[ii] + " ");
 			System.out.println();
-			if(Assistant.withComsol) 				WithComsol.Run(model);
-			else								WithoutComsol.Run(model);
+			if(Assistant.withComsol) 				WithComsol.Run();
+			else									WithoutComsol.Run();
 		}
 		// Render POV things
 		if(Assistant.postPlot) {
 			// Open directory
-			String name = model.name;
+			String name = CModel.name;
 			File dir = new File(name + "/output/");
 			// Construct filter
 			FilenameFilter filter = new FilenameFilter() {
@@ -74,14 +72,12 @@ public class Interface{
 			String[] files = dir.list(filter);
 			if(files==null) throw new Exception("No files found in directory " + name + "/output/");
 			for(String fileName : files) { 
-				model.Write("Loading " + fileName,"",true);
-				model = null;
-				model = new CModel(name);
-				model.Load(name + "/output/" + fileName);
+				CModel.Write("Loading " + fileName,"",true);
+				CModel.Load(name + "/output/" + fileName);			// Note that not included variables will still be defined as default, could lead to issues
 				// Fix name if it was run from another folder
-				model.name = name;
-				model.POV_Write(Assistant.plotIntermediate);
-				model.POV_Plot(Assistant.plotIntermediate);	
+				CModel.name = name;
+				CModel.POV_Write(Assistant.plotIntermediate);
+				CModel.POV_Plot(Assistant.plotIntermediate);	
 			}
 		}
 	}

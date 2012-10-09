@@ -2,8 +2,6 @@
 
 package NR;
 
-import cell.CModel;
-
 public class Odeint<Stepper extends StepperBase> {
 	static int MAXSTP = 5000000;	// == 5e6, but int doesn't like e.
 	double EPS;						// tolerance
