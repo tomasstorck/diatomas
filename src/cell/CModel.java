@@ -38,7 +38,7 @@ public class CModel {
 	public double Kd 	= 1e3;						// drag force coefficient (per BALL)
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
-	public double rhoX	= 1100;					// [kg/m3], diatoma density
+	public double rhoX	= 1020;					// [kg/m3], diatoma density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
 	public Vector3d L 	= new Vector3d(60e-6, 15e-6, 60e-6);	// [m], Dimensions of domain
 	// Model biomass properties
@@ -51,9 +51,9 @@ public class CModel {
 //	public double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
 	public double[] aspect	= {0.0, 0.0, 4.0, 2.0, 5.0, 3.0};	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 	// Ball properties
-	public double[] MCellInit = {2.66e-16, 1.71e-14, 1.87e-15, 2.88e-14, 1.87e-15, 2.88e-14};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
-	public double[] MBallInit = {MCellInit[0], MCellInit[1], MCellInit[2]/2.0, MCellInit[3]/2.0, MCellInit[4]/2.0, MCellInit[5]/2.0};				// [Cmol] initial mass of one ball in the cell
-	public double[] MCellMax = {MCellInit[0]*2.0, MCellInit[1]*2.0, MCellInit[2]*2.0, MCellInit[3]*2.0, MCellInit[4]*2.0, MCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
+	public double[] nCellInit = {2.66e-16, 1.71e-14, 1.87e-15, 2.88e-14, 1.87e-15, 2.88e-14};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
+	public double[] nBallInit = {nCellInit[0], nCellInit[1], nCellInit[2]/2.0, nCellInit[3]/2.0, nCellInit[4]/2.0, nCellInit[5]/2.0};				// [Cmol] initial mass of one ball in the cell
+	public double[] nCellMax = {nCellInit[0]*2.0, nCellInit[1]*2.0, nCellInit[2]*2.0, nCellInit[3]*2.0, nCellInit[4]*2.0, nCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 3600.0;		// [s] Time step for growth
@@ -385,7 +385,7 @@ public class CModel {
 							if(dist<R2) {									// Nested because always < R2*formLimStick (assuming that's >1.0)
 								// We have a collision
 								dirn.normalise();
-								double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
+								double MBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
 								Vector3d Fs = dirn.times(Kc*MBallAvg*(R2*1.01-dist));	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
 								// Add forces
 								c0b0.force = c0b0.force.plus(Fs);
@@ -409,7 +409,7 @@ public class CModel {
 								// Collision detection
 								if(dist<R2) {
 									// don't stick, done during growth
-									double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
+									double MBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
 									double f = Kc*MBallAvg / dist*(dist-R2*1.01);
 									Vector3d Fs = dP.times(f);
 									// Add these elastic forces to the cells
@@ -449,7 +449,7 @@ public class CModel {
 								}
 								// Collision detection
 								if(dist < R2) {
-									double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
+									double MBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
 									double f = Kc*MBallAvg / dist*(dist-R2*1.01);
 									Vector3d Fs = dP.times(f);
 									// Add these elastic forces to the cells
@@ -482,7 +482,7 @@ public class CModel {
 									Assistant.NStickForm += cell0.Stick(cell1);
 								}
 								if(dist<R2) {
-									double MBallAvg = (MBallInit[cell0.type]+MBallInit[cell1.type])/2.0;
+									double MBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
 									double f = Kc*MBallAvg / dist*(dist-R2*1.01);
 									Vector3d Fs = dP.times(f);
 									// Add these elastic forces to the cells
@@ -507,17 +507,17 @@ public class CModel {
 			double y = ball.pos.y;
 			double r = ball.radius;
 			if(y<r){
-				ball.force.y += Kw*MBallInit[ball.cell.type]*(r-y);
+				ball.force.y += Kw*nBallInit[ball.cell.type]*(r-y);
 			}
 			// Gravity and buoyancy
 			if(gravity) {
 				if(y>r*1.1) {			// Only if not already at the floor plus a tiny bit 
-					ball.force.y += G * ((rhoX-rhoWater)/rhoWater) * ball.mass ;  //let the ball fall 
+					ball.force.y += G * ((rhoX-rhoWater)/rhoWater) * ball.n*MWX ;  //let the ball fall 
 				}	
 			}
 			
 			// Velocity damping
-			ball.force.subtract(ball.vel.times(Kd*MBallInit[ball.cell.type]));
+			ball.force.subtract(ball.vel.times(Kd*nBallInit[ball.cell.type]));
 		}
 		
 		// Elastic forces between springs within cells (CRodSpring in type>1)
@@ -636,7 +636,7 @@ public class CModel {
 		Vector dydx = new Vector(yode.size());
 		int ii=0;
 		for(CBall ball : ballArray) {
-				double M = ball.mass;
+				double M = ball.n;
 				dydx.set(ii++,ball.vel.x);			// dpos/dt = v;
 				dydx.set(ii++,ball.vel.y);
 				dydx.set(ii++,ball.vel.z);
@@ -662,7 +662,7 @@ public class CModel {
 			mother.SetMass(mass);
 			
 			// Cell growth or division
-			if(mother.GetMass()>MCellMax[mother.type]) {
+			if(mother.GetMass()>nCellMax[mother.type]) {
 				newCell++;
 				GrowCell(mother);
 			}	
@@ -690,7 +690,7 @@ public class CModel {
 			mother.SetMass(mass);
 			
 			// Cell growth or division
-			if(mother.GetMass()>MCellMax[mother.type]) {
+			if(mother.GetMass()>nCellMax[mother.type]) {
 				newCell++;
 				GrowCell(mother);
 			}
@@ -911,9 +911,9 @@ public class CModel {
 		//	public double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
 		mlModel.setField("aspect",                        new MLDouble(null, aspect, aspect.length));                                     	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 		// Ball properties
-		mlModel.setField("MCellInit",                     new MLDouble(null, MCellInit, MCellInit.length));                               	// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
-		mlModel.setField("MBallInit",                     new MLDouble(null, MBallInit, MBallInit.length));                               	// [Cmol] initial mass of one ball in the cell
-		mlModel.setField("MCellMax",                      new MLDouble(null, MCellMax, MCellMax.length));                                 	// [Cmol] max mass of cells before division;
+		mlModel.setField("MCellInit",                     new MLDouble(null, nCellInit, nCellInit.length));                               	// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
+		mlModel.setField("MBallInit",                     new MLDouble(null, nBallInit, nBallInit.length));                               	// [Cmol] initial mass of one ball in the cell
+		mlModel.setField("MCellMax",                      new MLDouble(null, nCellMax, nCellMax.length));                                 	// [Cmol] max mass of cells before division;
 		// Progress
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {growthTime}, 1));                              	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {growthTimeStep}, 1));                          	// [s] Time step for growth
@@ -962,7 +962,7 @@ public class CModel {
 		MLStructure mlballArray = new MLStructure(null, new int[] {ballArray.size() ,1});
 		for(int ii=0; ii<N; ii++) {
 			CBall obj = ballArray.get(ii);
-			mlballArray.setField("mass",                      new MLDouble(null, new double[] {obj.mass}, 1), ii);                            	
+			mlballArray.setField("mass",                      new MLDouble(null, new double[] {obj.n}, 1), ii);                            	
 			mlballArray.setField("radius",                    new MLDouble(null, new double[] {obj.radius}, 1), ii);                          	// Will put in method
 			mlballArray.setField("pos",                       new MLDouble(null, new double[] {obj.pos.x, obj.pos.y, obj.pos.z}, 3), ii);     	
 			mlballArray.setField("vel",                       new MLDouble(null, new double[] {obj.vel.x, obj.vel.y, obj.vel.z}, 3), ii);     	
@@ -1143,7 +1143,7 @@ public class CModel {
 				CBall ball = new CBall();
 //				ball.ballArrayIndex = ((MLDouble)mlBallArray.getField("cellBallArrayIndex",iBall)).getReal(0).intValue()-1;
 				ball.cell = cellArray.get(((MLDouble)mlBallArray.getField("cellArrayIndex",iBall)).getReal(0).intValue()-1);
-				ball.mass 	= ((MLDouble)mlBallArray.getField("mass",iBall)).getReal(0);
+				ball.n 	= ((MLDouble)mlBallArray.getField("mass",iBall)).getReal(0);
 				ball.radius = ball.Radius();
 				ball.pos 	= new Vector3d(
 								((MLDouble)mlBallArray.getField("pos", iBall)).getReal(0),

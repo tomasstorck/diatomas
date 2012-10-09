@@ -19,7 +19,7 @@ public class CAnchorSpring {
 		CModel model = ball.cell.model;
 		this.ball = ball;
 		anchor = new Vector3d(ball.pos.x, 0, ball.pos.z);
-		K = ball.cell.model.Kan*model.MBallInit[ball.cell.type];
+		K = ball.cell.model.Kan*model.nBallInit[ball.cell.type];
 		restLength = Math.max(ball.pos.y,ball.radius*1.01);			// Whatever is largest: distance ball-floor or radius plus a little push
 		
 		ball.cell.model.anchorSpringArray.add(this);

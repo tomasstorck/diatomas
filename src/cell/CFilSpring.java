@@ -16,11 +16,11 @@ public class CFilSpring {
 	public CFilSpring(CCell parent, CCell daughter) {
 		CModel model = parent.model;
 		small_ballArray	= new CBall[]{daughter.ballArray[0],parent.ballArray[1]};
-		small_K = parent.model.Kf*(model.MBallInit[parent.type] + model.MBallInit[daughter.type])/2.0;
+		small_K = parent.model.Kf*(model.nBallInit[parent.type] + model.nBallInit[daughter.type])/2.0;
 		this.ResetSmall();
 		
 		big_ballArray	= new CBall[]{daughter.ballArray[1],parent.ballArray[0]};
-		big_K = parent.model.Kf*(model.MBallInit[parent.type] + model.MBallInit[daughter.type])/2.0;
+		big_K = parent.model.Kf*(model.nBallInit[parent.type] + model.nBallInit[daughter.type])/2.0;
 		this.ResetBig();		// Set restLength for big springs
 		
 		// Add to filSpringArray

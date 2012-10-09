@@ -22,7 +22,7 @@ public class CRodSpring {
 	
 	public CRodSpring(CBall ball0, CBall ball1){
 		CModel model = ball0.cell.model;
-		this.K = model.Kr*model.MBallInit[ball0.cell.type];
+		this.K = model.Kr*model.nBallInit[ball0.cell.type];
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
 		this.ResetRestLength();

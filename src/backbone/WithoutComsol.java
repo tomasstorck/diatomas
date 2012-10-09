@@ -23,14 +23,13 @@ public class WithoutComsol {
 		model.gravity = true;
 		model.anchoring = true;
 		/////
-		model.Kan *= 100.0;
-		model.Kc *= 100.0;
-		model.Kd *= 100.0;
-		model.Kf *= 100.0;
-		model.Kr *= 100.0;
-		model.Ks *= 100.0;
-		model.Kw *= 100.0;
-		model.rhoX = 1020;
+//		model.Kan *= 100.0;
+//		model.Kc *= 100.0;
+//		model.Kd *= 100.0;
+//		model.Kf *= 100.0;
+//		model.Kr *= 100.0;
+//		model.Ks *= 100.0;
+//		model.Kw *= 100.0;
 		/////
 //		model.Kr *= 0.01;
 		

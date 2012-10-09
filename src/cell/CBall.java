@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import NR.Vector3d;
 
 public class CBall {
-	public double mass;
-	public 	double radius;	// Will put in method
+	public double n;		// [mol] Chemical amount 
+	public 	double radius;
 	public Vector3d pos;
 	public Vector3d vel;
 	public Vector3d force;
@@ -36,7 +36,7 @@ public class CBall {
 //			forceSave[iSave] = new Vector3d();
 		}
 		
-		this.mass = mass;
+		this.n = mass;
 		
 		// Add ball to required arrays
 //		this.ballArrayIndex = ballArrayIndex;
@@ -53,11 +53,11 @@ public class CBall {
 	
 	public double Radius() {		// Note that rho is in kg m-3 but cell mass is in Cmol
 		if (cell.type<2) {
-			return Math.pow( 							mass*cell.model.MWX / (Math.PI * cell.model.rhoX * 4.0/3.0), .333333);
+			return Math.pow( 							n*cell.model.MWX / (Math.PI * cell.model.rhoX * 4.0/3.0), .333333);
 		} else if(cell.type<4) {	// type == 2 || 3 is variable radius balls
-			return Math.pow( 				 	  2.0*mass * cell.model.MWX / (Math.PI * cell.model.rhoX * (2.0*cell.model.aspect[cell.type] + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
+			return Math.pow( 				 	  2.0*n * cell.model.MWX / (Math.PI * cell.model.rhoX * (2.0*cell.model.aspect[cell.type] + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
 		} else {									// type == 4 || 5 is fixed radius (variable length) rod
-			return Math.pow( cell.model.MCellMax[cell.type]*cell.model.MWX / (Math.PI * cell.model.rhoX * (2.0*cell.model.aspect[cell.type] + 4.0/3.0)), .333333);			// Static
+			return Math.pow( cell.model.nCellMax[cell.type]*cell.model.MWX / (Math.PI * cell.model.rhoX * (2.0*cell.model.aspect[cell.type] + 4.0/3.0)), .333333);			// Static
 		}
 		
 	}

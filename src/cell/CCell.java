@@ -34,12 +34,12 @@ public class CCell {
 		model.cellArray.add(this);				// Add it here so we can use cell.Index()
 		
 		if(type<2) { // Leaves ballArray and springArray, and mother
-			ballArray[0] = new CBall(base0x, base0y, base0z, model.MCellInit[type],   0, this);
+			ballArray[0] = new CBall(base0x, base0y, base0z, model.nCellInit[type],   0, this);
 		} else {
 			ballArray = 	new CBall[2];		// Reinitialise ballArray to contain 2 balls
 			springArray = new CRodSpring[1];	// Reinitialise springArray to contain a spring
-			new CBall(base0x, base0y, base0z, model.MCellInit[type]/2.0, 0, this);		// Constructor adds it to the array
-			new CBall(base1x, base1y, base1z, model.MCellInit[type]/2.0, 1, this);		// Constructor adds it to the array
+			new CBall(base0x, base0y, base0z, model.nCellInit[type]/2.0, 0, this);		// Constructor adds it to the array
+			new CBall(base1x, base1y, base1z, model.nCellInit[type]/2.0, 1, this);		// Constructor adds it to the array
 			new CRodSpring(ballArray[0],ballArray[1]);								// Constructor adds it to the array
 		}
 	}
@@ -53,12 +53,12 @@ public class CCell {
 		model.cellArray.add(this);				// Add it here so we can use cell.Index()
 		
 		if(type<2) { // Leaves ballArray and springArray, and mother
-			new CBall(base0x, base0y, base0z, model.MCellInit[type],   0, this);
+			new CBall(base0x, base0y, base0z, model.nCellInit[type],   0, this);
 //			ballArrayIndex = new int[]{ballArray[0].index};
 		} else {
 			ballArray = 	new CBall[2];	// Reinitialise ballArray to contain 2 balls
 			springArray = new CRodSpring[1];	// Reinitialise springArray to contain a spring
-			new CBall(base0x, base0y, base0z, model.MCellInit[type]/2.0, 0, this);
+			new CBall(base0x, base0y, base0z, model.nCellInit[type]/2.0, 0, this);
 			
 			Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());
 			direction.normalise();	// Normalise direction
@@ -67,13 +67,13 @@ public class CCell {
 			if(type<4) {
 				distance = ballArray[0].radius * model.aspect[type]*2.0;										// type == 2||3 is fixed ball-ball distance
 			} else {
-				distance = ballArray[0].radius * model.aspect[type]*2.0 * ballArray[0].mass/model.MCellMax[type];		// type == 4||5 is variable ball-ball distance
+				distance = ballArray[0].radius * model.aspect[type]*2.0 * ballArray[0].n/model.nCellMax[type];		// type == 4||5 is variable ball-ball distance
 			}
 			double base1x = base0x + direction.x * distance;
 			double base1y = base0y + direction.y * distance;
 			double base1z = base0z + direction.z * distance;
 			
-			new CBall(base1x, base1y, base1z, model.MCellInit[type]/2.0, 1, this);
+			new CBall(base1x, base1y, base1z, model.nCellInit[type]/2.0, 1, this);
 			new CRodSpring(ballArray[0],ballArray[1]);
 		}
 	}
@@ -167,19 +167,19 @@ public class CCell {
 		int NBall = (type<2) ? 1 : 2;
 		double mass = 0; 
 		for(int iBall=0; iBall<NBall; iBall++) {
-			mass += ballArray[iBall].mass;
+			mass += ballArray[iBall].n;
 		}
 		return mass;
 	}
 	
 	public void SetMass(double newMass) {
 		if(type<2) {
-			ballArray[0].mass = newMass;
+			ballArray[0].n = newMass;
 			ballArray[0].radius = ballArray[0].Radius();
 		} else {
-			ballArray[0].mass = newMass/2.0;
+			ballArray[0].n = newMass/2.0;
 			ballArray[0].radius = ballArray[0].Radius();
-			ballArray[1].mass = newMass/2.0;
+			ballArray[1].n = newMass/2.0;
 			ballArray[1].radius = ballArray[1].Radius();
 		}
 	}
