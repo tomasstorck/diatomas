@@ -697,14 +697,14 @@ public class CModel {
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
 			CCell mother = cellArray.get(iCell);
-			double mass = mother.GetMass();
+			double mass = mother.GetAmount();
 
 			// Random growth
 			mass *= (0.95+rand.Double()/5.0);
 			mother.SetMass(mass);
 			
 			// Cell growth or division
-			if(mother.GetMass()>nCellMax[mother.type]) {
+			if(mother.GetAmount()>nCellMax[mother.type]) {
 				newCell++;
 				GrowCell(mother);
 			}	
@@ -717,7 +717,7 @@ public class CModel {
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
 			CCell mother = cellArray.get(iCell);
-			double mass = mother.GetMass();
+			double mass = mother.GetAmount();
 
 			// Random growth
 			mass *= (0.95+rand.Double()/5.0);
@@ -732,7 +732,7 @@ public class CModel {
 			mother.SetMass(mass);
 			
 			// Cell growth or division
-			if(mother.GetMass()>nCellMax[mother.type]) {
+			if(mother.GetAmount()>nCellMax[mother.type]) {
 				newCell++;
 				GrowCell(mother);
 			}
@@ -746,12 +746,12 @@ public class CModel {
 		for(int iCell=0; iCell<NCell; iCell++){
 			CCell mother = cellArray.get(iCell);
 			// Obtain mol increase based on flux
-			double molIn = mother.q * mother.GetMass() * growthTimeStep * SMX[mother.type];
+			double molIn = mother.q * mother.GetAmount() * growthTimeStep * SMX[mother.type];
 			// Grow mother cell
-			double newMass = mother.GetMass()+molIn;
+			double newMass = mother.GetAmount()+molIn;
 			mother.SetMass(newMass);
 			// divide mother cell if ready 
-			if(mother.GetMass()>newMass) {
+			if(mother.GetAmount()>newMass) {
 				newCell++;
 				GrowCell(mother);
 			}
@@ -760,7 +760,7 @@ public class CModel {
 	}
 	
 	public static CCell GrowCell(CCell mother) {
-		double mass = mother.GetMass();
+		double n = mother.GetAmount();
 		CCell daughter;
 		if(mother.type<2) {
 			// Come up with a nice direction in which to place the new cell
@@ -768,15 +768,16 @@ public class CModel {
 			direction.normalise();
 			double displacement = mother.ballArray[0].radius;
 			// Make a new, displaced cell
-			daughter = new CCell(mother.type,																// Same type as cell
-					mother.ballArray[0].pos.x - displacement * direction.x,						// The new location is the old one plus some displacement					
+			daughter = new CCell(mother.type,											// Same type as cell
+					mother.GetAmount(),
+					mother.ballArray[0].pos.x - displacement * direction.x,				// The new location is the old one plus some displacement					
 					mother.ballArray[0].pos.y - displacement * direction.y,	
 					mother.ballArray[0].pos.z - displacement * direction.z,
 					mother.filament,
 					mother.colour);														// Same filament boolean as cell and pointer to the model
 			// Set mass for both cells
-			daughter.SetMass(mass/2.0);		// Radius is updated in this method
-			mother.SetMass(mass/2.0);
+			daughter.SetMass(n/2.0);		// Radius is updated in this method
+			mother.SetMass(n/2.0);
 			// Set properties for new cell
 			daughter.ballArray[0].vel = 	new Vector3d(mother.ballArray[0].vel);
 			daughter.ballArray[0].force = 	new Vector3d(mother.ballArray[0].force);
@@ -817,8 +818,8 @@ public class CModel {
 					mother.filament,
 					mother.colour);																		// Same filament boolean as cell and pointer to the model
 			// Set mass for both cells
-			daughter.SetMass(mass/2.0);
-			mother.SetMass(mass/2.0);
+			daughter.SetMass(n/2.0);
+			mother.SetMass(n/2.0);
 			// Displace old cell, 2nd ball
 			motherBall1.pos = middle.minus(direction.times(displacement));
 			mother.springArray[0].ResetRestLength();

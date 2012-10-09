@@ -42,7 +42,7 @@ public class CCell {
 		}
 	}
 	
-	public CCell(int type, double base0x, double base0y, double base0z, boolean filament, double[] colour) {
+	public CCell(int type, double n, double base0x, double base0y, double base0z, boolean filament, double[] colour) {
 		this.type = type;
 		this.filament = filament;
 		this.colour = colour;
@@ -50,12 +50,12 @@ public class CCell {
 		CModel.cellArray.add(this);				// Add it here so we can use cell.Index()
 		
 		if(type<2) { // Leaves ballArray and springArray, and mother
-			new CBall(base0x, base0y, base0z, CModel.nCellInit[type],   0, this);
+			new CBall(base0x, base0y, base0z, n,   0, this);
 //			ballArrayIndex = new int[]{ballArray[0].index};
 		} else {
 			ballArray = 	new CBall[2];	// Reinitialise ballArray to contain 2 balls
 			springArray = new CRodSpring[1];	// Reinitialise springArray to contain a spring
-			new CBall(base0x, base0y, base0z, CModel.nCellInit[type]/2.0, 0, this);
+			new CBall(base0x, base0y, base0z, n/2.0, 0, this);
 			
 			Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());
 			direction.normalise();	// Normalise direction
@@ -70,14 +70,9 @@ public class CCell {
 			double base1y = base0y + direction.y * distance;
 			double base1z = base0z + direction.z * distance;
 			
-			new CBall(base1x, base1y, base1z, CModel.nCellInit[type]/2.0, 1, this);
+			new CBall(base1x, base1y, base1z, n/2.0, 1, this);
 			new CRodSpring(ballArray[0],ballArray[1]);
 		}
-	}
-	
-	public CCell(int type, Vector3d base, boolean filament, double[] colour) {
-		new CCell(type, base.x, base.y, base.z, filament, colour);
-		// Add is taken care of through calling method
 	}
 	
 	public CCell() {}		// Empty constructor for loading, note that this doesn't add the cell to the array!
@@ -160,7 +155,7 @@ public class CCell {
 		return NSpring;
 	}
 			
-	public double GetMass() {
+	public double GetAmount() {
 		int NBall = (type<2) ? 1 : 2;
 		double mass = 0; 
 		for(int iBall=0; iBall<NBall; iBall++) {

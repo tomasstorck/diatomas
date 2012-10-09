@@ -278,7 +278,7 @@ public class Comsol {
 	    for(int ii=0; ii<CModel.NdComp; ii++) {
 	    	if(CModel.SMdiffusion[cell.type][ii]!=0.0) {
 	    		model.physics("chds").feature(flName).set("species", ii+1, "1");
-		    	model.physics("chds").feature(flName).set("N0", ii+1, "q" + Integer.toString(cell.type) + " * " + Double.toString(cell.GetMass()) + "/" + Double.toString(cell.SurfaceArea()) + " * " + CModel.SMdiffusion[cell.type][ii]);	
+		    	model.physics("chds").feature(flName).set("N0", ii+1, "q" + Integer.toString(cell.type) + " * " + Double.toString(cell.GetAmount()) + "/" + Double.toString(cell.SurfaceArea()) + " * " + CModel.SMdiffusion[cell.type][ii]);	
 	    	}
 	    }
 	}

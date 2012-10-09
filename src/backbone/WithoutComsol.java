@@ -56,7 +56,10 @@ public class WithoutComsol {
 		if(CModel.growthIter==0 && CModel.movementIter==0) {
 			// Create initial cells, not overlapping
 			for(int iCell = 0; iCell < CModel.NInitCell; iCell++){
-				CCell cell = new CCell(rand.IntChoose(CModel.cellType), 	// 0, 1 or 2 by default (specified number is exclusive)
+				int type = rand.IntChoose(CModel.cellType);
+				double n = CModel.nCellInit[type]+(CModel.nCellMax[type]-CModel.nCellInit[type])*rand.Double();
+				CCell cell = new CCell(type, 						// Type of biomass
+						n,											// Initial cell mass is random between initial and max
 						(0.2*(rand.Double()+0.4))*CModel.L.x, 		// Anywhere between 0.4*Lx and 0.6*Lx
 						(0.2*(rand.Double()+0.4))*CModel.L.y, 		// Anywhere between 0.4*Ly and 0.6*Ly
 						(0.2*(rand.Double()+0.4))*CModel.L.z,		// Anywhere between 0.4*Lz and 0.6*Lz

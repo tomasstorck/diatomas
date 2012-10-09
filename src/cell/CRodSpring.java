@@ -38,7 +38,7 @@ public class CRodSpring {
 		if(ballArray[0].cell.type<4) {
 			restLength = 2.0*ballArray[0].radius*CModel.aspect[ballArray[0].cell.type];																		// About 2 balls in the same cell, so no need to make it complicated  
 		} else {
-			restLength = 2.0*ballArray[0].radius*(ballArray[0].cell.GetMass()*CModel.MWX/(2.0*Math.PI*CModel.rhoX*Math.pow(ballArray[0].radius,3)) - 2.0/3.0);
+			restLength = 2.0*ballArray[0].radius*(ballArray[0].cell.GetAmount()*CModel.MWX/(2.0*Math.PI*CModel.rhoX*Math.pow(ballArray[0].radius,3)) - 2.0/3.0);
 //			restLength = 2.0*ballArray[0].radius*CModel.aspect[ballArray[0].cell.type] * ballArray[0].cell.GetMass()/model.MCellMax[ballArray[0].cell.type];
 		}
 		return restLength;
