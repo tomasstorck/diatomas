@@ -104,7 +104,7 @@ public class StepperDopr853 extends StepperBase {
 		dydx=dydxnew;
 		y.set(yout);										// This is the one that took me a while: in C++ the pointed value is copied, in Java the value to the reference
 		xold=x;
-		x += (hdid=h);
+		x += (hdid=h);										// hdid == h Will later be used to define success
 		hnext=con.hnext;
 	}
 

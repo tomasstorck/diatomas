@@ -2,6 +2,8 @@
 
 package NR;
 
+import cell.CModel;
+
 public class Odeint<Stepper extends StepperBase> {
 	static int MAXSTP = 5000000;	// == 5e6, but int doesn't like e.
 	double EPS;						// tolerance
@@ -53,7 +55,14 @@ public class Odeint<Stepper extends StepperBase> {
 		for(nstp=0; nstp<MAXSTP; nstp++) {
 			if((s.x+s.h*1.0001-x2)*(x2-x1) > 0.0) 	s.h = x2-s.x;	// Make sure current h doesn't result in next x outside the interval  
 			s.step(s.h,derivs); 					// Take a step with the solver. This changes various fields of the stepper
-			if(s.hdid==s.h) ++nok; else ++nbad;		// Did we succeed? Mark that down.
+			if(s.hdid==s.h) {						// Did we succeed? Mark that down.
+				++nok;
+				// What else do we want to do after a successful step --> model specific! Remove this if solver applied to other model
+				// FIXME
+			} else {
+				++nbad;
+			}
+			
 			// Save results
 			if(dense){
 				out.out(nstp, s.x, s.y, s, s.hdid);
