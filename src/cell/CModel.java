@@ -24,30 +24,30 @@ public class CModel {
 	public boolean filament = false;
 	public boolean gravity = false;
 	// Spring constants
-	public double Kr = 1e5;						// internal cell spring (per ball)
-	public double Kf = 3e4;						// filament spring (per ball average)
-	public double Kw = 2e5;						// wall spring (per ball)
-	public double Kc = 1e7;						// collision (per ball)
-	public double Ks = 1e4;						// sticking (per ball average)
-	public double Kan= 1e4;						// anchor (per BALL)
+	public double Kr 	= 1e5;					// internal cell spring (per ball)
+	public double Kf 	= 3e4;					// filament spring (per ball average)
+	public double Kw 	= 2e5;					// wall spring (per ball)
+	public double Kc 	= 1e7;					// collision (per ball)
+	public double Ks 	= 1e4;					// sticking (per ball average)
+	public double Kan	= 1e4;					// anchor (per BALL)
 	public double[] stretchLimAnchor = {0.6, 1.4};			// Maximum tension and compression (1-this value) for anchoring springs
-	public double formLimAnchor = 1.1;				// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
+	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public double[] stretchLimStick = {0.6, 1.4};			// Maximum tension and compression (1-this value) for sticking springs
-	public double formLimStick = 1.1; 				// Multiplication factor for rest length to form sticking springs. 
+	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	// Domain properties
-	public double Kd = 1e3;						// drag force coefficient (per BALL)
+	public double Kd 	= 1e3;						// drag force coefficient (per BALL)
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
-	public double rhoWater = 1000;					// [kg/m3], density of bulk liquid (water)
-	public double rhoX	= 1100;						// [kg/m3], diatoma density
-	public double MWX 	= 24.6e-3;					// [kg/mol], composition CH1.8O0.5N0.2
+	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
+	public double rhoX	= 1100;					// [kg/m3], diatoma density
+	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
 	public Vector3d L 	= new Vector3d(60e-6, 15e-6, 60e-6);	// [m], Dimensions of domain
 	// Model biomass properties
-	public int NXComp = 6;							// Types of biomass
-	public int NdComp = 5;							// d for dynamic compound (e.g. total Ac)
-	public int NcComp = 8;							// c for concentration (or virtual compound, e.g. Ac-)
-	public int NAcidDiss = 4; 						// Number of acid dissociation reactions
-	public int NInitCell = 15;						// Initial number of cells
-	public int[] cellType = {1, 3};				// Cell types used by default
+	public int NXComp = 6;						// Types of biomass
+	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
+	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
+	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
+	public int NInitCell = 15;					// Initial number of cells
+	public int[] cellType = {1, 5};				// Cell types used by default
 //	public double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
 	public double[] aspect	= {0.0, 0.0, 4.0, 2.0, 5.0, 3.0};	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 	// Ball properties
@@ -56,12 +56,12 @@ public class CModel {
 	public double[] MCellMax = {MCellInit[0]*2.0, MCellInit[1]*2.0, MCellInit[2]*2.0, MCellInit[3]*2.0, MCellInit[4]*2.0, MCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
-	public double growthTimeStep = 3600.0;			// [s] Time step for growth
-	public int growthIter = 0;						// [-] Counter time iterations for growth
-	public double movementTime = 0.0;				// [s] initial time for movement (for ODE solver)
-	public double movementTimeStep = 2e-2;			// [s] output time step  for movement
-	public double movementTimeStepEnd = 10e-2;		// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
-	public int movementIter = 0;					// [-] counter time iterations for movement
+	public double growthTimeStep = 3600.0;		// [s] Time step for growth
+	public int growthIter = 0;					// [-] Counter time iterations for growth
+	public double movementTime = 0.0;			// [s] initial time for movement (for ODE solver)
+	public double movementTimeStep = 2e-2;		// [s] output time step  for movement
+	public double movementTimeStepEnd = 10e-2;	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
+	public int movementIter = 0;				// [-] counter time iterations for movement
 	// Arrays
 	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
 	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
@@ -73,9 +73,9 @@ public class CModel {
 	// Biomass, assuming Cmol and composition CH1.8O0.5N0.2 (i.e. MW = 24.6 g/mol)
 	//							type 0					type 1					type 2					type 3					type 4					type 5
 	// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
-	public double[] SMX = {	7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
+	public double[] SMX = {		7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
 	public double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						// [microM] FIXME
-	public double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400),	0.204e-3/(MWX*86400)};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc. S.f. from Scholten 2000;
+	public double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
 	public String[] rateEquation = {
 			Double.toString(qMax[0]) + "*(c3*d3^4)/(K0+c3*d3^4)",		// type==0
 			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==1
@@ -378,7 +378,7 @@ public class CModel {
 					if(cell1.type<2) {										// The other cell is a ball too
 						if(dist<R2*formLimStick) {							// Close enough to form a sticking spring
 							// Form a sticking spring if not already stuck
-							if(!stuck) {
+							if(!stuck && sticking) {
 								Assistant.NStickForm += cell0.Stick(cell1);
 							}
 							// do a simple collision detection if close enough
@@ -403,7 +403,7 @@ public class CModel {
 							double sc = C.sc;
 							if(dist<R2*formLimStick) {
 								// Stick
-								if(!stuck){
+								if(!stuck && sticking){
 									Assistant.NStickForm += cell0.Stick(cell1);
 								}
 								// Collision detection
@@ -444,7 +444,7 @@ public class CModel {
 							double sc = C.sc;
 							if(dist<R2*formLimStick) {
 								// Stick
-								if(!stuck) {
+								if(!stuck && sticking) {
 									Assistant.NStickForm += cell0.Stick(cell1);
 								}
 								// Collision detection
@@ -478,7 +478,7 @@ public class CModel {
 							double sc = R.sc;
 							double tc = R.tc;
 							if(dist<R2*formLimStick) {			//  120910 removed: && !cell.IsFilament(cellNext)
-								if(!stuck) {
+								if(!stuck && sticking) {
 									Assistant.NStickForm += cell0.Stick(cell1);
 								}
 								if(dist<R2) {
@@ -505,7 +505,6 @@ public class CModel {
 		for(CBall ball : ballArray) {
 			// Contact forces
 			double y = ball.pos.y;
-//			double z = ball.pos.z;
 			double r = ball.radius;
 			if(y<r){
 				ball.force.y += Kw*MBallInit[ball.cell.type]*(r-y);

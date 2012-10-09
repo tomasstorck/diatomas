@@ -11,24 +11,27 @@ public class WithComsol {
 
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
-//		model.cellType = new int[]{1,5};
 		/////
-//		model.L 	= new Vector3d(20e-6, 5e-6, 20e-6);		// [m], Dimensions of domain
+//		model.L.y = 4e-7;
 //		setting.POVScale = 1;
 		/////
 		model.randomSeed = 1;
 		/////
 		model.sticking = true;
-		model.filament = true;
-		model.gravity = true;
-		model.anchoring = true;
+		model.filament = false;
+		model.gravity = false;
+		model.anchoring = false;
 		/////
-//		model.Ks = 10.0*model.Ks;
-//		model.Kan = 1000.0*model.Kan;
+//		model.Kan *= 100.0;
+//		model.Kc *= 100.0;
+//		model.Kd *= 100.0;
+//		model.Kf *= 100.0;
+//		model.Kr *= 100.0;
+//		model.Ks *= 100.0;
+//		model.Kw *= 100.0;
 //		model.rhoX = 1020;
-//		model.Kd = 50.0*model.Kd;
-//		model.Kr = 0.1*model.Kr;
 		/////
+//		model.Kr *= 0.01;
 		model.growthTimeStep = 24.0*3600.0;
 		
 		// Initialise random seed
@@ -69,11 +72,18 @@ public class WithComsol {
 //				cell.Anchor();
 			}
 			boolean overlap = true;
+			int[] NSpring = {0,0,0,0};
 			while(overlap) {
 				model.Movement();
+				// We want to save the number of springs formed and broken
+				NSpring[0] += Assistant.NAnchorBreak;
+				NSpring[1] += Assistant.NAnchorForm;
+				NSpring[2] += Assistant.NStickBreak;
+				NSpring[3] += Assistant.NStickForm;
 				if(model.DetectCellCollision_Simple(1.0).isEmpty()) 	overlap = false;
 			}
 			model.Write(model.cellArray.size() + " initial non-overlapping cells created","iter");
+			model.Write((NSpring[1]-NSpring[0]) + " anchor and " + (NSpring[3]-NSpring[2]) + " sticking springs formed", "iter");
 		}
 		
 		boolean overlap = false;
@@ -84,39 +94,11 @@ public class WithComsol {
 		Server.Start(Assistant.port);
 		Server.Connect(Assistant.port);
 		
+		
 		while(true) {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.movementIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
 
-			if(model.anchoring) {
-				// Break anchor springs
-				// {} to make sure objects are destroyed when we're done (aka scope)
-				ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak(0.6,1.4);	// Returns lonely anchors, without their siblings
-				int counter = 0;
-				for(CAnchorSpring anchor : breakArray) {
-					counter += anchor.UnAnchor();
-				}
-				model.Write(counter + " anchor springs broken","iter");
-				// Build anchor springs
-				model.Write("Detecting cell-floor collisions","iter");
-				ArrayList<CCell> collisionArray = model.DetectFloorCollision(1.1);		// Returns already anchored cells
-				int NNewAnchor = model.BuildAnchor(collisionArray);
-				model.Write(NNewAnchor + " anchor springs built","iter");
-			}
-
-			if(model.sticking) {
-				// Break stick springs
-				ArrayList<CStickSpring> breakArray = model.DetectStickBreak(0.6,1.4);		// Returns all springs that'll be broken (<rl*first argument, >rl*second argument). Should not contain any duplicates in the form of siblingsprings
-				model.BreakStick(breakArray);
-				model.Write(breakArray.size() + " sticking springs broken","iter");
-				// Build stick springs
-				model.Write("Detecting cell-cell collisions","iter");
-				ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple(1.1);	 // Note that this one returns already stuck and duplicate cells
-				model.Write("Building new sticking springs","iter");
-				int NNewStick = model.BuildStick(collisionArray);
-				model.Write(NNewStick + " cell pairs sticked","iter");				// Divided by two, as array is based on origin and other cell (see for loop)
-			}
-			
 			// Do COMSOL things
 			model.Write("Calculating cell steady state concentrations (COMSOL)","iter");
 			// Make the model
@@ -175,6 +157,8 @@ public class WithComsol {
 			model.movementIter++;
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
+			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
+			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Simple(1.0);
 			if(!overlapCellArray.isEmpty()) {
 				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
@@ -192,11 +176,10 @@ public class WithComsol {
 				model.POV_Write(Assistant.plotIntermediate);
 				model.POV_Plot(Assistant.plotIntermediate); 
 			}
-
+			
 			// And finally: save stuff
 			model.Write("Saving model as .mat file", "iter");
 			model.Save();
 		}
-//		Server.Stop();
 	}
 }

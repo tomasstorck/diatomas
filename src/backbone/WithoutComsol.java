@@ -12,9 +12,8 @@ public class WithoutComsol {
 
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
-		model.cellType = new int[]{1,5};
 		/////
-//		model.L 	= new Vector3d(20e-6, 5e-6, 20e-6);		// [m], Dimensions of domain
+//		model.L.y = 4e-7;
 //		setting.POVScale = 1;
 		/////
 		model.randomSeed = 1;
@@ -24,12 +23,16 @@ public class WithoutComsol {
 		model.gravity = true;
 		model.anchoring = true;
 		/////
-//		model.Ks = 10.0*model.Ks;
-//		model.Kan = 1000.0*model.Kan;
-//		model.rhoX = 1020;
-//		model.Kd = 50.0*model.Kd;
-//		model.Kr = 0.1*model.Kr;
+		model.Kan *= 100.0;
+		model.Kc *= 100.0;
+		model.Kd *= 100.0;
+		model.Kf *= 100.0;
+		model.Kr *= 100.0;
+		model.Ks *= 100.0;
+		model.Kw *= 100.0;
+		model.rhoX = 1020;
 		/////
+//		model.Kr *= 0.01;
 		
 		// Initialise random seed
 		rand.Seed(model.randomSeed);

@@ -133,7 +133,7 @@ public class Comsol {
 		// Pure geometry
 		String name = "sph" + Integer.toString(cell.Index());
 	    model.geom("geom1").feature().create(name, "Sphere");
-	    model.geom("geom1").feature(name).set("r", Double.toString(cell.ballArray[0].radius));
+	    model.geom("geom1").feature(name).set("r", Double.toString(cell.ballArray[0].radius*0.9));			// FIXME Note radiusFactor
 	    model.geom("geom1").feature(name).set("createselection", "on");		// Allows us to add something by selection name
 	    model.geom("geom1").feature(name).set("pos", new String[]{Double.toString(cell.ballArray[0].pos.x), Double.toString(cell.ballArray[0].pos.y), Double.toString(cell.ballArray[0].pos.z)});
 
@@ -152,7 +152,7 @@ public class Comsol {
 	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z)}});
 	    pointName = "pt" + Integer.toString(3*cell.Index()+2);
 	    model.geom("geom1").feature().create(pointName, "Point");
-	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z+cell.ballArray[0].radius)}}); 	// Not sure why +radius here, but it's in the C++ code
+	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z+cell.ballArray[0].radius*0.9)}});
 	    
 	    // Create WP
 	    String wpName = "wp" + Integer.toString(cell.Index());
@@ -167,15 +167,15 @@ public class Comsol {
 	    
 	    // Create rectangle in WP
 	    String rectName = "rect" + Integer.toString(cell.Index());
-	    double cellWidth = (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).length() + 2*cell.ballArray[0].radius;
+	    double cellWidth = (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).length() + 2*cell.ballArray[0].radius*0.9;
 	    model.geom("geom1").feature(wpName).geom().feature()
 	         .create(rectName, "Rectangle");
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
 	         .setIndex("size", Double.toString(cellWidth), 0);
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
-	         .setIndex("size", Double.toString(cell.ballArray[0].radius), 1);			// We're revolving --> half the actual height
+	         .setIndex("size", Double.toString(cell.ballArray[0].radius*0.9), 1);			// We're revolving --> half the actual height
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
-	         .setIndex("pos", Double.toString(-cell.ballArray[0].radius), 0);			// Move the cell on the x axis, so that the centre of the ball is aligned with the origin 
+	         .setIndex("pos", Double.toString(-cell.ballArray[0].radius*0.9), 0);			// Move the cell on the x axis, so that the centre of the ball is aligned with the origin 
 
 	    // Fillet the rectangle
 	    String filName = "fil" + Integer.toString(cell.Index());
@@ -184,7 +184,7 @@ public class Comsol {
 	    model.geom("geom1").feature(wpName).geom().feature(filName)
 	         .selection("point").set(rectName + "(1)", new int[]{3, 4});
 	    model.geom("geom1").feature(wpName).geom().feature(filName)
-	         .set("radius", Double.toString(cell.ballArray[0].radius));
+	         .set("radius", Double.toString(cell.ballArray[0].radius*0.9));
 
 	    // Revolve WP around X axis
 	    String name = "rod" + Integer.toString(cell.Index());
