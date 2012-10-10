@@ -24,21 +24,21 @@ public class CModel {
 	public static boolean filament = false;
 	public static boolean gravity = false;
 	// Spring constants
-	public static double Kr 	= 1e5;					// internal cell spring (per ball)
-	public static double Kf 	= 3e4;					// filament spring (per ball average)
-	public static double Kw 	= 2e5;					// wall spring (per ball)
-	public static double Kc 	= 1e7;					// collision (per ball)
-	public static double Ks 	= 1e4;					// sticking (per ball average)
-	public static double Kan	= 1e4;					// anchor (per BALL)
+	public static double Kc 	= 1e9;					// collision (per ball)
+	public static double Kw 	= 5e7;					// wall spring (per ball)
+	public static double Kr 	= 3e7;					// internal cell spring (per ball)
+	public static double Kf 	= 1e7;					// filament spring (per ball average)
+	public static double Kan	= 1e7;					// anchor (per BALL)
+	public static double Ks 	= 1e7;					// sticking (per ball average)
 	public static double[] stretchLimAnchor = {0.6, 1.4};			// Maximum tension and compression (1-this value) for anchoring springs
 	public static double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public static double[] stretchLimStick = {0.6, 1.4};			// Maximum tension and compression (1-this value) for sticking springs
 	public static double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	// Domain properties
-	public static double Kd 	= 1e3;						// drag force coefficient (per BALL)
+	public static double Kd 	= 4e4;					// drag force coefficient (per BALL). Justified by computation from Wikipedia, for large sphere, but should be for v^2 and per kg
 	public static double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public static double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
-	public static double rhoX	= 1020;					// [kg/m3], diatoma density
+	public static double rhoX	= 1100;					// [kg/m3], diatoma density
 	public static double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
 	public static Vector3d L 	= new Vector3d(60e-6, 15e-6, 60e-6);	// [m], Dimensions of domain
 	// Model biomass properties
@@ -489,7 +489,7 @@ public class CModel {
 			}
 			
 			// Velocity damping
-			ball.force.subtract(ball.vel.times(Kd*nBallInit[ball.cell.type]));
+			ball.force.subtract(ball.vel.times(Kd*nBallInit[ball.cell.type]));			// TODO Should be v^2
 		}
 		
 		// Elastic forces between springs within cells (CRodSpring in type>1)

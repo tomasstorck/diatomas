@@ -16,20 +16,21 @@ public class WithoutComsol {
 //		model.L.y = 4e-7;
 //		setting.POVScale = 1;
 		/////
-		CModel.randomSeed = 1;
+		CModel.randomSeed = 4;		// Results in 7 rods, 8 spheres
 		/////
 		CModel.sticking = true;
-		CModel.filament = true;
-		CModel.gravity = true;
-		CModel.anchoring = true;
+//		CModel.filament = true;
+//		CModel.gravity = true;
+//		CModel.anchoring = true;
 		/////
-		CModel.Kan = 2e7;
-		CModel.Kc = 4e7;
-		CModel.Kd = 4e4;
-		CModel.Kf = 4e7;
-		CModel.Kr = 1.23e7;
-		CModel.Ks = 2e7;
-		CModel.Kw = 2e7;
+//		// Cristian
+//		CModel.Kan = 2e7;
+//		CModel.Kc = 4e7;
+//		CModel.Kd = 4e4;
+//		CModel.Kf = 4e7;
+//		CModel.Kr = 1.23e7;
+//		CModel.Ks = 2e7;
+//		CModel.Kw = 2e7;
 		/////
 //		model.Kr *= 0.01;
 		

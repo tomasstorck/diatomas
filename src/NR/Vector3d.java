@@ -118,6 +118,16 @@ public class Vector3d {
 		return times;
 	}
 	
+	public Vector3d times(Vector3d v) {
+		double newx = this.x * v.x;
+		double newy = this.y * v.y;
+		double newz = this.z * v.z;
+		
+		Vector3d times = new Vector3d(newx, newy, newz);
+		
+		return times;
+	}
+	
 	public Vector3d divide(double number) {
 		double newx = this.x / number;
 		double newy = this.y / number;
