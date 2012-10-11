@@ -32,15 +32,15 @@ public class WithoutComsol {
 //		CModel.Ks = 2e7;
 //		CModel.Kw = 2e7;
 		/////
-		CModel.Kc 	= 1e8;					// collision (per ball)
-		CModel.Kw 	= 5e6;					// wall spring (per ball)
-		CModel.Kr 	= 3e6;					// internal cell spring (per ball)
-		CModel.Kf 	= 1e6;					// filament spring (per ball average)
-		CModel.Kan	= 1e6;					// anchor (per BALL)
-		CModel.Ks 	= 1e6;					// sticking (per ball average)
-		CModel.Kd 	= 4e4;					// Drag
-		/////
+		CModel.Kc 		= 2e7;			// collision
+		CModel.Kw 		= 1e7;			// wall spri
+		CModel.Kr 		= 2.5e5;		// internal cell spring
+		CModel.Kf 		= 1.25e5;		// filament spring
+		CModel.Ks 		= 1.25e5;		// sticking
+		CModel.Kan 		= 1.25e5;		// anchor
+		CModel.Kd 		= 2.5e3;		// drag force coefficient
 //		model.Kr *= 0.01;
+		/////
 		
 		// Initialise random seed
 		rand.Seed(CModel.randomSeed);

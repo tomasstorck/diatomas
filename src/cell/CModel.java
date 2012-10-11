@@ -24,21 +24,21 @@ public class CModel {
 	public static boolean filament = false;
 	public static boolean gravity = false;
 	// Spring constants
-	public static double Kc 	= 1e9;					// collision (per ball)
-	public static double Kw 	= 5e7;					// wall spring (per ball)
-	public static double Kr 	= 3e7;					// internal cell spring (per ball)
-	public static double Kf 	= 1e7;					// filament spring (per ball average)
-	public static double Kan	= 1e7;					// anchor (per BALL)
-	public static double Ks 	= 1e7;					// sticking (per ball average)
+	public static double Kc 	= 2e7;					// collision (per ball)
+	public static double Kw 	= 1e7;					// wall spring (per ball)
+	public static double Kr 	= 2.5e5;					// internal cell spring (per ball)
+	public static double Kf 	= 1.25e5;					// filament spring (per ball average)
+	public static double Kan	= 1.25e5;					// anchor (per BALL)
+	public static double Ks 	= 1.25e5;					// sticking (per ball average)
 	public static double[] stretchLimAnchor = {0.6, 1.4};			// Maximum tension and compression (1-this value) for anchoring springs
 	public static double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public static double[] stretchLimStick = {0.6, 1.4};			// Maximum tension and compression (1-this value) for sticking springs
 	public static double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	// Domain properties
-	public static double Kd 	= 4e4;					// drag force coefficient (per BALL). Justified by computation from Wikipedia, for large sphere, but should be for v^2 and per kg
+	public static double Kd 	= 2.5e3;					// drag force coefficient (per BALL). Justified by computation from Wikipedia, for large sphere, but should be for v^2 and per kg
 	public static double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public static double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
-	public static double rhoX	= 1100;					// [kg/m3], diatoma density
+	public static double rhoX	= 1010;					// [kg/m3], diatoma density
 	public static double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
 	public static Vector3d L 	= new Vector3d(60e-6, 15e-6, 60e-6);	// [m], Dimensions of domain
 	// Model biomass properties
@@ -51,7 +51,7 @@ public class CModel {
 //	public static double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
 	public static double[] aspect	= {0.0, 0.0, 4.0, 2.0, 5.0, 3.0};	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 	// Ball properties
-	public static double[] nCellInit = {2.66e-16, 1.71e-14, 1.87e-15, 2.88e-14, 1.87e-15, 2.88e-14};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
+	public static double[] nCellInit = {2.42e-19*rhoX, 1.55e-17*rhoX, 1.70e-18*rhoX, 2.62e-17*rhoX, 1.70e-18*rhoX, 2.62e-17*rhoX};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
 	public static double[] nBallInit = {nCellInit[0], nCellInit[1], nCellInit[2]/2.0, nCellInit[3]/2.0, nCellInit[4]/2.0, nCellInit[5]/2.0};				// [Cmol] initial mass of one ball in the cell
 	public static double[] nCellMax = {nCellInit[0]*2.0, nCellInit[1]*2.0, nCellInit[2]*2.0, nCellInit[3]*2.0, nCellInit[4]*2.0, nCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
 	// Progress
@@ -75,7 +75,7 @@ public class CModel {
 	// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
 	public static double[] SMX = {		7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
 	public static double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						// [microM] FIXME
-	public static double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
+	public static double[] qMax = {		0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
 	public static String[] rateEquation = {
 			Double.toString(qMax[0]) + "*(c3*d3^4)/(K0+c3*d3^4)",		// type==0
 			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==1
@@ -483,7 +483,7 @@ public class CModel {
 			// Gravity and buoyancy
 			if(gravity) {
 				if(y>r*1.1) {			// Only if not already at the floor plus a tiny bit 
-					ball.force.y += G * ((rhoX-rhoWater)/rhoWater) * ball.n*MWX ;  //let the ball fall 
+					ball.force.y += G * ((rhoX-rhoWater)/rhoWater) * ball.n*MWX ;  //let the ball fall. Note that G is negative 
 				}	
 			}
 			
