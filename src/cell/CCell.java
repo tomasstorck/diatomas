@@ -164,14 +164,14 @@ public class CCell {
 		return mass;
 	}
 	
-	public void SetMass(double newMass) {
+	public void SetAmount(double newAmount) {
 		if(type<2) {
-			ballArray[0].n = newMass;
+			ballArray[0].n = newAmount;
 			ballArray[0].radius = ballArray[0].Radius();
 		} else {
-			ballArray[0].n = newMass/2.0;
+			ballArray[0].n = newAmount/2.0;
 			ballArray[0].radius = ballArray[0].Radius();
-			ballArray[1].n = newMass/2.0;
+			ballArray[1].n = newAmount/2.0;
 			ballArray[1].radius = ballArray[1].Radius();
 		}
 	}

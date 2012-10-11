@@ -19,7 +19,7 @@ public class CBall {
 	
 	///////////////////////////////////////////////////////////////////
 	
-	public CBall(double posx, double posy, double posz, double mass, int ballArrayIndex, CCell cell){	// Create a new ball, make it belong to cell
+	public CBall(double posx, double posy, double posz, double amount, int ballArrayIndex, CCell cell){	// Create a new ball, make it belong to cell
 		this.cell = cell;
 		
 		pos = new Vector3d(posx, posy, posz);
@@ -36,7 +36,7 @@ public class CBall {
 //			forceSave[iSave] = new Vector3d();
 		}
 		
-		this.n = mass;
+		this.n = amount;
 		
 		// Add ball to required arrays
 //		this.ballArrayIndex = ballArrayIndex;

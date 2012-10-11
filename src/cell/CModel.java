@@ -373,8 +373,8 @@ public class CModel {
 					CBall c1b0 = cell1.ballArray[0];
 					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					double dist = dirn.length();							// Mere estimation for ball-rod
 					if(cell1.type<2) {										// The other cell is a ball too
+						double dist = dirn.length();						// Mere estimation for ball-rod
 						// do a simple collision detection if close enough
 						if(dist<R2) {
 							// We have a collision
@@ -387,12 +387,12 @@ public class CModel {
 						}
 					} else {												// this cell is a ball, the other cell is a rod
 						double H2 = aspect[cell1.type]*2.0*c1b0.radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dist<H2) {
+						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a sphere-rod collision detection
 							CBall c1b1 = cell1.ballArray[1];
 							EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 							Vector3d dP = C.dP;
-							dist = C.dist;									// Make distance more accurate
+							double dist = C.dist;							// Make distance more accurate
 							double sc = C.sc;
 							// Collision detection
 							if(dist<R2) {
@@ -417,14 +417,13 @@ public class CModel {
 					CBall c1b0 = cell1.ballArray[0];
 					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					double dist = dirn.length();							// Mere estimation for ball-rod
 					if(cell1.type<2) {										// This cell is a rod, the Next is a ball
 						double H2 = aspect[cell0.type]*2.0*c0b0.radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dist<H2) {
+						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a rod-sphere collision detection
 							EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
 							Vector3d dP = C.dP;
-							dist = C.dist;
+							double dist = C.dist;
 							double sc = C.sc;
 							// Collision detection
 							if(dist < R2) {
@@ -447,11 +446,11 @@ public class CModel {
 						CBall c1b1 = cell1.ballArray[1];
 						Vector3d c1b1pos = new Vector3d(c1b1.pos);
 						double H2 = aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
-						if(dist<H2) {
+						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// calculate the distance between the two diatoma segments
 							EricsonObject C = DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
 							Vector3d dP = C.dP;					// dP is vector from closest point 2 --> 1
-							dist = C.dist;
+							double dist = C.dist;
 							double sc = C.sc;
 							double tc = C.tc;
 							if(dist<R2) {
@@ -572,7 +571,7 @@ public class CModel {
 		Vector dydx = new Vector(yode.size());
 		int ii=0;
 		for(CBall ball : ballArray) {
-				double M = ball.n;
+				double M = ball.n*MWX;
 				dydx.set(ii++,ball.vel.x);			// dpos/dt = v;
 				dydx.set(ii++,ball.vel.y);
 				dydx.set(ii++,ball.vel.z);
@@ -619,7 +618,6 @@ public class CModel {
 				// Determine current distance
 				CBall c0b0 = cell0.ballArray[0];
 				CBall c1b0 = cell1.ballArray[0];
-				double dist = (c1b0.pos.minus(c0b0.pos)).length();
 				// Are these cells stuck to each other?
 				boolean stuck = false;
 				CStickSpring stickingSpring = null; 
@@ -632,62 +630,44 @@ public class CModel {
 					}
 				}
 				if(stuck) {					// Stuck --> can we break this spring?
+					double dist = (c1b0.pos.minus(c0b0.pos)).length();
 					if(dist < stickingSpring.restLength*stretchLimStick[0] || dist > stickingSpring.restLength*stretchLimStick[1]) 		Assistant.NStickBreak += stickingSpring.UnStick();
 				} else {					// Not stuck --> can we stick them?
 					double R2 = c0b0.radius + c1b0.radius;
+					Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
 					if(cell0.type<2 && cell1.type<2) {							// both spheres
+						double dist = (c1b0.pos.minus(c0b0.pos)).length();
 						if(dist<R2*formLimStick)		Assistant.NStickForm += cell0.Stick(cell1);
 					} else if(cell0.type<2) {									// 1st sphere, 2nd rod
-						double H2 = aspect[cell1.type]*2.0*c1b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dist<H2*formLimStick) {
+						double H2f = formLimStick * aspect[cell1.type]*2.0*c1b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+						if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 							CBall c1b1 = cell1.ballArray[1];
 							// do a sphere-rod collision detection
 							EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
-							dist = C.dist;
-							if(dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
+							if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
 						}
 					} else if (cell1.type<2) {									// 2nd sphere, 1st rod
-						double H2 = aspect[cell0.type]*2.0*c0b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dist<H2*formLimStick) {
+						double H2f = formLimStick * aspect[cell0.type]*2.0*c0b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+						if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 							CBall c0b1 = cell0.ballArray[1];
 							// do a sphere-rod collision detection
 							EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
-							dist = C.dist;
-							if(dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);		// OPTIMISE by passing dist to Stick
+							if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);		// OPTIMISE by passing dist to Stick
 						}
 					} else {													// both rod
-						double H2 = aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
-						if(dist<H2*formLimStick) {
+						double H2f = formLimStick * aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
+						if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 							CBall c0b1 = cell0.ballArray[1];
 							CBall c1b1 = cell1.ballArray[1];
 							// calculate the distance between the two diatoma segments
 							EricsonObject C = DetectLinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
-							dist = C.dist;
-							if(dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
+							if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
 						}
 					}	
 				}
 			}
 		}
-		
-		ArrayList<CStickSpring> unStickArray = new ArrayList<CStickSpring>(); 
-		for(int jj=0; jj<stickSpringArray.size(); jj++) {		// Empty if sticking is disabled, so no need to add an extra if statement for disabled sticking
-			CStickSpring stick = stickSpringArray.get(jj);
-			CBall ball0 = stick.ballArray[0];
-			CBall ball1 = stick.ballArray[1];
-			// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = ball1.pos.minus(ball0.pos);
-			double dn = diff.length();
-			// Break stick?
-			if(dn<stick.restLength*stretchLimStick[0] || dn>stick.restLength*stretchLimStick[1]) {
-				unStickArray.add(stick);
-				for(CStickSpring sibling : stick.siblingArray) {		// Don't worry about duplicates 
-					unStickArray.add(sibling);
-				}
-			}}
-		// UnStick() collected array
-		for(CStickSpring stick : unStickArray)		Assistant.NStickBreak += stick.UnStick();
-}
+	}
 	
 	//////////////////
 	// Growth stuff //
@@ -701,7 +681,7 @@ public class CModel {
 
 			// Random growth
 			mass *= (0.95+rand.Double()/5.0);
-			mother.SetMass(mass);
+			mother.SetAmount(mass);
 			
 			// Cell growth or division
 			if(mother.GetAmount()>nCellMax[mother.type]) {
@@ -729,7 +709,7 @@ public class CModel {
 					break;
 				}
 			}
-			mother.SetMass(mass);
+			mother.SetAmount(mass);
 			
 			// Cell growth or division
 			if(mother.GetAmount()>nCellMax[mother.type]) {
@@ -749,7 +729,7 @@ public class CModel {
 			double molIn = mother.q * mother.GetAmount() * growthTimeStep * SMX[mother.type];
 			// Grow mother cell
 			double newMass = mother.GetAmount()+molIn;
-			mother.SetMass(newMass);
+			mother.SetAmount(newMass);
 			// divide mother cell if ready 
 			if(mother.GetAmount()>newMass) {
 				newCell++;
@@ -776,8 +756,8 @@ public class CModel {
 					mother.filament,
 					mother.colour);														// Same filament boolean as cell and pointer to the model
 			// Set mass for both cells
-			daughter.SetMass(n/2.0);		// Radius is updated in this method
-			mother.SetMass(n/2.0);
+			daughter.SetAmount(n/2.0);		// Radius is updated in this method
+			mother.SetAmount(n/2.0);
 			// Set properties for new cell
 			daughter.ballArray[0].vel = 	new Vector3d(mother.ballArray[0].vel);
 			daughter.ballArray[0].force = 	new Vector3d(mother.ballArray[0].force);
@@ -818,8 +798,8 @@ public class CModel {
 					mother.filament,
 					mother.colour);																		// Same filament boolean as cell and pointer to the model
 			// Set mass for both cells
-			daughter.SetMass(n/2.0);
-			mother.SetMass(n/2.0);
+			daughter.SetAmount(n/2.0);
+			mother.SetAmount(n/2.0);
 			// Displace old cell, 2nd ball
 			motherBall1.pos = middle.minus(direction.times(displacement));
 			mother.springArray[0].ResetRestLength();

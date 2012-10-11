@@ -18,7 +18,7 @@ public class WithoutComsol {
 		/////
 		CModel.randomSeed = 4;		// Results in 7 rods, 8 spheres
 		/////
-		CModel.sticking = true;
+		CModel.sticking = false;
 //		CModel.filament = true;
 //		CModel.gravity = true;
 //		CModel.anchoring = true;
@@ -31,6 +31,14 @@ public class WithoutComsol {
 //		CModel.Kr = 1.23e7;
 //		CModel.Ks = 2e7;
 //		CModel.Kw = 2e7;
+		/////
+		CModel.Kc 	= 1e8;					// collision (per ball)
+		CModel.Kw 	= 5e6;					// wall spring (per ball)
+		CModel.Kr 	= 3e6;					// internal cell spring (per ball)
+		CModel.Kf 	= 1e6;					// filament spring (per ball average)
+		CModel.Kan	= 1e6;					// anchor (per BALL)
+		CModel.Ks 	= 1e6;					// sticking (per ball average)
+		CModel.Kd 	= 4e4;					// Drag
 		/////
 //		model.Kr *= 0.01;
 		
