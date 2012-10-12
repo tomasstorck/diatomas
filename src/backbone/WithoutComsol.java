@@ -17,12 +17,6 @@ public class WithoutComsol {
 //		setting.POVScale = 1;
 		/////
 		CModel.randomSeed = 4;		// Results in 7 rods, 8 spheres
-		/////
-		CModel.sticking = false;
-//		CModel.filament = true;
-//		CModel.gravity = true;
-//		CModel.anchoring = true;
-		/////
 //		// Cristian
 //		CModel.Kan = 2e7;
 //		CModel.Kc = 4e7;
@@ -32,14 +26,7 @@ public class WithoutComsol {
 //		CModel.Ks = 2e7;
 //		CModel.Kw = 2e7;
 		/////
-		CModel.Kc 		= 2e7;			// collision
-		CModel.Kw 		= 1e7;			// wall spri
-		CModel.Kr 		= 2.5e5;		// internal cell spring
-		CModel.Kf 		= 1.25e5;		// filament spring
-		CModel.Ks 		= 1.25e5;		// sticking
-		CModel.Kan 		= 1.25e5;		// anchor
-		CModel.Kd 		= 2.5e3;		// drag force coefficient
-//		model.Kr *= 0.01;
+//		CModel.Kr *= 0.01;
 		/////
 		
 		// Initialise random seed

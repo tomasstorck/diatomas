@@ -24,18 +24,18 @@ public class CModel {
 	public static boolean filament = false;
 	public static boolean gravity = false;
 	// Spring constants
-	public static double Kc 	= 2e7;					// collision (per ball)
-	public static double Kw 	= 1e7;					// wall spring (per ball)
-	public static double Kr 	= 2.5e5;					// internal cell spring (per ball)
-	public static double Kf 	= 1.25e5;					// filament spring (per ball average)
-	public static double Kan	= 1.25e5;					// anchor (per BALL)
-	public static double Ks 	= 1.25e5;					// sticking (per ball average)
-	public static double[] stretchLimAnchor = {0.6, 1.4};			// Maximum tension and compression (1-this value) for anchoring springs
+	public static double Kc 	= 2e6;					// collision (per ball)
+	public static double Kw 	= 1e6;					// wall spring (per ball)
+	public static double Kr 	= 2.5e5;				// internal cell spring (per ball)
+	public static double Kf 	= 1e6;					// filament spring (per ball average)
+	public static double Kan	= 5e4;					// anchor (per BALL)
+	public static double Ks 	= 5e4;					// sticking (per ball average)
+	public static double[] stretchLimAnchor = {0.6, 1.4};// Maximum tension and compression (1-this value) for anchoring springs
 	public static double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-	public static double[] stretchLimStick = {0.6, 1.4};			// Maximum tension and compression (1-this value) for sticking springs
+	public static double[] stretchLimStick = {0.6, 1.4};// Maximum tension and compression (1-this value) for sticking springs
 	public static double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	// Domain properties
-	public static double Kd 	= 2.5e3;					// drag force coefficient (per BALL). Justified by computation from Wikipedia, for large sphere, but should be for v^2 and per kg
+	public static double Kd 	= 2.5e3;					// drag force coefficient (per BALL)
 	public static double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public static double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public static double rhoX	= 1010;					// [kg/m3], diatoma density
@@ -633,37 +633,40 @@ public class CModel {
 					double dist = (c1b0.pos.minus(c0b0.pos)).length();
 					if(dist < stickingSpring.restLength*stretchLimStick[0] || dist > stickingSpring.restLength*stretchLimStick[1]) 		Assistant.NStickBreak += stickingSpring.UnStick();
 				} else {					// Not stuck --> can we stick them?
-					double R2 = c0b0.radius + c1b0.radius;
-					Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
-					if(cell0.type<2 && cell1.type<2) {							// both spheres
-						double dist = (c1b0.pos.minus(c0b0.pos)).length();
-						if(dist<R2*formLimStick)		Assistant.NStickForm += cell0.Stick(cell1);
-					} else if(cell0.type<2) {									// 1st sphere, 2nd rod
-						double H2f = formLimStick * aspect[cell1.type]*2.0*c1b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
-							CBall c1b1 = cell1.ballArray[1];
-							// do a sphere-rod collision detection
-							EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
-							if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
-						}
-					} else if (cell1.type<2) {									// 2nd sphere, 1st rod
-						double H2f = formLimStick * aspect[cell0.type]*2.0*c0b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
-							CBall c0b1 = cell0.ballArray[1];
-							// do a sphere-rod collision detection
-							EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
-							if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);		// OPTIMISE by passing dist to Stick
-						}
-					} else {													// both rod
-						double H2f = formLimStick * aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
-						if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
-							CBall c0b1 = cell0.ballArray[1];
-							CBall c1b1 = cell1.ballArray[1];
-							// calculate the distance between the two diatoma segments
-							EricsonObject C = DetectLinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
-							if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
-						}
-					}	
+					boolean related = ((cell0.mother!=null && cell0.mother.equals(cell1)) || (cell1.mother!=null && cell1.mother.equals(cell0))) ? true : false;
+					if(!related) {// Check only if these cells are not connected through filament springs
+						double R2 = c0b0.radius + c1b0.radius;
+						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
+						if(cell0.type<2 && cell1.type<2) {							// both spheres
+							double dist = (c1b0.pos.minus(c0b0.pos)).length();
+							if(dist<R2*formLimStick)		Assistant.NStickForm += cell0.Stick(cell1);
+						} else if(cell0.type<2) {									// 1st sphere, 2nd rod
+							double H2f = formLimStick * aspect[cell1.type]*2.0*c1b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+								CBall c1b1 = cell1.ballArray[1];
+								// do a sphere-rod collision detection
+								EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
+								if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
+							}
+						} else if (cell1.type<2) {									// 2nd sphere, 1st rod
+							double H2f = formLimStick * aspect[cell0.type]*2.0*c0b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+								CBall c0b1 = cell0.ballArray[1];
+								// do a sphere-rod collision detection
+								EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
+								if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);		// OPTIMISE by passing dist to Stick
+							}
+						} else {													// both rod
+							double H2f = formLimStick * aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
+							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+								CBall c0b1 = cell0.ballArray[1];
+								CBall c1b1 = cell1.ballArray[1];
+								// calculate the distance between the two diatoma segments
+								EricsonObject C = DetectLinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
+								if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
+							}
+						}	
+					}
 				}
 			}
 		}
