@@ -24,8 +24,8 @@ public class CModel {
 	public static boolean filament = false;
 	public static boolean gravity = false;
 	// Spring constants
-	public static double Kc 	= 2e6;					// collision (per ball)
-	public static double Kw 	= 1e6;					// wall spring (per ball)
+	public static double Kc 	= 2e7;					// collision (per ball)
+	public static double Kw 	= 1e7;					// wall spring (per ball)
 	public static double Kr 	= 2.5e5;				// internal cell spring (per ball)
 	public static double Kf 	= 1e6;					// filament spring (per ball average)
 	public static double Kan	= 5e4;					// anchor (per BALL)
@@ -272,7 +272,7 @@ public class CModel {
 		ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 		
 		for(CAnchorSpring pSpring : anchorSpringArray) {
-			double al = (pSpring.ball.pos.minus(pSpring.anchor)).length();		// al = Actual Length
+			double al = (pSpring.ballArray[0].pos.minus(pSpring.anchor)).length();		// al = Actual Length
 			if(al < minStretch*pSpring.restLength || al > maxStretch*pSpring.restLength) {
 				breakArray.add(pSpring);
 			}
@@ -454,8 +454,8 @@ public class CModel {
 							double sc = C.sc;
 							double tc = C.tc;
 							if(dist<R2) {
-								double MBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
-								double f = Kc*MBallAvg / dist*(dist-R2*1.01);
+								double nBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
+								double f = Kc*nBallAvg / dist*(dist-R2*1.01);
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
@@ -509,14 +509,14 @@ public class CModel {
 		
 		// Apply forces due to anchor springs
 		for(CAnchorSpring spring : anchorSpringArray) {
-			Vector3d diff = spring.anchor.minus(spring.ball.pos);
+			Vector3d diff = spring.anchor.minus(spring.ballArray[0].pos);
 			double dn = diff.length();
 			// Get force
 			double f = spring.K/dn * (dn - spring.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			spring.ball.force.add(Fs);
+			spring.ballArray[0].force.add(Fs);
 
 		}
 		
@@ -592,7 +592,7 @@ public class CModel {
 			if(cell.anchorSpringArray.length>0) { 		// This cell is already anchored
 				for(CAnchorSpring spring : cell.anchorSpringArray) {
 					// Break anchor?
-					Vector3d diff = spring.anchor.minus(spring.ball.pos);
+					Vector3d diff = spring.anchor.minus(spring.ballArray[0].pos);
 					double dn = diff.length();
 					if(dn < spring.restLength*stretchLimAnchor[0] || dn > spring.restLength*stretchLimAnchor[1]) {			// too much tension || compression --> break the spring
 						Assistant.NAnchorBreak += spring.UnAnchor();
@@ -868,7 +868,7 @@ public class CModel {
 	
 	public static int BuildAnchor(ArrayList<CCell> collisionArray) {
 		// Make unique
-		for(CAnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.ball.cell);
+		for(CAnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.ballArray[0].cell);
 		
 		// Anchor the non-stuck, collided cells to the ground
 		for(CCell cell : collisionArray) cell.Anchor();
@@ -898,6 +898,7 @@ public class CModel {
 	////////////////////////////////////////////
 	// Saving, loading things, reconstructing //
 	////////////////////////////////////////////
+	
 	public static void Save() {
 		MLStructure mlModel = new MLStructure("model", new int[] {1,1});
 		int N;
@@ -906,12 +907,12 @@ public class CModel {
 		mlModel.setField("name",                          new MLChar(null, new String[] {name}, 1));                                      	
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {randomSeed}, 1));                              	
 		mlModel.setField("sticking",                      new MLDouble(null, new double[] {sticking?1:0}, 1));                            			mlModel.setField("anchoring",                     new MLDouble(null, new double[] {anchoring?1:0}, 1));                           			mlModel.setField("filament",                      new MLDouble(null, new double[] {filament?1:0}, 1));                            			mlModel.setField("gravity",                       new MLDouble(null, new double[] {gravity?1:0}, 1));                             			// Spring constants
+		mlModel.setField("Kc",                            new MLDouble(null, new double[] {Kc}, 1));                                      	// collision (per ball)
+		mlModel.setField("Kw",                            new MLDouble(null, new double[] {Kw}, 1));                                      	// wall spring (per ball)
 		mlModel.setField("Kr",                            new MLDouble(null, new double[] {Kr}, 1));                                      	// internal cell spring (per ball)
 		mlModel.setField("Kf",                            new MLDouble(null, new double[] {Kf}, 1));                                      	// filament spring (per ball average)
-		mlModel.setField("Kw",                            new MLDouble(null, new double[] {Kw}, 1));                                      	// wall spring (per ball)
-		mlModel.setField("Kc",                            new MLDouble(null, new double[] {Kc}, 1));                                      	// collision (per ball)
-		mlModel.setField("Ks",                            new MLDouble(null, new double[] {Ks}, 1));                                      	// sticking (per ball average)
 		mlModel.setField("Kan",                           new MLDouble(null, new double[] {Kan}, 1));                                     	// anchor (per BALL)
+		mlModel.setField("Ks",                            new MLDouble(null, new double[] {Ks}, 1));                                      	// sticking (per ball average)
 		mlModel.setField("stretchLimAnchor",              new MLDouble(null, stretchLimAnchor, stretchLimAnchor.length));                 	// Maximum tension and compression (1-this value) for anchoring springs
 		mlModel.setField("formLimAnchor",                 new MLDouble(null, new double[] {formLimAnchor}, 1));                           	// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 		mlModel.setField("stretchLimStick",               new MLDouble(null, stretchLimStick, stretchLimStick.length));                   	// Maximum tension and compression (1-this value) for sticking springs
@@ -935,9 +936,9 @@ public class CModel {
 		//	public static double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
 		mlModel.setField("aspect",                        new MLDouble(null, aspect, aspect.length));                                     	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 		// Ball properties
-		mlModel.setField("MCellInit",                     new MLDouble(null, nCellInit, nCellInit.length));                               	// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
-		mlModel.setField("MBallInit",                     new MLDouble(null, nBallInit, nBallInit.length));                               	// [Cmol] initial mass of one ball in the cell
-		mlModel.setField("MCellMax",                      new MLDouble(null, nCellMax, nCellMax.length));                                 	// [Cmol] max mass of cells before division;
+		mlModel.setField("nCellInit",                     new MLDouble(null, nCellInit, nCellInit.length));                               	// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
+		mlModel.setField("nBallInit",                     new MLDouble(null, nBallInit, nBallInit.length));                               	// [Cmol] initial mass of one ball in the cell
+		mlModel.setField("nCellMax",                      new MLDouble(null, nCellMax, nCellMax.length));                                 	// [Cmol] max mass of cells before division;
 		// Progress
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {growthTime}, 1));                              	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {growthTimeStep}, 1));                          	// [s] Time step for growth
@@ -986,12 +987,23 @@ public class CModel {
 		MLStructure mlballArray = new MLStructure(null, new int[] {ballArray.size() ,1});
 		for(int ii=0; ii<N; ii++) {
 			CBall obj = ballArray.get(ii);
-			mlballArray.setField("mass",                      new MLDouble(null, new double[] {obj.n}, 1), ii);                            	
-			mlballArray.setField("radius",                    new MLDouble(null, new double[] {obj.radius}, 1), ii);                          	// Will put in method
+			mlballArray.setField("n",                         new MLDouble(null, new double[] {obj.n}, 1), ii);                               	// [mol] Chemical amount
+			mlballArray.setField("radius",                    new MLDouble(null, new double[] {obj.radius}, 1), ii);                          	
 			mlballArray.setField("pos",                       new MLDouble(null, new double[] {obj.pos.x, obj.pos.y, obj.pos.z}, 3), ii);     	
 			mlballArray.setField("vel",                       new MLDouble(null, new double[] {obj.vel.x, obj.vel.y, obj.vel.z}, 3), ii);     	
 			mlballArray.setField("force",                     new MLDouble(null, new double[] {obj.force.x, obj.force.y, obj.force.z}, 3), ii);	
 			mlballArray.setField("cellIndex",                 new MLDouble(null, new double[] {obj.cellIndex}, 1), ii);                       	
+			// FIXME posSave and velSave not automated
+			int NSave = (int)(movementTimeStepEnd/movementTimeStep);
+			double[] posSave = new double[NSave*3];
+			double[] velSave = new double[NSave*3];
+			for(int jj=0; jj<NSave; jj++) {
+				posSave[jj] 		= obj.posSave[jj].x; 	velSave[jj] 		= obj.velSave[jj].x;
+				posSave[jj+NSave] 	= obj.posSave[jj].y; 	velSave[jj+NSave] 	= obj.velSave[jj].y;
+				posSave[jj+2*NSave] = obj.posSave[jj].z; 	velSave[jj+2*NSave] = obj.velSave[jj].z;
+			}
+			mlballArray.setField("posSave", 				new MLDouble(null, posSave, NSave), ii);
+			mlballArray.setField("velSave", 				new MLDouble(null, velSave, NSave), ii);
 		}
 		mlModel.setField("ballArray", mlballArray);
 
@@ -1053,6 +1065,10 @@ public class CModel {
 		MLStructure mlanchorSpringArray = new MLStructure(null, new int[] {anchorSpringArray.size() ,1});
 		for(int ii=0; ii<N; ii++) {
 			CAnchorSpring obj = anchorSpringArray.get(ii);
+			
+			arrayIndex = new double[obj.ballArray.length];
+			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index()+1;
+			mlanchorSpringArray.setField("ballArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlanchorSpringArray.setField("anchor",            new MLDouble(null, new double[] {obj.anchor.x, obj.anchor.y, obj.anchor.z}, 3), ii);	
 			mlanchorSpringArray.setField("K",                 new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlanchorSpringArray.setField("restLength",        new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
@@ -1068,7 +1084,7 @@ public class CModel {
 		// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
 		mlModel.setField("SMX",                           new MLDouble(null, SMX, SMX.length));                                           	// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
 		mlModel.setField("K",                             new MLDouble(null, K, K.length));                                               	// [microM] FIXME
-		mlModel.setField("qMax",                          new MLDouble(null, qMax, qMax.length));                                         	// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc. S.f. from Scholten 2000;
+		mlModel.setField("qMax",                          new MLDouble(null, qMax, qMax.length));                                         	// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
 		mlModel.setField("rateEquation",                  new MLChar(null, rateEquation));                                                	
 		// 	 pH calculations
 		//							HPro		CO2			HCO3-		HAc
@@ -1091,7 +1107,6 @@ public class CModel {
 			e.printStackTrace();
 		}
 	}
-
 
 	public static void Load(String fileName) {
 		try {
@@ -1223,14 +1238,14 @@ public class CModel {
 									((MLDouble)mlAnchorSpringArray.getField("anchor",iAnchor)).getReal(2));
 				spring.K		= ((MLDouble)mlAnchorSpringArray.getField("K",iAnchor)).getReal(0);
 				int iBall		= ((MLDouble)mlAnchorSpringArray.getField("ballArrayIndex",iAnchor)).getReal(0).intValue()-1;
-				spring.ball 	= ballArray.get(iBall);
+				spring.ballArray[0] 	= ballArray.get(iBall);
 				spring.restLength = ((MLDouble)mlAnchorSpringArray.getField("restLength",iAnchor)).getReal(0);
 				anchorSpringArray.add(spring);
 			}
 			for(int iAnchor=0; iAnchor<NAnchor; iAnchor++) {	// Additional for loop to assign siblings
 				CAnchorSpring spring = anchorSpringArray.get(iAnchor);
 				
-				if(spring.ball.cell.type!=0) {
+				if(spring.ballArray[0].cell.type!=0) {
 					spring.siblingArray = new CAnchorSpring[1];
 					int iSibling = ((MLDouble)mlAnchorSpringArray.getField("siblingArrayIndex", iAnchor)).getReal(0).intValue()-1;
 					spring.siblingArray[0] = anchorSpringArray.get(iSibling); 
@@ -1546,7 +1561,7 @@ public class CModel {
 					for(int iAnchor = 1; iAnchor < anchorSpringArray.size(); iAnchor++) {
 						fid.println("// Anchor spring no. " + iAnchor);
 						CAnchorSpring pSpring = anchorSpringArray.get(iAnchor);
-						CBall ball = pSpring.ball;
+						CBall ball = pSpring.ballArray[0];
 
 						if (!pSpring.anchor.equals(ball.pos)) {		// else we get degenerate cylinders (i.e. height==0), POV doesn't like that
 							fid.println("cylinder\n" +

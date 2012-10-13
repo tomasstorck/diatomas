@@ -477,7 +477,8 @@ public class MatFileReader
         
         //process data decompression
         byte[] result = new byte[128];
-        _ByteArrayOutputStream baos = new _ByteArrayOutputStream(numOfBytes);
+        @SuppressWarnings("resource")
+		_ByteArrayOutputStream baos = new _ByteArrayOutputStream(numOfBytes);
         int i;
         try
         {

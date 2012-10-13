@@ -73,7 +73,8 @@ public class MatFileWriter
      * @throws IOException
      * @throws DataFormatException
      */
-    public MatFileWriter(File file, Collection<MLArray> data) throws IOException
+    @SuppressWarnings("resource")
+	public MatFileWriter(File file, Collection<MLArray> data) throws IOException
     {
         this( (new FileOutputStream(file)).getChannel(), data );
     }

@@ -6,7 +6,7 @@ fid=fopen('../src/cell/CModel.java');
 c = '';
 
 % Make header
-fprintf('\tpublic void Save() {\n');
+fprintf('\tpublic static void Save() {\n');
 fprintf('\t\tMLStructure mlModel = new MLStructure("model", new int[] {1,1});\n');
 fprintf('\t\tint N;\n')		% we'll need this one for the arrays
 fprintf('\t\tdouble[] arrayIndex;\n')	% we'll need this one for the arrays' arrays
@@ -163,7 +163,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 			% String[]
 			if hasstr(c2,'String[] ')
 				[n comment] = splitline(c,'String\[\]');
-				fprintf('\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLChar(null, n);'], comment);
+				fprintf('\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLChar(null, n);'], comment);
 				continue
 			end
 			% Vector3d
@@ -172,6 +172,26 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 				fprintf('\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.x, obj.' n '.y, obj.' n '.z}, 3), ii);'], comment);
 				continue
 			end
+% 			% Vector3d[]		//FIXME
+% 			if hasstr(c2,'Vector3d[] ')
+% 				[n comment] = splitline(c2,'Vector3d\[\]');
+% 				
+% 				int NField = (int)(movementTimeStepEnd/movementTimeStep);			// -1 for not last index, +1 for initial position and velocity
+% 			double[] posSave = new double[NSave*3];
+% 			double[] velSave = new double[NSave*3];
+% 			for(int ii=0; ii<NSave; ii++) {
+% 				posSave[ii] 		= ball.posSave[ii].x; 	velSave[ii] 		= ball.velSave[ii].x;
+% 				posSave[ii+NSave] 	= ball.posSave[ii].y; 	velSave[ii+NSave] 	= ball.velSave[ii].y;
+% 				posSave[ii+2*NSave] = ball.posSave[ii].z; 	velSave[ii+2*NSave] = ball.velSave[ii].z;
+% 			}
+% 			
+% 				fprintf('\t\t\t%-50s%-80s\t%s\n',['int NField = (int)(movementTimeStepEnd/movementTimeStep);'], comment);
+% 				fprintf('\t\t\t%-50s%-80s\t%s\n',['for(int jj=0; jj<NField; jj++) {'], comment);
+% 				fprintf('\t\t\t%-50s%-80s\t%s\n',['double'], comment);
+% 				
+% 				fprintf('\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.x, obj.' n '.y, obj.' n '.z}, 3), ii);'], comment);
+% 				continue
+% 			end
 			% boolean
 			if hasstr(c2,'boolean ')
 				[n comment] = splitline(c2,'boolean');

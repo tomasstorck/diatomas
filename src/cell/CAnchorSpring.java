@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import NR.Vector3d;
 
 public class CAnchorSpring {
-	CBall ball;
+	CBall[] ballArray = new CBall[1];
 	Vector3d anchor;
 	double K;
 	double restLength;
@@ -16,7 +16,7 @@ public class CAnchorSpring {
 	///////////////////////////////////////////////////////////////////
 	
 	public CAnchorSpring(CBall ball) {		// Note that siblingArray is not assigned here
-		this.ball = ball;
+		this.ballArray[0] = ball;
 		anchor = new Vector3d(ball.pos.x, 0, ball.pos.z);
 		K = CModel.Kan*CModel.nBallInit[ball.cell.type];
 		restLength = Math.max(ball.pos.y,ball.radius*1.01);			// Whatever is largest: distance ball-floor or radius plus a little push
@@ -36,7 +36,7 @@ public class CAnchorSpring {
 			count += (CModel.anchorSpringArray.remove(this.siblingArray[ii]))?1:0;
 		}
 		
-		this.ball.cell.anchorSpringArray = new CAnchorSpring[0];
+		this.ballArray[0].cell.anchorSpringArray = new CAnchorSpring[0];
 		
 		return count;
 	}

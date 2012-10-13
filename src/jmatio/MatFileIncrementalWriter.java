@@ -82,7 +82,8 @@ public class MatFileIncrementalWriter
      * @throws IOException
      * @throws DataFormatException
      */
-    public MatFileIncrementalWriter(File file) throws IOException
+    @SuppressWarnings("resource")
+	public MatFileIncrementalWriter(File file) throws IOException
     {
         this( (new FileOutputStream(file)).getChannel());
     }

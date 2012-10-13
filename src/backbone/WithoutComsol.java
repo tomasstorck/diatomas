@@ -7,6 +7,7 @@ import NR.Vector3d;
 import cell.*;
 
 import random.rand;
+@SuppressWarnings("unused")
 
 public class WithoutComsol {
 
@@ -17,6 +18,7 @@ public class WithoutComsol {
 //		setting.POVScale = 1;
 		/////
 		CModel.randomSeed = 4;		// Results in 7 rods, 8 spheres
+//		CModel.cellType = new int[]{1,3};
 //		// Cristian
 //		CModel.Kan = 2e7;
 //		CModel.Kc = 4e7;
@@ -26,7 +28,7 @@ public class WithoutComsol {
 //		CModel.Ks = 2e7;
 //		CModel.Kw = 2e7;
 		/////
-//		CModel.Kr *= 0.01;
+		CModel.Kr *= 0.01;
 		/////
 		
 		// Initialise random seed
