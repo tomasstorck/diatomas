@@ -48,7 +48,6 @@ public class CModel {
 	public static int NAcidDiss = 4; 					// Number of acid dissociation reactions
 	public static int NInitCell = 15;					// Initial number of cells
 	public static int[] cellType = {1, 5};				// Cell types used by default
-//	public static double[] aspect	= {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};	// Aspect ratio of cells
 	public static double[] aspect	= {0.0, 0.0, 4.0, 2.0, 5.0, 3.0};	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 	// Ball properties
 	public static double[] nCellInit = {2.42e-19*rhoX, 1.55e-17*rhoX, 1.70e-18*rhoX, 2.62e-17*rhoX, 1.70e-18*rhoX, 2.62e-17*rhoX};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
@@ -74,7 +73,7 @@ public class CModel {
 	//							type 0					type 1					type 2					type 3					type 4					type 5
 	// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
 	public static double[] SMX = {		7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
-	public static double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						// [microM] FIXME
+	public static double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						//
 	public static double[] qMax = {		0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
 	public static String[] rateEquation = {
 			Double.toString(qMax[0]) + "*(c3*d3^4)/(K0+c3*d3^4)",		// type==0
@@ -190,6 +189,48 @@ public class CModel {
 					if(Math.abs(diff.length()) - touchFactor*(ball.radius+ball2.radius) < 0) {
 						collisionCell.add(ball.cell);
 						collisionCell.add(ball2.cell);
+					}
+				}
+			}
+		}
+		return collisionCell;
+	}
+	
+	public static ArrayList<CCell> DetectCellCollision_Proper(double touchFactor) {
+		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
+		
+		int NCell = cellArray.size();
+		for(int ii=0; ii<NCell; ii++) {
+			CCell cell0 = cellArray.get(ii);
+			for(int jj=ii+1; jj<NCell; jj++) {
+				CCell cell1 = cellArray.get(jj);
+				double R2 = cell0.ballArray[0].radius + cell1.ballArray[0].radius; 
+				if(cell0.type < 2 && cell1.type < 2) {
+					double dist = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos).length();
+					if(dist<R2*touchFactor) {
+						collisionCell.add(cell0); 
+						collisionCell.add(cell1);
+					}
+				} else {
+					double H2;
+					Vector3d diff = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos);;
+					if(cell0.type > 1 && cell1.type > 1) {
+						H2 = aspect[cell0.type]*2.0*cell0.ballArray[0].radius + aspect[cell1.type]*2.0*cell1.ballArray[0].radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
+					} else {
+						CCell rod;
+						if(cell0.type<2) {
+							rod=cell1;
+						} else {
+							rod=cell0;
+						}
+						H2 = aspect[rod.type]*2.0*rod.ballArray[0].radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+					}
+					if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
+						double dist = diff.length();
+						if(dist<R2*touchFactor)	{
+							collisionCell.add(cell0); 
+							collisionCell.add(cell1);
+						}
 					}
 				}
 			}
@@ -727,16 +768,16 @@ public class CModel {
 		int newCell=0;
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
-			CCell mother = cellArray.get(iCell);
+			CCell cell = cellArray.get(iCell);
 			// Obtain mol increase based on flux
-			double molIn = mother.q * mother.GetAmount() * growthTimeStep * SMX[mother.type];
+			double molIn = cell.q * cell.GetAmount() * growthTimeStep * SMX[cell.type];
 			// Grow mother cell
-			double newMass = mother.GetAmount()+molIn;
-			mother.SetAmount(newMass);
+			double newAmount = cell.GetAmount()+molIn;
+			cell.SetAmount(newAmount);
 			// divide mother cell if ready 
-			if(mother.GetAmount()>newMass) {
+			if(newAmount>nCellMax[cell.type]) {
 				newCell++;
-				GrowCell(mother);
+				GrowCell(cell);
 			}
 		}
 		return newCell;
@@ -1083,7 +1124,7 @@ public class CModel {
 		//							type 0					type 1					type 2					type 3					type 4					type 5
 		// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
 		mlModel.setField("SMX",                           new MLDouble(null, SMX, SMX.length));                                           	// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
-		mlModel.setField("K",                             new MLDouble(null, K, K.length));                                               	// [microM] FIXME
+		mlModel.setField("K",                             new MLDouble(null, K, K.length));                                               	// 
 		mlModel.setField("qMax",                          new MLDouble(null, qMax, qMax.length));                                         	// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
 		mlModel.setField("rateEquation",                  new MLChar(null, rateEquation));                                                	
 		// 	 pH calculations

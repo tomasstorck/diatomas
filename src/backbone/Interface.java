@@ -46,17 +46,18 @@ public class Interface{
 				return;
 			}
 			//
-			if(arg.equalsIgnoreCase("anchoring"))			{CModel.anchoring = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			if(arg.equalsIgnoreCase("anchoring") || arg.equalsIgnoreCase("anchor"))
+															{CModel.anchoring = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("comsol")) 				{Assistant.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("echocommand")) 		{Assistant.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
-			if(arg.equalsIgnoreCase("filament")) 			{CModel.filament = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
-			if(arg.equalsIgnoreCase("gravity")) 			{CModel.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
-			if(arg.equalsIgnoreCase("plot")) 				{Assistant.plot = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("plotintermediate")) 	{Assistant.plotIntermediate = (Integer.parseInt(args[ii+1])==1)?true:false;	continue;}
+			if(arg.equalsIgnoreCase("filament")) 			{CModel.filament = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("gravity")) 			{CModel.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
+			if(arg.equalsIgnoreCase("plot")) 				{Assistant.plot = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
+			if(arg.equalsIgnoreCase("plotintermediate")) 	{Assistant.plotIntermediate = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
-			if(arg.equalsIgnoreCase("postplot")) 			{Assistant.postPlot = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			if(arg.equalsIgnoreCase("postplot")) 			{Assistant.postPlot = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("start"))				{Assistant.start = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("sticking")) 			{CModel.sticking = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			if(arg.equalsIgnoreCase("sticking")) 			{CModel.sticking = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("load")){
 				CModel.Write("Loading " + args[ii], "iter");

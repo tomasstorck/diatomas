@@ -13,6 +13,8 @@ import com.comsol.util.exceptions.FlException;
 public class Comsol {
 	Model model;				// The COMSOL model
 	
+	final double dimensionFactor = 0.75;
+	
 	int NSphere = 0;
 	int NRod = 0;
 	ArrayList<String> cellList = new ArrayList<String>();   
@@ -50,7 +52,7 @@ public class Comsol {
 	    // Create mesh
 	    model.mesh().create("mesh1", "geom1");
 	    model.mesh("mesh1").automatic(true);
-		model.mesh("mesh1").autoMeshSize(7);		// 4 == fine, 5 == normal, 7 == coarser		
+		model.mesh("mesh1").autoMeshSize(8);		// 4 == fine, 5 == normal, 7 == coarser		
 		model.mesh("mesh1").run();	
 		
 		// Define physics
@@ -109,6 +111,7 @@ public class Comsol {
 
 	    // Create alternative solver (direct, PARDISO, fully coupled, 25 iterations allowed, adjusted tolerance)
 	    model.sol().create("sol1");
+	    model.sol("sol1").clearSolution();												// Added to make sure previous stuff is cleared
 	    model.sol("sol1").study("std1");
 	    model.sol("sol1").attach("std1");
 	    model.sol("sol1").feature().create("st1", "StudyStep");
@@ -130,7 +133,7 @@ public class Comsol {
 		// Pure geometry
 		String name = "sph" + Integer.toString(cell.Index());
 	    model.geom("geom1").feature().create(name, "Sphere");
-	    model.geom("geom1").feature(name).set("r", Double.toString(cell.ballArray[0].radius*0.9));			// FIXME Note radiusFactor
+	    model.geom("geom1").feature(name).set("r", Double.toString(cell.ballArray[0].radius*dimensionFactor));
 	    model.geom("geom1").feature(name).set("createselection", "on");		// Allows us to add something by selection name
 	    model.geom("geom1").feature(name).set("pos", new String[]{Double.toString(cell.ballArray[0].pos.x), Double.toString(cell.ballArray[0].pos.y), Double.toString(cell.ballArray[0].pos.z)});
 
@@ -149,7 +152,7 @@ public class Comsol {
 	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z)}});
 	    pointName = "pt" + Integer.toString(3*cell.Index()+2);
 	    model.geom("geom1").feature().create(pointName, "Point");
-	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z+cell.ballArray[0].radius*0.9)}});
+	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z+cell.ballArray[0].radius*dimensionFactor)}});
 	    
 	    // Create WP
 	    String wpName = "wp" + Integer.toString(cell.Index());
@@ -164,15 +167,15 @@ public class Comsol {
 	    
 	    // Create rectangle in WP
 	    String rectName = "rect" + Integer.toString(cell.Index());
-	    double cellWidth = (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).length() + 2*cell.ballArray[0].radius*0.9;
+	    double cellWidth = ( (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).length() + 2*cell.ballArray[0].radius )*dimensionFactor;
 	    model.geom("geom1").feature(wpName).geom().feature()
 	         .create(rectName, "Rectangle");
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
 	         .setIndex("size", Double.toString(cellWidth), 0);
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
-	         .setIndex("size", Double.toString(cell.ballArray[0].radius*0.9), 1);			// We're revolving --> half the actual height
+	         .setIndex("size", Double.toString(cell.ballArray[0].radius*dimensionFactor), 1);			// We're revolving --> half the actual height
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
-	         .setIndex("pos", Double.toString(-cell.ballArray[0].radius*0.9), 0);			// Move the cell on the x axis, so that the centre of the ball is aligned with the origin 
+	         .setIndex("pos", Double.toString(-cell.ballArray[0].radius*dimensionFactor), 0);			// Move the cell on the x axis, so that the centre of the ball is aligned with the origin 
 
 	    // Fillet the rectangle
 	    String filName = "fil" + Integer.toString(cell.Index());
@@ -181,7 +184,7 @@ public class Comsol {
 	    model.geom("geom1").feature(wpName).geom().feature(filName)
 	         .selection("point").set(rectName + "(1)", new int[]{3, 4});
 	    model.geom("geom1").feature(wpName).geom().feature(filName)
-	         .set("radius", Double.toString(cell.ballArray[0].radius*0.9));
+	         .set("radius", Double.toString(cell.ballArray[0].radius*dimensionFactor));
 
 	    // Revolve WP around X axis
 	    String name = "rod" + Integer.toString(cell.Index());

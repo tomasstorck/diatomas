@@ -1,4 +1,6 @@
-POVScale = 1;
+function Render
+
+POVScale = 2;
 
 if POVScale == 1
 	textscale = 0.7;
@@ -12,8 +14,8 @@ else
 	LPOV = [60,60,60];
 end
 
-% location = uigetdir;
-location = '/home/tomas/documenten/modelling/diatomas/default';
+location = uigetdir;
+% location = '/home/tomas/documenten/modelling/diatomas/default';
 
 % Make output folder if it doesn't exist already
 if ~exist([location filesep 'image']) %#ok<EXIST>
@@ -21,8 +23,12 @@ if ~exist([location filesep 'image']) %#ok<EXIST>
 end
 
 loadFileNameList = dir([location filesep 'output' filesep '*.mat']);
-for loadFileName = {loadFileNameList.name}
-	load([location filesep 'output' filesep loadFileName{1}]);
+loadFileNameList = {loadFileNameList.name};
+
+for iFile=length(loadFileNameList):-1:1
+	loadFileName = loadFileNameList{iFile};
+	fprintf([loadFileName '\n']);
+	load([location filesep 'output' filesep loadFileName]);
 	NSave = length(model.ballArray(1).posSave);
 	for ii=0:NSave
 		povName = [location sprintf('/output/pov_g%04dm%04d_%02d.pov', model.growthIter, model.movementIter, ii)];
@@ -38,18 +44,18 @@ for loadFileName = {loadFileNameList.name}
 		end
 		
 		% Create camera, background and lighting based on L
-		fprintf(fid,'#declare Lx = %f;',LPOV(1));
-		fprintf(fid,'#declare Ly = %f;',LPOV(2));
-		fprintf(fid,'#declare Lz = %f;\n',LPOV(3));
+		fprintf(fid,'#declare Lx = %f;\n',LPOV(1));
+		fprintf(fid,'#declare Ly = %f;\n',LPOV(2));
+		fprintf(fid,'#declare Lz = %f;\n\n',LPOV(3));
 		fprintf(fid,['camera {\n',...
 			'\tlocation <-1*Lx, 0.9*Ly,-1.0*Lz>\n',...
 			'\tlook_at  <Lx/2, 0, Lz/2>\n',...
 			'\tangle 50\n',...
-			'}\n']);
-		fprintf(fid,'background { color rgb <1, 1, 1> }\n');
-		fprintf(fid,'light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }');
-		fprintf(fid,'light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }');
+			'}\n\n']);
+		fprintf(fid,'background { color rgb <1, 1, 1> }\n\n');
 		fprintf(fid,'light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }\n');
+		fprintf(fid,'light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }\n');
+		fprintf(fid,'light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }\n\n');
 		
 		% Create plane
 		fprintf(fid,['union {\n',...
@@ -65,7 +71,7 @@ for loadFileName = {loadFileNameList.name}
 			'\t\t\t\tdiffuse .6\n',...
 			'\t\t\t}\n',...
 			'\t\t}\n',...
-			'\t}\n']);
+			'\t}\n\n']);
 		
 		% Include text, calibrated for tomas_persp_3D_java.pov
 		fprintf(fid,['text {\n',...
@@ -83,12 +89,12 @@ for loadFileName = {loadFileNameList.name}
 			sprintf('\ttranslate <%f,%f,%f>\n', pos2(1), pos2(2), pos2(3)),...
 			'\trotate <15,45,0>\n',...
 			'\tno_shadow',...
-			'}\n']);
+			'}\n\n']);
 		
 		% Build spheres and rods
 		for iCell=1:length(model.cellArray)
 			cell = model.cellArray(iCell);
-			fprintf(fid,['// Cell no. ' num2str(iCell)]);
+			fprintf(fid,['// Cell no. ' num2str(iCell-1) '\n']);
 			if cell.type<2
 				% Spherical cell
 				ball = model.ballArray(cell.ballArray(1));
@@ -111,7 +117,7 @@ for loadFileName = {loadFileNameList.name}
 					'\t\t\tdiffuse .6\n',...
 					'\t\t}\n',...
 					'\t}\n',...
-					'}\n']);
+					'}\n\n']);
 			elseif cell.type>1	% Rod
 				ball = model.ballArray(cell.ballArray(1));
 				ballNext = model.ballArray(cell.ballArray(2));
@@ -172,7 +178,7 @@ for loadFileName = {loadFileNameList.name}
 					'\t\t\tdiffuse .6\n',...
 					'\t\t}\n',...
 					'\t}\n',...
-					'}\n']);
+					'}\n\n']);
 			end
 		end
 		
@@ -180,7 +186,7 @@ for loadFileName = {loadFileNameList.name}
 		for iFil = 1:length(model.filSpringArray)
 			pFil = model.filSpringArray(iFil);
 			for springType = 1:2;
-				fprintf(fid,['// Filament spring no. ' num2str(iFil)]);
+				fprintf(fid,['// Filament spring no. ' num2str(iFil-1) '\n']);
 				if springType==0		% Set specific things for small spring and big spring
 					colour(1) = 0; colour(2) = 0; colour(3) = 1;		% Big spring is blue
 					ball 	= model.ballArray(pFil.big_ballArray(1));
@@ -211,13 +217,13 @@ for loadFileName = {loadFileNameList.name}
 					'\t\t\tdiffuse .6\n',...
 					'\t\t}\n',...
 					'\t}\n',...
-					'}\n']);
+					'}\n\n']);
 			end
 		end
 		
 		% Build stick spring array
 		for iStick = 1:length(model.stickSpringArray)
-			fprintf(fid,['// Sticking spring no. ' num2str(iStick)]);
+			fprintf(fid,['// Sticking spring no. ' num2str(iStick-1) '\n']);
 			pSpring = model.stickSpringArray(iStick);
 			ball = model.ballArray(pSpring.ballArray(1));
 			ballNext = model.ballArray(pSpring.ballArray(2));
@@ -242,49 +248,57 @@ for loadFileName = {loadFileNameList.name}
 				'\t\t\tdiffuse .6\n',...
 				'\t\t}\n',...
 				'\t}\n',...
-				'}\n']);
+				'}\n\n']);
 		end
 		
 		%Build anchor spring array
 		for iAnchor = 1:length(model.anchorSpringArray)
-			fprintf(fid,['// Anchor spring no. ' num2str(iAnchor)]);
+			fprintf(fid,['// Anchor spring no. ' num2str(iAnchor-1) '\n']);
 			pSpring = model.anchorSpringArray(iAnchor);
-			ball = pSpring.ball;
-			
-			if plotIntermediate
-				position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6);
-			else
-				position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.pos(1)*1e6, ball.pos(2)*1e6, ball.pos(3)*1e6);
-			end
-			if ~all(pSpring.anchor==ball.pos)
-				fprintf(fid,['cylinder\n',...
-					'{\n',...
-					position,...
-					sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', pSpring.anchor(1)*1e6, pSpring.anchor(2)*1e6, pSpring.anchor(3)*1e6),...
-					sprintf('\t%10.3f\n', ball.radius*1e5),...	% 1e5 because it is a spring
-					'\ttexture{\n',...
-					'\t\tpigment{\n',...
-					sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', 1.0, 1.0, 0.0),...		%Anchoring springs are yellow
-					'\t\t}\n',...
-					'\t\tfinish{\n',...
-					'\t\t\tambient .2\n',...
-					'\t\t\tdiffuse .6\n',...
-					'\t\t}\n',...
-					'\t}\n',...
-					'}\n']);
+			if isfield(pSpring,'ballArray')						% Workaround for old bug in saving
+				ball = model.ballArray(pSpring.ballArray(1));
+				if plotIntermediate
+					position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6);
+				else
+					position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.pos(1)*1e6, ball.pos(2)*1e6, ball.pos(3)*1e6);
+				end
+				if ~all(pSpring.anchor==ball.pos)
+					fprintf(fid,['cylinder\n',...
+						'{\n',...
+						position,...
+						sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', pSpring.anchor(1)*1e6, pSpring.anchor(2)*1e6, pSpring.anchor(3)*1e6),...
+						sprintf('\t%10.3f\n', ball.radius*1e5),...	% 1e5 because it is a spring
+						'\ttexture{\n',...
+						'\t\tpigment{\n',...
+						sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', 1.0, 1.0, 0.0),...		%Anchoring springs are yellow
+						'\t\t}\n',...
+						'\t\tfinish{\n',...
+						'\t\t\tambient .2\n',...
+						'\t\t\tdiffuse .6\n',...
+						'\t\t}\n',...
+						'\t}\n',...
+						'}\n\n']);
+				end
 			end
 		end
 		
 		% Finalise the file
 		fprintf(fid,['\ttranslate <0,0,0>\n',...
 			'\trotate <0,0,0>\n']);
-		fprintf(fid,'}\n');						% Yes, we actually need this bracket
+		fprintf(fid,'}\n\n');						% Yes, we actually need this bracket
 		fclose(fid);
 		
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 		
 		imageName = sprintf('pov_g%04dm%04d_%02d', model.growthIter, model.movementIter, ii);
-		input = ['povray ' povName ' +W1024 +H768 +O../' location '/image/' imageName ' +A -J'];
-		system(['cd ' location ' ; ' input ' ; rm ' povName  ' ; cd ..']);
+		systemInput = ['povray ' povName ' +W1024 +H768 +O' location '/image/' imageName ' +A -J'];
+		if(exist([location '/image/' imageName '.png'])) && ~exist('keepgoing') %#ok<EXIST>
+			R = input(['File already found, continue? (n/N for no): ' imageName '\n'],'s');
+			if(any([R=='n',R=='N']))
+				return;
+			end
+			keepgoing = true; %#ok<NASGU>
+		end
+		[~,~] = system(['cd ' location ' ; ' systemInput ' ; rm ' povName ' ; cd ..']);
 	end
 end
