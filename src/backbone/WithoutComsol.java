@@ -143,7 +143,7 @@ public class WithoutComsol {
 			CModel.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + CModel.anchorSpringArray.size(), "iter");
 			CModel.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + CModel.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = CModel.DetectCellCollision_Proper(1.0);
-			overlapCellArray.addAll(CModel.DetectCellCollision_Simple(1.0));
+//			overlapCellArray.addAll(CModel.DetectCellCollision_Simple(1.0));
 			if(!overlapCellArray.isEmpty()) {
 				CModel.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
 				String cellNumber = "" + overlapCellArray.get(0).Index();

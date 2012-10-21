@@ -37,6 +37,7 @@ public class Interface{
 				System.out.println("  Comsol:");
 				System.out.println("comsol \t\t\t Enable or disable the use of COMSOL. Enable: use backbone file WithComsol.java, otherwise use WithoutComsol.java");
 				System.out.println("port [comsol server port]\t\t\t\t Use port [comsol server port] to start COMSOL server");
+				System.out.println("64bit \t\t\t Enable (use 64 bit) or disable (use 32 bit) the use of a 32 bit architecture (can eliminate memory issues, can cause memory leak)");
 				
 				System.out.println("  Other:");
 				System.out.println("start \t\t\t Starts the model automatically after looping through the arguments, or not");
@@ -46,12 +47,15 @@ public class Interface{
 				return;
 			}
 			//
+			if(arg.equalsIgnoreCase("64bit") || arg.equalsIgnoreCase("bit64")) 
+															{Assistant.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("anchoring") || arg.equalsIgnoreCase("anchor"))
 															{CModel.anchoring = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("comsol")) 				{Assistant.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("echocommand")) 		{Assistant.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("filament")) 			{CModel.filament = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("gravity")) 			{CModel.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
+			if(arg.equalsIgnoreCase("gravityz")) 			{CModel.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("plot")) 				{Assistant.plot = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("plotintermediate")) 	{Assistant.plotIntermediate = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}

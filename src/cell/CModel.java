@@ -23,6 +23,7 @@ public class CModel {
 	public static boolean anchoring = false;
 	public static boolean filament = false;
 	public static boolean gravity = false;
+	public static boolean gravityZ = false;
 	// Spring constants
 	public static double Kc 	= 2e7;					// collision (per ball)
 	public static double Kw 	= 1e7;					// wall spring (per ball)
@@ -523,9 +524,11 @@ public class CModel {
 			}
 			// Gravity and buoyancy
 			if(gravity) {
-				if(y>r*1.1) {			// Only if not already at the floor plus a tiny bit 
-					ball.force.y += G * ((rhoX-rhoWater)/rhoWater) * ball.n*MWX ;  //let the ball fall. Note that G is negative 
-				}	
+				if(gravityZ) {
+					ball.force.z += G * ((rhoX-rhoWater)/rhoWater) * ball.n*MWX;
+				} else if(y>r*1.1) {			// Only if not already at the floor plus a tiny bit 
+					ball.force.y += G * ((rhoX-rhoWater)/rhoWater) * ball.n*MWX;  //let the ball fall. Note that G is negative 
+				}
 			}
 			
 			// Velocity damping

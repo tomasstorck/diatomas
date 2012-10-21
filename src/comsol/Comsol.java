@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import NR.Vector3d;
 import cell.*;
 import com.comsol.model.*;
 import com.comsol.model.util.*;
 import com.comsol.util.exceptions.FlException;
-
 
 public class Comsol {
 	Model model;				// The COMSOL model
@@ -19,6 +19,9 @@ public class Comsol {
 	int NRod = 0;
 	ArrayList<String> cellList = new ArrayList<String>();   
 	
+	// Settings for model
+	static int meshSize = 8;
+	
 	public Comsol() {}
 	
 	//////////////////////////////////
@@ -26,13 +29,15 @@ public class Comsol {
 	public void Initialise() throws FlException {
 		// Create model, initialise geometry, mesh, study and physics
 		ModelUtil.initStandalone(false);
+		ModelUtil.showProgress(false);								// enabling this causes COMSOL to run something SWT/graphical --> crash
+		ModelUtil.showProgress(CModel.name + "/logfile_comsol.txt");
 		model = ModelUtil.create("Model");
 	    model.modelPath("/home/tomas/Desktop");
 	    model.modelNode().create("mod1");
 	    model.geom().create("geom1", 3);
 	    	    
 	    // Make list with parameters
-	    for(int ii=0; ii<CModel.NXComp; ii++) {		// Set acid dissociation constants, Ka[]
+	    for(int ii=0; ii<CModel.NXComp; ii++) {		// Set Monod constants, K[]
 	    	model.param().set("K" + Integer.toString(ii), Double.toString(CModel.K[ii]));
 	    }
 	    for(int ii=0; ii<CModel.NAcidDiss; ii++) {		// Set acid dissociation constants, Ka[]
@@ -52,7 +57,7 @@ public class Comsol {
 	    // Create mesh
 	    model.mesh().create("mesh1", "geom1");
 	    model.mesh("mesh1").automatic(true);
-		model.mesh("mesh1").autoMeshSize(8);		// 4 == fine, 5 == normal, 7 == coarser		
+		model.mesh("mesh1").autoMeshSize(meshSize);		// 4 == fine, 5 == normal, 7 == coarser, 9 == extremely coarse (max)
 		model.mesh("mesh1").run();	
 		
 		// Define physics
@@ -129,7 +134,7 @@ public class Comsol {
 	    model.sol("sol1").feature("s1").feature("fc1").set("maxiter", "25");			// Set maximum iterations to 25 (default)
     }
 	
-	public void CreateSphere(CCell cell) {
+	public void CreateSphere(CCell cell) throws FlException {
 		// Pure geometry
 		String name = "sph" + Integer.toString(cell.Index());
 	    model.geom("geom1").feature().create(name, "Sphere");
@@ -142,17 +147,21 @@ public class Comsol {
 	    cellList.add(name);
 	}
 	
-	public void CreateRod(CCell cell) {
+	public void CreateRod(CCell cell) throws FlException {
 		// Create points for constructing WP
 		String pointName = "pt" + Integer.toString(3*cell.Index());
+		double cellHT = ( (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).length() + 2.0*cell.ballArray[0].radius )*dimensionFactor;		// HT = Head-Tail
+		Vector3d pos0 = cell.ballArray[0].pos.plus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
+		Vector3d pos1 = cell.ballArray[1].pos.minus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
+		
 	    model.geom("geom1").feature().create(pointName, "Point");
-	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[0].pos.x)},{Double.toString(cell.ballArray[0].pos.y)},{Double.toString(cell.ballArray[0].pos.z)}});
+	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(pos0.x)},{Double.toString(pos0.y)},{Double.toString(pos0.z)}});
 	    pointName = "pt" + Integer.toString(3*cell.Index()+1);
 	    model.geom("geom1").feature().create(pointName, "Point");
-	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z)}});
+	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(pos1.x)},{Double.toString(pos1.y)},{Double.toString(pos1.z)}});
 	    pointName = "pt" + Integer.toString(3*cell.Index()+2);
 	    model.geom("geom1").feature().create(pointName, "Point");
-	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(cell.ballArray[1].pos.x)},{Double.toString(cell.ballArray[1].pos.y)},{Double.toString(cell.ballArray[1].pos.z+cell.ballArray[0].radius*dimensionFactor)}});
+	    model.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(pos1.x)},{Double.toString(pos1.y)},{Double.toString(pos1.z+cell.ballArray[0].radius*dimensionFactor)}});
 	    
 	    // Create WP
 	    String wpName = "wp" + Integer.toString(cell.Index());
@@ -167,11 +176,10 @@ public class Comsol {
 	    
 	    // Create rectangle in WP
 	    String rectName = "rect" + Integer.toString(cell.Index());
-	    double cellWidth = ( (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).length() + 2*cell.ballArray[0].radius )*dimensionFactor;
 	    model.geom("geom1").feature(wpName).geom().feature()
 	         .create(rectName, "Rectangle");
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
-	         .setIndex("size", Double.toString(cellWidth), 0);
+	         .setIndex("size", Double.toString(cellHT), 0);
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
 	         .setIndex("size", Double.toString(cell.ballArray[0].radius*dimensionFactor), 1);			// We're revolving --> half the actual height
 	    model.geom("geom1").feature(wpName).geom().feature(rectName)
@@ -201,7 +209,7 @@ public class Comsol {
 	    cellList.add(name);
 	}
 	
-	public void CreateBCBox() {
+	public void CreateBCBox() throws FlException {
 		double BCMultiplier = 3.0;
 		
 	    model.geom("geom1").feature().create("blk1", "Block");
@@ -258,13 +266,13 @@ public class Comsol {
 //	    model.geom("geom1").run("dif1");
 	}
 	
-	public void BuildGeometry() {
+	public void BuildGeometry() throws FlException {
 		model.geom("geom1").run();
 	}
 	
 	//////////////////////////////////
 	
-	public void SetFlux(CCell cell) {
+	public void SetFlux(CCell cell) throws FlException {
 //		double[] rate = cell.GetRate();
 		String name;
 		String flName;
@@ -288,11 +296,11 @@ public class Comsol {
 	
 	//////////////////////////////////
 
-	public double GetParameter(CCell cell, String parameter) {
+	public double GetParameter(CCell cell, String parameter) throws FlException {
 		return GetParameter(cell, parameter, parameter);
 	}
 	
-	public double GetParameter(CCell cell, String parameter, String name) {
+	public double GetParameter(CCell cell, String parameter, String name) throws FlException {
 		String avName = "av" + Integer.toString(cell.Index()) + "_" + name;											// e.g. av0_c0
 		String cellName = (cell.type<2 ? "sph" : "rod") + cell.Index();							// We named it either sphere or rod + the cell's number  
 		model.result().numerical().create(avName,"AvSurface");										// Determine the average surface value...
@@ -303,8 +311,43 @@ public class Comsol {
 	
 	//////////////////////////////////
 	
-	public void Run() {
-		model.sol("sol1").runAll();
+	public void Run(){																			// Includes detailed error handling using try/catch
+		boolean solved = false;
+		while(!solved) {
+			try {
+				model.sol("sol1").runAll();			
+				// No problems? Continue then
+				solved = true;
+			} catch(FlException E) {
+				String message = E.toString();
+				if(message.contains("Out of memory LU factorization")) {
+					CModel.Write("\tOut of memory during LU factorisation","warning");
+					if(meshSize<9) {
+						CModel.Write("\tIncreasing mesh size by 1 to " + ++meshSize + " and re-running", "iter");
+						model.mesh("mesh1").autoMeshSize(meshSize);	// Add 1 to meshSize, enter that value		
+						model.mesh("mesh1").run();					// Run mesh again
+						continue;									// Try solving again
+					} else {
+						CModel.Write("\tCannot increase mesh size any further", "warning");
+					}
+				} else if(message.contains("Failed to respect boundary element edge on geometry face")) {
+					CModel.Write("\tBoundary element edge meshing problem","warning");
+					if(meshSize>1) {
+						CModel.Write("Decreasing mesh size by 1 to " + --meshSize + " and re-running", "iter");
+						model.mesh("mesh1").autoMeshSize(meshSize);	// Add 1 to meshSize, enter that value		
+						model.mesh("mesh1").run();						// Run mesh again
+						continue;
+					} else {
+						CModel.Write("\tCannot increase mesh size any further", "warning");
+					}
+				}
+				// If we're still here, throw error
+				CModel.Write(message,"");
+				CModel.Write("Don't know how to deal with error above, exiting", "error");
+				throw new FlException("Don't know how to deal with error above, exiting");
+			}
+		}
+				
 	}
 	
 	public void Save() throws IOException {

@@ -2,6 +2,8 @@ package comsol;
 
 import interactor.Interactor;
 
+import backbone.Assistant;
+
 import com.comsol.model.util.ModelUtil;
 
 
@@ -9,7 +11,8 @@ public class Server {
 //	public static boolean started;
 	
 	public static void Start(int port) throws Exception {
-		Interactor.executeCommand("comsol -32 -3drend sw server -user tomas -port " + port, false, false);		// Can't waitForFinish, process remains open
+		String architecture = (Assistant.bit64) ? "-64 " : "-32 "; 
+		Interactor.executeCommand("comsol " + architecture + " -3drend sw server -np 1 -user tomas -port " + port, false, false);		// Can't waitForFinish, process remains open
 	}
 	
 	public static void Stop(boolean waitForFinish) throws Exception{											// Note that this is a scary function
