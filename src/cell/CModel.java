@@ -1363,13 +1363,15 @@ public class CModel {
 	///////////////////
 	// POV-Ray stuff //
 	///////////////////
-	public static void POV_Write(boolean plotIntermediate) {
-		int NSave;
-		if(plotIntermediate) 	NSave = ballArray.get(0).posSave.length;
-		else					NSave = 0;
-		plotIntermediate = false;		// Don't plot intermediate values for now, will revert later.
+	public static void POVWrite(boolean plotIntermediate) {
+		double ambient = 0.8;
+		double diffuse = 0.4;
 		
 		//////////////////////////////
+
+		int NSave;
+		if(Assistant.plotIntermediate) 	NSave = ballArray.get(0).posSave.length;
+		else							NSave = 0;
 		
 		double textscale;
 		Vector3d pos1;
@@ -1430,8 +1432,8 @@ public class CModel {
 				    "\t\t\t\tcolor rgb <0.2, 0.2, 0.2>\n" +
 				    "\t\t\t}\n" +
 				    "\t\t\tfinish {\n" +
-				    "\t\t\t\tambient .2\n" +
-				    "\t\t\t\tdiffuse .6\n" +
+				    "\t\t\t\tambient " + Double.toString(ambient) + "\n" +
+				    "\t\t\t\tdiffuse " + Double.toString(diffuse) + "\n" +
 				    "\t\t\t}\n" +       
 				    "\t\t}\n" +
 				    "\t}\n");
@@ -1473,8 +1475,8 @@ public class CModel {
 									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
 									"\t\t}\n" +
 									"\t\tfinish{\n" +
-									"\t\t\tambient .2\n" +
-									"\t\t\tdiffuse .6\n" +
+									"\t\t\tambient " + Double.toString(ambient) + "\n" +
+									"\t\t\tdiffuse " + Double.toString(diffuse) + "\n" +
 									"\t\t}\n" +
 									"\t}\n" +
 									"}\n");}
@@ -1495,8 +1497,8 @@ public class CModel {
 									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
 									"\t\t}\n" +
 									"\t\tfinish{\n" +
-									"\t\t\tambient .2\n" +
-									"\t\t\tdiffuse .6\n" +
+									"\t\t\tambient " + Double.toString(ambient) + "\n" +
+									"\t\t\tdiffuse " + Double.toString(diffuse) + "\n" +
 									"\t\t}\n" +
 									"\t}\n" +
 									"}\n" +
@@ -1511,8 +1513,8 @@ public class CModel {
 									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
 									"\t\t}\n" +
 									"\t\tfinish{\n" +
-									"\t\t\tambient .2\n" +
-									"\t\t\tdiffuse .6\n" +
+									"\t\t\tambient " + Double.toString(ambient) + "\n" +
+									"\t\t\tdiffuse " + Double.toString(diffuse) + "\n" +
 									"\t\t}\n" +
 									"\t}\n" +
 									"}\n"+
@@ -1527,8 +1529,8 @@ public class CModel {
 									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", cell.colour[0], cell.colour[1], cell.colour[2]) +
 									"\t\t}\n" +
 									"\t\tfinish{\n" +
-									"\t\t\tambient .2\n" +
-									"\t\t\tdiffuse .6\n" +
+									"\t\t\tambient " + Double.toString(ambient) + "\n" +
+									"\t\t\tdiffuse " + Double.toString(diffuse) + "\n" +
 									"\t\t}\n" +
 									"\t}\n" +
 									"}\n");
@@ -1566,8 +1568,8 @@ public class CModel {
 									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", colour[0], colour[1], colour[2]) +
 									"\t\t}\n" +
 									"\t\tfinish{\n" +
-									"\t\t\tambient .2\n" +
-									"\t\t\tdiffuse .6\n" +
+									"\t\t\tambient " + Double.toString(ambient) + "\n" +
+									"\t\t\tdiffuse " + Double.toString(diffuse) + "\n" +
 									"\t\t}\n" +
 									"\t}\n" +
 									"}\n");
@@ -1594,8 +1596,8 @@ public class CModel {
 								String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 0.0, 1.0, 0.0) +		//Sticking springs are green
 								"\t\t}\n" +
 								"\t\tfinish{\n" +
-								"\t\t\tambient .2\n" +
-								"\t\t\tdiffuse .6\n" +
+								"\t\t\tambient " + Double.toString(ambient) + "\n" +
+								"\t\t\tdiffuse " + Double.toString(diffuse) + "\n" +
 								"\t\t}\n" +
 								"\t}\n" +
 								"}\n");
@@ -1620,8 +1622,8 @@ public class CModel {
 									String.format("\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n", 1.0, 1.0, 0.0) +		//Anchoring springs are yellow
 									"\t\t}\n" +
 									"\t\tfinish{\n" +
-									"\t\t\tambient .2\n" +
-									"\t\t\tdiffuse .6\n" +
+									"\t\t\tambient " + Double.toString(ambient) + "\n" +
+									"\t\t\tdiffuse " + Double.toString(diffuse) + "\n" +
 									"\t\t}\n" +
 									"\t}\n" +
 									"}\n");
@@ -1642,7 +1644,7 @@ public class CModel {
 		
 	}
 	
-	public static void POV_Plot(boolean plotIntermediate) throws Exception {
+	public static void POVPlot(boolean plotIntermediate) throws Exception {
 //		if(growthIter<16) return;
 		if(!(new File(name + "/image")).exists()) {
 			new File(name + "/image").mkdir();
@@ -1654,7 +1656,8 @@ public class CModel {
 			String imageName = String.format("pov_g%04dm%04d_%02d", growthIter, movementIter, ii);
 			String povName = String.format("pov_g%04dm%04d_%02d.pov", growthIter, movementIter, ii);
 			String input = "povray ./output/" + povName + " +W1024 +H768 +O../" + name + "/image/" + imageName + " +A -J";
-			Interactor.executeCommand("cd " + name + " ; " + input + " ; rm ./output/" + povName + " ; cd ..", Assistant.waitForFinish,Assistant.echoCommand);
+			Interactor.executeCommand("cd " + name + " ; " + input + " ; cd ..", Assistant.waitForFinish,Assistant.echoCommand);
+			if(!Assistant.keepPOV) 		Interactor.executeCommand("cd " + name + " ; rm ./output/" + povName + " ; cd ..", Assistant.waitForFinish,Assistant.echoCommand);
 		}
 	}
 }

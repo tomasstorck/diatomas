@@ -29,6 +29,7 @@ public class Interface{
 				System.out.println("plot \t\t\t Enable or disable plotting");
 				System.out.println("plotIntermediate \t\t Enable or disable plotting of intermediate movement steps");
 				System.out.println("postPlot \t\t\t Runs or does not run a postPlot after starting the model. Can be combined with *IntermediatePlot. Be sure to disable start if you just want to postPlot");
+				System.out.println("keepPOV \t\t\t Do not remove .pov file after plotting");
 				
 				System.out.println("  OS communication");
 				System.out.println("waitForFinish || disableWaitForFinish\t When calling command line arguments from the model, waits for them to finish running or continues with the model");
@@ -56,6 +57,7 @@ public class Interface{
 			if(arg.equalsIgnoreCase("filament")) 			{CModel.filament = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("gravity")) 			{CModel.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("gravityz")) 			{CModel.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("keeppov"))				{Assistant.keepPOV = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("plot")) 				{Assistant.plot = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("plotintermediate")) 	{Assistant.plotIntermediate = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
@@ -100,8 +102,8 @@ public class Interface{
 				CModel.Load(name + "/output/" + fileName);			// Note that not included variables will still be defined as default, could lead to issues
 				// Fix name if it was run from another folder
 				CModel.name = name;
-				CModel.POV_Write(Assistant.plotIntermediate);
-				CModel.POV_Plot(Assistant.plotIntermediate);	
+				CModel.POVWrite(Assistant.plotIntermediate);
+				CModel.POVPlot(Assistant.plotIntermediate);	
 			}
 		}
 	}

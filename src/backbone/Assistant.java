@@ -8,6 +8,7 @@ public class Assistant {
 	public static boolean postPlot = false;
 	public static boolean plotIntermediate = true;
 	public static int POVScale = 2;
+	public static boolean keepPOV = false;
 	// Linux interactor
 	public static boolean waitForFinish = true;
 	public static boolean echoCommand = false;

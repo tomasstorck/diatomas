@@ -337,9 +337,15 @@ public class Comsol {
 						model.mesh("mesh1").autoMeshSize(meshSize);	// Add 1 to meshSize, enter that value		
 						model.mesh("mesh1").run();						// Run mesh again
 						continue;
-					} else {
-						CModel.Write("\tCannot increase mesh size any further", "warning");
-					}
+					} else 		CModel.Write("\tCannot increase mesh size any further", "warning");
+				} else if(message.contains("Mean operator requires an adjacent domain of higher dimension")) {
+					CModel.Write("\tMean operator domain size problem","warning");
+					if(meshSize>1) {
+						CModel.Write("Decreasing mesh size by 1 to " + --meshSize + " and re-running", "iter");
+						model.mesh("mesh1").autoMeshSize(meshSize);	// Add 1 to meshSize, enter that value		
+						model.mesh("mesh1").run();						// Run mesh again
+						continue;
+					} else 		CModel.Write("\tCannot increase mesh size any further", "warning");
 				}
 				// If we're still here, throw error
 				CModel.Write(message,"");

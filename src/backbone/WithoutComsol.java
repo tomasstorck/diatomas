@@ -157,8 +157,8 @@ public class WithoutComsol {
 			// Plot
 			if(Assistant.plot) {
 				CModel.Write("Writing and rendering POV files","iter");
-				CModel.POV_Write(Assistant.plotIntermediate);
-				CModel.POV_Plot(Assistant.plotIntermediate); 
+				CModel.POVWrite(Assistant.plotIntermediate);
+				CModel.POVPlot(Assistant.plotIntermediate); 
 			}
 			
 			// And finally: save stuff
