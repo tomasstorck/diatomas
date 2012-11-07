@@ -57,11 +57,7 @@ public class Interface{
 			if(arg.equalsIgnoreCase("filament")) 			{CModel.filament = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("gravity")) 			{CModel.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("gravityz")) 			{CModel.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("keeppov"))				{Assistant.keepPOV = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("plot")) 				{Assistant.plot = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
-			if(arg.equalsIgnoreCase("plotintermediate")) 	{Assistant.plotIntermediate = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
-			if(arg.equalsIgnoreCase("postplot")) 			{Assistant.postPlot = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("start"))				{Assistant.start = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("sticking")) 			{CModel.sticking = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
@@ -82,29 +78,6 @@ public class Interface{
 			System.out.println();
 			if(Assistant.withComsol) 				WithComsol.Run();
 			else									WithoutComsol.Run();
-		}
-		// Render POV things
-		if(Assistant.postPlot) {
-			// Open directory
-			String name = CModel.name;
-			File dir = new File(name + "/output/");
-			// Construct filter
-			FilenameFilter filter = new FilenameFilter() {
-			    public boolean accept(File dir, String name) {
-			    	return name.endsWith(".mat");
-			    }
-			};
-			// List filtered files
-			String[] files = dir.list(filter);
-			if(files==null) throw new Exception("No files found in directory " + name + "/output/");
-			for(String fileName : files) { 
-				CModel.Write("Loading " + fileName,"",true);
-				CModel.Load(name + "/output/" + fileName);			// Note that not included variables will still be defined as default, could lead to issues
-				// Fix name if it was run from another folder
-				CModel.name = name;
-				CModel.POVWrite(Assistant.plotIntermediate);
-				CModel.POVPlot(Assistant.plotIntermediate);	
-			}
 		}
 	}
 }

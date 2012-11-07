@@ -192,13 +192,6 @@ public class WithComsol {
 				overlap = false;
 			}
 
-			// Plot
-			if(Assistant.plot) {
-				CModel.Write("Writing and rendering POV files","iter");
-				CModel.POVWrite(Assistant.plotIntermediate);
-				CModel.POVPlot(Assistant.plotIntermediate); 
-			}
-
 			// And finally: save stuff
 			CModel.Write("Saving model as .mat file", "iter");
 			CModel.Save();
