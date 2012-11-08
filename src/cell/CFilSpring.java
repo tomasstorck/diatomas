@@ -1,8 +1,11 @@
 package cell;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class CFilSpring {
+public class CFilSpring implements Serializable {
+	private static final long serialVersionUID = 1L;
+	//
 	// We work with two "virtual" springs here big_ and small_:
 	CBall[] big_ballArray 	= new CBall[2];
 	double big_K;

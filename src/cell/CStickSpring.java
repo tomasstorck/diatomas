@@ -1,8 +1,11 @@
 package cell;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class CStickSpring {
+public class CStickSpring implements Serializable {
+	private static final long serialVersionUID = 1L;
+	//
 	CBall[] ballArray = new CBall[2];
 //	int[] ballArrayIndex = new int[2];
 	double K;

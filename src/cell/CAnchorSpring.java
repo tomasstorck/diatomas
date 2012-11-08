@@ -1,10 +1,13 @@
 package cell;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import NR.Vector3d;
 
-public class CAnchorSpring {
+public class CAnchorSpring implements Serializable {
+	private static final long serialVersionUID = 1L;
+	//
 	CBall[] ballArray = new CBall[1];
 	Vector3d anchor;
 	double K;

@@ -2,9 +2,12 @@ package cell;
 
 import interactor.Interactor;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -15,7 +18,9 @@ import random.rand;
 import jmatio.*;
 import NR.*;
 
-public class CModel {
+public class CModel implements Serializable {
+	// Set serializable information
+	private static final long serialVersionUID = 1L;
 	// Model properties
 	public static String name = "default";
 	public static int randomSeed = 1;
@@ -942,6 +947,7 @@ public class CModel {
 	////////////////////////////////////////////
 	// Saving, loading things, reconstructing //
 	////////////////////////////////////////////
+	
 	
 	public static void Save() {
 		MLStructure mlModel = new MLStructure("model", new int[] {1,1});

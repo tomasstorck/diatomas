@@ -1,12 +1,15 @@
 package cell;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import NR.Vector3d;
 
 import random.rand;
 
-public class CCell {
+public class CCell implements Serializable {
+	private static final long serialVersionUID = 1L;
+	//
 	public int type;
 	public boolean filament;
 	public double[] colour = 	new double[3];

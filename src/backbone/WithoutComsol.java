@@ -1,5 +1,10 @@
 package backbone;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import NR.Vector3d;
@@ -154,9 +159,34 @@ public class WithoutComsol {
 				overlap = false;
 			}
 
-			// And finally: save stuff
-			CModel.Write("Saving model as .mat file", "iter");
-			CModel.Save();
+//			// And finally: save stuff
+//			CModel.Write("Saving model as .mat file", "iter");
+//			FileOutputStream fos = null;
+//			ObjectOutputStream oos = null;
+//			try {
+//				fos = new FileOutputStream("/home/tomas/Desktop/test.txt");
+//				oos = new ObjectOutputStream(fos);
+//				oos.writeObject(CModel.ballArray);
+//				oos.close();
+//			} catch (IOException ex) {
+//				ex.printStackTrace();
+//			}
+			
+			// Load stuff just to play around
+			FileInputStream fis = null;
+			ObjectInputStream ois = null;
+			try {
+				fis = new FileInputStream("/home/tomas/Desktop/test.txt");
+				ois = new ObjectInputStream(fis);
+				ArrayList<CBall> ball2 = (ArrayList<CBall>) ois.readObject();
+				ois.close();
+				System.out.println(ball2.get(0).pos.x); 
+				System.out.println(CModel.ballArray.get(0).pos.x);
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			} catch (ClassNotFoundException ex) {
+				ex.printStackTrace();
+			}
 		}
 	}
 }

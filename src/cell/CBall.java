@@ -1,10 +1,13 @@
 package cell;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import NR.Vector3d;
 
-public class CBall {
+public class CBall implements Serializable {
+	private static final long serialVersionUID = 1L;
+	//
 	public double n;		// [mol] Chemical amount 
 	public 	double radius;
 	public Vector3d pos;

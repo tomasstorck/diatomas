@@ -2,9 +2,12 @@
 
 package cell;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class CRodSpring {
+public class CRodSpring implements Serializable {
+	private static final long serialVersionUID = 1L;
+	//
 	CBall[] ballArray = new CBall[2];
 	double K;
 	double restLength;
