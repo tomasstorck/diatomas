@@ -23,34 +23,38 @@ public class CCell implements Serializable {
 //	public int index;
 //	public int[] ballArrayIndex;
 	// CFD stuff
-	public double q;													// [mol reactions (CmolX * s)-1]	
+	public double q;													// [mol reactions (CmolX * s)-1]
+	// Pointer stuff
+	public CModel model;
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public CCell(int type, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, double[] colour) {
+	public CCell(int type, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, double[] colour, CModel model) {
+		this.model = model;
 		this.type = type;
 		this.filament = filament;
 		this.colour = colour;
 		
-		CModel.cellArray.add(this);				// Add it here so we can use cell.Index()
+		model.cellArray.add(this);				// Add it here so we can use cell.Index()
 		
 		if(type<2) { // Leaves ballArray and springArray, and mother
-			ballArray[0] = new CBall(base0x, base0y, base0z, CModel.nCellInit[type],   0, this);
+			ballArray[0] = new CBall(base0x, base0y, base0z, model.nCellInit[type],   0, this);
 		} else {
 			ballArray = 	new CBall[2];		// Reinitialise ballArray to contain 2 balls
 			springArray = new CRodSpring[1];	// Reinitialise springArray to contain a spring
-			new CBall(base0x, base0y, base0z, CModel.nCellInit[type]/2.0, 0, this);		// Constructor adds it to the array
-			new CBall(base1x, base1y, base1z, CModel.nCellInit[type]/2.0, 1, this);		// Constructor adds it to the array
+			new CBall(base0x, base0y, base0z, model.nCellInit[type]/2.0, 0, this);		// Constructor adds it to the array
+			new CBall(base1x, base1y, base1z, model.nCellInit[type]/2.0, 1, this);		// Constructor adds it to the array
 			new CRodSpring(ballArray[0],ballArray[1]);								// Constructor adds it to the array
 		}
 	}
 	
-	public CCell(int type, double n, double base0x, double base0y, double base0z, boolean filament, double[] colour) {
+	public CCell(int type, double n, double base0x, double base0y, double base0z, boolean filament, double[] colour, CModel model) {
+		this.model = model;
 		this.type = type;
 		this.filament = filament;
 		this.colour = colour;
 		
-		CModel.cellArray.add(this);				// Add it here so we can use cell.Index()
+		model.cellArray.add(this);				// Add it here so we can use cell.Index()
 		
 		if(type<2) { // Leaves ballArray and springArray, and mother
 			new CBall(base0x, base0y, base0z, n,   0, this);
@@ -65,9 +69,9 @@ public class CCell implements Serializable {
 			
 			double distance;
 			if(type<4) {
-				distance = ballArray[0].radius * CModel.aspect[type]*2.0;										// type == 2||3 is fixed ball-ball distance
+				distance = ballArray[0].radius * model.aspect[type]*2.0;										// type == 2||3 is fixed ball-ball distance
 			} else {
-				distance = ballArray[0].radius * CModel.aspect[type]*2.0 * ballArray[0].n/CModel.nCellMax[type];		// type == 4||5 is variable ball-ball distance
+				distance = ballArray[0].radius * model.aspect[type]*2.0 * ballArray[0].n/model.nCellMax[type];		// type == 4||5 is variable ball-ball distance
 			}
 			double base1x = base0x + direction.x * distance;
 			double base1y = base0y + direction.y * distance;
@@ -83,7 +87,7 @@ public class CCell implements Serializable {
 	/////////////////////////////////////////////////////////
 	
 	public int Index() {
-		ArrayList<CCell> array = CModel.cellArray;
+		ArrayList<CCell> array = model.cellArray;
 		for(int index=0; index<array.size(); index++) {
 			if(array.get(index).equals(this))	return index;
 		}
@@ -181,7 +185,7 @@ public class CCell implements Serializable {
 	
 	public ArrayList<CCell> StickCellArray() {			// Currently used only for loading. Using the maintained stickCellArray field is much more CPU efficient.
 		ArrayList<CCell> stickCellArray = new ArrayList<CCell>(1);
-		for(CStickSpring spring : CModel.stickSpringArray) {
+		for(CStickSpring spring : model.stickSpringArray) {
 			CCell cell0 = spring.ballArray[0].cell;
 			CCell cell1 = spring.ballArray[1].cell;
 			if(this.equals(cell0) && !stickCellArray.contains(cell1)) {		// 2nd if argument makes sure we don't get duplicates (this'll happen when we encounter siblings)

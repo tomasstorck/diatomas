@@ -16,8 +16,9 @@ public class CStickSpring implements Serializable {
 	///////////////////////////////////////////////////////////////////
 
 	public CStickSpring(CBall ball0, CBall ball1){			// Note that siblingArray is by default not initialised
-		K = CModel.Ks * (CModel.nBallInit[ball0.cell.type]+CModel.nBallInit[ball1.cell.type])/2.0;
-		restLength = ball0.radius*Math.max(2.0, CModel.aspect[ball0.cell.type]) + ball1.radius*Math.max(2.0, CModel.aspect[ball1.cell.type]);
+		CModel model = ball0.cell.model;
+		K = model.Ks * (model.nBallInit[ball0.cell.type]+model.nBallInit[ball1.cell.type])/2.0;
+		restLength = ball0.radius*Math.max(2.0, model.aspect[ball0.cell.type]) + ball1.radius*Math.max(2.0, model.aspect[ball1.cell.type]);
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
 		// Set the siblingArray size
@@ -28,12 +29,13 @@ public class CStickSpring implements Serializable {
 			
 		siblingArray = new CStickSpring[NSibling];
 		// Add this sticking spring to the model
-		CModel.stickSpringArray.add(this);
+		model.stickSpringArray.add(this);
 	}
 	
 	public CStickSpring() {}								// Empty constructor for model loading. Note that the stickSpring is not automatically added to the array
 	
 	public int UnStick() {									// Also removes siblings
+		CModel model = this.ballArray[0].cell.model;
 		int count = 0;
 		CCell cell0 = ballArray[0].cell;
 		CCell cell1 = ballArray[1].cell;
@@ -43,11 +45,11 @@ public class CStickSpring implements Serializable {
 		// from cell's AND model's stickSpringArray
 		cell0.stickSpringArray.remove(this);
 		cell1.stickSpringArray.remove(this);
-		count += (CModel.stickSpringArray.remove(this))?1:0;// Add one to counter if successfully removed
+		count += (model.stickSpringArray.remove(this))?1:0;// Add one to counter if successfully removed
 		for(CStickSpring sibling : siblingArray) {
 			cell0.stickSpringArray.remove(sibling);
 			cell1.stickSpringArray.remove(sibling);
-			count += (CModel.stickSpringArray.remove(sibling))?1:0;
+			count += (model.stickSpringArray.remove(sibling))?1:0;
 		}
 		
 		return count;
@@ -63,7 +65,8 @@ public class CStickSpring implements Serializable {
 	}
 	
 	public int Index() {
-		ArrayList<CStickSpring> array = CModel.stickSpringArray;
+		CModel model = this.ballArray[0].cell.model;
+		ArrayList<CStickSpring> array = model.stickSpringArray;
 		for(int index=0; index<array.size(); index++) {
 			if(array.equals(this))	return index;
 		}

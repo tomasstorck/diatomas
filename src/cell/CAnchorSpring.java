@@ -19,12 +19,13 @@ public class CAnchorSpring implements Serializable {
 	///////////////////////////////////////////////////////////////////
 	
 	public CAnchorSpring(CBall ball) {		// Note that siblingArray is not assigned here
+		CModel model = ball.cell.model;
 		this.ballArray[0] = ball;
 		anchor = new Vector3d(ball.pos.x, 0, ball.pos.z);
-		K = CModel.Kan*CModel.nBallInit[ball.cell.type];
+		K = model.Kan*model.nBallInit[ball.cell.type];
 		restLength = Math.max(ball.pos.y,ball.radius*1.01);			// Whatever is largest: distance ball-floor or radius plus a little push
 		
-		CModel.anchorSpringArray.add(this);
+		model.anchorSpringArray.add(this);
 		// CAnchorSpring is added to the cell from where this function is called 
 	}
 	
@@ -33,10 +34,11 @@ public class CAnchorSpring implements Serializable {
 	/////////////////////
 	
 	public int UnAnchor() {
+		CModel model = this.ballArray[0].cell.model;
 		int count = 0;
-		count += (CModel.anchorSpringArray.remove(this))?1:0;
+		count += (model.anchorSpringArray.remove(this))?1:0;
 		for(int ii=0; ii<siblingArray.length; ii++) {
-			count += (CModel.anchorSpringArray.remove(this.siblingArray[ii]))?1:0;
+			count += (model.anchorSpringArray.remove(this.siblingArray[ii]))?1:0;
 		}
 		
 		this.ballArray[0].cell.anchorSpringArray = new CAnchorSpring[0];
@@ -47,7 +49,8 @@ public class CAnchorSpring implements Serializable {
 	//////////////////////
 	
 	public int Index() {
-		ArrayList<CAnchorSpring> array = CModel.anchorSpringArray;
+		CModel model = this.ballArray[0].cell.model;
+		ArrayList<CAnchorSpring> array = model.anchorSpringArray;
 		for(int index=0; index<array.size(); index++) {
 			if(array.equals(this))	return index;
 		}

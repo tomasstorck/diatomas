@@ -58,8 +58,8 @@ public class Odeint<Stepper extends StepperBase> {
 			if(s.hdid==s.h) {						// Did we succeed? Mark that down.
 				++nok;
 				// What else do we want to do after a successful step --> model specific! Remove this if solver applied to other model
-				if(CModel.anchoring) 	CModel.AnchorUnAnchor();
-				if(CModel.sticking)		CModel.StickUnStick();
+//				if(model.anchoring) 	model.AnchorUnAnchor();
+//				if(model.sticking)		model.StickUnStick();
 			} else {
 				++nbad;
 			}

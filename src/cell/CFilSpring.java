@@ -17,16 +17,17 @@ public class CFilSpring implements Serializable {
 	///////////////////////////////////////////////////////////////////
 	
 	public CFilSpring(CCell parent, CCell daughter) {
+		CModel model = this.big_ballArray[0].cell.model;
 		small_ballArray	= new CBall[]{daughter.ballArray[0],parent.ballArray[1]};
-		small_K = CModel.Kf*(CModel.nBallInit[parent.type] + CModel.nBallInit[daughter.type])/2.0;
+		small_K = model.Kf*(model.nBallInit[parent.type] + model.nBallInit[daughter.type])/2.0;
 		this.ResetSmall();
 		
 		big_ballArray	= new CBall[]{daughter.ballArray[1],parent.ballArray[0]};
-		big_K = CModel.Kf*(CModel.nBallInit[parent.type] + CModel.nBallInit[daughter.type])/2.0;
+		big_K = model.Kf*(model.nBallInit[parent.type] + model.nBallInit[daughter.type])/2.0;
 		this.ResetBig();		// Set restLength for big springs
 		
 		// Add to filSpringArray
-		CModel.filSpringArray.add(this);
+		model.filSpringArray.add(this);
 	}
 
 	public CFilSpring() {}		// Empty constructor for loading. Doesn't add to filSpringArray!
@@ -46,7 +47,8 @@ public class CFilSpring implements Serializable {
 	}
 	
 	public int Index() {
-		ArrayList<CFilSpring> array = CModel.filSpringArray;
+		CModel model = this.big_ballArray[0].cell.model;
+		ArrayList<CFilSpring> array = model.filSpringArray;
 		for(int index=0; index<array.size(); index++) {
 			if(array.equals(this))	return index;
 		}

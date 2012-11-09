@@ -10,6 +10,8 @@ public class Interface{
 	public static void main(String[] args) throws Exception{
 		System.out.println("DIATOMAS Java model");
 
+		CModel model = new CModel("default");
+		
 		int NArg = args.length;
 		for(int ii=0; ii<NArg; ii+=2) {
 			String arg = args[ii];
@@ -51,22 +53,22 @@ public class Interface{
 			if(arg.equalsIgnoreCase("64bit") || arg.equalsIgnoreCase("bit64")) 
 															{Assistant.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("anchoring") || arg.equalsIgnoreCase("anchor"))
-															{CModel.anchoring = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+															{model.anchoring = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("comsol")) 				{Assistant.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("echocommand")) 		{Assistant.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
-			if(arg.equalsIgnoreCase("filament")) 			{CModel.filament = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("gravity")) 			{CModel.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
-			if(arg.equalsIgnoreCase("gravityz")) 			{CModel.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("filament")) 			{model.filament = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("gravity")) 			{model.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
+			if(arg.equalsIgnoreCase("gravityz")) 			{model.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
 			if(arg.equalsIgnoreCase("start"))				{Assistant.start = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("sticking")) 			{CModel.sticking = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("sticking")) 			{model.sticking = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("load")){
-				CModel.Write("Loading " + args[ii], "iter");
-				CModel.Load(args[ii+1]);
+				model.Write("Loading " + args[ii], "iter");
+				model.Load(args[ii+1]);
 				continue;}
 			// If not any of the above, it must be the name
-			CModel.name=arg;
+			model.name=arg;
 			ii--;				// subtract 1 from ii because we don't want to ignore the argument after this name
 		}
 		
@@ -76,8 +78,8 @@ public class Interface{
 			System.out.print("Loading w/ arguments: ");
 			for(int jj=0; jj<args.length; jj++) 	System.out.print(args[jj] + " ");
 			System.out.println();
-			if(Assistant.withComsol) 				WithComsol.Run();
-			else									WithoutComsol.Run();
+			if(Assistant.withComsol) 				WithComsol.Run(model);
+			else									WithoutComsol.Run(model);
 		}
 	}
 }
