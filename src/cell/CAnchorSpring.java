@@ -8,11 +8,11 @@ import NR.Vector3d;
 public class CAnchorSpring implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
-	CBall[] ballArray = new CBall[1];
-	Vector3d anchor;
-	double K;
-	double restLength;
-	CAnchorSpring[] siblingArray = new CAnchorSpring[0];
+	public CBall[] ballArray = new CBall[1];
+	public Vector3d anchor;
+	public double K;
+	public double restLength;
+	public CAnchorSpring[] siblingArray = new CAnchorSpring[0];
 	
 //	int anchorArrayIndex;					// Would need to be maintained while UnAnchoring, too much work
 	

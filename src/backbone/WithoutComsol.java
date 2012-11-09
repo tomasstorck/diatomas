@@ -162,32 +162,7 @@ public class WithoutComsol {
 
 			// And finally: save stuff
 			model.Write("Saving model as .mat file", "iter");
-			FileOutputStream fos = null;
-			ObjectOutputStream oos = null;
-			try {
-				fos = new FileOutputStream("/home/tomas/Desktop/test.txt");
-				oos = new ObjectOutputStream(fos);
-				oos.writeObject(model);
-				oos.close();
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
-			
-			// Load stuff just to play around
-			FileInputStream fis = null;
-			ObjectInputStream ois = null;
-			try {
-				fis = new FileInputStream("/home/tomas/Desktop/test.txt");
-				ois = new ObjectInputStream(fis);
-				CModel model2 = (CModel) ois.readObject();
-				ois.close();
-				System.out.println(model2.ballArray.get(1).cell.type); 
-				System.out.println(model.ballArray.get(1).cell.type);
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			} catch (ClassNotFoundException ex) {
-				ex.printStackTrace();
-			}
+			model.Save();
 		}
 	}
 }

@@ -8,9 +8,9 @@ import java.util.ArrayList;
 public class CRodSpring implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
-	CBall[] ballArray = new CBall[2];
-	double K;
-	double restLength;
+	public CBall[] ballArray = new CBall[2];
+	public double K;
+	public double restLength;
 
 	///////////////////////////////////////////////////////////////////
 	

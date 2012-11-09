@@ -1,7 +1,13 @@
 package backbone;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
+import ser2mat.ser2mat;
 
 import cell.CModel;
 
@@ -44,7 +50,8 @@ public class Interface{
 				
 				System.out.println("  Other:");
 				System.out.println("start \t\t\t Starts the model automatically after looping through the arguments, or not");
-				System.out.println("load [path/filename.extension]\t Load the speficied file instead of the default parameters (buggy)");
+				System.out.println("load [path/filename.extension]\t Load the specified file instead of the default parameters. Automatically starts model after loading");
+				System.out.println("makemat [path] \t\t\t Converts all .ser files found in [path]/output/ to .mat files. Automatically inhibits model starting after loading");
 								
 				System.out.println("*\t\t\t\t Any unrecognised argument is assumed to be simulation the name");
 				return;
@@ -64,9 +71,34 @@ public class Interface{
 			if(arg.equalsIgnoreCase("sticking")) 			{model.sticking = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("load")){
-				model.Write("Loading " + args[ii], "iter");
-				model.Load(args[ii+1]);
+				String loadPath = args[ii+1];
+				model.Write("Loading " + loadPath, "");
+				model = Load(loadPath);
+				
+				Assistant.start = true;
 				continue;}
+			if(arg.equalsIgnoreCase("makemat")){
+				String modelPath = args[ii+1];
+				// Open directory
+				File dir = new File(modelPath + "/output/");
+				// Construct filter
+				FilenameFilter filter = new FilenameFilter() {
+				    public boolean accept(File dir, String name) {
+				    	return name.endsWith(".ser");
+				    }
+				};
+				// List filtered files
+				String[] files = dir.list(filter);
+				if(files==null) throw new Exception("No .ser files found in directory " + modelPath + "/output/");
+				for(String fileName : files) { 
+					model.Write("Loading " + fileName,"",true);
+					String loadPath = modelPath + "/output/" + fileName; 
+					model = Load(loadPath);
+					ser2mat.Convert(model);
+				}
+				
+				Assistant.start = false;
+			}
 			// If not any of the above, it must be the name
 			model.name=arg;
 			ii--;				// subtract 1 from ii because we don't want to ignore the argument after this name
@@ -75,11 +107,30 @@ public class Interface{
 		// Done analysing input arguments
 		// Start model if requested
 		if(Assistant.start) {
-			System.out.print("Loading w/ arguments: ");
+			System.out.print("Starting simulation '" + model.name + "' w/ arguments: ");
 			for(int jj=0; jj<args.length; jj++) 	System.out.print(args[jj] + " ");
 			System.out.println();
 			if(Assistant.withComsol) 				WithComsol.Run(model);
 			else									WithoutComsol.Run(model);
 		}
+	}
+	
+	public static CModel Load(String loadPath) {
+		FileInputStream fis = null;
+		ObjectInputStream ois = null;
+		CModel model = null;
+		
+		try {
+			fis = new FileInputStream(loadPath);
+			ois = new ObjectInputStream(fis);
+			model = (CModel) ois.readObject();
+			ois.close();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} catch (ClassNotFoundException ex) {
+			ex.printStackTrace();
+		}
+		
+		return model;
 	}
 }

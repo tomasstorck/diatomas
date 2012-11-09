@@ -6,12 +6,12 @@ import java.util.ArrayList;
 public class CStickSpring implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
-	CBall[] ballArray = new CBall[2];
+	public CBall[] ballArray = new CBall[2];
 //	int[] ballArrayIndex = new int[2];
-	double K;
-	double restLength;
-	CStickSpring[] siblingArray = new CStickSpring[0];
-	int NSibling;
+	public double K;
+	public double restLength;
+	public CStickSpring[] siblingArray = new CStickSpring[0];
+	public int NSibling;
 	
 	///////////////////////////////////////////////////////////////////
 

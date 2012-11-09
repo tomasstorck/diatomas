@@ -7,12 +7,12 @@ public class CFilSpring implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
 	// We work with two "virtual" springs here big_ and small_:
-	CBall[] big_ballArray 	= new CBall[2];
-	double big_K;
-	double big_restLength; 
-	CBall[] small_ballArray = new CBall[2];
-	double small_K;
-	double small_restLength;
+	public CBall[] big_ballArray 	= new CBall[2];
+	public double big_K;
+	public double big_restLength; 
+	public CBall[] small_ballArray = new CBall[2];
+	public double small_K;
+	public double small_restLength;
 	
 	///////////////////////////////////////////////////////////////////
 	
