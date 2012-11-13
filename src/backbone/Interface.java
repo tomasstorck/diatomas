@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import ser2mat.ser2mat;
 
@@ -32,12 +34,6 @@ public class Interface{
 				System.out.println("filament\t\t\t Enable or disable filial links between mother and daughter cells");
 				System.out.println("gravity\t\t\t Enable or disable gravity");
 				System.out.println("anchoring\t\t\t Enable or disable cell-substratum EPS links (anchoring springs)");
-				
-				System.out.println("  Plotting:");
-				System.out.println("plot \t\t\t Enable or disable plotting");
-				System.out.println("plotIntermediate \t\t Enable or disable plotting of intermediate movement steps");
-				System.out.println("postPlot \t\t\t Runs or does not run a postPlot after starting the model. Can be combined with *IntermediatePlot. Be sure to disable start if you just want to postPlot");
-				System.out.println("keepPOV \t\t\t Do not remove .pov file after plotting");
 				
 				System.out.println("  OS communication");
 				System.out.println("waitForFinish || disableWaitForFinish\t When calling command line arguments from the model, waits for them to finish running or continues with the model");
@@ -117,12 +113,14 @@ public class Interface{
 	
 	public static CModel Load(String loadPath) {
 		FileInputStream fis = null;
+		GZIPInputStream gz = null;
 		ObjectInputStream ois = null;
 		CModel model = null;
 		
 		try {
 			fis = new FileInputStream(loadPath);
-			ois = new ObjectInputStream(fis);
+			gz = new GZIPInputStream(fis);
+			ois = new ObjectInputStream(gz);
 			model = (CModel) ois.readObject();
 			ois.close();
 		} catch (IOException ex) {

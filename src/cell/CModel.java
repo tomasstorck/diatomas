@@ -14,6 +14,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.zip.GZIPOutputStream;
 
 import backbone.Assistant;
 import random.rand;
@@ -96,7 +97,7 @@ public class CModel implements Serializable {
 	//							0,			1,			2,			3
 	public double[] Ka = {		1.34e-5,	4.6e-7,		4.69e-11, 	1.61e-5};								// From Wikipedia 120811. CO2 and H2CO3 --> HCO3- + H+;
 	public String[] pHEquation = {																			// pH calculations
-			"c2+c4+c5+c7-c0", 
+			"c2+c4+2*c5+c7-c0",											// Has -2 charge 
 			"c2*c0/Ka0-c1", 
 			"d0-c1-c2", 
 			"c4*c0/Ka1-c3", 
@@ -954,10 +955,12 @@ public class CModel implements Serializable {
 	
 	public void Save() {
 		FileOutputStream fos = null;
+		GZIPOutputStream gz = null;
 		ObjectOutputStream oos = null;
 		try {
 			fos = new FileOutputStream(String.format("%s/output/g%04dm%04d.ser", name, growthIter, movementIter));
-			oos = new ObjectOutputStream(fos);
+			gz = new GZIPOutputStream(fos);
+			oos = new ObjectOutputStream(gz);
 			oos.writeObject(this);
 			oos.close();
 		} catch (IOException ex) {
