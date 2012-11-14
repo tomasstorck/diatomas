@@ -137,7 +137,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 			end
 			
 			% Operate on the line
-			% comment
+			% comment2
 			c2trim = strtrim(c2);
 			if length(c2trim)>2 && strcmp(c2trim(1:2),'//') && ~strcmp(c2trim(1:3),'///')
 % 				fprintf(fid2,['\t\t\t' c2trim '\n']);
@@ -179,26 +179,25 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.x, obj.' n '.y, obj.' n '.z}, 3), ii);'], comment);
 				continue
 			end
-% 			% Vector3d[]		//FIXME
-% 			if hasstr(c2,'Vector3d[] ')
-% 				[n comment] = splitline(c2,'Vector3d\[\]');
-% 				
-% 				int NField = (int)(movementTimeStepEnd/movementTimeStep);			// -1 for not last index, +1 for initial position and velocity
-% 			double[] posSave = new double[NSave*3];
-% 			double[] velSave = new double[NSave*3];
-% 			for(int ii=0; ii<NSave; ii++) {
-% 				posSave[ii] 		= ball.posSave[ii].x; 	velSave[ii] 		= ball.velSave[ii].x;
-% 				posSave[ii+NSave] 	= ball.posSave[ii].y; 	velSave[ii+NSave] 	= ball.velSave[ii].y;
-% 				posSave[ii+2*NSave] = ball.posSave[ii].z; 	velSave[ii+2*NSave] = ball.velSave[ii].z;
-% 			}
-% 			
-% 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['int NField = (int)(movementTimeStepEnd/movementTimeStep);'], comment);
-% 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['for(int jj=0; jj<NField; jj++) {'], comment);
-% 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['double'], comment);
-% 				
-% 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.x, obj.' n '.y, obj.' n '.z}, 3), ii);'], comment);
-% 				continue
-% 			end
+			% Vector3d[]
+			if hasstr(c2,'Vector3d[] ')
+				[n comment] = splitline(c2,'Vector3d\[\]');
+				fprintf(fid2,['\t\t\t//' n '\n']);
+				if ~isempty(comment)
+					fprintf(fid2,['\t\t' comment '\n']);
+				end
+				fprintf(fid2,['\t\t\t{int N2 = (int) obj.' n '.length;\n']);
+				fprintf(fid2,['\t\t\tdouble[][] ' n ' = new double[N2][3];\n']);
+				fprintf(fid2,['\t\t\tfor(int jj=0; jj<N2; jj++) {\n']);
+				fprintf(fid2,['\t\t\t\t' n '[jj][0] = obj.' n '[jj].x;\n']);
+				fprintf(fid2,['\t\t\t\t' n '[jj][1] = obj.' n '[jj].y;\n']);
+				fprintf(fid2,['\t\t\t\t' n '[jj][2] = obj.' n '[jj].z;\n']);
+				fprintf(fid2,['\t\t\t}\n']);
+				fprintf(fid2,'\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, ' n '));}']);
+% 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, obj.' n ', obj.' n '.length), ii);'],comment);
+% 				fprintf(fid2,'\t\t%-50s%-80s\n',['mlModel.setField("' n '",'],['new MLDouble(null, model.' n '));']);
+				continue
+			end
 			% boolean
 			if hasstr(c2,'boolean ')
 				[n comment] = splitline(c2,'boolean');

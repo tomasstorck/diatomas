@@ -100,6 +100,24 @@ public class ser2mat {
 			mlballArray.setField("pos",                       new MLDouble(null, new double[] {obj.pos.x, obj.pos.y, obj.pos.z}, 3), ii);     	
 			mlballArray.setField("vel",                       new MLDouble(null, new double[] {obj.vel.x, obj.vel.y, obj.vel.z}, 3), ii);     	
 			mlballArray.setField("force",                     new MLDouble(null, new double[] {obj.force.x, obj.force.y, obj.force.z}, 3), ii);	
+			//posSave
+			{int N2 = (int) obj.posSave.length;
+			double[][] posSave = new double[N2][3];
+			for(int jj=0; jj<N2; jj++) {
+				posSave[jj][0] = obj.posSave[jj].x;
+				posSave[jj][1] = obj.posSave[jj].y;
+				posSave[jj][2] = obj.posSave[jj].z;
+			}
+			mlballArray.setField("posSave",                   new MLDouble(null, posSave));}                                                  
+			//velSave
+			{int N2 = (int) obj.velSave.length;
+			double[][] velSave = new double[N2][3];
+			for(int jj=0; jj<N2; jj++) {
+				velSave[jj][0] = obj.velSave[jj].x;
+				velSave[jj][1] = obj.velSave[jj].y;
+				velSave[jj][2] = obj.velSave[jj].z;
+			}
+			mlballArray.setField("velSave",                   new MLDouble(null, velSave));}                                                  
 			mlballArray.setField("cellIndex",                 new MLDouble(null, new double[] {obj.cellIndex}, 1), ii);                       	
 		}
 		mlModel.setField("ballArray", mlballArray);
