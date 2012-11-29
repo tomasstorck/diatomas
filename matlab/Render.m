@@ -8,7 +8,7 @@ LPOV = [30,30,30];
 ambient = 0.8;
 diffuse = 0.4;
 
-keepPOV=false;
+keepPOV=true;
 
 if ~exist('location','var')
 	location = uigetdir;

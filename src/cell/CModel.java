@@ -110,16 +110,16 @@ public class CModel implements Serializable {
 	// 							ProT, 		CO2T,				AcT,				H2, 				CH4
 	//							0,    		1,   				2, 					3,   				4
  	public double[] BCConc = new double[]{
- 								13.50,		0.0, 				0.0,				0.0,				0.0	};			// [mol m-3]. equivalent to 1 [kg HPro m-3], neglecting Pro concentration
+ 								1.0,		0.0, 				0.0,				0.0,				0.0	};			// [mol m-3]. equivalent to 1 [kg HPro m-3], neglecting Pro concentration
 	public double[] D = new double[]{	
 								1.060e-9,	1.92e-9,			1.21e-9,			4.500e-9,			1.88e-9};		// [m2 s-1]. Diffusion mass transfer Cussler 2nd edition. Methane through Witherspoon 1965
 	public double[][] SMdiffusion = {
-							{	0.0,		-1.0,				0.0,				-4.0,				(1.0-SMX[0])*1.0},		// XComp == 0 (small sphere)
-							{	0.0,		-1.0,				0.0,				-4.0,				(1.0-SMX[1])*1.0},		// XComp == 1 (big sphere)
-							{	-1.0,		(1.0-SMX[2])*1.0,	(1.0-SMX[2])*1.0,	(1.0-SMX[2])*3.0,	0.0				},		// XComp == 2 (small rod, variable W)
-							{	-1.0,		(1.0-SMX[3])*1.0,	(1.0-SMX[3])*1.0,	(1.0-SMX[3])*3.0,	0.0				},		// XComp == 3 (big rod, variable W)
-							{	-1.0,		(1.0-SMX[4])*1.0,	(1.0-SMX[4])*1.0,	(1.0-SMX[4])*3.0,	0.0				},		// XComp == 4 (small rod, fixed W)
-							{	-1.0,		(1.0-SMX[5])*1.0,	(1.0-SMX[5])*1.0,	(1.0-SMX[5])*3.0,	0.0				}};		// XComp == 5 (big rod, fixed W);
+							{	0.0,		-1.0,				0.0,				-4.0,				1.0				},		// XComp == 0 (small sphere)
+							{	0.0,		-1.0,				0.0,				-4.0,				1.0				},		// XComp == 1 (big sphere)
+							{	-1.0,		1.0,				1.0,				3.0,				0.0				},		// XComp == 2 (small rod, variable W)
+							{	-1.0,		1.0,				1.0,				3.0,				0.0				},		// XComp == 3 (big rod, variable W)
+							{	-1.0,		1.0,				1.0,				3.0,				0.0				},		// XComp == 4 (small rod, fixed W)
+							{	-1.0,		1.0,				1.0,				3.0,				0.0				}};		// XComp == 5 (big rod, fixed W);
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
