@@ -26,7 +26,7 @@ public class CModel implements Serializable {
 	private final long serialVersionUID = 1L;
 	// Model properties
 	public String name = "default";
-	public int randomSeed = 1;
+	public int randomSeed = 5;					// Makes first 3 rods, then 3 spheres (I got lucky)
 	public boolean sticking = true;
 	public boolean anchoring = false;
 	public boolean filament = false;
@@ -49,13 +49,13 @@ public class CModel implements Serializable {
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
-	public Vector3d L 	= new Vector3d(60e-6, 15e-6, 60e-6);	// [m], Dimensions of domain
+	public Vector3d L 	= new Vector3d(20e-6, 5e-6, 20e-6);	// [m], Dimensions of domain
 	// Model biomass properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
 	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
-	public int NInitCell = 15;					// Initial number of cells
+	public int NInitCell = 6;					// Initial number of cells
 	public int[] cellType = {1, 5};				// Cell types used by default
 	public double[] aspect	= {0.0, 0.0, 4.0, 2.0, 5.0, 3.0};	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
 	// Ball properties

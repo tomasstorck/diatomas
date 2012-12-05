@@ -30,6 +30,7 @@ public class Interface{
 				System.out.println("help || --help || ? || /?\t\t Show this help text");
 				
 				System.out.println("  Model:");
+				System.out.println("seed\t\t\t Set random seed");
 				System.out.println("sticking\t\t\t Enable or disable cell-cell EPS links (sticking springs)");
 				System.out.println("filament\t\t\t Enable or disable filial links between mother and daughter cells");
 				System.out.println("gravity\t\t\t Enable or disable gravity");
@@ -63,6 +64,7 @@ public class Interface{
 			if(arg.equalsIgnoreCase("gravity")) 			{model.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("gravityz")) 			{model.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
+			if(arg.equalsIgnoreCase("seed")) 				{model.randomSeed = Integer.parseInt(args[ii+1]);									continue;}
 			if(arg.equalsIgnoreCase("start"))				{Assistant.start = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("sticking")) 			{model.sticking = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}

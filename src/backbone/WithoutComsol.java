@@ -19,7 +19,6 @@ public class WithoutComsol {
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
 		/////
-		model.randomSeed = 4;		// Results in 7 rods, 8 spheres
 //		model.cellType = new int[]{1,3};
 //		// Cristian
 //		model.Kan = 2e7;
@@ -36,21 +35,19 @@ public class WithoutComsol {
 
 		// Create cells
 		double[][] colour = new double[][]{
-				{0.3,0.3,0.3},
-				{0.3,0.3,1.0},
-				{0.3,1.0,0.3},
-				{0.3,1.0,1.0},
-				{1.0,0.3,0.3},
-				{1.0,0.3,1.0},
-				{1.0,1.0,0.3},
-				{1.0,1.0,1.0},
-				{0.1,0.1,0.1},
+				{1.0,0.7,0.7},
+				{0.1,1.0,0.1},
 				{0.1,0.1,0.4},
-				{0.1,0.4,0.1},
-				{0.1,0.4,0.4},
-				{0.4,0.1,0.1},
+				{1.0,1.0,0.7},
+				{0.1,1.0,1.0},
 				{0.4,0.1,0.4},
-				{0.4,0.4,0.1}};
+				{0.4,0.1,0.1},
+				{0.4,1.0,0.4},
+				{0.1,0.1,1.0},
+				{0.4,0.4,0.1},
+				{0.4,1.0,1.0},
+				{1.0,0.1,1.0}};
+				
 		if(model.growthIter==0 && model.movementIter==0) {
 			// Create initial cells, not overlapping
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
@@ -58,9 +55,9 @@ public class WithoutComsol {
 				double n = model.nCellInit[type]+(model.nCellMax[type]-model.nCellInit[type])*rand.Double();
 				CCell cell = new CCell(type, 						// Type of biomass
 						n,											// Initial cell mass is random between initial and max
-						(0.2*(rand.Double()+0.4))*model.L.x, 		// Anywhere between 0.4*Lx and 0.6*Lx
-						(0.2*(rand.Double()+0.4))*model.L.y, 		// Anywhere between 0.4*Ly and 0.6*Ly
-						(0.2*(rand.Double()+0.4))*model.L.z,		// Anywhere between 0.4*Lz and 0.6*Lz
+						(0.2*rand.Double()+0.4)*model.L.x, 			// Anywhere between 0.4*Lx and 0.6*Lx
+						(0.2*rand.Double()+0.4)*model.L.y, 			// Anywhere between 0.4*Ly and 0.6*Ly
+						(0.2*rand.Double()+0.4)*model.L.z,			// Anywhere between 0.4*Lz and 0.6*Lz
 						model.filament,								// With filament?
 						colour[iCell],
 						model);
