@@ -16,22 +16,32 @@ public class CFilSpring implements Serializable {
 	
 	///////////////////////////////////////////////////////////////////
 	
-	public CFilSpring(CCell parent, CCell daughter) {
-		CModel model = this.big_ballArray[0].cell.model;
-		small_ballArray	= new CBall[]{daughter.ballArray[0],parent.ballArray[1]};
-		small_K = model.Kf*(model.nBallInit[parent.type] + model.nBallInit[daughter.type])/2.0;
+	public CFilSpring(CCell mother, CCell daughter) {
+		CModel model = mother.model;
+		small_ballArray	= new CBall[]{daughter.ballArray[0],mother.ballArray[1]};
+		small_K = model.Kf*(model.nBallInit[mother.type] + model.nBallInit[daughter.type])/2.0;
 		this.ResetSmall();
 		
-		big_ballArray	= new CBall[]{daughter.ballArray[1],parent.ballArray[0]};
-		big_K = model.Kf*(model.nBallInit[parent.type] + model.nBallInit[daughter.type])/2.0;
+		big_ballArray	= new CBall[]{daughter.ballArray[1],mother.ballArray[0]};
+		big_K = model.Kf*(model.nBallInit[mother.type] + model.nBallInit[daughter.type])/2.0;
 		this.ResetBig();		// Set restLength for big springs
 		
 		// Add to filSpringArray
 		model.filSpringArray.add(this);
+		mother.filSpringArray.add(this);
+		daughter.filSpringArray.add(this);
 	}
 
 	public CFilSpring() {}		// Empty constructor for loading. Doesn't add to filSpringArray!
 	
+	public void UnFil() {
+		CModel model = this.big_ballArray[0].cell.model;
+		// Remove from model
+		model.filSpringArray.remove(this);
+		// Remove from both cells
+		big_ballArray[0].cell.filSpringArray.remove(this);
+		big_ballArray[1].cell.filSpringArray.remove(this);
+	}
 	/////////////////////////////
 	
 	public void set(CBall big_ballArray0, CBall big_ballArray1, CBall small_ballArray0, CBall small_ballArray1) {

@@ -18,6 +18,7 @@ public class CCell implements Serializable {
 	public ArrayList<CCell> stickCellArray = new ArrayList<CCell>(0);
 	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(0);
 	public CAnchorSpring[] anchorSpringArray = new CAnchorSpring[0];
+	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(2);
 	public CCell mother;
 	public int motherIndex;
 //	public int index;
@@ -183,21 +184,6 @@ public class CCell implements Serializable {
 		}
 	}
 	
-	public ArrayList<CCell> StickCellArray() {			// Currently used only for loading. Using the maintained stickCellArray field is much more CPU efficient.
-		ArrayList<CCell> stickCellArray = new ArrayList<CCell>(1);
-		for(CStickSpring spring : model.stickSpringArray) {
-			CCell cell0 = spring.ballArray[0].cell;
-			CCell cell1 = spring.ballArray[1].cell;
-			if(this.equals(cell0) && !stickCellArray.contains(cell1)) {		// 2nd if argument makes sure we don't get duplicates (this'll happen when we encounter siblings)
-				stickCellArray.add(cell1);	// Add the other cell
-			}
-			if(this.equals(cell1) && !stickCellArray.contains(cell0)) {
-				stickCellArray.add(cell0);
-			}
-		}
-		return stickCellArray;
-	}
-	
 	/////////////////
 	
 	public double SurfaceArea() {
@@ -205,7 +191,7 @@ public class CCell implements Serializable {
 			return 4*Math.PI * Math.pow(ballArray[0].radius, 2);
 		} else {	// Assuming radii are equal
 			double Aballs = 4*Math.PI * Math.pow(ballArray[0].radius, 2); 		// Two half balls
-			double height = ballArray[1].pos.minus(ballArray[0].pos).length();	// height == distance between balls
+			double height = ballArray[1].pos.minus(ballArray[0].pos).norm();	// height == distance between balls
 			double Acyl = 	2*Math.PI * ballArray[0].radius * height;			// area of wall of cylinder. NOTE: Matt subtracted 2*radius, I don't see why
 			return Aballs + Acyl;
 		}

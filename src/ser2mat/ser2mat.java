@@ -14,8 +14,13 @@ public class ser2mat {
 		// Set serializable information
 		// Model properties
 		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, 1));                                	
-		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	
-		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      			mlModel.setField("anchoring",                     new MLDouble(null, new double[] {model.anchoring?1:0}, 1));                     			mlModel.setField("filament",                      new MLDouble(null, new double[] {model.filament?1:0}, 1));                      			mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       			mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      			// Spring constants
+		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	// Makes first 3 rods, then 3 spheres (I got lucky)
+		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	
+		mlModel.setField("anchoring",                     new MLDouble(null, new double[] {model.anchoring?1:0}, 1));                     	
+		mlModel.setField("filament",                      new MLDouble(null, new double[] {model.filament?1:0}, 1));                      	
+		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
+		mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      	
+		// Spring constants
 		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// collision (per ball)
 		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall spring (per ball)
 		mlModel.setField("Kr",                            new MLDouble(null, new double[] {model.Kr}, 1));                                	// internal cell spring (per ball)
@@ -26,6 +31,7 @@ public class ser2mat {
 		mlModel.setField("formLimAnchor",                 new MLDouble(null, new double[] {model.formLimAnchor}, 1));                     	// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 		mlModel.setField("stretchLimStick",               new MLDouble(null, model.stretchLimStick, model.stretchLimStick.length));       	// Maximum tension and compression (1-this value) for sticking springs
 		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {model.formLimStick}, 1));                      	// Multiplication factor for rest length to form sticking springs.
+		mlModel.setField("stretchLimFil",                 new MLDouble(null, model.stretchLimFil, model.stretchLimFil.length));           	// Maximum tension and compression (1-this value) for sticking springs
 		// Domain properties
 		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient (per BALL)
 		mlModel.setField("G",                             new MLDouble(null, new double[] {model.G}, 1));                                 	// [m/s2], acceleration due to gravity
@@ -67,24 +73,28 @@ public class ser2mat {
 			mlcellArray.setField("colour",                    new MLDouble(null, obj.colour, obj.colour.length), ii);                         	
 			
 			arrayIndex = new double[obj.ballArray.length];
-			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index()+1;
+			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlcellArray.setField("ballArray",                 new MLDouble(null, arrayIndex, 1), ii);                                         	// Note that this ballArray has the same name as CModel's
 			
 			arrayIndex = new double[obj.springArray.length];
-			for(int jj=0; jj<obj.springArray.length; jj++)	arrayIndex[jj] = obj.springArray[jj].Index()+1;
+			for(int jj=0; jj<obj.springArray.length; jj++)	arrayIndex[jj] = obj.springArray[jj].Index();
 			mlcellArray.setField("springArray",               new MLDouble(null, arrayIndex, 1), ii);                                         	
 			
 			arrayIndex = new double[obj.stickCellArray.size()];
-			for(int jj=0; jj<obj.stickCellArray.size(); jj++)	arrayIndex[jj] = obj.stickCellArray.get(jj).Index()+1;
+			for(int jj=0; jj<obj.stickCellArray.size(); jj++)	arrayIndex[jj] = obj.stickCellArray.get(jj).Index();
 			mlcellArray.setField("stickCellArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
 			
 			arrayIndex = new double[obj.stickSpringArray.size()];
-			for(int jj=0; jj<obj.stickSpringArray.size(); jj++)	arrayIndex[jj] = obj.stickSpringArray.get(jj).Index()+1;
+			for(int jj=0; jj<obj.stickSpringArray.size(); jj++)	arrayIndex[jj] = obj.stickSpringArray.get(jj).Index();
 			mlcellArray.setField("stickSpringArray",          new MLDouble(null, arrayIndex, 1), ii);                                         	
 			
 			arrayIndex = new double[obj.anchorSpringArray.length];
-			for(int jj=0; jj<obj.anchorSpringArray.length; jj++)	arrayIndex[jj] = obj.anchorSpringArray[jj].Index()+1;
+			for(int jj=0; jj<obj.anchorSpringArray.length; jj++)	arrayIndex[jj] = obj.anchorSpringArray[jj].Index();
 			mlcellArray.setField("anchorSpringArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
+			
+			arrayIndex = new double[obj.filSpringArray.size()];
+			for(int jj=0; jj<obj.filSpringArray.size(); jj++)	arrayIndex[jj] = obj.filSpringArray.get(jj).Index();
+			mlcellArray.setField("filSpringArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlcellArray.setField("motherIndex",               new MLDouble(null, new double[] {obj.motherIndex}, 1), ii);                     	
 			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.q}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
 		}
@@ -129,7 +139,7 @@ public class ser2mat {
 			CRodSpring obj = model.rodSpringArray.get(ii);
 			
 			arrayIndex = new double[obj.ballArray.length];
-			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index()+1;
+			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlrodSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlrodSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlrodSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
@@ -143,13 +153,13 @@ public class ser2mat {
 			CStickSpring obj = model.stickSpringArray.get(ii);
 			
 			arrayIndex = new double[obj.ballArray.length];
-			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index()+1;
+			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlstickSpringArray.setField("ballArray",          new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlstickSpringArray.setField("K",                  new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlstickSpringArray.setField("restLength",         new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 			
 			arrayIndex = new double[obj.siblingArray.length];
-			for(int jj=0; jj<obj.siblingArray.length; jj++)	arrayIndex[jj] = obj.siblingArray[jj].Index()+1;
+			for(int jj=0; jj<obj.siblingArray.length; jj++)	arrayIndex[jj] = obj.siblingArray[jj].Index();
 			mlstickSpringArray.setField("siblingArray",       new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlstickSpringArray.setField("NSibling",           new MLDouble(null, new double[] {obj.NSibling}, 1), ii);                        	
 		}
@@ -162,13 +172,13 @@ public class ser2mat {
 			CFilSpring obj = model.filSpringArray.get(ii);
 			
 			arrayIndex = new double[obj.big_ballArray.length];
-			for(int jj=0; jj<obj.big_ballArray.length; jj++)	arrayIndex[jj] = obj.big_ballArray[jj].Index()+1;
+			for(int jj=0; jj<obj.big_ballArray.length; jj++)	arrayIndex[jj] = obj.big_ballArray[jj].Index();
 			mlfilSpringArray.setField("big_ballArray",        new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlfilSpringArray.setField("big_K",                new MLDouble(null, new double[] {obj.big_K}, 1), ii);                           	
 			mlfilSpringArray.setField("big_restLength",       new MLDouble(null, new double[] {obj.big_restLength}, 1), ii);                  	
 			
 			arrayIndex = new double[obj.small_ballArray.length];
-			for(int jj=0; jj<obj.small_ballArray.length; jj++)	arrayIndex[jj] = obj.small_ballArray[jj].Index()+1;
+			for(int jj=0; jj<obj.small_ballArray.length; jj++)	arrayIndex[jj] = obj.small_ballArray[jj].Index();
 			mlfilSpringArray.setField("small_ballArray",      new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlfilSpringArray.setField("small_K",              new MLDouble(null, new double[] {obj.small_K}, 1), ii);                         	
 			mlfilSpringArray.setField("small_restLength",     new MLDouble(null, new double[] {obj.small_restLength}, 1), ii);                	
@@ -182,14 +192,14 @@ public class ser2mat {
 			CAnchorSpring obj = model.anchorSpringArray.get(ii);
 			
 			arrayIndex = new double[obj.ballArray.length];
-			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index()+1;
+			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlanchorSpringArray.setField("ballArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlanchorSpringArray.setField("anchor",            new MLDouble(null, new double[] {obj.anchor.x, obj.anchor.y, obj.anchor.z}, 3), ii);	
 			mlanchorSpringArray.setField("K",                 new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlanchorSpringArray.setField("restLength",        new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 			
 			arrayIndex = new double[obj.siblingArray.length];
-			for(int jj=0; jj<obj.siblingArray.length; jj++)	arrayIndex[jj] = obj.siblingArray[jj].Index()+1;
+			for(int jj=0; jj<obj.siblingArray.length; jj++)	arrayIndex[jj] = obj.siblingArray[jj].Index();
 			mlanchorSpringArray.setField("siblingArray",      new MLDouble(null, arrayIndex, 1), ii);                                         	
 		}
 		mlModel.setField("anchorSpringArray", mlanchorSpringArray);

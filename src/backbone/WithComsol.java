@@ -35,7 +35,6 @@ public class WithComsol {
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
 
-		// Create cells
 		double[][] colour = new double[][]{
 				{1.0,0.7,0.7},
 				{0.1,1.0,0.1},
@@ -49,7 +48,7 @@ public class WithComsol {
 				{0.4,0.4,0.1},
 				{0.4,1.0,1.0},
 				{1.0,0.1,1.0}};
-								
+				
 		if(model.growthIter==0 && model.movementIter==0) {
 			// Create initial cells, not overlapping
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
@@ -57,18 +56,14 @@ public class WithComsol {
 				double n = model.nCellInit[type]+(model.nCellMax[type]-model.nCellInit[type])*rand.Double();
 				CCell cell = new CCell(type, 						// Type of biomass
 						n,											// Initial cell mass is random between initial and max
-						(0.2*(rand.Double()+0.4))*model.L.x, 		// Anywhere between 0.4*Lx and 0.6*Lx
-						(0.2*(rand.Double()+0.4))*model.L.y, 		// Anywhere between 0.4*Ly and 0.6*Ly
-						(0.2*(rand.Double()+0.4))*model.L.z,		// Anywhere between 0.4*Lz and 0.6*Lz
+						(0.2*rand.Double()-0.1)*model.L.x, 			// Anywhere between -0.1*Lx and 0.1*Lx
+						(0.2*rand.Double()-0.1)*model.L.y, 			// Anywhere between -0.1*Ly and 0.1*Ly
+						(0.2*rand.Double()-0.1)*model.L.z,			// Anywhere between -0.1*Lz and 0.1*Lz
 						model.filament,								// With filament?
 						colour[iCell],
 						model);
 				// Set cell boundary concentration to initial value
 				cell.q = 0.0;
-//				for(int ii=0; ii<(cell.type<2?1:2); ii++) {
-//					cell.ballArray[ii].pos.y=cell.ballArray[ii].radius;
-//				}
-//				cell.Anchor();
 			}
 			boolean overlap = true;
 			int[] NSpring = {0,0,0,0};
@@ -84,7 +79,7 @@ public class WithComsol {
 			model.Write(model.cellArray.size() + " initial non-overlapping cells created","iter");
 			model.Write((NSpring[1]-NSpring[0]) + " anchor and " + (NSpring[3]-NSpring[2]) + " sticking springs formed", "iter");
 		}
-		
+				
 		boolean overlap = false;
 		
 		while(true) {
@@ -179,8 +174,10 @@ public class WithComsol {
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
+			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.stickSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
+//			overlapCellArray.addAll(model.DetectCellCollision_Simple(1.0));
 			if(!overlapCellArray.isEmpty()) {
 				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
 				String cellNumber = "" + overlapCellArray.get(0).Index();
@@ -192,7 +189,7 @@ public class WithComsol {
 			}
 
 			// And finally: save stuff
-			model.Write("Saving model as .mat file", "iter");
+			model.Write("Saving model as serialised file", "iter");
 			model.Save();
 		}
 	}

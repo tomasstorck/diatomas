@@ -55,9 +55,9 @@ public class WithoutComsol {
 				double n = model.nCellInit[type]+(model.nCellMax[type]-model.nCellInit[type])*rand.Double();
 				CCell cell = new CCell(type, 						// Type of biomass
 						n,											// Initial cell mass is random between initial and max
-						(0.2*rand.Double()+0.4)*model.L.x, 			// Anywhere between 0.4*Lx and 0.6*Lx
-						(0.2*rand.Double()+0.4)*model.L.y, 			// Anywhere between 0.4*Ly and 0.6*Ly
-						(0.2*rand.Double()+0.4)*model.L.z,			// Anywhere between 0.4*Lz and 0.6*Lz
+						(0.2*rand.Double()-0.1)*model.L.x, 			// Anywhere between -0.1*Lx and 0.1*Lx
+						(0.2*rand.Double()-0.1)*model.L.y, 			// Anywhere between -0.1*Ly and 0.1*Ly
+						(0.2*rand.Double()-0.1)*model.L.z,			// Anywhere between -0.1*Lz and 0.1*Lz
 						model.filament,								// With filament?
 						colour[iCell],
 						model);
@@ -144,6 +144,7 @@ public class WithoutComsol {
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
+			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.stickSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
 //			overlapCellArray.addAll(model.DetectCellCollision_Simple(1.0));
@@ -158,7 +159,7 @@ public class WithoutComsol {
 			}
 
 			// And finally: save stuff
-			model.Write("Saving model as .mat file", "iter");
+			model.Write("Saving model as serialised file", "iter");
 			model.Save();
 		}
 	}

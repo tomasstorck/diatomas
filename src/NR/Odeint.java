@@ -14,15 +14,16 @@ public class Odeint<Stepper extends StepperBase> {
 	double x1,x2,hmin;				// time steps?
 //	double x,h;
 	boolean dense;					// whether or not we want a dense output, i.e. values at certain x points
-//	NRvector y,dydx;		// actual derivative values
-	Vector ystart;		// initial values
+//	NRvector y,dydx;				// actual derivative values
+	Vector ystart;					// initial values
 	Output<StepperDopr853> out;		// The out structure, see way below
 	feval derivs; 					// feval object containing information about the derivatives, including method to calculate them
 	StepperDopr853 s;				// Our stepper
+	CModel model;
 
 	public Odeint(Vector ystartt, double xx1, double xx2, 			// initial values, intial integration interval point, end of interval 
 			double atol, double rtol, double h1, double hminn,		// absolute tolerance, relative tolerance, initial stepsize, minimum stepsize allowed
-			Output<StepperDopr853> outt, feval derivss) {			// derivss should be a Dtype (=feval)
+			Output<StepperDopr853> outt, feval derivss, CModel diatomas) {			// derivss should be a Dtype (=feval)
 		nvar	= ystartt.size();
 		ystart	= ystartt;			// Should be a ref based on C++ code
 		nok 	= 0;
@@ -33,6 +34,7 @@ public class Odeint<Stepper extends StepperBase> {
 		dense 	= outt.dense;
 		out		= outt;				// Takes care of intermediate values
 		derivs	= derivss;			// feval object, takes care of solving
+		model	= diatomas; 
 		
 		// Construct stepper with temporary variables
 		double x 		= xx1;
@@ -58,8 +60,9 @@ public class Odeint<Stepper extends StepperBase> {
 			if(s.hdid==s.h) {						// Did we succeed? Mark that down.
 				++nok;
 				// What else do we want to do after a successful step --> model specific! Remove this if solver applied to other model
-//				if(model.anchoring) 	model.AnchorUnAnchor();
-//				if(model.sticking)		model.StickUnStick();
+				if(model.anchoring) 	model.AnchorUnAnchor();
+				if(model.sticking)		model.StickUnStick();
+				if(model.filament)		model.FilUnFil();
 			} else {
 				++nbad;
 			}

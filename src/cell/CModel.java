@@ -43,8 +43,9 @@ public class CModel implements Serializable {
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public double[] stretchLimStick = {0.6, 1.4};// Maximum tension and compression (1-this value) for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
+	public double[] stretchLimFil = {0.6, 1.4};// Maximum tension and compression (1-this value) for sticking springs
 	// Domain properties
-	public double Kd 	= 2.5e3;					// drag force coefficient (per BALL)
+	public double Kd 	= 2.5e3;				// drag force coefficient (per BALL)
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
@@ -195,7 +196,7 @@ public class CModel implements Serializable {
 				CBall ball2 = ballArray.get(iBall2);
 				if(ball.cell.Index()!=ball2.cell.Index()) {
 					Vector3d diff = ball2.pos.minus(ball.pos);
-					if(Math.abs(diff.length()) - touchFactor*(ball.radius+ball2.radius) < 0) {
+					if(Math.abs(diff.norm()) - touchFactor*(ball.radius+ball2.radius) < 0) {
 						collisionCell.add(ball.cell);
 						collisionCell.add(ball2.cell);
 					}
@@ -215,7 +216,7 @@ public class CModel implements Serializable {
 				CCell cell1 = cellArray.get(jj);
 				double R2 = cell0.ballArray[0].radius + cell1.ballArray[0].radius; 
 				if(cell0.type < 2 && cell1.type < 2) {
-					double dist = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos).length();
+					double dist = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos).norm();
 					if(dist<R2*touchFactor) {
 						collisionCell.add(cell0); 
 						collisionCell.add(cell1);
@@ -235,7 +236,7 @@ public class CModel implements Serializable {
 						H2 = aspect[rod.type]*2.0*rod.ballArray[0].radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 					}
 					if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
-						double dist = diff.length();
+						double dist = diff.norm();
 						if(dist<R2*touchFactor)	{
 							collisionCell.add(cell0); 
 							collisionCell.add(cell1);
@@ -311,7 +312,7 @@ public class CModel implements Serializable {
 		Vector3d d = p1.plus(ab.times(rpos));
 		//calculate the vector p2 --> d
 		Vector3d dP = d.minus(p2);
-		EricsonObject R = new EricsonObject(dP, dP.length(), rpos);	// Defined at the end of the model class
+		EricsonObject R = new EricsonObject(dP, dP.norm(), rpos);	// Defined at the end of the model class
 		return R;
 	}
 	
@@ -322,7 +323,7 @@ public class CModel implements Serializable {
 		ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 		
 		for(CAnchorSpring pSpring : anchorSpringArray) {
-			double al = (pSpring.ballArray[0].pos.minus(pSpring.anchor)).length();		// al = Actual Length
+			double al = (pSpring.ballArray[0].pos.minus(pSpring.anchor)).norm();		// al = Actual Length
 			if(al < minStretch*pSpring.restLength || al > maxStretch*pSpring.restLength) {
 				breakArray.add(pSpring);
 			}
@@ -336,7 +337,7 @@ public class CModel implements Serializable {
 		int iSpring = 0;
 		while(iSpring < stickSpringArray.size()) {
 			CStickSpring spring = stickSpringArray.get(iSpring);
-			double al = (spring.ballArray[1].pos.minus(  spring.ballArray[0].pos)  ).length();		// al = Actual Length
+			double al = (spring.ballArray[1].pos.minus(  spring.ballArray[0].pos)  ).norm();		// al = Actual Length
 			if(al < minStretch*spring.restLength || al > maxStretch*spring.restLength) {
 				breakArray.add(spring);
 			}
@@ -350,7 +351,7 @@ public class CModel implements Serializable {
 	////////////////////
 	public int Movement() throws Exception {
 		// Reset counter
-		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NStickBreak = Assistant.NStickForm = 0;
+		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NFilBreak = Assistant.NStickBreak = Assistant.NStickForm = 0;
 		
 		int nvar = 6*ballArray.size();
 		int ntimes = (int) (movementTimeStepEnd/movementTimeStep);
@@ -371,7 +372,7 @@ public class CModel implements Serializable {
 		}
 		Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
 		feval dydt = new feval(this);
-		Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt);
+		Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt, this);
 		int nstp = ode.integrate();
 		for(int iTime=0; iTime<out.nsave; iTime++) {		// Save all intermediate results to the save variables
 			int iVar = 0;
@@ -424,7 +425,7 @@ public class CModel implements Serializable {
 					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
 					if(cell1.type<2) {										// The other cell is a ball too
-						double dist = dirn.length();						// Mere estimation for ball-rod
+						double dist = dirn.norm();						// Mere estimation for ball-rod
 						// do a simple collision detection if close enough
 						if(dist<R2) {
 							// We have a collision
@@ -549,7 +550,7 @@ public class CModel implements Serializable {
 			CBall ball1 = rod.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
 			Vector3d diff = ball1.pos.minus(ball0.pos);
-			double dn = diff.length();
+			double dn = diff.norm();
 			// Get force
 			double f = rod.K/dn * (dn - rod.restLength);
 			// Hooke's law
@@ -562,7 +563,7 @@ public class CModel implements Serializable {
 		// Apply forces due to anchor springs
 		for(CAnchorSpring spring : anchorSpringArray) {
 			Vector3d diff = spring.anchor.minus(spring.ballArray[0].pos);
-			double dn = diff.length();
+			double dn = diff.norm();
 			// Get force
 			double f = spring.K/dn * (dn - spring.restLength);
 			// Hooke's law
@@ -578,7 +579,7 @@ public class CModel implements Serializable {
 			CBall ball1 = stick.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
 			Vector3d diff = ball1.pos.minus(ball0.pos);
-			double dn = diff.length();
+			double dn = diff.norm();
 			// Get force
 			double f = stick.K/dn * (dn - stick.restLength);
 			// Hooke's law
@@ -597,7 +598,7 @@ public class CModel implements Serializable {
 			// === big spring ===
 			{// find difference vector and distance dn between balls (euclidian distance) 
 			Vector3d diff = bb1.pos.minus(bb0.pos);
-			double dn = diff.length();
+			double dn = diff.norm();
 			// Get force
 			double f = fil.big_K/dn * (dn - fil.big_restLength);
 			// Hooke's law
@@ -608,7 +609,7 @@ public class CModel implements Serializable {
 			// === small spring ===
 			{// find difference vector and distance dn between balls (euclidian distance) 
 			Vector3d diff = sb1.pos.minus(sb0.pos);
-			double dn = diff.length();
+			double dn = diff.norm();
 			// Get force
 			double f = fil.small_K/dn * (dn - fil.small_restLength);
 			// Hooke's law
@@ -645,7 +646,7 @@ public class CModel implements Serializable {
 				for(CAnchorSpring spring : cell.anchorSpringArray) {
 					// Break anchor?
 					Vector3d diff = spring.anchor.minus(spring.ballArray[0].pos);
-					double dn = diff.length();
+					double dn = diff.norm();
 					if(dn < spring.restLength*stretchLimAnchor[0] || dn > spring.restLength*stretchLimAnchor[1]) {			// too much tension || compression --> break the spring
 						Assistant.NAnchorBreak += spring.UnAnchor();
 					}
@@ -682,7 +683,7 @@ public class CModel implements Serializable {
 					}
 				}
 				if(stuck) {					// Stuck --> can we break this spring?
-					double dist = (c1b0.pos.minus(c0b0.pos)).length();
+					double dist = (c1b0.pos.minus(c0b0.pos)).norm();
 					if(dist < stickingSpring.restLength*stretchLimStick[0] || dist > stickingSpring.restLength*stretchLimStick[1]) 		Assistant.NStickBreak += stickingSpring.UnStick();
 				} else {					// Not stuck --> can we stick them?
 					boolean related = ((cell0.mother!=null && cell0.mother.equals(cell1)) || (cell1.mother!=null && cell1.mother.equals(cell0))) ? true : false;
@@ -690,7 +691,7 @@ public class CModel implements Serializable {
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
 						if(cell0.type<2 && cell1.type<2) {							// both spheres
-							double dist = (c1b0.pos.minus(c0b0.pos)).length();
+							double dist = (c1b0.pos.minus(c0b0.pos)).norm();
 							if(dist<R2*formLimStick)		Assistant.NStickForm += cell0.Stick(cell1);
 						} else if(cell0.type<2) {									// 1st sphere, 2nd rod
 							double H2f = formLimStick * aspect[cell1.type]*2.0*c1b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
@@ -722,6 +723,25 @@ public class CModel implements Serializable {
 				}
 			}
 		}
+	}
+	
+	public void FilUnFil() {
+		ArrayList<CFilSpring> unFilArray = new ArrayList<CFilSpring>(0);
+		for(CFilSpring fil : filSpringArray) {
+			// No need to make filial links here, is done in growth step
+			
+			// Filament spring breaking
+			double big_distance = fil.big_ballArray[0].pos.minus(fil.big_ballArray[1].pos).norm();
+			double small_distance = fil.small_ballArray[0].pos.minus(fil.small_ballArray[1].pos).norm();
+			// Check if we can break this spring
+			if((big_distance<fil.big_restLength*stretchLimFil[0] || big_distance>fil.big_restLength*stretchLimFil[1])
+					|| (small_distance<fil.small_restLength*stretchLimFil[0] || small_distance>fil.small_restLength*stretchLimFil[1])) {
+				unFilArray.add(fil);
+				Assistant.NFilBreak++;
+			}
+		}
+		// unFil all the springs that are detected to be broken 
+		for(CFilSpring fil : unFilArray) fil.UnFil();
 	}
 	
 	//////////////////
@@ -877,7 +897,7 @@ public class CModel implements Serializable {
 
 			// Set filament springs
 			if(daughter.filament) {
-				for(CFilSpring fil : filSpringArray) {
+				for(CFilSpring fil : mother.filSpringArray) {
 					boolean found=false;
 					if( fil.big_ballArray[0] == motherBall0) {
 						fil.set(daughter.ballArray[0],0);
@@ -892,6 +912,10 @@ public class CModel implements Serializable {
 						fil.set(daughter.ballArray[1],3);
 						found = true;}
 					if(found) {
+						// Donate filament spring from mother to daughter 
+						daughter.filSpringArray.add(fil);
+						mother.filSpringArray.remove(fil);
+						// Reset rest lengths
 						fil.ResetSmall();
 						fil.ResetBig();
 					}
@@ -953,7 +977,7 @@ public class CModel implements Serializable {
 	// Saving //
 	////////////
 	
-	public void Save() {
+	public void Save() {		// Save as serialised file, later to be converted to .mat file
 		FileOutputStream fos = null;
 		GZIPOutputStream gz = null;
 		ObjectOutputStream oos = null;

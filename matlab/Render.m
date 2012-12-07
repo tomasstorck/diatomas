@@ -1,16 +1,15 @@
 function Render(location)
 
+% Settings
 L = [20,5,20];
-
-% Camera settings
-camPos = [-1*L(1), 0.9*L(2),-1*L(3)];
-camView = [L(1)/2, 0, L(3)/2];
-camAngle = 70;		% degrees
-
+imageWidth = 1024;
+imageHeight = 768;
+camPos = [-L(1), 2*L(2),-L(3)];
 ambient = 0.8;
 diffuse = 0.4;
-
 keepPOV=true;
+
+%%%%%%%%%
 
 if ~exist('location','var')
 	location = uigetdir;
@@ -32,6 +31,21 @@ for iFile=length(loadFileNameList):-1:1
 	fprintf([loadFileName '\n']);
 	load([location filesep 'output' filesep loadFileName]);
 	NSave = length(model.ballArray(1).posSave);
+	
+	if rem(length(loadFileNameList)-iFile,3)==0
+		% Create camera, background and lighting based on L
+		minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates
+		maxPos = max([model.ballArray.pos],[],2)*1e6;
+		A = camPos';										% For meaning of A, B and C, see drawing in journal, entry 121206
+		camView = (maxPos+minPos)/2;
+		C = camView;
+		Pmax = max(max(maxPos-C,abs(minPos+C)));			% Get whichever point in whichever dimension is most extreme, be it negative or positive
+		B = C+[Pmax 0 -Pmax]';									
+		BC = norm(B-C);
+		AC = norm(A-C);
+		camAngle = 2*rad2deg(atan(1.1*BC/AC));
+	end
+
 	for ii=0:NSave
 		povName = [location sprintf('/output/pov_g%04dm%04d_%02d.pov', model.growthIter, model.movementIter, ii)];
 		if(exist(povName,'file'))
@@ -45,7 +59,6 @@ for iFile=length(loadFileNameList):-1:1
 			plotIntermediate=false;
 		end
 		
-		% Create camera, background and lighting based on L
 		fprintf(fid,'#declare Lx = %f;\n',L(1));
 		fprintf(fid,'#declare Ly = %f;\n',L(2));
 		fprintf(fid,'#declare Lz = %f;\n\n',L(3));
@@ -53,13 +66,11 @@ for iFile=length(loadFileNameList):-1:1
 			'\torthographic\n',...
 			sprintf('\tlocation <%g, %g, %g>\n', camPos(1), camPos(2), camPos(3)),...
 			sprintf('\tlook_at  <%g, %g, %g>\n', camView(1), camView(2), camView(3)),...
-			'right x*image_width/image_height',...		% Makes aspect ratio dynamic, fixing width/varying height while width>height
+			'\tright x*image_width/image_height',...		% Makes aspect ratio dynamic, fixing width/varying height while width>height
 			['\tangle ' num2str(camAngle) '\n'],...
 			'}\n\n']);
 		fprintf(fid,'background { color rgb <1, 1, 1> }\n\n');
 		fprintf(fid,'light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }\n');
-		fprintf(fid,'light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }\n');
-		fprintf(fid,'light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }\n\n');
 				
 		% Build spheres and rods
 		for iCell=1:length(model.cellArray)
@@ -67,13 +78,14 @@ for iFile=length(loadFileNameList):-1:1
 			fprintf(fid,['// Cell no. ' num2str(iCell-1) '\n']);
 			if cell.type<2
 				% Spherical cell
-				ball = model.ballArray(cell.ballArray(1));
+				ball = model.ballArray(cell.ballArray(1)+1);
 				
 				if plotIntermediate
-					position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6);
+					pos = ball.posSave(ii+1,:)*1e6;
 				else
-					position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.pos(1)*1e6, ball.pos(2)*1e6, ball.pos(3)*1e6);
+					pos = ball.pos*1e6;
 				end
+				position = sprintf('\t < %10.3f,%10.3f,%10.3f > \n', pos(1), pos(2), pos(3));
 				fprintf(fid,['sphere\n',...
 					'{\n',...
 					position,...
@@ -81,9 +93,15 @@ for iFile=length(loadFileNameList):-1:1
 					'\ttexture{\n',...
 					'\t\tpigment{\n',...
 					'\t\t\tgradient <0,1,0>\n',...
-					'\t\t\tcolor_map{[0.5 color rgb< 0.7,0.7,0.7 >]\n',...
-					sprintf('\t\t\t\t[0.5 color rgb< %10.3f,%10.3f,%10.3f >]}', cell.colour(1), cell.colour(2), cell.colour(3)),...
-					'\t\t\tfrequency 3',...
+ 					sprintf('\t\t\ttranslate <0,%g,0>\n',pos(2)),...		% Keeps the stripes in the correct location
+ 					'\t\t\tcolor_map{\n',...
+					sprintf('\t\t\t\t[0.4 color rgb< %10.3f,%10.3f,%10.3f >]', cell.colour(1), cell.colour(2), cell.colour(3)),...
+					'\t\t\t\t[0.4 color rgb< 1,1,1 >]\n',...
+					'\t\t\t\t[0.6 color rgb< 1,1,1 >]\n',...
+ 					sprintf('\t\t\t\t[0.6 color rgb< %10.3f,%10.3f,%10.3f >]', cell.colour(1), cell.colour(2), cell.colour(3)),...
+					'\t\t\t}\n',...
+ 					'\t\t\tfrequency 6',...
+					...sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', cell.colour(1), cell.colour(2), cell.colour(3)),...
 					'\t\t}\n',...
 					'\t\tfinish{\n',...
 					['\t\t\tambient ' num2str(ambient) '\n'],...
@@ -92,8 +110,8 @@ for iFile=length(loadFileNameList):-1:1
 					'\t}\n',...
 					'}\n\n']);
 			elseif cell.type>1	% Rod
-				ball = model.ballArray(cell.ballArray(1));
-				ballNext = model.ballArray(cell.ballArray(2));
+				ball = model.ballArray(cell.ballArray(1)+1);
+				ballNext = model.ballArray(cell.ballArray(2)+1);
 				
 				if plotIntermediate
 					position = [sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6),...
@@ -198,8 +216,8 @@ for iFile=length(loadFileNameList):-1:1
 		for iStick = 1:length(model.stickSpringArray)
 			fprintf(fid,['// Sticking spring no. ' num2str(iStick-1) '\n']);
 			pSpring = model.stickSpringArray(iStick);
-			ball = model.ballArray(pSpring.ballArray(1));
-			ballNext = model.ballArray(pSpring.ballArray(2));
+			ball = model.ballArray(pSpring.ballArray(1)+1);
+			ballNext = model.ballArray(pSpring.ballArray(2)+1);
 			
 			if plotIntermediate
 				position = [sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6),...
@@ -226,10 +244,10 @@ for iFile=length(loadFileNameList):-1:1
 		
 		%Build anchor spring array
 		for iAnchor = 1:length(model.anchorSpringArray)
-			fprintf(fid,['// Anchor spring no. ' num2str(iAnchor-1) '\n']);
+			fprintf(fid,['// Anchor spring no. ' num2str(iAnchor-1) '\n']);					% -1 so we use Java numbering to display this
 			pSpring = model.anchorSpringArray(iAnchor);
 			if isfield(pSpring,'ballArray')						% Workaround for old bug in saving
-				ball = model.ballArray(pSpring.ballArray(1));
+				ball = model.ballArray(pSpring.ballArray(1)+1);
 				if plotIntermediate
 					position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6);
 				else
@@ -258,15 +276,15 @@ for iFile=length(loadFileNameList):-1:1
 		% Create plane
 		fprintf(fid,['union {\n',...
 			'\tbox {\n',...
-			'\t\t<-0.5*Lx, 0, -0.5*Lz>\n',...			% Corner 1. Centred around 0.5 Lx and 0.5 Lz
-			'\t\t<1.5*Lx, 0, 1.5*Lz>\n',...				% Corner 2
+			'\t\t<-Lx, 0, -Lz>\n',...				% Corner 1. Centred around 0.5 Lx and 0.5 Lz
+			'\t\t< Lx, 0,  Lz>\n',...				% Corner 2
 			'\t\ttexture {\n',...
 			'\t\t\tpigment {\n',...
    			'\t\t\tbrick\n',...
-   			'\t\t\tcolor rgb<0.2, 0.2, 0.2>\n',...
+   			'\t\t\tcolor rgb<0, 0, 0>\n',...
    			'\t\t\tcolor rgb<1, 1, 1>\n',...
    			'\t\t\tbrick_size<0.5, .5, .5>\n',...
-   			'\t\t\tmortar 0.05\n',...
+   			'\t\t\tmortar 0.025\n',...
 			'\t\t}\n',...
 			'\t\t\tfinish {\n',...
 			['\t\t\t\tambient ' num2str(ambient) '\n'],...
@@ -285,7 +303,7 @@ for iFile=length(loadFileNameList):-1:1
 		
 		imageName = sprintf('pov_g%04dm%04d_%02d', model.growthIter, model.movementIter, ii);
 		imageLoc = [location '/image/' imageName '.png'];
-		systemInput = ['povray ' povName ' +W1024 +H768 +O' location '/image/' imageName ' +A -J'];
+		systemInput = ['povray ' povName ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' location '/image/' imageName ' +A -J'];
 		if(exist(imageLoc,'file')) && ~exist('keepgoing','var')
 			R = input(['File already found, continue? (n/N for no): ' imageName '\n'],'s');
 			if(any([R=='n',R=='N']))
@@ -301,14 +319,16 @@ for iFile=length(loadFileNameList):-1:1
 		[~,~] = system(['cd ' location ' ; ' systemInput   remove ' ; cd ..']);
 		% Append text for movement and growth
 		system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:   ' sprintf('%5.1f h',model.growthIter*model.growthTimeStep/3600.0) '\nMovement time: ' sprintf('%5.2f s'' ',model.movementIter*model.movementTimeStepEnd+ii*model.movementTimeStep)  imageLoc ' ' imageLoc]);
-		% Find extremities
-		minPos = min([model.ballArray.pos],[],2);
-		maxPos = max([model.ballArray.pos],[],2);
 		% Append scale bar
-		LLine = 100;
-		tan(0.5*deg2rad(camAngle))
-		system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''um'' ' imageLoc ' ' imageLoc]);
-		system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(900-LLine/2) ',70 ' num2str(900+LLine/2) ',70" ' imageLoc ' ' imageLoc]);
+		A = camPos';
+		C = camView;
+		AC = norm(A-C);
+		BC = tan(deg2rad(0.5*camAngle))*AC;
+		
+		LLine = 1/BC * imageWidth/2;
+		
+		system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''1 um'' ' imageLoc ' ' imageLoc]);
+		system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imageLoc ' ' imageLoc]);
 		
 	end
 end

@@ -27,12 +27,12 @@ public class Vector3d implements Serializable {
 	
 	///////////////////////////////////////////////
 	
-	public double length() {
+	public double norm() {
 		return Math.sqrt(x*x+y*y+z*z);
 	}
 	
 	public void normalise() {
-		double L = this.length();
+		double L = this.norm();
 		x = x/L;
 		y = y/L;
 		z = z/L;
@@ -160,11 +160,11 @@ public class Vector3d implements Serializable {
 	// Vector projections     //
 	////////////////////////////
 	public double comp(Vector3d u) {		// Scalar projection of u onto this, not the other way around
-		return this.dot(u) / this.length();
+		return this.dot(u) / this.norm();
 	}
 	
 	public Vector3d proj(Vector3d u) {
-		return this.times(this.dot(u) / (this.length()*this.length()));		// i.e. (a dot b over length(a)^2 times a) or (comp of b onto a times a over length(a))
+		return this.times(this.dot(u) / (this.norm()*this.norm()));		// i.e. (a dot b over length(a)^2 times a) or (comp of b onto a times a over length(a))
 	}
 	
 }

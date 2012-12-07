@@ -153,7 +153,7 @@ public class Comsol {
 	public void CreateRod(CCell cell) throws FlException {
 		// Create points for constructing WP
 		String pointName = "pt" + Integer.toString(3*cell.Index());
-		double cellHT = ( (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).length() + 2.0*cell.ballArray[0].radius )*dimensionFactor;		// HT = Head-Tail
+		double cellHT = ( (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).norm() + 2.0*cell.ballArray[0].radius )*dimensionFactor;		// HT = Head-Tail
 		Vector3d pos0 = cell.ballArray[0].pos.plus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
 		Vector3d pos1 = cell.ballArray[1].pos.minus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
 		

@@ -87,7 +87,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 	% boolean
 	if hasstr(c,'boolean ')
 		[n comment] = splitline(c,'boolean');
-		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLDouble(null, new double[] {model.' n '?1:0}, 1));' comment]);
+		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLDouble(null, new double[] {model.' n '?1:0}, 1));'], comment);
 		continue
 	end
 	% Matrix
@@ -214,7 +214,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 					[nObj2 comment2] = splitline(c2,'\[\]');
 					fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.length];\n']);
 					fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.length; jj++)\t']);
-					fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '[jj].Index()+1;\n']);
+					fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '[jj].Index();\n']);
 				elseif hasstr(c2,'>')
 					% Extract class name
 					s2raw = regexp(c2,'ArrayList<','split');
@@ -224,7 +224,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 					[nObj2 comment2] = splitline(c2,'>');
 					fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.size()];\n']);
 					fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.size(); jj++)\t']);
-					fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '.get(jj).Index()+1;\n']);
+					fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '.get(jj).Index();\n']);
 				else
 					throw(['Cannot recognise type of array in: ' c2])
 				end

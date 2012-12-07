@@ -14,4 +14,5 @@ public class Assistant {
 	public static int NAnchorForm = 0;
 	public static int NStickBreak = 0;
 	public static int NStickForm = 0;
+	public static int NFilBreak = 0;
 }
