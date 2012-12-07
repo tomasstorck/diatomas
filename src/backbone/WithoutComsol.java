@@ -99,12 +99,11 @@ public class WithoutComsol {
 				model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");
 
 				model.Write("Resetting springs","iter");
-				for(CRodSpring rod : model.rodSpringArray) {
+				for(CSpring rod : model.rodSpringArray) {
 					rod.ResetRestLength();
 				}
-				for(CFilSpring fil : model.filSpringArray) 	{
-//					fil.ResetSmall();
-					fil.ResetBig();
+				for(CSpring fil : model.filSpringArray) 	{
+					fil.ResetRestLength();
 				}
 			}
 			
@@ -144,7 +143,7 @@ public class WithoutComsol {
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
-			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.stickSpringArray.size(), "iter");
+			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
 //			overlapCellArray.addAll(model.DetectCellCollision_Simple(1.0));

@@ -72,6 +72,6 @@ public class CFilSpring implements Serializable {
 	public void ResetBig() {			// Note that only bigSpring is reset here, as was in C++ model
 		CCell bc0 = big_ballArray[0].cell;
 		CCell bc1 = big_ballArray[1].cell;
-		big_restLength = 1.6*small_restLength + bc0.springArray[0].restLength + bc1.springArray[0].restLength;
+		big_restLength = 1.6*small_restLength + bc0.rodSpringArray[0].restLength + bc1.rodSpringArray[0].restLength;
 	}
 }

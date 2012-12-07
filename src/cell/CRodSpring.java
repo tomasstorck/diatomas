@@ -20,7 +20,7 @@ public class CRodSpring implements Serializable {
 		CModel model = this.ballArray[0].cell.model;
 		this.K = K;
 		this.restLength = restLength;
-		ball0.cell.springArray[0] = this;
+		ball0.cell.rodSpringArray[0] = this;
 		model.rodSpringArray.add(this);
 	}
 	
@@ -30,7 +30,7 @@ public class CRodSpring implements Serializable {
 		CModel model = this.ballArray[0].cell.model;
 		this.K = model.Kr*model.nBallInit[ball0.cell.type];
 		this.ResetRestLength();
-		ball0.cell.springArray[0] = this;
+		ball0.cell.rodSpringArray[0] = this;
 		model.rodSpringArray.add(this);
 	}
 	

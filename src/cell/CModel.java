@@ -74,9 +74,9 @@ public class CModel implements Serializable {
 	// Arrays
 	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
 	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
-	public ArrayList<CRodSpring> rodSpringArray = new ArrayList<CRodSpring>(NInitCell);
-	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(NInitCell);
-	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(NInitCell);
+	public ArrayList<CSpring> rodSpringArray = new ArrayList<CSpring>(NInitCell);
+	public ArrayList<CSpring> stickSpringArray = new ArrayList<CSpring>(NInitCell);
+	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(NInitCell);
 	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
 	// === COMSOL STUFF ===
 	// Biomass, assuming Cmol and composition CH1.8O0.5N0.2 (i.e. MW = 24.6 g/mol)
@@ -84,7 +84,7 @@ public class CModel implements Serializable {
 	// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
 	public double[] SMX = {		7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
 	public double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						//
-	public double[] qMax = {		0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
+	public double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
 	public String[] rateEquation = {
 			Double.toString(qMax[0]) + "*(c3*d3^4)/(K0+c3*d3^4)",		// type==0
 			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==1
@@ -331,17 +331,17 @@ public class CModel implements Serializable {
 		return breakArray;
 	}
 	
-	public ArrayList<CStickSpring> DetectStickBreak(double minStretch, double maxStretch) {
-		ArrayList<CStickSpring> breakArray = new ArrayList<CStickSpring>();
+	public ArrayList<CSpring> DetectStickBreak(double minStretch, double maxStretch) {
+		ArrayList<CSpring> breakArray = new ArrayList<CSpring>();
 		
 		int iSpring = 0;
 		while(iSpring < stickSpringArray.size()) {
-			CStickSpring spring = stickSpringArray.get(iSpring);
+			CSpring spring = stickSpringArray.get(iSpring);
 			double al = (spring.ballArray[1].pos.minus(  spring.ballArray[0].pos)  ).norm();		// al = Actual Length
 			if(al < minStretch*spring.restLength || al > maxStretch*spring.restLength) {
 				breakArray.add(spring);
 			}
-			iSpring += spring.NSibling+1;
+			iSpring += spring.siblingArray.size()+1;
 		}
 		return breakArray;
 	} 
@@ -544,8 +544,8 @@ public class CModel implements Serializable {
 			ball.force.subtract(ball.vel.times(Kd*nBallInit[ball.cell.type]));			// TODO Should be v^2
 		}
 		
-		// Elastic forces between springs within cells (CRodSpring in type>1)
-		for(CRodSpring rod : rodSpringArray) {
+		// Elastic forces between springs within cells (CSpring in type>1)
+		for(CSpring rod : rodSpringArray) {
 			CBall ball0 = rod.ballArray[0];
 			CBall ball1 = rod.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
@@ -574,7 +574,7 @@ public class CModel implements Serializable {
 		}
 		
 		// Apply forces on sticking springs
-		for(CStickSpring stick : stickSpringArray) {
+		for(CSpring stick : stickSpringArray) {
 			CBall ball0 = stick.ballArray[0];
 			CBall ball1 = stick.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
@@ -589,34 +589,20 @@ public class CModel implements Serializable {
 			ball1.force.subtract(Fs);
 		}
 		
-		// Filament spring elastic force (CFilSpring in filSpringArray)
-		for(CFilSpring fil : filSpringArray) {
-			CBall sb0 = fil.small_ballArray[0];
-			CBall sb1 = fil.small_ballArray[1];
-			CBall bb0 = fil.big_ballArray[0];
-			CBall bb1 = fil.big_ballArray[1];
-			// === big spring ===
+		// Filament spring elastic force (CSpring in filSpringArray)
+		for(CSpring fil : filSpringArray) {
+			CBall ball0 = fil.ballArray[0];
+			CBall ball1 = fil.ballArray[1];
 			{// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = bb1.pos.minus(bb0.pos);
+			Vector3d diff = ball1.pos.minus(ball0.pos);
 			double dn = diff.norm();
 			// Get force
-			double f = fil.big_K/dn * (dn - fil.big_restLength);
+			double f = fil.K/dn * (dn - fil.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			bb0.force.add(Fs);
-			bb1.force.subtract(Fs);}
-			// === small spring ===
-			{// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = sb1.pos.minus(sb0.pos);
-			double dn = diff.norm();
-			// Get force
-			double f = fil.small_K/dn * (dn - fil.small_restLength);
-			// Hooke's law
-			Vector3d Fs = diff.times(f);
-			// apply forces on balls
-			sb0.force.add(Fs);
-			sb1.force.subtract(Fs);
+			ball0.force.add(Fs);
+			ball1.force.subtract(Fs);
 			}
 		}
 		
@@ -673,8 +659,8 @@ public class CModel implements Serializable {
 				CBall c1b0 = cell1.ballArray[0];
 				// Are these cells stuck to each other?
 				boolean stuck = false;
-				CStickSpring stickingSpring = null; 
-				for(CStickSpring spring : stickSpringArray) {
+				CSpring stickingSpring = null; 
+				for(CSpring spring : stickSpringArray) {
 					if( (spring.ballArray[0].cell.equals(cell0) && spring.ballArray[1].cell.equals(cell1)) || (spring.ballArray[0].cell.equals(cell1) && spring.ballArray[1].cell.equals(cell0)) ) {
 						// That's the one containing both cells
 						stuck = true;
@@ -684,7 +670,7 @@ public class CModel implements Serializable {
 				}
 				if(stuck) {					// Stuck --> can we break this spring?
 					double dist = (c1b0.pos.minus(c0b0.pos)).norm();
-					if(dist < stickingSpring.restLength*stretchLimStick[0] || dist > stickingSpring.restLength*stretchLimStick[1]) 		Assistant.NStickBreak += stickingSpring.UnStick();
+					if(dist < stickingSpring.restLength*stretchLimStick[0] || dist > stickingSpring.restLength*stretchLimStick[1]) 		Assistant.NStickBreak += stickingSpring.Break();
 				} else {					// Not stuck --> can we stick them?
 					boolean related = ((cell0.mother!=null && cell0.mother.equals(cell1)) || (cell1.mother!=null && cell1.mother.equals(cell0))) ? true : false;
 					if(!related) {// Check only if these cells are not connected through filament springs
@@ -726,22 +712,20 @@ public class CModel implements Serializable {
 	}
 	
 	public void FilUnFil() {
-		ArrayList<CFilSpring> unFilArray = new ArrayList<CFilSpring>(0);
-		for(CFilSpring fil : filSpringArray) {
+		ArrayList<CSpring> unFilArray = new ArrayList<CSpring>(0);
+		for(CSpring fil : filSpringArray) {
 			// No need to make filial links here, is done in growth step
 			
 			// Filament spring breaking
-			double big_distance = fil.big_ballArray[0].pos.minus(fil.big_ballArray[1].pos).norm();
-			double small_distance = fil.small_ballArray[0].pos.minus(fil.small_ballArray[1].pos).norm();
+			double distance = fil.ballArray[0].pos.minus(fil.ballArray[1].pos).norm();
 			// Check if we can break this spring
-			if((big_distance<fil.big_restLength*stretchLimFil[0] || big_distance>fil.big_restLength*stretchLimFil[1])
-					|| (small_distance<fil.small_restLength*stretchLimFil[0] || small_distance>fil.small_restLength*stretchLimFil[1])) {
+			if(distance<fil.restLength*stretchLimFil[0] || distance>fil.restLength*stretchLimFil[1]) {
 				unFilArray.add(fil);
 				Assistant.NFilBreak++;
 			}
 		}
 		// unFil all the springs that are detected to be broken 
-		for(CFilSpring fil : unFilArray) fil.UnFil();
+		for(CSpring fil : unFilArray) fil.Break();
 	}
 	
 	//////////////////
@@ -879,7 +863,7 @@ public class CModel implements Serializable {
 			mother.SetAmount(n/2.0);
 			// Displace old cell, 2nd ball
 			motherBall1.pos = middle.minus(direction.times(displacement));
-			mother.springArray[0].ResetRestLength();
+			mother.rodSpringArray.get(0).ResetRestLength();
 			// Contain cells to y dimension of domain
 			for(int iBall=0; iBall<2; iBall++) {
 				if(mother.ballArray[iBall].pos.y 		< mother.ballArray[iBall].radius) 		{mother.ballArray[0].pos.y 	= mother.ballArray[0].radius;};
@@ -893,34 +877,33 @@ public class CModel implements Serializable {
 			daughter.colour =	mother.colour;
 			daughter.mother = 	mother;
 			daughter.motherIndex = mother.Index();
-			daughter.springArray[0].restLength = mother.springArray[0].restLength;
+			daughter.rodSpringArray.get(0).restLength = mother.rodSpringArray.get(0).restLength;
 
 			// Set filament springs
 			if(daughter.filament) {
-				for(CFilSpring fil : mother.filSpringArray) {
+				for(CSpring fil : mother.filSpringArray) {
 					boolean found=false;
-					if( fil.big_ballArray[0] == motherBall0) {
-						fil.set(daughter.ballArray[0],0);
+					if( fil.ballArray[0] == motherBall0) {
+						fil.ballArray[0] = daughter.ballArray[0];
 						found = true;}
-					if( fil.big_ballArray[1] == motherBall0) {
-						fil.set(daughter.ballArray[0],1);
-						found = true;}
-					if( fil.small_ballArray[0] == motherBall1) {
-						fil.set(daughter.ballArray[1],2);
-						found = true;}
-					if( fil.small_ballArray[1] == motherBall1) {
-						fil.set(daughter.ballArray[1],3);
+					if( fil.ballArray[1] == motherBall0) {
+						fil.ballArray[1] = daughter.ballArray[0];
 						found = true;}
 					if(found) {
 						// Donate filament spring from mother to daughter 
 						daughter.filSpringArray.add(fil);
 						mother.filSpringArray.remove(fil);
 						// Reset rest lengths
-						fil.ResetSmall();
-						fil.ResetBig();
+						fil.ResetRestLength();
 					}
 				}
-				new CFilSpring(mother,daughter);
+				double K = Kf*(nBallInit[mother.type] + nBallInit[daughter.type])/2.0;
+				CSpring filSmall = new CSpring(daughter.ballArray[0], mother.ballArray[1], K, 0.0, 2);
+				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], K, 0.0, 2);
+				filSmall.siblingArray.add(filBig);
+				filBig.siblingArray.add(filSmall);
+				filSmall.ResetRestLength();
+				filBig.ResetRestLength();
 			}
 		}
 		return daughter;
@@ -929,17 +912,17 @@ public class CModel implements Serializable {
 	////////////////////////////
 	// Anchor and Stick stuff //
 	////////////////////////////
-	public void BreakStick(ArrayList<CStickSpring> breakArray) {
-		for(CStickSpring pSpring : breakArray) {
-			CCell cell0 = pSpring.ballArray[0].cell;
-			CCell cell1 = pSpring.ballArray[1].cell;
+	public void BreakStick(ArrayList<CSpring> breakArray) {
+		for(CSpring spring : breakArray) {
+			CCell cell0 = spring.ballArray[0].cell;
+			CCell cell1 = spring.ballArray[1].cell;
 			// Remove cells from each others' stickCellArray 
 			cell0.stickCellArray.remove(cell1);
 			cell1.stickCellArray.remove(cell0);
 			// Remove springs from model stickSpringArray
-			stickSpringArray.remove(pSpring);
-			for(int ii=0; ii<pSpring.siblingArray.length; ii++) {
-				stickSpringArray.remove(pSpring.siblingArray[ii]);
+			stickSpringArray.remove(spring);
+			for(int ii=0; ii<spring.siblingArray.size(); ii++) {
+				stickSpringArray.remove(spring.siblingArray.get(ii));
 			}
 		}
 	}
@@ -960,7 +943,7 @@ public class CModel implements Serializable {
 			CCell cell0 = collisionArray.get(ii);
 			CCell cell1 = collisionArray.get(ii+1);
 			// Check if already stuck, don't stick if that is the case
-			for(CStickSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
+			for(CSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
 				if((pSpring.ballArray[0].cell.equals(cell0) && pSpring.ballArray[1].cell.equals(cell1)) || (pSpring.ballArray[0].cell.equals(cell1) && pSpring.ballArray[1].cell.equals(cell0))) {
 					setStick = false;
 				}

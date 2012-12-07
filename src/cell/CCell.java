@@ -14,11 +14,11 @@ public class CCell implements Serializable {
 	public boolean filament;
 	public double[] colour = 	new double[3];
 	public CBall[] ballArray = 	new CBall[1];							// Note that this ballArray has the same name as CModel's
-	public CRodSpring[] springArray = new CRodSpring[0];
+	public ArrayList<CSpring> rodSpringArray = new ArrayList<CSpring>(0);
 	public ArrayList<CCell> stickCellArray = new ArrayList<CCell>(0);
-	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(0);
+	public ArrayList<CSpring> stickSpringArray = new ArrayList<CSpring>(0);
 	public CAnchorSpring[] anchorSpringArray = new CAnchorSpring[0];
-	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(2);
+	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(0);
 	public CCell mother;
 	public int motherIndex;
 //	public int index;
@@ -42,10 +42,10 @@ public class CCell implements Serializable {
 			ballArray[0] = new CBall(base0x, base0y, base0z, model.nCellInit[type],   0, this);
 		} else {
 			ballArray = 	new CBall[2];		// Reinitialise ballArray to contain 2 balls
-			springArray = new CRodSpring[1];	// Reinitialise springArray to contain a spring
 			new CBall(base0x, base0y, base0z, model.nCellInit[type]/2.0, 0, this);		// Constructor adds it to the array
 			new CBall(base1x, base1y, base1z, model.nCellInit[type]/2.0, 1, this);		// Constructor adds it to the array
-			new CRodSpring(ballArray[0],ballArray[1]);								// Constructor adds it to the array
+			double K = model.Kr*model.nBallInit[ballArray[0].cell.type];
+			new CSpring(ballArray[0],ballArray[1], K, 0.0, 0);							// Constructor adds it to the array
 		}
 	}
 	
@@ -62,7 +62,6 @@ public class CCell implements Serializable {
 //			ballArrayIndex = new int[]{ballArray[0].index};
 		} else {
 			ballArray = 	new CBall[2];	// Reinitialise ballArray to contain 2 balls
-			springArray = new CRodSpring[1];	// Reinitialise springArray to contain a spring
 			new CBall(base0x, base0y, base0z, n/2.0, 0, this);
 			
 			Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());
@@ -79,7 +78,8 @@ public class CCell implements Serializable {
 			double base1z = base0z + direction.z * distance;
 			
 			new CBall(base1x, base1y, base1z, n/2.0, 1, this);
-			new CRodSpring(ballArray[0],ballArray[1]);
+			double K = model.Kr*model.nBallInit[ballArray[0].cell.type];
+			new CSpring(ballArray[0],ballArray[1], K, 0.0, 0);
 		}
 	}
 	
@@ -127,32 +127,35 @@ public class CCell implements Serializable {
 		if(type<2) 			{NSpring0 = 1;} else {NSpring0 = 2;}
 		if(cell.type<2) 	{NSpring1 = 1;} else {NSpring1 = 2;}
 		int NSpring = NSpring0 * NSpring1;
-		CCell pA, pB;
+		CCell cell0, cell1;
 		if(type > 1 && cell.type < 2) {		// Sphere goes first (see indexing next paragraph)
-			pA = cell;
-			pB = this;
+			cell0 = cell;
+			cell1 = this;
 		} else {							// Sphere goes first. Other cases, it doesn't matter
-			pA = this;
-			pB = cell;
+			cell0 = this;
+			cell1 = cell;
 		}
 		
-		CStickSpring[] stickArray = new CStickSpring[NSpring];
+		CSpring[] stickArray = new CSpring[NSpring];
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
-			CStickSpring spring 	= new CStickSpring(	pA.ballArray[iSpring/2],	// 0, 0, 1, 1, ...
-														pB.ballArray[iSpring%2]); 	// 0, 1, 0, 1, ...
+			CBall ball0 = cell0.ballArray[iSpring/2];
+			CBall ball1 = cell1.ballArray[iSpring%2];
+			double K = (model.nBallInit[ball0.cell.type]+model.nBallInit[ball1.cell.type])/2.0;
+			double restLength = ball0.radius*Math.max(2.0, model.aspect[ball0.cell.type]) + ball1.radius*Math.max(2.0, model.aspect[ball1.cell.type]);
+			CSpring spring 	= new CSpring(	ball0,						// 0, 0, 1, 1, ...
+											ball1, 						// 0, 1, 0, 1, ...
+											K,					// Spring constant
+											restLength,					// Rest length
+											1); 						// Type is sticking spring
 			stickArray[iSpring] = spring;
-			this.stickSpringArray.add(spring);
-			cell.stickSpringArray.add(spring);
 		}
 		
-		// Define siblings
-		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and siblingspring			
-			CStickSpring spring = stickArray[iSpring];			
-			spring.NSibling = NSpring-1;
-			int ii = 0;
+		// Define siblings, link them
+		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and sibling spring			
+			CSpring spring = stickArray[iSpring];			
 			for(int iSpring2 = 0; iSpring2 < NSpring; iSpring2++) {			
 				if(iSpring != iSpring2) {									// For all its siblings
-					spring.siblingArray[ii++] = stickArray[iSpring2];
+					spring.siblingArray.add(stickArray[iSpring2]);
 				}
 			}
 		}
