@@ -35,6 +35,7 @@ public class WithComsol {
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
 
+		// Create cells
 		double[][] colour = new double[][]{
 				{1.0,0.7,0.7},
 				{0.1,1.0,0.1},
@@ -79,9 +80,10 @@ public class WithComsol {
 			model.Write(model.cellArray.size() + " initial non-overlapping cells created","iter");
 			model.Write((NSpring[1]-NSpring[0]) + " anchor and " + (NSpring[3]-NSpring[2]) + " sticking springs formed", "iter");
 		}
-				
-		boolean overlap = false;
 		
+		model.Save();
+		
+		boolean overlap = false;
 		while(true) {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.movementIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
@@ -129,12 +131,11 @@ public class WithComsol {
 				model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");
 
 				model.Write("Resetting springs","iter");
-				for(CRodSpring rod : model.rodSpringArray) {
+				for(CSpring rod : model.rodSpringArray) {
 					rod.ResetRestLength();
 				}
-				for(CFilSpring fil : model.filSpringArray) 	{
-//					fil.ResetSmall();
-					fil.ResetBig();
+				for(CSpring fil : model.filSpringArray) 	{
+					fil.ResetRestLength();
 				}
 			}
 
@@ -174,7 +175,7 @@ public class WithComsol {
 			model.movementTime += model.movementTimeStep;
 			model.Write("Movement finished in " + nstp + " solver steps","iter");
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
-			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.stickSpringArray.size(), "iter");
+			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
 //			overlapCellArray.addAll(model.DetectCellCollision_Simple(1.0));

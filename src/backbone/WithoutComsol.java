@@ -29,7 +29,7 @@ public class WithoutComsol {
 //		model.Ks = 2e7;
 //		model.Kw = 2e7;
 		/////
-		
+				
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
 

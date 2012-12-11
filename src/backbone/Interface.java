@@ -105,9 +105,11 @@ public class Interface{
 		// Done analysing input arguments
 		// Start model if requested
 		if(Assistant.start) {
-			System.out.print("Starting simulation '" + model.name + "' w/ arguments: ");
-			for(int jj=0; jj<args.length; jj++) 	System.out.print(args[jj] + " ");
-			System.out.println();
+			model.Write("=====================================", "");
+			String message = "Starting simulation '" + model.name + "' w/ arguments: ";
+			for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
+			model.Write(message,"");
+			model.Write("=====================================", "");
 			if(Assistant.withComsol) 				WithComsol.Run(model);
 			else									WithoutComsol.Run(model);
 		}
