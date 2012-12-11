@@ -30,7 +30,7 @@ public class CCell implements Serializable {
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public CCell(int type, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, double[] colour, CModel model) {
+	public CCell(int type, double n, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, double[] colour, CModel model) {
 		this.model = model;
 		this.type = type;
 		this.filament = filament;
@@ -39,47 +39,38 @@ public class CCell implements Serializable {
 		model.cellArray.add(this);				// Add it here so we can use cell.Index()
 		
 		if(type<2) { // Leaves ballArray and springArray, and mother
-			ballArray[0] = new CBall(base0x, base0y, base0z, model.nCellInit[type],   0, this);
+			ballArray[0] = new CBall(base0x, base0y, base0z, n,   0, this);
 		} else {
 			ballArray = 	new CBall[2];		// Reinitialise ballArray to contain 2 balls
-			new CBall(base0x, base0y, base0z, model.nCellInit[type]/2.0, 0, this);		// Constructor adds it to the array
-			new CBall(base1x, base1y, base1z, model.nCellInit[type]/2.0, 1, this);		// Constructor adds it to the array
+			new CBall(base0x, base0y, base0z, n/2.0, 0, this);		// Constructor adds it to the array
+			new CBall(base1x, base1y, base1z, n/2.0, 1, this);		// Constructor adds it to the array
 			double K = model.Kr*model.nBallInit[ballArray[0].cell.type];
-			new CSpring(ballArray[0],ballArray[1], K, 0.0, 0);							// Constructor adds it to the array
+			CSpring rod = new CSpring(ballArray[0],ballArray[1], K, 0.0, 0);							// Constructor adds it to the array
+			rod.ResetRestLength();
 		}
 	}
 	
 	public CCell(int type, double n, double base0x, double base0y, double base0z, boolean filament, double[] colour, CModel model) {
-		this.model = model;
-		this.type = type;
-		this.filament = filament;
-		this.colour = colour;
-		
-		model.cellArray.add(this);				// Add it here so we can use cell.Index()
-		
-		if(type<2) { // Leaves ballArray and springArray, and mother
-			new CBall(base0x, base0y, base0z, n,   0, this);
-//			ballArrayIndex = new int[]{ballArray[0].index};
-		} else {
-			ballArray = 	new CBall[2];	// Reinitialise ballArray to contain 2 balls
-			new CBall(base0x, base0y, base0z, n/2.0, 0, this);
-			
+		// Set cell based on other constructor
+		this(type, n, base0x, base0y, base0z, base0x, base0y, base0z, filament, colour, model);
+		// Leaves ballArray and springArray if rod cell
+		if(type>1) { 
+			// Put cell in correct position
 			Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());
 			direction.normalise();	// Normalise direction
-			
 			double distance;
 			if(type<4) {
-				distance = ballArray[0].radius * model.aspect[type]*2.0;										// type == 2||3 is fixed ball-ball distance
+				distance = 2.0*ballArray[0].radius * model.aspect[type];										// type == 2||3 is fixed ball-ball distance
 			} else {
-				distance = ballArray[0].radius * model.aspect[type]*2.0 * ballArray[0].n/model.nCellMax[type];		// type == 4||5 is variable ball-ball distance
+				distance = 2.0*ballArray[0].radius * model.aspect[type] * ballArray[0].n/model.nCellMax[type];	// type == 4||5 is variable ball-ball distance
 			}
 			double base1x = base0x + direction.x * distance;
 			double base1y = base0y + direction.y * distance;
 			double base1z = base0z + direction.z * distance;
-			
-			new CBall(base1x, base1y, base1z, n/2.0, 1, this);
-			double K = model.Kr*model.nBallInit[ballArray[0].cell.type];
-			new CSpring(ballArray[0],ballArray[1], K, 0.0, 0);
+			// Set pos. Rest length is function of mass, not position, so no need to reset
+			ballArray[1].pos.x = base1x;
+			ballArray[1].pos.y = base1y;
+			ballArray[1].pos.z = base1z;
 		}
 	}
 	
@@ -140,7 +131,7 @@ public class CCell implements Serializable {
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
 			CBall ball0 = cell0.ballArray[iSpring/2];
 			CBall ball1 = cell1.ballArray[iSpring%2];
-			double K = (model.nBallInit[ball0.cell.type]+model.nBallInit[ball1.cell.type])/2.0;
+			double K = model.Ks*(model.nBallInit[ball0.cell.type]+model.nBallInit[ball1.cell.type])/2.0;
 			double restLength = ball0.radius*Math.max(2.0, model.aspect[ball0.cell.type]) + ball1.radius*Math.max(2.0, model.aspect[ball1.cell.type]);
 			CSpring spring 	= new CSpring(	ball0,						// 0, 0, 1, 1, ...
 											ball1, 						// 0, 1, 0, 1, ...

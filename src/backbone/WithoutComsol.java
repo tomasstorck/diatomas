@@ -79,8 +79,9 @@ public class WithoutComsol {
 			model.Write((NSpring[1]-NSpring[0]) + " anchor and " + (NSpring[3]-NSpring[2]) + " sticking springs formed", "iter");
 		}
 		
-		boolean overlap = false;
+		model.Save();
 		
+		boolean overlap = false;
 		while(true) {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.movementIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
@@ -107,6 +108,7 @@ public class WithoutComsol {
 				}
 			}
 			
+			// Below code is only required if sticking/anchoring is not done in the ODE solver
 //			if(model.anchoring) {
 //				// Break anchor springs
 //				// {} to make sure objects are destroyed when we're done (aka scope)

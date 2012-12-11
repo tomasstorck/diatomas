@@ -724,7 +724,7 @@ public class CModel implements Serializable {
 				Assistant.NFilBreak++;
 			}
 		}
-		// unFil all the springs that are detected to be broken 
+		// unFil all the springs that are detected to be broken, with their siblings 
 		for(CSpring fil : unFilArray) fil.Break();
 	}
 	
@@ -736,11 +736,11 @@ public class CModel implements Serializable {
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
 			CCell mother = cellArray.get(iCell);
-			double mass = mother.GetAmount();
+			double amount = mother.GetAmount();
 
 			// Random growth
-			mass *= (0.95+rand.Double()/5.0);
-			mother.SetAmount(mass);
+			amount *= (0.95+rand.Double()/5.0);
+			mother.SetAmount(amount);
 			
 			// Cell growth or division
 			if(mother.GetAmount()>nCellMax[mother.type]) {
@@ -815,7 +815,7 @@ public class CModel implements Serializable {
 					mother.filament,
 					mother.colour,
 					this);														// Same filament boolean as cell and pointer to the model
-			// Set mass for both cells
+			// Set amount for both cells
 			daughter.SetAmount(n/2.0);		// Radius is updated in this method
 			mother.SetAmount(n/2.0);
 			// Set properties for new cell
@@ -823,7 +823,7 @@ public class CModel implements Serializable {
 			daughter.ballArray[0].force = 	new Vector3d(mother.ballArray[0].force);
 			daughter.colour =				mother.colour;							// copy of reference
 			daughter.mother = 				mother;
-			daughter.q = 				mother.q;
+			daughter.q = 					mother.q;
 			// Displace old cell
 			mother.ballArray[0].pos = mother.ballArray[0].pos.plus(  direction.times( displacement )  );
 			// Contain cells to y dimension of domain
@@ -840,15 +840,13 @@ public class CModel implements Serializable {
 			Vector3d direction = motherBall1.pos.minus( motherBall0.pos );
 			direction.normalise();
 			// Displacement
-			double displacement; 																		
-//			if(mother.type<4) {
-//				displacement = motherBall0.radius*Math.pow(2.0,-0.666666);								// A very strange formula: compare our radius to the C++ equation for Rpos and you'll see it's the same
-//			} else {
-				displacement = motherBall1.radius/2.0;
-//			}
+			double displacement = motherBall1.radius/2.0;
+			// Half mass of mother cell
+			mother.SetAmount(mother.GetAmount()/2.0);
 			// Make a new, displaced cell
 			Vector3d middle = motherBall1.pos.plus(motherBall0.pos).divide(2.0); 
 			daughter = new CCell(mother.type,													// Same type as cell
+					mother.GetAmount(),															// Same mass as (already slimmed down) mother cell
 					middle.x+	  displacement*direction.x,										// First ball. First ball and second ball were swapped in MATLAB and possibly C++					
 					middle.y+1.01*displacement*direction.y,										// ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
 					middle.z+	  displacement*direction.z,
@@ -858,9 +856,6 @@ public class CModel implements Serializable {
 					mother.filament,
 					mother.colour,
 					this);																		// Same filament boolean as cell and pointer to the model
-			// Set mass for both cells
-			daughter.SetAmount(n/2.0);
-			mother.SetAmount(n/2.0);
 			// Displace old cell, 2nd ball
 			motherBall1.pos = middle.minus(direction.times(displacement));
 			mother.rodSpringArray.get(0).ResetRestLength();
@@ -897,6 +892,7 @@ public class CModel implements Serializable {
 						fil.ResetRestLength();
 					}
 				}
+				// Make new filial link between mother and daughter
 				double K = Kf*(nBallInit[mother.type] + nBallInit[daughter.type])/2.0;
 				CSpring filSmall = new CSpring(daughter.ballArray[0], mother.ballArray[1], K, 0.0, 2);
 				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], K, 0.0, 2);
