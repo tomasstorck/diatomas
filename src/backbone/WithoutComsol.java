@@ -20,7 +20,7 @@ public class WithoutComsol {
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
 		/////
-//		model.cellType = new int[]{5};
+		model.cellType = new int[]{5};
 //		model.Kan *= 100.0; 
 //		// Cristian
 //		model.Kan = 2e7;

@@ -32,7 +32,7 @@ for iFile=length(loadFileNameList):-1:1
 	load([location filesep 'output' filesep loadFileName]);
 	NSave = length(model.ballArray(1).posSave);
 	
-	if rem(length(loadFileNameList)-iFile,3)==0
+	if rem(length(loadFileNameList)-iFile,5)==0
 		% Create camera, background and lighting based on L
 		minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates
 		maxPos = max([model.ballArray.pos],[],2)*1e6;
@@ -43,7 +43,7 @@ for iFile=length(loadFileNameList):-1:1
 		B = C+[Pmax 0 -Pmax]';									
 		BC = norm(B-C);
 		AC = norm(A-C);
-		camAngle = 2*rad2deg(atan(1.1*BC/AC));
+		camAngle = 2*rad2deg(atan(BC/AC));
 	end
 
 	for ii=0:NSave
@@ -75,10 +75,10 @@ for iFile=length(loadFileNameList):-1:1
 		% Build spheres and rods
 		for iCell=1:length(model.cellArray)
 			cell = model.cellArray(iCell);
-			fprintf(fid,['// Cell no. ' num2str(iCell-1) '\n']);
+			fprintf(fid,['// Cell no. ' num2str(iCell-1) '\n']);		% -1 because we want Java numbering
 			if cell.type<2
 				% Spherical cell
-				ball = model.ballArray(cell.ballArray(1)+1);
+				ball = model.ballArray(cell.ballArray(1)+1);			% +1 because of Java --> MATLAB
 				
 				if plotIntermediate
 					pos = ball.posSave(ii+1,:)*1e6;
@@ -110,11 +110,11 @@ for iFile=length(loadFileNameList):-1:1
 					'\t}\n',...
 					'}\n\n']);
 			elseif cell.type>1	% Rod
-				ball = model.ballArray(cell.ballArray(1)+1);
+				ball = model.ballArray(cell.ballArray(1)+1);				% +1 because of Java --> MATLAB
 				ballNext = model.ballArray(cell.ballArray(2)+1);
 				
 				if plotIntermediate
-					position = [sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6),...
+					position = [sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6),...		% +1 because of Java --> MATLAB
 						sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ballNext.posSave(ii+1,1)*1e6, ballNext.posSave(ii+1,2)*1e6, ballNext.posSave(ii+1,3)*1e6)];
 					
 					position2 = sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6);
@@ -175,49 +175,41 @@ for iFile=length(loadFileNameList):-1:1
 		
 		% Build filament springs
 		for iFil = 1:length(model.filSpringArray)
-			pFil = model.filSpringArray(iFil);
-			for springType = 1:2;
-				fprintf(fid,['// Filament spring no. ' num2str(iFil-1) '\n']);
-				if springType==0		% Set specific things for small spring and big spring
-					colour(1) = 0; colour(2) = 0; colour(3) = 1;		% Big spring is blue
-					ball 	= model.ballArray(pFil.big_ballArray(1));
-					ballNext = model.ballArray(pFil.big_ballArray(2));
-				else
-					colour(1) = 1; colour(2) = 0; colour(3) = 0;		% Small spring is red
-					ball 	= model.ballArray(pFil.small_ballArray(1));
-					ballNext = model.ballArray(pFil.small_ballArray(2));
-				end
-				
-				if plotIntermediate
-					position = [sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6),...
-						sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ballNext.posSave(ii+1,1)*1e6, ballNext.posSave(ii+1,2)*1e6, ballNext.posSave(ii+1,3)*1e6)];
-				else
-					position = [sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ball.pos(1)*1e6, ball.pos(2)*1e6, ball.pos(3)*1e6),...
-						sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ballNext.pos(1)*1e6, ballNext.pos(2)*1e6, ballNext.pos(3)*1e6)];
-				end
-				fprintf(fid,['cylinder\n',...
-					'{\n',...
-					position,...
-					sprintf('\t%10.3f\n', ball.radius*1e5),...
-					'\ttexture{\n',...
-					'\t\tpigment{\n',...
-					sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', colour(1), colour(2), colour(3)),...
-					'\t\t}\n',...
-					'\t\tfinish{\n',...
-					['\t\t\tambient ' num2str(ambient) '\n'],...
-					['\t\t\tdiffuse ' num2str(diffuse) '\n'],...
-					'\t\t}\n',...
-					'\t}\n',...
-					'}\n\n']);
+			fil = model.filSpringArray(iFil);
+			fprintf(fid,['// Filament spring no. ' num2str(iFil-1) '\n']);
+			colour(1) = 0; colour(2) = 0; colour(3) = 1;		% Filament spring is blue
+			ball 	= model.ballArray(fil.ballArray(1)+1);
+			ballNext = model.ballArray(fil.ballArray(2)+1);
+			
+			if plotIntermediate
+				position = [sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6),...
+					sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ballNext.posSave(ii+1,1)*1e6, ballNext.posSave(ii+1,2)*1e6, ballNext.posSave(ii+1,3)*1e6)];
+			else
+				position = [sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ball.pos(1)*1e6, ball.pos(2)*1e6, ball.pos(3)*1e6),...
+					sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ballNext.pos(1)*1e6, ballNext.pos(2)*1e6, ballNext.pos(3)*1e6)];
 			end
+			fprintf(fid,['cylinder\n',...
+				'{\n',...
+				position,...
+				sprintf('\t%10.3f\n', ball.radius*1e5),...
+				'\ttexture{\n',...
+				'\t\tpigment{\n',...
+				sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', colour(1), colour(2), colour(3)),...
+				'\t\t}\n',...
+				'\t\tfinish{\n',...
+				['\t\t\tambient ' num2str(ambient) '\n'],...
+				['\t\t\tdiffuse ' num2str(diffuse) '\n'],...
+				'\t\t}\n',...
+				'\t}\n',...
+				'}\n\n']);
 		end
 		
 		% Build stick spring array
 		for iStick = 1:length(model.stickSpringArray)
 			fprintf(fid,['// Sticking spring no. ' num2str(iStick-1) '\n']);
-			pSpring = model.stickSpringArray(iStick);
-			ball = model.ballArray(pSpring.ballArray(1)+1);
-			ballNext = model.ballArray(pSpring.ballArray(2)+1);
+			spring = model.stickSpringArray(iStick);
+			ball = model.ballArray(spring.ballArray(1)+1);
+			ballNext = model.ballArray(spring.ballArray(2)+1);
 			
 			if plotIntermediate
 				position = [sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6),...
@@ -245,19 +237,19 @@ for iFile=length(loadFileNameList):-1:1
 		%Build anchor spring array
 		for iAnchor = 1:length(model.anchorSpringArray)
 			fprintf(fid,['// Anchor spring no. ' num2str(iAnchor-1) '\n']);					% -1 so we use Java numbering to display this
-			pSpring = model.anchorSpringArray(iAnchor);
-			if isfield(pSpring,'ballArray')						% Workaround for old bug in saving
-				ball = model.ballArray(pSpring.ballArray(1)+1);
+			spring = model.anchorSpringArray(iAnchor);
+			if isfield(spring,'ballArray')						% Workaround for old bug in saving
+				ball = model.ballArray(spring.ballArray(1)+1);
 				if plotIntermediate
 					position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.posSave(ii+1,1)*1e6, ball.posSave(ii+1,2)*1e6, ball.posSave(ii+1,3)*1e6);
 				else
 					position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.pos(1)*1e6, ball.pos(2)*1e6, ball.pos(3)*1e6);
 				end
-				if ~all(pSpring.anchor==ball.pos)
+				if ~all(spring.anchor==ball.pos)
 					fprintf(fid,['cylinder\n',...
 						'{\n',...
 						position,...
-						sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', pSpring.anchor(1)*1e6, pSpring.anchor(2)*1e6, pSpring.anchor(3)*1e6),...
+						sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', spring.anchor(1)*1e6, spring.anchor(2)*1e6, spring.anchor(3)*1e6),...
 						sprintf('\t%10.3f\n', ball.radius*1e5),...	% 1e5 because it is a spring
 						'\ttexture{\n',...
 						'\t\tpigment{\n',...

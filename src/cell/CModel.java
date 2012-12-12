@@ -33,7 +33,7 @@ public class CModel implements Serializable {
 	public double Kw 	= 1e7;					// wall spring (per ball)
 	public double Kr 	= 2.5e5;				// internal cell spring (per ball)
 	public double Kf 	= 1e6;					// filament spring (per ball average)
-	public double Kan	= 5e4;					// anchor (per BALL)
+	public double Kan	= 5e4;					// anchor (per ball)
 	public double Ks 	= 5e4;					// sticking (per ball average)
 	public double[] stretchLimAnchor = {0.6, 1.4};// Maximum tension and compression (1-this value) for anchoring springs
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
@@ -827,7 +827,9 @@ public class CModel implements Serializable {
 			if(daughter.ballArray[0].pos.y < daughter.ballArray[0].radius)  	{daughter.ballArray[0].pos.y 	= daughter.ballArray[0].radius;};
 			// Set filament springs
 			if(daughter.filament) {
-				daughter.Stick(mother);		// Because there are no filaments for two spherical cells
+				double K = Kf*(nBallInit[mother.type] + nBallInit[daughter.type])/2.0;
+				CSpring fil = new CSpring(mother.ballArray[0], daughter.ballArray[0], K, 0.0, 2);
+				fil.ResetRestLength();
 			}
 		} else {
 			CBall motherBall0 = mother.ballArray[0];
@@ -890,11 +892,11 @@ public class CModel implements Serializable {
 				}
 				// Make new filial link between mother and daughter
 				double K = Kf*(nBallInit[mother.type] + nBallInit[daughter.type])/2.0;
-				CSpring filSmall = new CSpring(daughter.ballArray[0], mother.ballArray[1], K, 0.0, 2);
-				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], K, 0.0, 2);
+				CSpring filSmall = new CSpring(daughter.ballArray[0], mother.ballArray[1], K, 0.0, 2);		// type==2 --> Small spring
+				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], K, 0.0, 3);		// type==3 --> Big spring
 				filSmall.siblingArray.add(filBig);
 				filBig.siblingArray.add(filSmall);
-				filSmall.ResetRestLength();
+				filSmall.ResetRestLength();			// Big uses small's rest length, so do small first!
 				filBig.ResetRestLength();
 			}
 		}

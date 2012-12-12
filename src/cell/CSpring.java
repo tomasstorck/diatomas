@@ -32,7 +32,7 @@ public class CSpring implements Serializable {
 			ball0.cell.stickSpringArray.add(this);
 			ball1.cell.stickSpringArray.add(this);
 			break;
-		case 2: 		// Filament spring
+		case 2:	case 3: 		// 2: Small filament spring, continue to doing whatever is in case 3: big filament spring
 			model.filSpringArray.add(this);
 			ball0.cell.filSpringArray.add(this);
 			ball1.cell.filSpringArray.add(this);
@@ -54,14 +54,13 @@ public class CSpring implements Serializable {
 			break;
 		case 1:				// Stick
 			break;
-		case 2:				// Fil
-			if(restLength<siblingArray.get(0).restLength) {		// If this is the short spring
-				restLength = 1.1*(ballArray[0].radius + ballArray[1].radius);
-			} else {											// This is the long spring
-				CCell cell0 = ballArray[0].cell;
-				CCell cell1 = ballArray[1].cell;
-				restLength = 1.6*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
-			}
+		case 2:				// Small fil spring
+			restLength = 1.1*(ballArray[0].radius + ballArray[1].radius);
+			break;
+		case 3:				// Big fil spring
+			CCell cell0 = ballArray[0].cell;
+			CCell cell1 = ballArray[1].cell;
+			restLength = 1.6*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
 			break;
 		}
 	}
@@ -73,10 +72,10 @@ public class CSpring implements Serializable {
 		CCell cell1 = ballArray[1].cell;
 		
 		switch (type) {
-		case 0: 	// Rod spring
+		case 0: 														// Rod spring
 			// Can't break
 			break;
-		case 1:		// Sticking spring
+		case 1:															// Sticking spring
 			cell0.stickCellArray.remove(cell1);
 			cell1.stickCellArray.remove(cell0);	
 			// Remove this and siblings from model and cells
@@ -89,7 +88,7 @@ public class CSpring implements Serializable {
 				count += (model.stickSpringArray.remove(sibling))?1:0;
 			}
 			break;
-		case 2:		// Filament springs
+		case 2:	case 3:													// Filament springs		
 			// Remove this and siblings from model and cells
 			count += (model.filSpringArray.remove(this))?1:0;			// Add one to counter if successfully removed
 			cell0.filSpringArray.remove(this);
@@ -100,8 +99,6 @@ public class CSpring implements Serializable {
 				count += (model.filSpringArray.remove(sibling))?1:0;
 			}
 			break;
-		case 3: 	// Anchoring springs
-			break;
 		}
 		return count;
 	}
@@ -110,9 +107,7 @@ public class CSpring implements Serializable {
 	
 	public void set(CBall ball0, CBall ball1) {
 		ballArray[0] = ball0;
-//		ballArrayIndex[0] = ball0.index;
 		ballArray[1] = ball1;
-//		ballArrayIndex[1] = ball1.index;
 	}
 	
 	public int Index() {
@@ -124,7 +119,7 @@ public class CSpring implements Serializable {
 		case 1:
 			array = model.stickSpringArray;
 			break;
-		case 2:
+		case 2: case 3:
 			array = model.filSpringArray;
 			break;
 		}
