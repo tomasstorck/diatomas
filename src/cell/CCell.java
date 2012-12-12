@@ -129,15 +129,15 @@ public class CCell implements Serializable {
 		
 		CSpring[] stickArray = new CSpring[NSpring];
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
-			CBall ball0 = cell0.ballArray[iSpring/2];
-			CBall ball1 = cell1.ballArray[iSpring%2];
+			CBall ball0 = cell0.ballArray[iSpring/2];							// 0, 0, 1, 1, ...
+			CBall ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
 			double K = model.Ks*(model.nBallInit[ball0.cell.type]+model.nBallInit[ball1.cell.type])/2.0;
 			double restLength = ball0.radius*Math.max(2.0, model.aspect[ball0.cell.type]) + ball1.radius*Math.max(2.0, model.aspect[ball1.cell.type]);
-			CSpring spring 	= new CSpring(	ball0,						// 0, 0, 1, 1, ...
-											ball1, 						// 0, 1, 0, 1, ...
-											K,					// Spring constant
-											restLength,					// Rest length
-											1); 						// Type is sticking spring
+			CSpring spring 	= new CSpring(	ball0,
+											ball1,
+											K,									// Spring constant
+											restLength,							// Rest length
+											1); 								// Type is sticking spring
 			stickArray[iSpring] = spring;
 		}
 		
@@ -150,7 +150,7 @@ public class CCell implements Serializable {
 				}
 			}
 		}
-		
+		// Tell cells they're stuck to each other
 		this.stickCellArray.add(cell);
 		cell.stickCellArray.add(this);
 		

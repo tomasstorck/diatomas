@@ -668,7 +668,7 @@ public class CModel implements Serializable {
 						break;						
 					}
 				}
-				if(stuck) {					// Stuck --> can we break this spring?
+				if(stuck) {					// Stuck --> can we break this spring (and its siblings)?
 					double dist = (c1b0.pos.minus(c0b0.pos)).norm();
 					if(dist < stickingSpring.restLength*stretchLimStick[0] || dist > stickingSpring.restLength*stretchLimStick[1]) 		Assistant.NStickBreak += stickingSpring.Break();
 				} else {					// Not stuck --> can we stick them?

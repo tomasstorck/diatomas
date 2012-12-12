@@ -12,6 +12,7 @@ import NR.Vector3d;
 import cell.*;
 
 import random.rand;
+import ser2mat.ser2mat;
 @SuppressWarnings("unused")
 
 public class WithoutComsol {
@@ -19,7 +20,8 @@ public class WithoutComsol {
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
 		/////
-//		model.cellType = new int[]{1,3};
+		model.cellType = new int[]{5};
+//		model.Kan *= 100.0; 
 //		// Cristian
 //		model.Kan = 2e7;
 //		model.Kc = 4e7;
@@ -63,6 +65,8 @@ public class WithoutComsol {
 						model);
 				// Set cell boundary concentration to initial value
 				cell.q = 0.0;
+				// Lower cell to the substratum
+				for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
 			}
 			boolean overlap = true;
 			int[] NSpring = {0,0,0,0};
@@ -162,6 +166,7 @@ public class WithoutComsol {
 			// And finally: save stuff
 			model.Write("Saving model as serialised file", "iter");
 			model.Save();
+			ser2mat.Convert(model);
 		}
 	}
 }

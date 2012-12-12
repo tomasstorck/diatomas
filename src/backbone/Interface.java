@@ -48,7 +48,7 @@ public class Interface{
 				System.out.println("  Other:");
 				System.out.println("start \t\t\t Starts the model automatically after looping through the arguments, or not");
 				System.out.println("load [path/filename.extension]\t Load the specified file instead of the default parameters. Automatically starts model after loading");
-				System.out.println("makemat [path] \t\t\t Converts all .ser files found in [path]/output/ to .mat files. Automatically inhibits model starting after loading");
+				System.out.println("ser2mat [path] \t\t\t Converts all .ser files found in [path]/output/ to .mat files. Automatically inhibits model starting after loading");
 								
 				System.out.println("*\t\t\t\t Any unrecognised argument is assumed to be simulation the name");
 				return;
@@ -75,7 +75,7 @@ public class Interface{
 				
 				Assistant.start = true;
 				continue;}
-			if(arg.equalsIgnoreCase("makemat")){
+			if(arg.equalsIgnoreCase("ser2mat")){
 				String modelPath = args[ii+1];
 				// Open directory
 				File dir = new File(modelPath + "/output/");
@@ -90,7 +90,7 @@ public class Interface{
 				if(files==null) throw new Exception("No .ser files found in directory " + modelPath + "/output/");
 				for(String fileName : files) { 
 					model.Write("Loading " + fileName,"",true);
-					String loadPath = modelPath + "/output/" + fileName; 
+					String loadPath = modelPath + "/output/" + fileName;
 					model = Load(loadPath);
 					ser2mat.Convert(model);
 				}
