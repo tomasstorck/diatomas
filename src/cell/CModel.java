@@ -1,12 +1,9 @@
 package cell;
 
-import interactor.Interactor;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
@@ -18,12 +15,11 @@ import java.util.zip.GZIPOutputStream;
 
 import backbone.Assistant;
 import random.rand;
-import jmatio.*;
 import NR.*;
 
 public class CModel implements Serializable {
 	// Set serializable information
-	private final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 	// Model properties
 	public String name = "default";
 	public int randomSeed = 5;					// Makes first 3 rods, then 3 spheres (I got lucky)

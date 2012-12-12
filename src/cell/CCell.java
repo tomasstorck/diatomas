@@ -132,7 +132,7 @@ public class CCell implements Serializable {
 			CBall ball0 = cell0.ballArray[iSpring/2];							// 0, 0, 1, 1, ...
 			CBall ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
 			double K = model.Ks*(model.nBallInit[ball0.cell.type]+model.nBallInit[ball1.cell.type])/2.0;
-			double restLength = ball0.radius*Math.max(2.0, model.aspect[ball0.cell.type]) + ball1.radius*Math.max(2.0, model.aspect[ball1.cell.type]);
+			double restLength = ball1.pos.minus(ball0.pos).norm();				// Set rest length to current distance
 			CSpring spring 	= new CSpring(	ball0,
 											ball1,
 											K,									// Spring constant
