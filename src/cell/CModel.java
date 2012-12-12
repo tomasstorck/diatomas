@@ -39,14 +39,14 @@ public class CModel implements Serializable {
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public double[] stretchLimStick = {0.6, 1.4};// Maximum tension and compression (1-this value) for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
-	public double[] stretchLimFil = {0.6, 1.4};// Maximum tension and compression (1-this value) for sticking springs
+	public double[] stretchLimFil = {0.4, 1.6};	// Maximum tension and compression (1-this value) for sticking springs
 	// Domain properties
 	public double Kd 	= 2.5e3;				// drag force coefficient (per BALL)
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
-	public Vector3d L 	= new Vector3d(20e-6, 5e-6, 20e-6);	// [m], Dimensions of domain
+	public Vector3d L 	= new Vector3d(20e-6, 20e-6, 20e-6);	// [m], Dimensions of domain
 	// Model biomass properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)

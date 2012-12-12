@@ -20,7 +20,7 @@ public class WithoutComsol {
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
 		/////
-		model.cellType = new int[]{5};
+//		model.cellType = new int[]{5};
 //		model.Kan *= 100.0; 
 //		// Cristian
 //		model.Kan = 2e7;
@@ -58,7 +58,7 @@ public class WithoutComsol {
 				CCell cell = new CCell(type, 						// Type of biomass
 						n,											// Initial cell mass is random between initial and max
 						(0.2*rand.Double()-0.1)*model.L.x, 			// Anywhere between -0.1*Lx and 0.1*Lx
-						(0.2*rand.Double()-0.1)*model.L.y, 			// Anywhere between -0.1*Ly and 0.1*Ly
+						(0.2*rand.Double()+0.9)*model.L.y, 			// Anywhere between 0.9*Ly and 1.1*Ly
 						(0.2*rand.Double()-0.1)*model.L.z,			// Anywhere between -0.1*Lz and 0.1*Lz
 						model.filament,								// With filament?
 						colour[iCell],
@@ -84,6 +84,7 @@ public class WithoutComsol {
 		}
 		
 		model.Save();
+		ser2mat.Convert(model);
 		
 		boolean overlap = false;
 		while(true) {
