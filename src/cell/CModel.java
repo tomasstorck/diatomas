@@ -530,9 +530,9 @@ public class CModel implements Serializable {
 			// Gravity and buoyancy
 			if(gravity) {
 				if(gravityZ) {
-					ball.force.z += G * ((rhoX-rhoWater)/rhoWater) * ball.n*MWX;
+					ball.force.z += G * (rhoX-rhoWater) * ball.n*MWX/rhoX;
 				} else if(y>r*1.1) {			// Only if not already at the floor plus a tiny bit 
-					ball.force.y += G * ((rhoX-rhoWater)/rhoWater) * ball.n*MWX;  //let the ball fall. Note that G is negative 
+					ball.force.y += G * (rhoX-rhoWater) * ball.n*MWX/rhoX;  //let the ball fall. Note that G is negative 
 				}
 			}
 			
@@ -874,6 +874,7 @@ public class CModel implements Serializable {
 
 			// Set filament springs
 			if(daughter.filament) {
+				ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
 				for(CSpring fil : mother.filSpringArray) {
 					boolean found=false;
 					if( fil.ballArray[0] == motherBall0) {
@@ -883,12 +884,15 @@ public class CModel implements Serializable {
 						fil.ballArray[1] = daughter.ballArray[0];
 						found = true;}
 					if(found) {
-						// Donate filament spring from mother to daughter 
-						daughter.filSpringArray.add(fil);
-						mother.filSpringArray.remove(fil);
-						// Reset rest lengths
-						fil.ResetRestLength();
+						// Mark filament spring for donation from mother to daughter
+						donateFilArray.add(fil);
 					}
+				}
+				for(CSpring fil : donateFilArray) {
+					daughter.filSpringArray.add(fil);
+					mother.filSpringArray.remove(fil);
+					// Reset rest lengths
+					fil.ResetRestLength();
 				}
 				// Make new filial link between mother and daughter
 				double K = Kf*(nBallInit[mother.type] + nBallInit[daughter.type])/2.0;
