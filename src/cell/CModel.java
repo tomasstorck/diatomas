@@ -740,16 +740,19 @@ public class CModel implements Serializable {
 			CCell mother = cellArray.get(iCell);
 			double amount = mother.GetAmount();
 
-			// Random growth
-			amount *= Math.pow(0.95+rand.Double()/5.0,growthTimeStep/3600.0);		// Per hour between 0.95 and 1.15
-			// Syntrophic growth for sticking cells
+			// Random growth, with syntrophy if required
+			double mu = 0.95+rand.Double()/5.0;										// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
+			double syntrophyAcceleration = 1.0;
 			for(CCell stickCell : mother.stickCellArray) {
 				if(mother.type != stickCell.type) {
 					// The cell types are different on the other end of the spring
-					amount *= syntrophyFactor;
+					syntrophyAcceleration *= syntrophyFactor;
 					break;
 				}
 			}
+			amount *= Math.exp(mu*syntrophyAcceleration*growthTimeStep/3600.0);							// We need growthTimeStep s-1 --> h-1
+
+			// Syntrophic growth for sticking cells
 			mother.SetAmount(amount);
 			
 			// Cell growth or division
