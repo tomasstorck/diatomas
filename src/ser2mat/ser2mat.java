@@ -21,6 +21,9 @@ public class ser2mat {
 		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
 		mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      	
 		mlModel.setField("sphereStraightFil",             new MLDouble(null, new double[] {model.sphereStraightFil?1:0}, 1));             	// Make streptococci-like structures if true, otherwise staphylococci
+		mlModel.setField("normalForce",                   new MLDouble(null, new double[] {model.normalForce?1:0}, 1));                   	// Use normal force to simulate cells colliding with substratum (at y=0)
+		mlModel.setField("initialAtSubstratum",           new MLDouble(null, new double[] {model.initialAtSubstratum?1:0}, 1));           	// All initial balls are positioned at y(t=0) = ball.radius
+		mlModel.setField("syntrophyFactor",               new MLDouble(null, new double[] {model.syntrophyFactor}, 1));                   	// Accelerated growth if two cells of different types are stuck to each other
 		// Spring constants
 		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// collision (per ball)
 		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall spring (per ball)
@@ -58,10 +61,10 @@ public class ser2mat {
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {model.growthTime}, 1));                        	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {model.growthTimeStep}, 1));                    	// [s] Time step for growth
 		mlModel.setField("growthIter",                    new MLDouble(null, new double[] {model.growthIter}, 1));                        	// [-] Counter time iterations for growth
-		mlModel.setField("movementTime",                  new MLDouble(null, new double[] {model.movementTime}, 1));                      	// [s] initial time for movement (for ODE solver)
-		mlModel.setField("movementTimeStep",              new MLDouble(null, new double[] {model.movementTimeStep}, 1));                  	// [s] output time step  for movement
-		mlModel.setField("movementTimeStepEnd",           new MLDouble(null, new double[] {model.movementTimeStepEnd}, 1));               	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
-		mlModel.setField("movementIter",                  new MLDouble(null, new double[] {model.movementIter}, 1));                      	// [-] counter time iterations for movement
+		mlModel.setField("relaxationTime",                new MLDouble(null, new double[] {model.relaxationTime}, 1));                    	// [s] initial time for relaxation (for ODE solver)
+		mlModel.setField("relaxationTimeStep",            new MLDouble(null, new double[] {model.relaxationTimeStep}, 1));                	// [s] output time step  for relaxation
+		mlModel.setField("relaxationTimeStepEnd",         new MLDouble(null, new double[] {model.relaxationTimeStepEnd}, 1));             	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
+		mlModel.setField("relaxationIter",                new MLDouble(null, new double[] {model.relaxationIter}, 1));                    	// [-] counter time iterations for relaxation
 		// Arrays
 
 		// cellArray
@@ -232,7 +235,7 @@ public class ser2mat {
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);
 		list.add(mlModel);
 		try {
-			new MatFileWriter(model.name + "/output/" + String.format("g%04dm%04d", model.growthIter, model.movementIter) + ".mat",list);
+			new MatFileWriter(model.name + "/output/" + String.format("g%04dm%04d", model.growthIter, model.relaxationIter) + ".mat",list);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -38,7 +38,7 @@ public class Interface{
 				System.out.println("initialAtSubstratum\t\t Initial cells start at substratum (y==ball.radius)");
 				System.out.println("syntrophyFactor\t\t Growth acceleration due to cells being stuck to a cell of a different type (1.0 is no acceleration)");
 				System.out.println("growthTimeStep\t\t Time passed in seconds per growth step");
-				System.out.println("movementTimeStep\t\t Time passed in seconds per movement step");
+				System.out.println("relaxationTimeStep\t\t Time passed in seconds per relaxation step");
 				System.out.println("normalForce\t\t\t Use normal force acting at the substratum, y=0");
 				
 				System.out.println("  OS communication");
@@ -71,7 +71,7 @@ public class Interface{
 			if(arg.equalsIgnoreCase("gravityz")) 			{model.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("growthTimeStep"))		{model.growthTimeStep = Double.parseDouble(args[ii+1]);							continue;}
 			if(arg.equalsIgnoreCase("initialatsubstratum")) {model.initialAtSubstratum = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
-			if(arg.equalsIgnoreCase("movementtimeStep"))	{model.movementTimeStep = Double.parseDouble(args[ii+1]);						continue;}
+			if(arg.equalsIgnoreCase("relaxationtimeStep"))	{model.relaxationTimeStep = Double.parseDouble(args[ii+1]);						continue;}
 			if(arg.equalsIgnoreCase("normalforce"))			{model.normalForce = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}			
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
 			if(arg.equalsIgnoreCase("seed")) 				{model.randomSeed = Integer.parseInt(args[ii+1]);								continue;}

@@ -6,6 +6,7 @@ import comsol.*;
 import cell.*;
 
 import random.rand;
+import ser2mat.ser2mat;
 
 public class WithComsol {
 
@@ -50,7 +51,7 @@ public class WithComsol {
 				{0.4,1.0,1.0},
 				{1.0,0.1,1.0}};
 				
-		if(model.growthIter==0 && model.movementIter==0) {
+		if(model.growthIter==0 && model.relaxationIter==0) {
 			// Create initial cells, not overlapping
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				int type = rand.IntChoose(model.cellType);
@@ -65,11 +66,15 @@ public class WithComsol {
 						model);
 				// Set cell boundary concentration to initial value
 				cell.q = 0.0;
+				// Lower cell to the substratum if desired
+				if(model.initialAtSubstratum) {
+					for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
+				}
 			}
 			boolean overlap = true;
 			int[] NSpring = {0,0,0,0};
 			while(overlap) {
-				model.Movement();
+				model.Relaxation();
 				// We want to save the number of springs formed and broken
 				NSpring[0] += Assistant.NAnchorBreak;
 				NSpring[1] += Assistant.NAnchorForm;
@@ -82,11 +87,12 @@ public class WithComsol {
 		}
 		
 		model.Save();
+		ser2mat.Convert(model);
 		
 		boolean overlap = false;
 		while(true) {
 			// Reset the random seed
-			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.movementIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
+			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.relaxationIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
 
 			// Do COMSOL things
 			model.Write("Calculating cell steady state concentrations (COMSOL)","iter");
@@ -138,7 +144,8 @@ public class WithComsol {
 					fil.ResetRestLength();
 				}
 			}
-
+			
+			// Below code is only required if sticking/anchoring is not done in the ODE solver
 //			if(model.anchoring) {
 //				// Break anchor springs
 //				// {} to make sure objects are destroyed when we're done (aka scope)
@@ -154,7 +161,7 @@ public class WithComsol {
 //				int NNewAnchor = model.BuildAnchor(collisionArray);
 //				model.Write(NNewAnchor + " anchor springs built","iter");
 //			}
-//
+
 //			if(model.sticking) {
 //				// Break stick springs
 //				ArrayList<CStickSpring> breakArray = model.DetectStickBreak(0.6,1.4);		// Returns all springs that'll be broken (<rl*first argument, >rl*second argument). Should not contain any duplicates in the form of siblingsprings
@@ -167,18 +174,17 @@ public class WithComsol {
 //				int NNewStick = model.BuildStick(collisionArray);
 //				model.Write(NNewStick + " cell pairs sticked","iter");				// Divided by two, as array is based on origin and other cell (see for loop)
 //			}
-		
-			// Movement
-			model.Write("Starting movement calculations","iter");
-			int nstp = model.Movement();
-			model.movementIter++;
-			model.movementTime += model.movementTimeStep;
-			model.Write("Movement finished in " + nstp + " solver steps","iter");
+			
+			// Relaxation
+			model.Write("Starting relaxation calculations","iter");
+			int nstp = model.Relaxation();
+			model.relaxationIter++;
+			model.relaxationTime += model.relaxationTimeStep;
+			model.Write("Relaxation finished in " + nstp + " solver steps","iter");
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
 			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
-//			overlapCellArray.addAll(model.DetectCellCollision_Simple(1.0));
 			if(!overlapCellArray.isEmpty()) {
 				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
 				String cellNumber = "" + overlapCellArray.get(0).Index();
@@ -192,6 +198,7 @@ public class WithComsol {
 			// And finally: save stuff
 			model.Write("Saving model as serialised file", "iter");
 			model.Save();
+			ser2mat.Convert(model);
 		}
 	}
 }

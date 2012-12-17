@@ -6,10 +6,10 @@ camPos = [-L(1), 2*L(2),-L(3)];
 ambient = 0.8;
 diffuse = 0.4;
 keepPOV = true;
-drawSubstratum = true;
+drawSubstratum = false;
 
 NSave = length(model.ballArray(1).posSave);
-if rem(model.movementIter,5)==0 || ~exist('camAngle','var')
+if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')
 	% Create camera, background and lighting based on L
 	minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates
 	maxPos = max([model.ballArray.pos],[],2)*1e6;
@@ -24,7 +24,7 @@ if rem(model.movementIter,5)==0 || ~exist('camAngle','var')
 end
 
 for ii=0:NSave
-	imageName = sprintf('pov_g%04dm%04d_%02d', model.growthIter, model.movementIter, ii);
+	imageName = sprintf('pov_g%04dm%04d_%02d', model.growthIter, model.relaxationIter, ii);
 	imageLoc = [location '/image/' imageName '.png'];
 	if(exist(imageLoc,'file')) && ~exist('keepgoing','var')
 		fprintf(['File already found, skipping: ' imageName '\n']);
@@ -37,7 +37,7 @@ for ii=0:NSave
 		continue
 	end
 	
-	povName = [location sprintf('/output/pov_g%04dm%04d_%02d.pov', model.growthIter, model.movementIter, ii)];
+	povName = [location sprintf('/output/pov_g%04dm%04d_%02d.pov', model.growthIter, model.relaxationIter, ii)];
 	if(exist(povName,'file'))
 		delete(povName);
 	end
@@ -275,12 +275,11 @@ for ii=0:NSave
 			'\t\t\t}\n',...
 			'\t\t}\n',...
 			'\t}\n\n']);
-	end
-	
-	% Finalise the file
 	fprintf(fid,['\ttranslate <0,0,0>\n',...
 		'\trotate <0,0,0>\n']);
 	fprintf(fid,'}\n\n');						% Yes, we actually need this bracket
+	end
+	% Finalise the file
 	fclose(fid);
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -292,8 +291,8 @@ for ii=0:NSave
 		remove = ['rm ' povName];
 	end
 	[~,~] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
-	% Append text for movement and growth
-	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:   ' sprintf('%5.1f h',model.growthIter*model.growthTimeStep/3600.0) '\nMovement time: ' sprintf('%5.2f s'' ',model.movementIter*model.movementTimeStepEnd+ii*model.movementTimeStep)  imageLoc ' ' imageLoc]);
+	% Append text for relaxation and growth
+	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:   ' sprintf('%5.1f h',model.growthIter*model.growthTimeStep/3600.0) '\Relaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStepEnd+ii*model.relaxationTimeStep)  imageLoc ' ' imageLoc]);
 	% Append scale bar
 	A = camPos';
 	C = camView;

@@ -360,7 +360,7 @@ public class Comsol {
 	}
 	
 	public void Save() throws IOException {
-		comsol.save(System.getProperty("user.dir") + "/" + java.name + "/output/" + String.format("g%04dm%04d", java.growthIter, java.movementIter));		// No 2nd arguments --> save as .mph
+		comsol.save(System.getProperty("user.dir") + "/" + java.name + "/output/" + String.format("g%04dm%04d", java.growthIter, java.relaxationIter));		// No 2nd arguments --> save as .mph
 	}
 	
 	//////////////////////////////////

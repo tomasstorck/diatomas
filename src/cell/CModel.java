@@ -62,15 +62,15 @@ public class CModel implements Serializable {
 	// Ball properties
 	public double[] nCellInit = {2.42e-19*rhoX, 1.55e-17*rhoX, 1.70e-18*rhoX, 2.62e-17*rhoX, 1.70e-18*rhoX, 2.62e-17*rhoX};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
 	public double[] nBallInit = {nCellInit[0], nCellInit[1], nCellInit[2]/2.0, nCellInit[3]/2.0, nCellInit[4]/2.0, nCellInit[5]/2.0};				// [Cmol] initial mass of one ball in the cell
-	public double[] nCellMax = {nCellInit[0]*2.0, nCellInit[1]*2.0, nCellInit[2]*2.0, nCellInit[3]*2.0, nCellInit[4]*2.0, nCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
+	public double[] nCellMax = 	{nCellInit[0]*2.0, nCellInit[1]*2.0, nCellInit[2]*2.0, nCellInit[3]*2.0, nCellInit[4]*2.0, nCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
-	public double growthTimeStep = 3600.0;		// [s] Time step for growth
+	public double growthTimeStep = 600.0;		// [s] Time step for growth
 	public int growthIter = 0;					// [-] Counter time iterations for growth
-	public double movementTime = 0.0;			// [s] initial time for movement (for ODE solver)
-	public double movementTimeStep = 2e-2;		// [s] output time step  for movement
-	public double movementTimeStepEnd = 10e-2;	// [s] time interval for movement (for ODE solver), 5*movementTimeStep by default
-	public int movementIter = 0;				// [-] counter time iterations for movement
+	public double relaxationTime = 0.0;			// [s] initial time for relaxation (for ODE solver)
+	public double relaxationTimeStep = 2e-2;		// [s] output time step  for relaxation
+	public double relaxationTimeStepEnd = 10e-2;	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
+	public int relaxationIter = 0;				// [-] counter time iterations for relaxation
 	// Arrays
 	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
 	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
@@ -141,7 +141,7 @@ public class CModel implements Serializable {
 		// Extract format from input arguments
 		String prefix = "   ";
 		String suffix = "";
-		if(format.equalsIgnoreCase("iter")) 	{suffix = " (" + growthIter + "/" + movementIter + ")";} 	else
+		if(format.equalsIgnoreCase("iter")) 	{suffix = " (" + growthIter + "/" + relaxationIter + ")";} 	else
 			if(format.equalsIgnoreCase("warning")) 	{prefix = " WARNING: ";} 									else
 				if(format.equalsIgnoreCase("error")) 	{prefix = " ERROR: ";}
 		String string = dateFormat.format(cal.getTime()) + prefix + message + suffix;
@@ -347,18 +347,18 @@ public class CModel implements Serializable {
 	} 
 
 	////////////////////
-	// Movement stuff //
+	// Relaxation stuff //
 	////////////////////
-	public int Movement() throws Exception {
+	public int Relaxation() throws Exception {
 		// Reset counter
 		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NFilBreak = Assistant.NStickBreak = Assistant.NStickForm = 0;
 		
 		int nvar = 6*ballArray.size();
-		int ntimes = (int) (movementTimeStepEnd/movementTimeStep);
+		int ntimes = (int) (relaxationTimeStepEnd/relaxationTimeStep);
 		double atol = 1.0e-6, rtol = atol;
 		double h1 = 0.00001, hmin = 0;
-		double t1 = movementTime; 
-		double t2 = t1 + movementTimeStepEnd;
+		double t1 = relaxationTime; 
+		double t2 = t1 + relaxationTimeStepEnd;
 		Vector ystart = new Vector(nvar,0.0);
 
 		int ii=0;											// Determine initial value vector
@@ -733,15 +733,15 @@ public class CModel implements Serializable {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public int GrowthSimple() {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
-		int newCell = 0;
+	public int GrowthSimple(double muAvg) {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int NCell = cellArray.size();
+		int newCell = 0;
 		for(int iCell=0; iCell<NCell; iCell++){
 			CCell mother = cellArray.get(iCell);
 			double amount = mother.GetAmount();
 
 			// Random growth, with syntrophy if required
-			double mu = 0.95+rand.Double()/5.0;										// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
+			double mu = muAvg + (rand.Double()-0.25)/5.0;					// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
 			double syntrophyAcceleration = 1.0;
 			for(CCell stickCell : mother.stickCellArray) {
 				if(mother.type != stickCell.type) {
@@ -974,7 +974,7 @@ public class CModel implements Serializable {
 		GZIPOutputStream gz = null;
 		ObjectOutputStream oos = null;
 		try {
-			fos = new FileOutputStream(String.format("%s/output/g%04dm%04d.ser", name, growthIter, movementIter));
+			fos = new FileOutputStream(String.format("%s/output/g%04dm%04d.ser", name, growthIter, relaxationIter));
 			gz = new GZIPOutputStream(fos);
 			oos = new ObjectOutputStream(gz);
 			oos.writeObject(this);

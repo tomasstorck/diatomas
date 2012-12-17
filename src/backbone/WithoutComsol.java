@@ -20,6 +20,8 @@ public class WithoutComsol {
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
 		/////
+		double muAvg = 0.33;			// Doubling every 20 minutes
+		/////
 //		model.cellType = new int[]{5};
 //		model.Kan *= 100.0; 
 //		// Cristian
@@ -50,7 +52,7 @@ public class WithoutComsol {
 				{0.4,1.0,1.0},
 				{1.0,0.1,1.0}};
 				
-		if(model.growthIter==0 && model.movementIter==0) {
+		if(model.growthIter==0 && model.relaxationIter==0) {
 			// Create initial cells, not overlapping
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				int type = rand.IntChoose(model.cellType);
@@ -73,7 +75,7 @@ public class WithoutComsol {
 			boolean overlap = true;
 			int[] NSpring = {0,0,0,0};
 			while(overlap) {
-				model.Movement();
+				model.Relaxation();
 				// We want to save the number of springs formed and broken
 				NSpring[0] += Assistant.NAnchorBreak;
 				NSpring[1] += Assistant.NAnchorForm;
@@ -91,14 +93,14 @@ public class WithoutComsol {
 		boolean overlap = false;
 		while(true) {
 			// Reset the random seed
-			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.movementIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
+			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.relaxationIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
 
 			// COMSOL was here
 			
 			// Grow cells
 			if(!overlap) {
 				model.Write("Growing cells", "iter");
-				int newCell = model.GrowthSimple();
+				int newCell = model.GrowthSimple(muAvg);
 				
 				// Advance growth
 				model.growthIter++;
@@ -145,17 +147,16 @@ public class WithoutComsol {
 //				model.Write(NNewStick + " cell pairs sticked","iter");				// Divided by two, as array is based on origin and other cell (see for loop)
 //			}
 			
-			// Movement
-			model.Write("Starting movement calculations","iter");
-			int nstp = model.Movement();
-			model.movementIter++;
-			model.movementTime += model.movementTimeStep;
-			model.Write("Movement finished in " + nstp + " solver steps","iter");
+			// Relaxation
+			model.Write("Starting relaxation calculations","iter");
+			int nstp = model.Relaxation();
+			model.relaxationIter++;
+			model.relaxationTime += model.relaxationTimeStep;
+			model.Write("Relaxation finished in " + nstp + " solver steps","iter");
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
 			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
-//			overlapCellArray.addAll(model.DetectCellCollision_Simple(1.0));
 			if(!overlapCellArray.isEmpty()) {
 				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
 				String cellNumber = "" + overlapCellArray.get(0).Index();
