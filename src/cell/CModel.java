@@ -28,6 +28,10 @@ public class CModel implements Serializable {
 	public boolean filament = false;
 	public boolean gravity = false;
 	public boolean gravityZ = false;
+	public boolean sphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci
+	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
+	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
+	public double syntrophyFactor = 1.0; 	// Accelerated growth if two cells of different types are stuck to each other 
 	// Spring constants
 	public double Kc 	= 2e7;					// collision (per ball)
 	public double Kw 	= 1e7;					// wall spring (per ball)
@@ -524,8 +528,10 @@ public class CModel implements Serializable {
 			// Contact forces
 			double y = ball.pos.y;
 			double r = ball.radius;
-			if(y<r){
-				ball.force.y += Kw*nBallInit[ball.cell.type]*(r-y);
+			if(normalForce) {
+				if(y<r){
+					ball.force.y += Kw*nBallInit[ball.cell.type]*(r-y);
+				}
 			}
 			// Gravity and buoyancy
 			if(gravity) {
@@ -735,7 +741,15 @@ public class CModel implements Serializable {
 			double amount = mother.GetAmount();
 
 			// Random growth
-			amount *= (0.95+rand.Double()/5.0);
+			amount *= Math.pow(0.95+rand.Double()/5.0,growthTimeStep/3600.0);		// Per hour between 0.95 and 1.15
+			// Syntrophic growth for sticking cells
+			for(CCell stickCell : mother.stickCellArray) {
+				if(mother.type != stickCell.type) {
+					// The cell types are different on the other end of the spring
+					amount *= syntrophyFactor;
+					break;
+				}
+			}
 			mother.SetAmount(amount);
 			
 			// Cell growth or division
@@ -743,34 +757,6 @@ public class CModel implements Serializable {
 				newCell++;
 				GrowCell(mother);
 			}	
-		}
-		return newCell;
-	}
-	
-	public int GrowthSyntrophy() {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
-		int newCell = 0;
-		int NCell = cellArray.size();
-		for(int iCell=0; iCell<NCell; iCell++){
-			CCell mother = cellArray.get(iCell);
-			double mass = mother.GetAmount();
-
-			// Random growth
-			mass *= (0.95+rand.Double()/5.0);
-			// Syntrophic growth
-			for(CCell stickCell : mother.stickCellArray) {
-				if((mother.type<2 && stickCell.type>1) || (mother.type>1 && stickCell.type<2)) {
-					// The cell types are different on the other end of the spring
-					mass *= 1.2;
-					break;
-				}
-			}
-			mother.SetAmount(mass);
-			
-			// Cell growth or division
-			if(mother.GetAmount()>nCellMax[mother.type]) {
-				newCell++;
-				GrowCell(mother);
-			}
 		}
 		return newCell;
 	}
@@ -828,6 +814,27 @@ public class CModel implements Serializable {
 			// Set filament springs
 			if(daughter.filament) {
 				double K = Kf*(nBallInit[mother.type] + nBallInit[daughter.type])/2.0;
+				if(sphereStraightFil) {								// Reorganise if we want straight fils, otherwise just attach resulting in random structures
+					CBall motherBall0 = mother.ballArray[0];
+					CBall daughterBall0 = daughter.ballArray[0];
+					ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
+					for(CSpring fil : mother.filSpringArray) {
+						boolean found=false;
+						if( fil.ballArray[0] == motherBall0) {		// Only replace half the balls for daughter's
+							fil.ballArray[0] = daughterBall0;
+							found = true;}
+						if(found) {
+							// Mark filament spring for donation from mother to daughter
+							donateFilArray.add(fil);
+						}
+					}
+					for(CSpring fil : donateFilArray) {
+						daughter.filSpringArray.add(fil);
+						mother.filSpringArray.remove(fil);
+						// Reset rest lengths
+						fil.ResetRestLength();
+					}
+				}
 				CSpring fil = new CSpring(mother.ballArray[0], daughter.ballArray[0], K, 0.0, 2);
 				fil.ResetRestLength();
 			}
@@ -874,14 +881,15 @@ public class CModel implements Serializable {
 
 			// Set filament springs
 			if(daughter.filament) {
+				CBall daughterBall0 = daughter.ballArray[0];
 				ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
 				for(CSpring fil : mother.filSpringArray) {
 					boolean found=false;
 					if( fil.ballArray[0] == motherBall0) {
-						fil.ballArray[0] = daughter.ballArray[0];
+						fil.ballArray[0] = daughterBall0;
 						found = true;}
 					if( fil.ballArray[1] == motherBall0) {
-						fil.ballArray[1] = daughter.ballArray[0];
+						fil.ballArray[1] = daughterBall0;
 						found = true;}
 					if(found) {
 						// Mark filament spring for donation from mother to daughter

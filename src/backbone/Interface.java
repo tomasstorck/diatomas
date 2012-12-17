@@ -33,6 +33,13 @@ public class Interface{
 				System.out.println("filament\t\t\t Enable or disable filial links between mother and daughter cells");
 				System.out.println("gravity\t\t\t Enable or disable gravity");
 				System.out.println("anchoring\t\t\t Enable or disable cell-substratum EPS links (anchoring springs)");
+				System.out.println("gravityZ\t\t\t Gravity parallel to the plane instead of perpendicular (needs gravity 1)");
+				System.out.println("sphereStraightFil\t\t Sphere-sphere filial links are straight (like streptococci, not staphyllococci)");
+				System.out.println("initialAtSubstratum\t\t Initial cells start at substratum (y==ball.radius)");
+				System.out.println("syntrophyFactor\t\t Growth acceleration due to cells being stuck to a cell of a different type (1.0 is no acceleration)");
+				System.out.println("growthTimeStep\t\t Time passed in seconds per growth step");
+				System.out.println("movementTimeStep\t\t Time passed in seconds per movement step");
+				System.out.println("normalForce\t\t\t Use normal force acting at the substratum, y=0");
 				
 				System.out.println("  OS communication");
 				System.out.println("waitForFinish || disableWaitForFinish\t When calling command line arguments from the model, waits for them to finish running or continues with the model");
@@ -52,6 +59,7 @@ public class Interface{
 				return;
 			}
 			//
+			boolean boolNameSet = false;
 			if(arg.equalsIgnoreCase("64bit") || arg.equalsIgnoreCase("bit64")) 
 															{Assistant.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("anchoring") || arg.equalsIgnoreCase("anchor"))
@@ -61,16 +69,21 @@ public class Interface{
 			if(arg.equalsIgnoreCase("filament")) 			{model.filament = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("gravity")) 			{model.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("gravityz")) 			{model.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
+			if(arg.equalsIgnoreCase("growthTimeStep"))		{model.growthTimeStep = Double.parseDouble(args[ii+1]);							continue;}
+			if(arg.equalsIgnoreCase("initialatsubstratum")) {model.initialAtSubstratum = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
+			if(arg.equalsIgnoreCase("movementtimeStep"))	{model.movementTimeStep = Double.parseDouble(args[ii+1]);						continue;}
+			if(arg.equalsIgnoreCase("normalforce"))			{model.normalForce = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}			
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
 			if(arg.equalsIgnoreCase("seed")) 				{model.randomSeed = Integer.parseInt(args[ii+1]);								continue;}
 			if(arg.equalsIgnoreCase("start"))				{Assistant.start = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
+			if(arg.equalsIgnoreCase("spherestraightfil")) 	{model.sphereStraightFil = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("sticking")) 			{model.sticking = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
+			if(arg.equalsIgnoreCase("syntrophyFactor"))		{model.syntrophyFactor = Double.parseDouble(args[ii+1]);					continue;}
 			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("load")){
 				String loadPath = args[ii+1];
 				model.Write("Loading " + loadPath, "");
 				model = Load(loadPath);
-				
 				Assistant.start = true;
 				continue;}
 			if(arg.equalsIgnoreCase("ser2mat")){
@@ -96,7 +109,9 @@ public class Interface{
 				Assistant.start = false;
 			}
 			// If not any of the above, it must be the name
+			if(boolNameSet)	throw new Exception("Name already set to '" + model.name + "': cannot set to '" + arg + "'");
 			model.name=arg;
+			boolNameSet = true;
 			ii--;				// subtract 1 from ii because we don't want to ignore the argument after this name
 		}
 		

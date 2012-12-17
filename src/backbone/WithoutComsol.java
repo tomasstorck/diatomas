@@ -65,8 +65,10 @@ public class WithoutComsol {
 						model);
 				// Set cell boundary concentration to initial value
 				cell.q = 0.0;
-				// Lower cell to the substratum
-				for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
+				// Lower cell to the substratum if desired
+				if(model.initialAtSubstratum) {
+					for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
+				}
 			}
 			boolean overlap = true;
 			int[] NSpring = {0,0,0,0};

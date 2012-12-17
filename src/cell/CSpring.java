@@ -14,6 +14,7 @@ public class CSpring implements Serializable {
 	
 	///////////////////////////////////////////////////////////////////
 
+	// Adds new spring to model's array, cell's array. Does NOT add to siblingArray
 	public CSpring(CBall ball0, CBall ball1, double K, double restLength, int type){			// Note that siblingArray is by default not initialised
 		CModel model = ball0.cell.model;
 		ballArray[0] = ball0;
@@ -32,7 +33,7 @@ public class CSpring implements Serializable {
 			ball0.cell.stickSpringArray.add(this);
 			ball1.cell.stickSpringArray.add(this);
 			break;
-		case 2:	case 3: 		// 2: Small filament spring, continue to doing whatever is in case 3: big filament spring
+		case 2:	case 3: // 2: Small filament spring, continue to doing whatever is in case 3: big filament spring
 			model.filSpringArray.add(this);
 			ball0.cell.filSpringArray.add(this);
 			ball1.cell.filSpringArray.add(this);
@@ -125,7 +126,7 @@ public class CSpring implements Serializable {
 		}
 		
 		for(int index=0; index<array.size(); index++) {
-			if(array.equals(this))	return index;
+			if(array.get(index).equals(this))	return index;
 		}
 		return -1;
 	}
