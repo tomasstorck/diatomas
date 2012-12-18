@@ -143,7 +143,7 @@ public class ser2mat {
 			arrayIndex = new double[obj.ballArray.length];
 			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlrodSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlrodSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
+			mlrodSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.k}, 1), ii);                               	
 			mlrodSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 			mlrodSpringArray.setField("type",                 new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
 			
@@ -162,7 +162,7 @@ public class ser2mat {
 			arrayIndex = new double[obj.ballArray.length];
 			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlstickSpringArray.setField("ballArray",          new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlstickSpringArray.setField("K",                  new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
+			mlstickSpringArray.setField("K",                  new MLDouble(null, new double[] {obj.k}, 1), ii);                               	
 			mlstickSpringArray.setField("restLength",         new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 			mlstickSpringArray.setField("type",               new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
 			
@@ -181,7 +181,7 @@ public class ser2mat {
 			arrayIndex = new double[obj.ballArray.length];
 			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlfilSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlfilSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
+			mlfilSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.k}, 1), ii);                               	
 			mlfilSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 			mlfilSpringArray.setField("type",                 new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
 			

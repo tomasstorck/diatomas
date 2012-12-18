@@ -7,7 +7,7 @@ public class CSpring implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
 	public CBall[] ballArray = new CBall[2];
-	public double K;
+	public double k;
 	public double restLength;
 	public int type;
 	public ArrayList<CSpring> siblingArray = new ArrayList<CSpring>(4);
@@ -19,7 +19,7 @@ public class CSpring implements Serializable {
 		CModel model = ball0.cell.model;
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
-		this.K = K;
+		this.k = K;
 		this.restLength = restLength;
 		this.type = type;
 		
@@ -62,6 +62,22 @@ public class CSpring implements Serializable {
 			CCell cell0 = ballArray[0].cell;
 			CCell cell1 = ballArray[1].cell;
 			restLength = 1.6*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
+			break;
+		}
+	}
+	
+	public void ResetK() {
+		CModel model = ballArray[0].cell.model;
+		switch(type) {
+		case 0:
+			k = model.Kr*ballArray[0].n;		// Two identical dimension balls, same cell
+			break;
+		case 1:
+			k = model.Ks * (ballArray[0].n+ballArray[1].n)/2.0;
+			break;
+		case 2:
+		case 3:
+			k = model.Kf * (ballArray[0].n+ballArray[1].n)/2.0;
 			break;
 		}
 	}

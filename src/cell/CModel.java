@@ -565,7 +565,7 @@ public class CModel implements Serializable {
 			Vector3d diff = ball1.pos.minus(ball0.pos);
 			double dn = diff.norm();
 			// Get force
-			double f = rod.K/dn * (dn - rod.restLength);
+			double f = rod.k/dn * (dn - rod.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
@@ -594,7 +594,7 @@ public class CModel implements Serializable {
 			Vector3d diff = ball1.pos.minus(ball0.pos);
 			double dn = diff.norm();
 			// Get force
-			double f = stick.K/dn * (dn - stick.restLength);
+			double f = stick.k/dn * (dn - stick.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
@@ -610,7 +610,7 @@ public class CModel implements Serializable {
 			Vector3d diff = ball1.pos.minus(ball0.pos);
 			double dn = diff.norm();
 			// Get force
-			double f = fil.K/dn * (dn - fil.restLength);
+			double f = fil.k/dn * (dn - fil.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
