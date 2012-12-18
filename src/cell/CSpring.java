@@ -15,13 +15,13 @@ public class CSpring implements Serializable {
 	///////////////////////////////////////////////////////////////////
 
 	// Adds new spring to model's array, cell's array. Does NOT add to siblingArray
-	public CSpring(CBall ball0, CBall ball1, double K, double restLength, int type){			// Note that siblingArray is by default not initialised
+	public CSpring(CBall ball0, CBall ball1, int type){			// Note that siblingArray is by default not initialised
 		CModel model = ball0.cell.model;
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
-		this.k = K;
-		this.restLength = restLength;
 		this.type = type;
+		ResetK();
+		ResetRestLength();
 		
 		switch(type) {
 		case 0:			// Rod spring
@@ -54,6 +54,7 @@ public class CSpring implements Serializable {
 			};
 			break;
 		case 1:				// Stick
+			restLength = ballArray[1].pos.minus(ballArray[0].pos).norm();
 			break;
 		case 2:				// Small fil spring
 			restLength = 1.1*(ballArray[0].radius + ballArray[1].radius);
@@ -67,17 +68,18 @@ public class CSpring implements Serializable {
 	}
 	
 	public void ResetK() {
-		CModel model = ballArray[0].cell.model;
+		CCell cell0 = ballArray[0].cell;
+		CCell cell1 = ballArray[1].cell;
+		CModel model = cell0.model;
 		switch(type) {
 		case 0:
-			k = model.Kr*ballArray[0].n;		// Two identical dimension balls, same cell
+			k = model.Kr * model.nCellMax[cell0.type]/4.0;			// Two identical dimension balls, same cell
 			break;
-		case 1:
-			k = model.Ks * (ballArray[0].n+ballArray[1].n)/2.0;
+		case 1:														// Two different balls, possible different cell types
+			k = model.Ks * (model.nCellMax[cell0.type]/((cell0.type<2) ? 2.0 : 4.0) + model.nCellMax[cell1.type]/((cell1.type<2) ? 2.0 : 4.0)) / 2.0;
 			break;
-		case 2:
-		case 3:
-			k = model.Kf * (ballArray[0].n+ballArray[1].n)/2.0;
+		case 2:	case 3:												// Two different balls, same cell type
+			k = model.Kf * model.nCellMax[cell0.type]/((cell0.type<2) ? 2.0 : 4.0);
 			break;
 		}
 	}

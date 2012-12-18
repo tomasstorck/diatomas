@@ -22,11 +22,13 @@ public class WithoutComsol {
 		/////
 		double muAvg = 0.33;			// Doubling every 20 minutes
 		/////
-		model.cellRadiusMax[4] = 0.25e-6;
-		model.cellLengthMax[4] = 2.5e-6;
+		model.cellRadiusMax[1] = 0.25*1.5e-6;
+		model.cellLengthMax[1] = 2.5e-6;
 		model.UpdateDimension();
-		int[] type = new int[]{4,4,4,4,4,4};
+		int[] type = new int[]{1,4,4,4,4,4};
+		model.NInitCell = 1;
 		
+		model.randomSeed = 2;
 //		model.Kf *= 10.0; 
 //		// Cristian
 //		model.Kan = 2e7;

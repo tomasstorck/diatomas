@@ -103,8 +103,9 @@ public class WithComsol {
 			model.Write("\tCreating cells", "iter");
 			// Create cells in the COMSOL model
 			for(CCell cell : model.cellArray) {
-				if(cell.type<2) 	comsol.CreateSphere(cell);
-				else				comsol.CreateRod(cell);
+				if(cell.type<2) 		comsol.CreateSphere(cell);
+				else if(cell.type<6)	comsol.CreateRod(cell);
+				else 					model.Write("Unknown cell type while making COMSOL model: " + cell.type, "error");
 			}
 			comsol.CreateBCBox();					// Create a large box where we set the "bulk" conditions
 			comsol.BuildGeometry();

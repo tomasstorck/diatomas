@@ -10,7 +10,7 @@ public class CAnchorSpring implements Serializable {
 	//
 	public CBall[] ballArray = new CBall[1];
 	public Vector3d anchor;
-	public double K;
+	public double k;
 	public double restLength;
 	public CAnchorSpring[] siblingArray = new CAnchorSpring[0];
 	
@@ -22,7 +22,7 @@ public class CAnchorSpring implements Serializable {
 		CModel model = ball.cell.model;
 		this.ballArray[0] = ball;
 		anchor = new Vector3d(ball.pos.x, 0, ball.pos.z);
-		K = model.Kan*model.nCellMax[ball.cell.type]/((ball.cell.type<2) ? 2.0 : 4.0);
+		k = model.Kan*model.nCellMax[ball.cell.type]/((ball.cell.type<2) ? 2.0 : 4.0);
 		restLength = Math.max(ball.pos.y,ball.radius*1.01);			// Whatever is largest: distance ball-floor or radius plus a little push
 		
 		model.anchorSpringArray.add(this);

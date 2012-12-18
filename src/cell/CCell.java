@@ -40,13 +40,14 @@ public class CCell implements Serializable {
 		
 		if(type<2) { // Leaves ballArray and springArray, and mother
 			ballArray[0] = new CBall(base0x, base0y, base0z, n,   0, this);
-		} else {
+		} else if(type<6){
 			ballArray = 	new CBall[2];		// Reinitialise ballArray to contain 2 balls
 			new CBall(base0x, base0y, base0z, n/2.0, 0, this);		// Constructor adds it to the array
 			new CBall(base1x, base1y, base1z, n/2.0, 1, this);		// Constructor adds it to the array
-			double K = model.Kr*model.nCellMax[ballArray[0].cell.type]/((type<2) ? 2.0:4.0);
-			CSpring rod = new CSpring(ballArray[0],ballArray[1], K, 0.0, 0);							// Constructor adds it to the array
+			CSpring rod = new CSpring(ballArray[0],ballArray[1], 0);							// Constructor adds it to the array
 			rod.ResetRestLength();
+		} else {
+			model.Write("Unknown cell type during cell creation: " + type, "error");
 		}
 	}
 	
@@ -54,7 +55,7 @@ public class CCell implements Serializable {
 		// Set cell based on other constructor
 		this(type, n, base0x, base0y, base0z, base0x, base0y, base0z, filament, colour, model);
 		// Leaves ballArray and springArray if rod cell
-		if(type>1) { 
+		if(type>1 && type<6) { 
 			// Put cell in correct position
 			Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());
 			direction.normalise();	// Normalise direction
@@ -114,9 +115,14 @@ public class CCell implements Serializable {
 	
 	public int Stick(CCell cell) {
 		// Determine how many sticking springs we need
-		int NSpring0, NSpring1;
-		if(type<2) 			{NSpring0 = 1;} else {NSpring0 = 2;}
-		if(cell.type<2) 	{NSpring1 = 1;} else {NSpring1 = 2;}
+		int NSpring0 = 0, NSpring1 = 0;
+		if(type<2) 			NSpring0 = 1; else 
+		if(type<6)			NSpring0 = 2; else
+			model.Write("Unknown cell type while sticking: " + type, "error");
+		if(cell.type<2) 	NSpring1 = 1; else 
+		if(cell.type<6) 	NSpring1 = 2; else
+			model.Write("Unknown cell type while sticking: " + type, "error");
+		
 		int NSpring = NSpring0 * NSpring1;
 		CCell cell0, cell1;
 		if(type > 1 && cell.type < 2) {		// Sphere goes first (see indexing next paragraph)
@@ -131,12 +137,8 @@ public class CCell implements Serializable {
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
 			CBall ball0 = cell0.ballArray[iSpring/2];							// 0, 0, 1, 1, ...
 			CBall ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
-			double K = model.Ks*(model.nCellMax[ball0.cell.type]/((type<2) ? 2.0:4.0) + model.nCellMax[ball1.cell.type]/((type<2) ? 2.0:4.0))/2.0;
-			double restLength = ball1.pos.minus(ball0.pos).norm();				// Set rest length to current distance
 			CSpring spring 	= new CSpring(	ball0,
 											ball1,
-											K,									// Spring constant
-											restLength,							// Rest length
 											1); 								// Type is sticking spring
 			stickArray[iSpring] = spring;
 		}
@@ -158,23 +160,26 @@ public class CCell implements Serializable {
 	}
 			
 	public double GetAmount() {
-		int NBall = (type<2) ? 1 : 2;
-		double mass = 0; 
-		for(int iBall=0; iBall<NBall; iBall++) {
-			mass += ballArray[iBall].n;
+		double amount = 0;
+		for(CBall ball : ballArray) {
+			amount += ball.n;
 		}
-		return mass;
+		return amount;
 	}
 	
 	public void SetAmount(double newAmount) {
 		if(type<2) {
 			ballArray[0].n = newAmount;
 			ballArray[0].radius = ballArray[0].Radius();
-		} else {
+		} else if(type<6){
 			ballArray[0].n = newAmount/2.0;
 			ballArray[0].radius = ballArray[0].Radius();
 			ballArray[1].n = newAmount/2.0;
 			ballArray[1].radius = ballArray[1].Radius();
+			// Reset rod spring length
+			for(CSpring rod : ballArray[0].cell.rodSpringArray) rod.ResetRestLength();
+		} else {
+			model.Write("Unknown cell type while setting cell amount: " + type,"error");
 		}
 	}
 	
@@ -183,11 +188,14 @@ public class CCell implements Serializable {
 	public double SurfaceArea() {
 		if(type<2) {
 			return 4*Math.PI * Math.pow(ballArray[0].radius, 2);
-		} else {	// Assuming radii are equal
+		} else if(type<6) {	// Assuming radii are equal
 			double Aballs = 4*Math.PI * Math.pow(ballArray[0].radius, 2); 		// Two half balls
 			double height = ballArray[1].pos.minus(ballArray[0].pos).norm();	// height == distance between balls
 			double Acyl = 	2*Math.PI * ballArray[0].radius * height;			// area of wall of cylinder. NOTE: Matt subtracted 2*radius, I don't see why
 			return Aballs + Acyl;
+		} else {
+			model.Write("Unknown type during surface calculations", "error");
+			return -1.0;
 		}
 	}
 }

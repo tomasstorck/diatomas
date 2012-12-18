@@ -396,7 +396,7 @@ public class CModel implements Serializable {
 		return nstp;
 	}
 	
-	public Vector CalculateForces(double t, Vector yode) {	
+	public Vector CalculateForces(Vector yode) {	
 		// Read data from y
 		{int ii=0; 				// Where we are in yode
 		for(CBall ball : ballArray) {
@@ -574,15 +574,15 @@ public class CModel implements Serializable {
 		}
 		
 		// Apply forces due to anchor springs
-		for(CAnchorSpring spring : anchorSpringArray) {
-			Vector3d diff = spring.anchor.minus(spring.ballArray[0].pos);
+		for(CAnchorSpring anchor : anchorSpringArray) {
+			Vector3d diff = anchor.anchor.minus(anchor.ballArray[0].pos);
 			double dn = diff.norm();
 			// Get force
-			double f = spring.K/dn * (dn - spring.restLength);
+			double f = anchor.k/dn * (dn - anchor.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			spring.ballArray[0].force.add(Fs);
+			anchor.ballArray[0].force.add(Fs);
 
 		}
 		
@@ -623,13 +623,13 @@ public class CModel implements Serializable {
 		Vector dydx = new Vector(yode.size());
 		int ii=0;
 		for(CBall ball : ballArray) {
-				double M = ball.n*MWX;
+				double m = ball.n*MWX;
 				dydx.set(ii++,ball.vel.x);			// dpos/dt = v;
 				dydx.set(ii++,ball.vel.y);
 				dydx.set(ii++,ball.vel.z);
-				dydx.set(ii++,ball.force.x/M);		// dvel/dt = a = f/M
-				dydx.set(ii++,ball.force.y/M);
-				dydx.set(ii++,ball.force.z/M);
+				dydx.set(ii++,ball.force.x/m);		// dvel/dt = a = f/M
+				dydx.set(ii++,ball.force.y/m);
+				dydx.set(ii++,ball.force.z/m);
 		}
 		return dydx;
 	}
@@ -744,7 +744,7 @@ public class CModel implements Serializable {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public int GrowthSimple(double muAvg) {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+	public int GrowthSimple(double muAvg) throws Exception {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int NCell = cellArray.size();
 		int newCell = 0;
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -775,7 +775,7 @@ public class CModel implements Serializable {
 		return newCell;
 	}
 	
-	public int GrowthFlux() {
+	public int GrowthFlux() throws Exception {
 		int newCell=0;
 		int NCell = cellArray.size();
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -827,7 +827,6 @@ public class CModel implements Serializable {
 			if(daughter.ballArray[0].pos.y < daughter.ballArray[0].radius)  	{daughter.ballArray[0].pos.y 	= daughter.ballArray[0].radius;};
 			// Set filament springs
 			if(daughter.filament) {
-				double K = Kf*nCellMax[daughter.type]/((daughter.type<2) ? 2.0:4.0);
 				if(sphereStraightFil) {								// Reorganise if we want straight fils, otherwise just attach resulting in random structures
 					CBall motherBall0 = mother.ballArray[0];
 					CBall daughterBall0 = daughter.ballArray[0];
@@ -845,14 +844,13 @@ public class CModel implements Serializable {
 					for(CSpring fil : donateFilArray) {
 						daughter.filSpringArray.add(fil);
 						mother.filSpringArray.remove(fil);
-						// Reset rest lengths
+						// Reset rest lengths. Spring constant won't change because it depends on cell type
 						fil.ResetRestLength();
 					}
 				}
-				CSpring fil = new CSpring(mother.ballArray[0], daughter.ballArray[0], K, 0.0, 2);
-				fil.ResetRestLength();
+				new CSpring(mother.ballArray[0], daughter.ballArray[0], 2);
 			}
-		} else {
+		} else if (mother.type<6) {
 			CBall motherBall0 = mother.ballArray[0];
 			CBall motherBall1 = mother.ballArray[1];
 			// Direction
@@ -917,14 +915,16 @@ public class CModel implements Serializable {
 					fil.ResetRestLength();
 				}
 				// Make new filial link between mother and daughter
-				double K = Kf*nCellMax[daughter.type]/((daughter.type<2) ? 2.0:4.0);
-				CSpring filSmall = new CSpring(daughter.ballArray[0], mother.ballArray[1], K, 0.0, 2);		// type==2 --> Small spring
-				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], K, 0.0, 3);		// type==3 --> Big spring
+				CSpring filSmall = new CSpring(daughter.ballArray[0], mother.ballArray[1], 2);		// type==2 --> Small spring
+				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], 3);		// type==3 --> Big spring
 				filSmall.siblingArray.add(filBig);
 				filBig.siblingArray.add(filSmall);
 				filSmall.ResetRestLength();			// Big uses small's rest length, so do small first!
 				filBig.ResetRestLength();
 			}
+		} else {
+			Write("Unknown cell type during cell division: " + mother.type, "error");
+			return mother;		// TODO
 		}
 		return daughter;
 	}

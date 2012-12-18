@@ -201,7 +201,7 @@ public class ser2mat {
 			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlanchorSpringArray.setField("ballArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlanchorSpringArray.setField("anchor",            new MLDouble(null, new double[] {obj.anchor.x, obj.anchor.y, obj.anchor.z}, 3), ii);	
-			mlanchorSpringArray.setField("K",                 new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
+			mlanchorSpringArray.setField("K",                 new MLDouble(null, new double[] {obj.k}, 1), ii);                               	
 			mlanchorSpringArray.setField("restLength",        new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 			
 			arrayIndex = new double[obj.siblingArray.length];

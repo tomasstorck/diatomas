@@ -9,7 +9,8 @@ public class feval {
 		this.model = model;
 	}
 
+	@SuppressWarnings("unused")
 	public void Calculate(double t, Vector yode, Vector dydx) {
-		dydx.set(model.CalculateForces(t, yode));
+		dydx.set(model.CalculateForces(yode));
 	}
 }
