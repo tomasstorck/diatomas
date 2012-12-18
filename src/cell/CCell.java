@@ -44,7 +44,7 @@ public class CCell implements Serializable {
 			ballArray = 	new CBall[2];		// Reinitialise ballArray to contain 2 balls
 			new CBall(base0x, base0y, base0z, n/2.0, 0, this);		// Constructor adds it to the array
 			new CBall(base1x, base1y, base1z, n/2.0, 1, this);		// Constructor adds it to the array
-			double K = model.Kr*model.nBallInit[ballArray[0].cell.type];
+			double K = model.Kr*model.nCellMax[ballArray[0].cell.type]/((type<2) ? 2.0:4.0);
 			CSpring rod = new CSpring(ballArray[0],ballArray[1], K, 0.0, 0);							// Constructor adds it to the array
 			rod.ResetRestLength();
 		}
@@ -60,9 +60,9 @@ public class CCell implements Serializable {
 			direction.normalise();	// Normalise direction
 			double distance;
 			if(type<4) {
-				distance = 2.0*ballArray[0].radius * model.aspect[type];										// type == 2||3 is fixed ball-ball distance
+				distance = ballArray[0].radius * model.cellLengthMax[ballArray[0].cell.type]/model.cellRadiusMax[ballArray[0].cell.type];										// type == 2||3 is fixed ball-ball distance
 			} else {
-				distance = 2.0*ballArray[0].radius * model.aspect[type] * ballArray[0].n/model.nCellMax[type];	// type == 4||5 is variable ball-ball distance
+				distance = ballArray[0].cell.GetAmount()*model.MWX/(Math.PI*model.rhoX*ballArray[0].radius*ballArray[0].radius) - 4.0/3.0*ballArray[0].radius;					// type == 4||5 is variable ball-ball distance. Correct? TODO
 			}
 			double base1x = base0x + direction.x * distance;
 			double base1y = base0y + direction.y * distance;
@@ -131,7 +131,7 @@ public class CCell implements Serializable {
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
 			CBall ball0 = cell0.ballArray[iSpring/2];							// 0, 0, 1, 1, ...
 			CBall ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
-			double K = model.Ks*(model.nBallInit[ball0.cell.type]+model.nBallInit[ball1.cell.type])/2.0;
+			double K = model.Ks*(model.nCellMax[ball0.cell.type]/((type<2) ? 2.0:4.0) + model.nCellMax[ball1.cell.type]/((type<2) ? 2.0:4.0))/2.0;
 			double restLength = ball1.pos.minus(ball0.pos).norm();				// Set rest length to current distance
 			CSpring spring 	= new CSpring(	ball0,
 											ball1,

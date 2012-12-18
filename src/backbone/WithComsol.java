@@ -55,7 +55,7 @@ public class WithComsol {
 			// Create initial cells, not overlapping
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				int type = rand.IntChoose(model.cellType);
-				double n = model.nCellInit[type]+(model.nCellMax[type]-model.nCellInit[type])*rand.Double();
+				double n = model.nCellMax[type]/2.0+(model.nCellMax[type]/2.0)*rand.Double();
 				CCell cell = new CCell(type, 						// Type of biomass
 						n,											// Initial cell mass is random between initial and max
 						(0.2*rand.Double()-0.1)*model.L.x, 			// Anywhere between -0.1*Lx and 0.1*Lx

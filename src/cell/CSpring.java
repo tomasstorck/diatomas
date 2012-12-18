@@ -47,7 +47,7 @@ public class CSpring implements Serializable {
 			CModel model = this.ballArray[0].cell.model;
 			// If type == 1 based on mass, type==2 based on max mass
 			if(ballArray[0].cell.type<4) {
-				restLength = 2.0*ballArray[0].radius*model.aspect[ballArray[0].cell.type];																		// About 2 balls in the same cell, so no need to make it complicated  
+				restLength = ballArray[0].radius * model.cellLengthMax[ballArray[0].cell.type]/model.cellRadiusMax[ballArray[0].cell.type];							// About 2 balls in the same cell, so no need to make it complicated  
 			} else {
 				restLength = ballArray[0].cell.GetAmount()*model.MWX/(Math.PI*model.rhoX*ballArray[0].radius*ballArray[0].radius) - 4.0/3.0*ballArray[0].radius;
 //				restLength = 2.0*ballArray[0].radius*model.aspect[ballArray[0].cell.type] * ballArray[0].cell.GetMass()/model.MCellMax[ballArray[0].cell.type];

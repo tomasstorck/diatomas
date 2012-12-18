@@ -58,11 +58,9 @@ public class CModel implements Serializable {
 	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
 	public int NInitCell = 6;					// Initial number of cells
 	public int[] cellType = {1, 5};				// Cell types used by default
-	public double[] aspect	= {0.0, 0.0, 4.0, 2.0, 5.0, 3.0};	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
-	// Ball properties
-	public double[] nCellInit = {2.42e-19*rhoX, 1.55e-17*rhoX, 1.70e-18*rhoX, 2.62e-17*rhoX, 1.70e-18*rhoX, 2.62e-17*rhoX};		// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
-	public double[] nBallInit = {nCellInit[0], nCellInit[1], nCellInit[2]/2.0, nCellInit[3]/2.0, nCellInit[4]/2.0, nCellInit[5]/2.0};				// [Cmol] initial mass of one ball in the cell
-	public double[] nCellMax = 	{nCellInit[0]*2.0, nCellInit[1]*2.0, nCellInit[2]*2.0, nCellInit[3]*2.0, nCellInit[4]*2.0, nCellInit[5]*2.0};		// [Cmol] max mass of cells before division;
+	public double[] cellRadiusMax = {0.125e-6,	0.5e-6, 	0.125e-6, 	0.375e-6, 	0.125e-6, 	0.375e-6};
+	public double[] cellLengthMax = {0.0,		0.0,		1e-6,		1.5e-6,		1e-6,		1.5e-6};
+	public double[] nCellMax =	new double[6];
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
@@ -215,7 +213,7 @@ public class CModel implements Serializable {
 			for(int jj=ii+1; jj<NCell; jj++) {
 				CCell cell1 = cellArray.get(jj);
 				double R2 = cell0.ballArray[0].radius + cell1.ballArray[0].radius; 
-				if(cell0.type < 2 && cell1.type < 2) {
+				if(cell0.type < 2 && cell1.type < 2) {					// Ball-ball
 					double dist = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos).norm();
 					if(dist<R2*touchFactor) {
 						collisionCell.add(cell0); 
@@ -224,21 +222,21 @@ public class CModel implements Serializable {
 				} else {
 					double H2;
 					Vector3d diff = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos);;
-					if(cell0.type > 1 && cell1.type > 1) {
-						H2 = aspect[cell0.type]*2.0*cell0.ballArray[0].radius + aspect[cell1.type]*2.0*cell1.ballArray[0].radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
-					} else {
+					if(cell0.type > 1 && cell1.type > 1) {				// Rod-rod
+						H2 = 1.5*(touchFactor*( cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still  
+					} else {											// Rod-ball
 						CCell rod;
 						if(cell0.type<2) {
 							rod=cell1;
 						} else {
 							rod=cell0;
 						}
-						H2 = aspect[rod.type]*2.0*rod.ballArray[0].radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+						H2 = 1.5*(touchFactor*( cellLengthMax[rod.type] + R2 ));// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 					}
 					if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
 						double dist = diff.norm();
 						if(dist<R2*touchFactor)	{
-							collisionCell.add(cell0); 
+							collisionCell.add(cell0);
 							collisionCell.add(cell1);
 						}
 					}
@@ -413,42 +411,49 @@ public class CModel implements Serializable {
 			ball.force.z = 0;
 		}}
 		// Collision forces
+		// Determine Hooke's law spring constants 
+		double[][] kc = new double[6][6];
+		for(int ii=0; ii<6; ii++) {
+			for(int jj=0; jj<6; jj++) {
+				double iiDivision = (ii<2) ? 2.0 : 4.0;
+				double jjDivision = (jj<2) ? 4.0 : 4.0;
+				kc[ii][jj] = Kc*(nCellMax[ii]/iiDivision + nCellMax[jj]/jjDivision)/2.0;
+			}
+		}
 		for(int iCell=0; iCell<cellArray.size(); iCell++) {
 			CCell cell0 = cellArray.get(iCell);
 			CBall c0b0 = cell0.ballArray[0];
 			// Base collision on the cell type
-			if(cell0.type<2) {
+			if(cell0.type<2) {											// cell0 is a ball
 				// Check for all remaining cells
 				for(int jCell=iCell+1; jCell<cellArray.size(); jCell++) {
 					CCell cell1 = cellArray.get(jCell);
 					CBall c1b0 = cell1.ballArray[0];
 					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					if(cell1.type<2) {										// The other cell is a ball too
-						double dist = dirn.norm();						// Mere estimation for ball-rod
+					if(cell1.type<2) {									// The other cell1 is a ball too
+						double dist = dirn.norm();
 						// do a simple collision detection if close enough
 						if(dist<R2) {
 							// We have a collision
 							dirn.normalise();
-							double nBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
-							Vector3d Fs = dirn.times(Kc*nBallAvg*(R2*1.01-dist));	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
+							Vector3d Fs = dirn.times(kc[cell0.type][cell1.type]);	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
 							// Add forces
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
 						}
-					} else {												// this cell is a ball, the other cell is a rod
-						double H2 = aspect[cell1.type]*2.0*c1b0.radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+					} else {												// cell0 is a ball, cell1 is a rod
+						double H2 = 1.5*(cellLengthMax[cell1.type] + R2);	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect. 1.5 is to make it more robust (stretching)
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a sphere-rod collision detection
 							CBall c1b1 = cell1.ballArray[1];
 							EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 							Vector3d dP = C.dP;
-							double dist = C.dist;							// Make distance more accurate
+							double dist = C.dist;						// Make distance more accurate
 							double sc = C.sc;
 							// Collision detection
 							if(dist<R2) {
-								double nBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
-								double f = Kc*nBallAvg / dist*(dist-R2*1.01);
+								double f = kc[cell0.type][cell1.type] / dist*(dist-R2*1.01);
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
@@ -461,15 +466,15 @@ public class CModel implements Serializable {
 						}
 					}
 				}
-			} else {	// cell.type > 1
+			} else {	// cell0.type > 1
 				CBall c0b1 = cell0.ballArray[1];
 				for(int jCell = iCell+1; jCell<cellArray.size(); jCell++) {
 					CCell cell1 = cellArray.get(jCell);
 					CBall c1b0 = cell1.ballArray[0];
 					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					if(cell1.type<2) {										// This cell is a rod, the Next is a ball
-						double H2 = aspect[cell0.type]*2.0*c0b0.radius + R2;// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+					if(cell1.type<2) {										// cell0 is a rod, the cell1 is a ball
+						double H2 = 1.5*(cellLengthMax[cell0.type] + R2);	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a rod-sphere collision detection
 							EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
@@ -478,8 +483,7 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							// Collision detection
 							if(dist < R2) {
-								double MBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
-								double f = Kc*MBallAvg / dist*(dist-R2*1.01);
+								double f = kc[cell0.type][cell1.type] / dist*(dist-R2*1.01);
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
@@ -496,7 +500,7 @@ public class CModel implements Serializable {
 						Vector3d c1b0pos = new Vector3d(c1b0.pos);
 						CBall c1b1 = cell1.ballArray[1];
 						Vector3d c1b1pos = new Vector3d(c1b1.pos);
-						double H2 = aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
+						double H2 = 1.5*( cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2 );		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// calculate the distance between the two diatoma segments
 							EricsonObject C = DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
@@ -505,8 +509,7 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							double tc = C.tc;
 							if(dist<R2) {
-								double nBallAvg = (nBallInit[cell0.type]+nBallInit[cell1.type])/2.0;
-								double f = Kc*nBallAvg / dist*(dist-R2*1.01);
+								double f = kc[cell0.type][cell1.type] / dist*(dist-R2*1.01);
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
@@ -524,13 +527,21 @@ public class CModel implements Serializable {
 			}
 		}
 		// Calculate gravity+bouyancy, normal forces and drag
+		// Determine Hooke's law spring constants 
+		double[] kw = new double[6];
+		double[] kd = new double[6];
+		for(int ii=0; ii<6; ii++) {
+			double iiDivision = (ii<2) ? 2.0 : 4.0;
+			kw[ii] = Kw*nCellMax[ii]/iiDivision;
+			kd[ii] = Kd*nCellMax[ii]/iiDivision;
+		}
 		for(CBall ball : ballArray) {
 			// Contact forces
 			double y = ball.pos.y;
 			double r = ball.radius;
 			if(normalForce) {
 				if(y<r){
-					ball.force.y += Kw*nBallInit[ball.cell.type]*(r-y);
+					ball.force.y += kw[ball.cell.type]*(r-y);
 				}
 			}
 			// Gravity and buoyancy
@@ -543,7 +554,7 @@ public class CModel implements Serializable {
 			}
 			
 			// Velocity damping
-			ball.force.subtract(ball.vel.times(Kd*nBallInit[ball.cell.type]));			// TODO Should be v^2
+			ball.force.subtract(ball.vel.times(kd[ball.cell.type]));			// TODO Should be v^2
 		}
 		
 		// Elastic forces between springs within cells (CSpring in type>1)
@@ -682,7 +693,7 @@ public class CModel implements Serializable {
 							double dist = (c1b0.pos.minus(c0b0.pos)).norm();
 							if(dist<R2*formLimStick)		Assistant.NStickForm += cell0.Stick(cell1);
 						} else if(cell0.type<2) {									// 1st sphere, 2nd rod
-							double H2f = formLimStick * aspect[cell1.type]*2.0*c1b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							double H2f =  1.5*(formLimStick*(cellLengthMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c1b1 = cell1.ballArray[1];
 								// do a sphere-rod collision detection
@@ -690,7 +701,7 @@ public class CModel implements Serializable {
 								if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
 							}
 						} else if (cell1.type<2) {									// 2nd sphere, 1st rod
-							double H2f = formLimStick * aspect[cell0.type]*2.0*c0b0.radius + R2;	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								// do a sphere-rod collision detection
@@ -698,7 +709,7 @@ public class CModel implements Serializable {
 								if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);		// OPTIMISE by passing dist to Stick
 							}
 						} else {													// both rod
-							double H2f = formLimStick * aspect[cell0.type]*2.0*c0b0.radius + aspect[cell1.type]*2.0*c1b0.radius + R2;		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
+							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2));
 							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								CBall c1b1 = cell1.ballArray[1];
@@ -816,7 +827,7 @@ public class CModel implements Serializable {
 			if(daughter.ballArray[0].pos.y < daughter.ballArray[0].radius)  	{daughter.ballArray[0].pos.y 	= daughter.ballArray[0].radius;};
 			// Set filament springs
 			if(daughter.filament) {
-				double K = Kf*(nBallInit[mother.type] + nBallInit[daughter.type])/2.0;
+				double K = Kf*nCellMax[daughter.type]/((daughter.type<2) ? 2.0:4.0);
 				if(sphereStraightFil) {								// Reorganise if we want straight fils, otherwise just attach resulting in random structures
 					CBall motherBall0 = mother.ballArray[0];
 					CBall daughterBall0 = daughter.ballArray[0];
@@ -906,7 +917,7 @@ public class CModel implements Serializable {
 					fil.ResetRestLength();
 				}
 				// Make new filial link between mother and daughter
-				double K = Kf*(nBallInit[mother.type] + nBallInit[daughter.type])/2.0;
+				double K = Kf*nCellMax[daughter.type]/((daughter.type<2) ? 2.0:4.0);
 				CSpring filSmall = new CSpring(daughter.ballArray[0], mother.ballArray[1], K, 0.0, 2);		// type==2 --> Small spring
 				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], K, 0.0, 3);		// type==3 --> Big spring
 				filSmall.siblingArray.add(filBig);
@@ -963,6 +974,15 @@ public class CModel implements Serializable {
 			}
 		}
 		return counter;
+	}
+	
+	public void UpdateDimension() {
+		for(int ii = 0; ii<2; ii++) {
+			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(cellRadiusMax[ii],3))*rhoX/MWX; 
+		}
+		for(int ii = 2; ii<6; ii++) {
+			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(cellRadiusMax[ii],3) + Math.PI*Math.pow(cellRadiusMax[ii],2)*cellLengthMax[ii])*rhoX/MWX; 
+		}
 	}
 	
 	////////////

@@ -22,8 +22,12 @@ public class WithoutComsol {
 		/////
 		double muAvg = 0.33;			// Doubling every 20 minutes
 		/////
-//		model.cellType = new int[]{5};
-//		model.Kan *= 100.0; 
+		model.cellRadiusMax[4] = 0.25e-6;
+		model.cellLengthMax[4] = 2.5e-6;
+		model.UpdateDimension();
+		int[] type = new int[]{4,4,4,4,4,4};
+		
+//		model.Kf *= 10.0; 
 //		// Cristian
 //		model.Kan = 2e7;
 //		model.Kc = 4e7;
@@ -55,9 +59,8 @@ public class WithoutComsol {
 		if(model.growthIter==0 && model.relaxationIter==0) {
 			// Create initial cells, not overlapping
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				int type = rand.IntChoose(model.cellType);
-				double n = model.nCellInit[type]+(model.nCellMax[type]-model.nCellInit[type])*rand.Double();
-				CCell cell = new CCell(type, 						// Type of biomass
+				double n = model.nCellMax[type[iCell]]/2.0+(model.nCellMax[type[iCell]]/2.0)*rand.Double();
+				CCell cell = new CCell(type[iCell], 						// Type of biomass
 						n,											// Initial cell mass is random between initial and max
 						(0.2*rand.Double()-0.1)*model.L.x, 			// Anywhere between -0.1*Lx and 0.1*Lx
 						(0.2*rand.Double()+0.9)*model.L.y, 			// Anywhere between 0.9*Ly and 1.1*Ly

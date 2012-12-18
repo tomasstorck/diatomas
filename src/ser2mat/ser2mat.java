@@ -52,11 +52,9 @@ public class ser2mat {
 		//
 		double[] DcellType = new double[model.cellType.length];		for(int ii=0; ii<model.cellType.length; ii++)		DcellType[ii] = model.cellType[ii];		mlModel.setField("cellType",                      new MLDouble(null, DcellType, model.cellType.length));                          	// Cell types used by default
 		//
-		mlModel.setField("aspect",                        new MLDouble(null, model.aspect, model.aspect.length));                         	// Aspect ratio of cells (last 2: around 4.0 and 2.0 resp.)
-		// Ball properties
-		mlModel.setField("nCellInit",                     new MLDouble(null, model.nCellInit, model.nCellInit.length));                   	// [Cmol] initial cell, when created at t=0. Factor *0.9 used for initial mass type<4
-		mlModel.setField("nBallInit",                     new MLDouble(null, model.nBallInit, model.nBallInit.length));                   	// [Cmol] initial mass of one ball in the cell
-		mlModel.setField("nCellMax",                      new MLDouble(null, model.nCellMax, model.nCellMax.length));                     	// [Cmol] max mass of cells before division;
+		mlModel.setField("cellRadiusMax",                 new MLDouble(null, model.cellRadiusMax, model.cellRadiusMax.length));           	
+		mlModel.setField("cellLengthMax",                 new MLDouble(null, model.cellLengthMax, model.cellLengthMax.length));           	
+		mlModel.setField("nCellMax",                      new MLDouble(null, model.nCellMax, model.nCellMax.length));                     	
 		// Progress
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {model.growthTime}, 1));                        	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {model.growthTimeStep}, 1));                    	// [s] Time step for growth
