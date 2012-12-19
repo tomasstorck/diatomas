@@ -1,5 +1,5 @@
 % Settings
-L = [20,5,20];
+L = [20,10,20];
 imageWidth = 1024;
 imageHeight = 768;
 camPos = [-L(1), 2*L(2),-L(3)];
@@ -292,7 +292,7 @@ for ii=0:NSave
 	end
 	[~,~] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
 	% Append text for relaxation and growth
-	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.1f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStepEnd+ii*model.relaxationTimeStep)  imageLoc ' ' imageLoc]);
+	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStepEnd+ii*model.relaxationTimeStep)  imageLoc ' ' imageLoc]);
 	% Append scale bar
 	A = camPos';
 	C = camView;

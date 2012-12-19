@@ -15,11 +15,12 @@ public class CSpring implements Serializable {
 	///////////////////////////////////////////////////////////////////
 
 	// Adds new spring to model's array, cell's array. Does NOT add to siblingArray
-	public CSpring(CBall ball0, CBall ball1, int type){			// Note that siblingArray is by default not initialised
+	public CSpring(CBall ball0, CBall ball1, int type, CSpring[] siblingArray){			// Note that siblingArray is by default not initialised
 		CModel model = ball0.cell.model;
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
 		this.type = type;
+		for(CSpring sibling : siblingArray) 	this.siblingArray.add(sibling);
 		ResetK();
 		ResetRestLength();
 		
@@ -39,6 +40,10 @@ public class CSpring implements Serializable {
 			ball1.cell.filSpringArray.add(this);
 			break;
 		}
+	}
+	
+	public CSpring(CBall ball0, CBall ball1, int type) {
+		this(ball0, ball1, type, new CSpring[0]);
 	}
 
 	public void ResetRestLength() {
@@ -92,7 +97,7 @@ public class CSpring implements Serializable {
 		
 		switch (type) {
 		case 0: 														// Rod spring
-			// Can't break
+			// Can't Break()
 			break;
 		case 1:															// Sticking spring
 			cell0.stickCellArray.remove(cell1);

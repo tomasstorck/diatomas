@@ -20,16 +20,13 @@ public class WithoutComsol {
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
 		/////
-		double muAvg = 0.33;			// Doubling every 20 minutes
-		/////
-		model.cellRadiusMax[1] = 0.25*1.5e-6;
-		model.cellLengthMax[1] = 2.5e-6;
+		model.cellRadiusMax[0] = 0.25e-6*1.5;
+		model.cellRadiusMax[4] = 0.25e-6;
+		model.cellLengthMax[4] = 2.5e-6;
 		model.UpdateDimension();
-		int[] type = new int[]{1,4,4,4,4,4};
-		model.NInitCell = 1;
-		
-		model.randomSeed = 2;
+		int[] type = new int[]{0,0,0,4,4,4};
 //		model.Kf *= 10.0; 
+		
 //		// Cristian
 //		model.Kan = 2e7;
 //		model.Kc = 4e7;
@@ -105,7 +102,7 @@ public class WithoutComsol {
 			// Grow cells
 			if(!overlap) {
 				model.Write("Growing cells", "iter");
-				int newCell = model.GrowthSimple(muAvg);
+				int newCell = model.GrowthSimple();
 				
 				// Advance growth
 				model.growthIter++;

@@ -22,7 +22,7 @@ public class CModel implements Serializable {
 	private static final long serialVersionUID = 1L;
 	// Model properties
 	public String name = "default";
-	public int randomSeed = 5;					// Makes first 3 rods, then 3 spheres (I got lucky)
+	public int randomSeed = 1;					// Makes first 3 rods, then 3 spheres (I got lucky)
 	public boolean sticking = true;
 	public boolean anchoring = false;
 	public boolean filament = false;
@@ -35,9 +35,9 @@ public class CModel implements Serializable {
 	// Spring constants
 	public double Kc 	= 2e7;					// collision (per ball)
 	public double Kw 	= 1e7;					// wall spring (per ball)
-	public double Kr 	= 2.5e5;				// internal cell spring (per ball)
+	public double Kr 	= 2e6;					// internal cell spring (per ball)
 	public double Kf 	= 1e6;					// filament spring (per ball average)
-	public double Kan	= 5e4;					// anchor (per ball)
+	public double Kan	= 2e5;					// anchor (per ball)
 	public double Ks 	= 5e4;					// sticking (per ball average)
 	public double[] stretchLimAnchor = {0.6, 1.4};// Maximum tension and compression (1-this value) for anchoring springs
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
@@ -61,6 +61,7 @@ public class CModel implements Serializable {
 	public double[] cellRadiusMax = {0.125e-6,	0.5e-6, 	0.125e-6, 	0.375e-6, 	0.125e-6, 	0.375e-6};
 	public double[] cellLengthMax = {0.0,		0.0,		1e-6,		1.5e-6,		1e-6,		1.5e-6};
 	public double[] nCellMax =	new double[6];
+	public double muAvgSimple = 0.33;			// Doubling every 20 minutes. Only used in GrowthSimple!
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
@@ -744,7 +745,7 @@ public class CModel implements Serializable {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public int GrowthSimple(double muAvg) throws Exception {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+	public int GrowthSimple() throws Exception {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int NCell = cellArray.size();
 		int newCell = 0;
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -752,7 +753,7 @@ public class CModel implements Serializable {
 			double amount = mother.GetAmount();
 
 			// Random growth, with syntrophy if required
-			double mu = muAvg + (rand.Double()-0.25)/5.0;					// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
+			double mu = muAvgSimple + (rand.Double()-0.25)/5.0;					// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
 			double syntrophyAcceleration = 1.0;
 			for(CCell stickCell : mother.stickCellArray) {
 				if(mother.type != stickCell.type) {
@@ -916,11 +917,8 @@ public class CModel implements Serializable {
 				}
 				// Make new filial link between mother and daughter
 				CSpring filSmall = new CSpring(daughter.ballArray[0], mother.ballArray[1], 2);		// type==2 --> Small spring
-				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], 3);		// type==3 --> Big spring
+				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], 3, new CSpring[]{filSmall});		// type==3 --> Big spring
 				filSmall.siblingArray.add(filBig);
-				filBig.siblingArray.add(filSmall);
-				filSmall.ResetRestLength();			// Big uses small's rest length, so do small first!
-				filBig.ResetRestLength();
 			}
 		} else {
 			Write("Unknown cell type during cell division: " + mother.type, "error");

@@ -139,7 +139,7 @@ public class CCell implements Serializable {
 			CBall ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
 			CSpring spring 	= new CSpring(	ball0,
 											ball1,
-											1); 								// Type is sticking spring
+											1);									// Type is sticking spring
 			stickArray[iSpring] = spring;
 		}
 		
