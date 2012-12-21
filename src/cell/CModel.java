@@ -13,9 +13,14 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.zip.GZIPOutputStream;
 
-import backbone.Assistant;
 import random.rand;
-import NR.*;
+import NR.Odeint;
+import NR.Output;
+import NR.StepperDopr853;
+import NR.Vector;
+import NR.Vector3d;
+import NR.feval;
+import backbone.Assistant;
 
 public class CModel implements Serializable {
 	// Set serializable information
@@ -438,7 +443,7 @@ public class CModel implements Serializable {
 						if(dist<R2) {
 							// We have a collision
 							dirn.normalise();
-							Vector3d Fs = dirn.times(kc[cell0.type][cell1.type]);	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
+							Vector3d Fs = dirn.times(kc[cell0.type][cell1.type]*(R2*1.01-dist));	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
 							// Add forces
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
@@ -637,109 +642,111 @@ public class CModel implements Serializable {
 	
 
 	public void AnchorUnAnchor() {
-		// See what we need to anchor or break
-		for(CCell cell : cellArray) {
-			CBall ball0 = cell.ballArray[0];
-			CBall ball1 = (cell.type>1) ? ball1 = cell.ballArray[1] : null;
+		if(anchoring) {
+			// See what we need to anchor or break
+			for(CCell cell : cellArray) {
+				CBall ball0 = cell.ballArray[0];
+				CBall ball1 = (cell.type>1) ? ball1 = cell.ballArray[1] : null;
 
-			if(cell.anchorSpringArray.length>0) { 		// This cell is already anchored
-				for(CAnchorSpring spring : cell.anchorSpringArray) {
-					// Break anchor?
-					Vector3d diff = spring.anchor.minus(spring.ballArray[0].pos);
-					double dn = diff.norm();
-					if(dn < spring.restLength*stretchLimAnchor[0] || dn > spring.restLength*stretchLimAnchor[1]) {			// too much tension || compression --> break the spring
-						Assistant.NAnchorBreak += spring.UnAnchor();
+				if(cell.anchorSpringArray.length>0) { 		// This cell is already anchored
+					for(CAnchorSpring spring : cell.anchorSpringArray) {
+						// Break anchor?
+						Vector3d diff = spring.anchor.minus(spring.ballArray[0].pos);
+						double dn = diff.norm();
+						if(dn < spring.restLength*stretchLimAnchor[0] || dn > spring.restLength*stretchLimAnchor[1]) {			// too much tension || compression --> break the spring
+							Assistant.NAnchorBreak += spring.UnAnchor();
+						}
 					}
-				}
-			} else {									// Cell is not yet anchored
-				// Form anchor?
-				boolean formBall0 = (ball0.pos.y < ball0.radius*formLimAnchor) ? true : false;
-				boolean formBall1 = false;
-				if(cell.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
-				if(formBall0 || formBall1) {
-					Assistant.NAnchorForm += cell.Anchor();					
+				} else {									// Cell is not yet anchored
+					// Form anchor?
+					boolean formBall0 = (ball0.pos.y < ball0.radius*formLimAnchor) ? true : false;
+					boolean formBall1 = false;
+					if(cell.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
+					if(formBall0 || formBall1) {
+						Assistant.NAnchorForm += cell.Anchor();					
+					}
 				}
 			}
 		}
 	}
 	
-	public void StickUnStick() {
+	public void FormBreak() {
 		for(int ii=0; ii<cellArray.size(); ii++) {
 			CCell cell0 = cellArray.get(ii);
-			for(int jj=ii+1; jj<cellArray.size(); jj++) {
+			for(int jj=ii+1; jj<cellArray.size(); jj++) {		// Only check OTHER cells not already checked in a different order (i.e. factorial elimination)
 				CCell cell1 = cellArray.get(jj);
-				// Determine current distance
-				CBall c0b0 = cell0.ballArray[0];
-				CBall c1b0 = cell1.ballArray[0];
-				// Are these cells stuck to each other?
-				boolean stuck = false;
-				CSpring stickingSpring = null; 
-				for(CSpring spring : stickSpringArray) {
-					if( (spring.ballArray[0].cell.equals(cell0) && spring.ballArray[1].cell.equals(cell1)) || (spring.ballArray[0].cell.equals(cell1) && spring.ballArray[1].cell.equals(cell0)) ) {
-						// That's the one containing both cells
+				// Are these cells connected to each other, either through sticking spring or filament?
+				boolean stuck = false, filament = false;
+				CSpring stickingSpring = null, filamentSpring = null; 
+				for(CSpring fil : filSpringArray) {				// Will be empty if filaments are disabled --> no need to add further if statements 
+					// That's the one containing both cells
+					if( (fil.ballArray[0].cell.equals(cell0) && fil.ballArray[1].cell.equals(cell1)) || (fil.ballArray[0].cell.equals(cell1) && fil.ballArray[1].cell.equals(cell0)) ) {
+						filament = true;
+						filamentSpring = fil;
+						break;									// That's all we need
+					}
+				}
+				for(CSpring stick : stickSpringArray) {		// TODO Can be replaced by cell's stickSpringArray. Will be empty if sticking springs are disabled --> no need to add further if statements 
+					if( (stick.ballArray[0].cell.equals(cell0) && stick.ballArray[1].cell.equals(cell1)) || (stick.ballArray[0].cell.equals(cell1) && stick.ballArray[1].cell.equals(cell0)) ) {
 						stuck = true;
-						stickingSpring = spring;
+						stickingSpring = stick;
 						break;						
 					}
 				}
-				if(stuck) {					// Stuck --> can we break this spring (and its siblings)?
-					double dist = (c1b0.pos.minus(c0b0.pos)).norm();
-					if(dist < stickingSpring.restLength*stretchLimStick[0] || dist > stickingSpring.restLength*stretchLimStick[1]) 		Assistant.NStickBreak += stickingSpring.Break();
-				} else {					// Not stuck --> can we stick them?
-					boolean related = ((cell0.mother!=null && cell0.mother.equals(cell1)) || (cell1.mother!=null && cell1.mother.equals(cell0))) ? true : false;
-					if(!related) {// Check only if these cells are not connected through filament springs
+				if(filament) {									// Can only be true if filaments are enabled 
+					// Don't stick this. It shouldn't be stuck so don't check if we can break sticking springs. Instead, see if we can break the filial link 
+					double distance = filamentSpring.ballArray[0].pos.minus(filamentSpring.ballArray[1].pos).norm();
+					// Check if we can break this spring
+					if(distance<filamentSpring.restLength*stretchLimFil[0] || distance>filamentSpring.restLength*stretchLimFil[1]) {
+						Assistant.NFilBreak += filamentSpring.Break();				// Also breaks its siblings
+					}
+				} else if (sticking){							// Check if we want to do sticking
+					// Determine current distance, required for formation and breaking
+					CBall c0b0 = cell0.ballArray[0];
+					CBall c1b0 = cell1.ballArray[0];				
+					if(stuck) {					// Stuck --> can we break this spring (and its siblings)?
+						double dist = (c1b0.pos.minus(c0b0.pos)).norm();
+						if(dist < stickingSpring.restLength*stretchLimStick[0] || dist > stickingSpring.restLength*stretchLimStick[1]) 		Assistant.NStickBreak += stickingSpring.Break();
+					} else {					// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
+						double dist=0;
 						if(cell0.type<2 && cell1.type<2) {							// both spheres
-							double dist = (c1b0.pos.minus(c0b0.pos)).norm();
-							if(dist<R2*formLimStick)		Assistant.NStickForm += cell0.Stick(cell1);
+							dist = (c1b0.pos.minus(c0b0.pos)).norm();
 						} else if(cell0.type<2) {									// 1st sphere, 2nd rod
 							double H2f =  1.5*(formLimStick*(cellLengthMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c1b1 = cell1.ballArray[1];
 								// do a sphere-rod collision detection
 								EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
-								if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
+								dist = C.dist;
 							}
-						} else if (cell1.type<2) {									// 2nd sphere, 1st rod
+						} else if(cell1.type<2) {									// 2nd sphere, 1st rod
 							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								// do a sphere-rod collision detection
 								EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
-								if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);		// OPTIMISE by passing dist to Stick
+								dist = C.dist;
 							}
-						} else {													// both rod
+						} else if(cell0.type<6 && cell1.type<6) {  					// both rod
 							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2));
 							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								CBall c1b1 = cell1.ballArray[1];
-								// calculate the distance between the two diatoma segments
+								// calculate the distance between the two segments
 								EricsonObject C = DetectLinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
-								if(C.dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
+								dist = C.dist;
 							}
-						}	
+						} else {
+							Write("Unknown cell type in collision detection: " + cell0.type + " or " + cell1.type,"error");
+						}
+						// Stick if distance is small enough
+						if(dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
 					}
 				}
 			}
 		}
-	}
-	
-	public void FilUnFil() {
-		ArrayList<CSpring> unFilArray = new ArrayList<CSpring>(0);
-		for(CSpring fil : filSpringArray) {
-			// No need to make filial links here, is done in growth step
-			
-			// Filament spring breaking
-			double distance = fil.ballArray[0].pos.minus(fil.ballArray[1].pos).norm();
-			// Check if we can break this spring
-			if(distance<fil.restLength*stretchLimFil[0] || distance>fil.restLength*stretchLimFil[1]) {
-				unFilArray.add(fil);
-				Assistant.NFilBreak++;
-			}
-		}
-		// unFil all the springs that are detected to be broken, with their siblings 
-		for(CSpring fil : unFilArray) fil.Break();
 	}
 	
 	//////////////////

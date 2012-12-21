@@ -59,10 +59,11 @@ public class Odeint<Stepper extends StepperBase> {
 			s.step(s.h,derivs); 					// Take a step with the solver. This changes various fields of the stepper
 			if(s.hdid==s.h) {						// Did we succeed? Mark that down.
 				++nok;
+				/////////////////////////////
 				// What else do we want to do after a successful step --> model specific! Remove this if solver applied to other model
-				if(model.anchoring) 	model.AnchorUnAnchor();
-				if(model.sticking)		model.StickUnStick();
-				if(model.filament)		model.FilUnFil();
+				model.AnchorUnAnchor();
+				model.FormBreak();
+				/////////////////////////////
 			} else {
 				++nbad;
 			}
