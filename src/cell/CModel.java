@@ -36,14 +36,21 @@ public class CModel implements Serializable {
 	public boolean sphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci
 	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
-	public double syntrophyFactor = 1.0; 	// Accelerated growth if two cells of different types are stuck to each other 
+	public double syntrophyFactor = 1.0; 	// Accelerated growth if two cells of different types are stuck to each other
+	// Domain properties
+	public double G		= -9.8;					// [m/s2], acceleration due to gravity
+	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
+	public double rhoX	= 1010;					// [kg/m3], diatoma density
+	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
+	public Vector3d L 	= new Vector3d(20e-6, 20e-6, 20e-6);	// [m], Dimensions of domain
+	public double Kd 	= 1e3*MWX;				// drag force coefficient (per BALL)
 	// Spring constants
-	public double Kc 	= 1e7;					// collision (per ball)
-	public double Kw 	= 2e5;					// wall spring (per ball)
-	public double Kr 	= 1e5;					// internal cell spring (per ball)
-	public double Kf 	= 3e4;					// filament spring (per ball average)
-	public double Kan	= 1e4;					// anchor (per ball)
-	public double Ks 	= 1e4;					// sticking (per ball average)
+	public double Kc 	= 1e7*MWX;					// collision (per ball)
+	public double Kw 	= 2e5*MWX;					// wall spring (per ball)
+	public double Kr 	= 1e5*MWX;					// internal cell spring (per ball)
+	public double Kf 	= 3e4*MWX;					// filament spring (per ball average)
+	public double Kan	= 1e4*MWX;					// anchor (per ball)
+	public double Ks 	= 1e4*MWX;					// sticking (per ball average)
 //	public double Kc 	= 2e7;					// collision (per ball)
 //	public double Kw 	= 1e7;					// wall spring (per ball)
 //	public double Kr 	= 2e6;					// internal cell spring (per ball)
@@ -55,13 +62,6 @@ public class CModel implements Serializable {
 	public double[] stretchLimStick = {0.6, 1.4};// Maximum tension and compression (1-this value) for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	public double[] stretchLimFil = {0.4, 1.6};	// Maximum tension and compression (1-this value) for sticking springs
-	// Domain properties
-	public double Kd 	= 2.5e1;				// drag force coefficient (per BALL)
-	public double G		= -9.8;					// [m/s2], acceleration due to gravity
-	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
-	public double rhoX	= 1010;					// [kg/m3], diatoma density
-	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
-	public Vector3d L 	= new Vector3d(20e-6, 20e-6, 20e-6);	// [m], Dimensions of domain
 	// Model biomass properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
