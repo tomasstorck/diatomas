@@ -670,7 +670,7 @@ public class CModel implements Serializable {
 		}
 	}
 	
-	public void FormBreak() {
+	public void FormBreak() {									// Breaks and forms sticking, filament springs when needed. Used during Relaxation()
 		for(int ii=0; ii<cellArray.size(); ii++) {
 			CCell cell0 = cellArray.get(ii);
 			for(int jj=ii+1; jj<cellArray.size(); jj++) {		// Only check OTHER cells not already checked in a different order (i.e. factorial elimination)
@@ -678,7 +678,7 @@ public class CModel implements Serializable {
 				// Are these cells connected to each other, either through sticking spring or filament?
 				boolean stuck = false, filament = false;
 				CSpring stickingSpring = null, filamentSpring = null; 
-				for(CSpring fil : filSpringArray) {				// Will be empty if filaments are disabled --> no need to add further if statements 
+				for(CSpring fil : cell0.filSpringArray) {				// Will be empty if filaments are disabled --> no need to add further if statements 
 					// That's the one containing both cells
 					if( (fil.ballArray[0].cell.equals(cell0) && fil.ballArray[1].cell.equals(cell1)) || (fil.ballArray[0].cell.equals(cell1) && fil.ballArray[1].cell.equals(cell0)) ) {
 						filament = true;
@@ -686,7 +686,7 @@ public class CModel implements Serializable {
 						break;									// That's all we need
 					}
 				}
-				for(CSpring stick : stickSpringArray) {		// TODO Can be replaced by cell's stickSpringArray. Will be empty if sticking springs are disabled --> no need to add further if statements 
+				for(CSpring stick : cell0.stickSpringArray) {			// Will be empty if sticking springs are disabled --> no need to add further if statements 
 					if( (stick.ballArray[0].cell.equals(cell0) && stick.ballArray[1].cell.equals(cell1)) || (stick.ballArray[0].cell.equals(cell1) && stick.ballArray[1].cell.equals(cell0)) ) {
 						stuck = true;
 						stickingSpring = stick;

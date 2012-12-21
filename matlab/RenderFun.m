@@ -23,7 +23,7 @@ if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')
 	camAngle = 2*rad2deg(atan(BC/AC));
 end
 
-for ii=0:NSave
+parfor ii=0:NSave
 	imageName = sprintf('pov_g%04dm%04d_%02d', model.growthIter, model.relaxationIter, ii);
 	imageLoc = [location '/image/' imageName '.png'];
 	if(exist(imageLoc,'file')) && ~exist('keepgoing','var')
