@@ -15,9 +15,9 @@ public class WithoutComsol {
 	public static void Run(CModel model) throws Exception{
 		// Change default parameters
 		/////
-		model.cellRadiusMax[0] = 0.25e-6*1.5*10.0;
-		model.cellRadiusMax[4] = 0.25e-6*10.0;
-		model.cellLengthMax[4] = 2.5e-6*10.0;
+		model.cellRadiusMax[0] = 0.25e-6*1.5;
+		model.cellRadiusMax[4] = 0.25e-6;
+		model.cellLengthMax[4] = 2.5e-6;
 		model.UpdateDimension();
 		int[] type = new int[]{0,0,0,4,4,4};
 //		model.Kf *= 10.0; 

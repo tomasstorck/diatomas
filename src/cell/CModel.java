@@ -38,19 +38,25 @@ public class CModel implements Serializable {
 	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
 	public double syntrophyFactor = 1.0; 	// Accelerated growth if two cells of different types are stuck to each other 
 	// Spring constants
-	public double Kc 	= 2e7;					// collision (per ball)
-	public double Kw 	= 1e7;					// wall spring (per ball)
-	public double Kr 	= 2e6;					// internal cell spring (per ball)
-	public double Kf 	= 1e6;					// filament spring (per ball average)
-	public double Kan	= 2e5;					// anchor (per ball)
-	public double Ks 	= 5e4;					// sticking (per ball average)
+	public double Kc 	= 1e7;					// collision (per ball)
+	public double Kw 	= 2e5;					// wall spring (per ball)
+	public double Kr 	= 1e5;					// internal cell spring (per ball)
+	public double Kf 	= 3e4;					// filament spring (per ball average)
+	public double Kan	= 1e4;					// anchor (per ball)
+	public double Ks 	= 1e4;					// sticking (per ball average)
+//	public double Kc 	= 2e7;					// collision (per ball)
+//	public double Kw 	= 1e7;					// wall spring (per ball)
+//	public double Kr 	= 2e6;					// internal cell spring (per ball)
+//	public double Kf 	= 1e6;					// filament spring (per ball average)
+//	public double Kan	= 2e5;					// anchor (per ball)
+//	public double Ks 	= 5e4;					// sticking (per ball average)
 	public double[] stretchLimAnchor = {0.6, 1.4};// Maximum tension and compression (1-this value) for anchoring springs
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public double[] stretchLimStick = {0.6, 1.4};// Maximum tension and compression (1-this value) for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	public double[] stretchLimFil = {0.4, 1.6};	// Maximum tension and compression (1-this value) for sticking springs
 	// Domain properties
-	public double Kd 	= 2.5e3;				// drag force coefficient (per BALL)
+	public double Kd 	= 2.5e1;				// drag force coefficient (per BALL)
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density

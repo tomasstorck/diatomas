@@ -1,5 +1,5 @@
 % Settings
-L = [20,10,20];
+L = [20,5,20];
 imageWidth = 1024;
 imageHeight = 768;
 camPos = [-L(1), 2*L(2),-L(3)];
