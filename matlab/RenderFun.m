@@ -7,6 +7,10 @@ ambient = 0.8;
 diffuse = 0.4;
 keepPOV = true;
 drawSubstratum = true;
+% Colours
+filColour = [0 0 1];		% Filament spring is blue
+stickColour = [0 1 0];		% Sticking spring is green
+
 
 NSave = length(model.ballArray(1).posSave);
 if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')
@@ -23,11 +27,15 @@ if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')
 	camAngle = 2*rad2deg(atan(BC/AC));
 end
 
+for ii=0:NSave
+	imageName{ii+1} = sprintf('pov_g%04dm%04d_%02d', model.growthIter, model.relaxationIter, ii);
+	imageLoc{ii+1} = [location '/image/' imageName{ii+1} '.png'];
+	povName{ii+1} = [location sprintf('/output/pov_g%04dm%04d_%02d.pov', model.growthIter, model.relaxationIter, ii)];
+end
+	
 parfor ii=0:NSave
-	imageName = sprintf('pov_g%04dm%04d_%02d', model.growthIter, model.relaxationIter, ii);
-	imageLoc = [location '/image/' imageName '.png'];
-	if(exist(imageLoc,'file')) && ~exist('keepgoing','var')
-		fprintf(['File already found, skipping: ' imageName '\n']);
+	if(exist(imageLoc{ii+1},'file')) && ~exist('keepgoing','var')
+		fprintf(['File already found, skipping: ' imageName{ii+1} '\n']);
 		skip = true;
 	else
 		skip = false;
@@ -37,11 +45,10 @@ parfor ii=0:NSave
 		continue
 	end
 	
-	povName = [location sprintf('/output/pov_g%04dm%04d_%02d.pov', model.growthIter, model.relaxationIter, ii)];
-	if(exist(povName,'file'))
-		delete(povName);
+	if(exist(povName{ii+1},'file'))
+		delete(povName{ii+1});
 	end
-	fid = fopen(povName,'a');
+	fid = fopen(povName{ii+1},'a');
 	
 	if ii~=NSave
 		plotIntermediate=true;		% If this is not the first iteration, do the intermediate plotting
@@ -167,7 +174,6 @@ parfor ii=0:NSave
 	for iFil = 1:length(model.filSpringArray)
 		fil = model.filSpringArray(iFil);
 		fprintf(fid,['// Filament spring no. ' num2str(iFil-1) '\n']);
-		colour(1) = 0; colour(2) = 0; colour(3) = 1;		% Filament spring is blue
 		ball 	= model.ballArray(fil.ballArray(1)+1);
 		ballNext = model.ballArray(fil.ballArray(2)+1);
 		
@@ -184,7 +190,7 @@ parfor ii=0:NSave
 			sprintf('\t%10.3f\n', ball.radius*1e5),...
 			'\ttexture{\n',...
 			'\t\tpigment{\n',...
-			sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', colour(1), colour(2), colour(3)),...
+			sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', filColour(1), filColour(2), filColour(3)),...
 			'\t\t}\n',...
 			'\t\tfinish{\n',...
 			['\t\t\tambient ' num2str(ambient) '\n'],...
@@ -214,7 +220,7 @@ parfor ii=0:NSave
 			sprintf('\t%10.3f\n', ball.radius*1e5),...									% 1e5 == 1/10 of the actual ball radius
 			'\ttexture{\n',...
 			'\t\tpigment{\n',...
-			sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', 0.0, 1.0, 0.0),...		%Sticking springs are green
+			sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n',stickColour(1), stickColour(2), stickColour(3)),...
 			'\t\t}\n',...
 			'\t\tfinish{\n',...
 			['\t\t\tambient ' num2str(ambient) '\n'],...
@@ -284,15 +290,15 @@ parfor ii=0:NSave
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	
-	systemInput = ['povray ' povName ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' location '/image/' imageName ' +A -J'];
+	systemInput = ['povray ' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' location '/image/' imageName{ii+1} ' +A -J'];
 	if keepPOV
 		remove = '';
 	else
-		remove = ['rm ' povName];
+		remove = ['rm ' povName{ii+1}];
 	end
 	[~,~] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
 	% Append text for relaxation and growth
-	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStepEnd+ii*model.relaxationTimeStep)  imageLoc ' ' imageLoc]);
+	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStepEnd+ii*model.relaxationTimeStep)  imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 	% Append scale bar
 	A = camPos';
 	C = camView;
@@ -301,8 +307,8 @@ parfor ii=0:NSave
 
 	LLine = 1/BC * imageWidth/2;
 
-	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''1 um'' ' imageLoc ' ' imageLoc]);
-	system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imageLoc ' ' imageLoc]);
+	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''1 um'' ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
+	system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 
 	% Remove if desired
 	[~,~] = system(['cd ' location ' ; ' remove ' ; cd ..']);

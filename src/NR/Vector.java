@@ -3,7 +3,7 @@
 package NR;
 
 public class Vector {		// It's NOT a template class, but fixed double
-	int n; 					// Size of the array, since Java and C++ are 0 index based the last element is at nn-1
+	int n; 					// Size of the array, since Java and C++ are 0 index based the last element is at n-1
 	double[] v;				// Actual content
 	static double scale=2;	// The default scaling factor. Can be changed easily. Static to hopefully save some memory
 

@@ -3,9 +3,8 @@ package cell;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-import NR.Vector3d;
-
 import random.rand;
+import NR.Vector3d;
 
 public class CCell implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -44,8 +43,7 @@ public class CCell implements Serializable {
 			ballArray = 	new CBall[2];		// Reinitialise ballArray to contain 2 balls
 			new CBall(base0x, base0y, base0z, n/2.0, 0, this);		// Constructor adds it to the array
 			new CBall(base1x, base1y, base1z, n/2.0, 1, this);		// Constructor adds it to the array
-			CSpring rod = new CSpring(ballArray[0],ballArray[1], 0);							// Constructor adds it to the array
-			rod.ResetRestLength();
+			new CSpring(ballArray[0],ballArray[1], 0);				// Constructor adds it to the array
 		} else {
 			model.Write("Unknown cell type during cell creation: " + type, "error");
 		}
@@ -62,8 +60,11 @@ public class CCell implements Serializable {
 			double distance;
 			if(type<4) {
 				distance = ballArray[0].radius * model.cellLengthMax[ballArray[0].cell.type]/model.cellRadiusMax[ballArray[0].cell.type];										// type == 2||3 is fixed ball-ball distance
-			} else {
+			} else if(type<6) {
 				distance = ballArray[0].cell.GetAmount()*model.MWX/(Math.PI*model.rhoX*ballArray[0].radius*ballArray[0].radius) - 4.0/3.0*ballArray[0].radius;					// type == 4||5 is variable ball-ball distance. Correct? TODO
+			} else {
+				model.Write("Unknown type in cell creation: " + type, "error");
+				distance = 0;
 			}
 			double base1x = base0x + direction.x * distance;
 			double base1y = base0y + direction.y * distance;

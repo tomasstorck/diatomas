@@ -29,12 +29,18 @@ public class StepperBase {
 			yerr = new Vector(n);	// ... and for the error estimate
 		};
 		
+		@SuppressWarnings("unused")
 		public StepperBase(double x, Vector y, Vector dydx) {};
 		
 		// "Forward declare" the functions  below, they'll be overwritten by the actual Stepper
+		@SuppressWarnings("unused")
 		public void step(double h, feval derivs) throws Exception {}
+		@SuppressWarnings("unused")
 		public void dy(double h, feval derivs) {}
+		@SuppressWarnings("unused")
 		public void prepare_dense(double h, Vector dydxnew, feval derivs) {}
-		public double dense_out(int i,double xout, double h) {return 0.0;} 
+		@SuppressWarnings("unused")
+		public double dense_out(int i,double xout, double h) {return 0.0;}
+		@SuppressWarnings("unused")
 		public double error(double h) {return 0.0;} 
 }
