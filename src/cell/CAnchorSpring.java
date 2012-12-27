@@ -23,7 +23,7 @@ public class CAnchorSpring implements Serializable {
 		this.ballArray[0] = ball;
 		anchor = new Vector3d(ball.pos.x, 0, ball.pos.z);
 		k = model.Kan*model.nCellMax[ball.cell.type]/((ball.cell.type<2) ? 2.0 : 4.0);
-		restLength = Math.max(ball.pos.y,ball.radius*1.01);			// Whatever is largest: distance ball-floor or radius plus a little push
+		restLength = ball.radius*1.01;			// Whatever is largest: distance ball-floor or radius plus a little push
 		
 		model.anchorSpringArray.add(this);
 		// CAnchorSpring is added to the cell from where this function is called 
