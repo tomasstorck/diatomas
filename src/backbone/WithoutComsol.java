@@ -8,7 +8,6 @@ import cell.CBall;
 import cell.CCell;
 import cell.CModel;
 import cell.CSpring;
-@SuppressWarnings("unused")
 
 public class WithoutComsol {
 
@@ -19,7 +18,8 @@ public class WithoutComsol {
 		model.cellRadiusMax[4] = 0.25e-6;
 		model.cellLengthMax[4] = 2.5e-6;
 		model.UpdateDimension();
-		int[] type = new int[]{0,0,0,4,4,4};
+		int[] type = new int[]{4,4,4,0,0,0};
+		model.NInitCell = 3;
 //		model.Kf *= 10.0; 
 		
 //		// Cristian

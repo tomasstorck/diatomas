@@ -2,7 +2,6 @@ package backbone;
 
 public class Assistant {
 	public static boolean start = true;
-	public static boolean withComsol = true;
 	// Linux interactor
 	public static boolean waitForFinish = true;
 	public static boolean echoCommand = false;

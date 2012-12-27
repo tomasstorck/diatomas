@@ -28,6 +28,7 @@ public class CModel implements Serializable {
 	// Model properties
 	public String name = "default";
 	public int randomSeed = 1;					// Makes first 3 rods, then 3 spheres (I got lucky)
+	public boolean withComsol = false;
 	public boolean sticking = true;
 	public boolean anchoring = false;
 	public boolean filament = false;
@@ -43,14 +44,17 @@ public class CModel implements Serializable {
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
 	public Vector3d L 	= new Vector3d(20e-6, 20e-6, 20e-6);	// [m], Dimensions of domain
-	public double Kd 	= 1e3*MWX;				// drag force coefficient (per BALL)
-	// Spring constants
-	public double Kc 	= 1e7*MWX;					// collision (per ball)
-	public double Kw 	= 2e5*MWX;					// wall spring (per ball)
-	public double Kr 	= 1e5*MWX;					// internal cell spring (per ball)
-	public double Kf 	= 3e4*MWX;					// filament spring (per ball average)
-	public double Kan	= 1e4*MWX;					// anchor (per ball)
-	public double Ks 	= 1e4*MWX;					// sticking (per ball average)
+	// Spring constants and drag ceoefficient
+	// Fast simulations/poor gravity
+	public double Kd 	= 2.5e1;				// drag force coefficient (per BALL)
+	public double Kc 	= 2e5;					// collision (per ball)
+	public double Kw 	= 1e5;					// wall spring (per ball)
+	public double Kr 	= 2e4;					// internal cell spring (per ball)
+	public double Kf 	= 1e4;					// filament spring (per ball average)
+	public double Kan	= 2e3;					// anchor (per ball)
+	public double Ks 	= 2e3;					// sticking (per ball average)
+//	// Slow simulations/proper gravity
+//	public double Kd 	= 2.5e3;				// drag force coefficient (per BALL)
 //	public double Kc 	= 2e7;					// collision (per ball)
 //	public double Kw 	= 1e7;					// wall spring (per ball)
 //	public double Kr 	= 2e6;					// internal cell spring (per ball)

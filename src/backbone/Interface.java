@@ -8,7 +8,6 @@ import java.io.ObjectInputStream;
 import java.util.zip.GZIPInputStream;
 
 import ser2mat.ser2mat;
-
 import cell.CModel;
 
 public class Interface{
@@ -61,10 +60,10 @@ public class Interface{
 			//
 			boolean boolNameSet = false;
 			if(arg.equalsIgnoreCase("64bit") || arg.equalsIgnoreCase("bit64")) 
-															{Assistant.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+															{Assistant.bit64 = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("anchoring") || arg.equalsIgnoreCase("anchor"))
 															{model.anchoring = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("comsol")) 				{Assistant.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			if(arg.equalsIgnoreCase("comsol")) 				{model.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("echocommand")) 		{Assistant.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("filament")) 			{model.filament = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("gravity")) 			{model.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
@@ -123,7 +122,7 @@ public class Interface{
 			for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
 			model.Write(message,"");
 			model.Write("=====================================", "");
-			if(Assistant.withComsol) 				WithComsol.Run(model);
+			if(model.withComsol) 					WithComsol.Run(model);
 			else									WithoutComsol.Run(model);
 		}
 	}
