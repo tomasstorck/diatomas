@@ -46,18 +46,18 @@ public class CModel implements Serializable {
 	public Vector3d L 	= new Vector3d(20e-6, 20e-6, 20e-6);	// [m], Dimensions of domain
 	// Spring constants and drag ceoefficient
 	// Fast simulations/poor gravity
-	public double Kd 	= 2.5e1;				// drag force coefficient (per BALL)
-	public double Kc 	= 2e5;					// collision (per ball)
-	public double Kw 	= 1e5;					// wall spring (per ball)
-	public double Kr 	= 2e4;					// internal cell spring (per ball)
-	public double Kf 	= 1e4;					// filament spring (per ball average)
-	public double Kan	= 2e3;					// anchor (per ball)
-	public double Ks 	= 2e3;					// sticking (per ball average)
+	public double Kd 	= 1e-13;				// drag force coefficient (per BALL)
+	public double Kc 	= 1e-9;					// collision (per ball)
+	public double Kw 	= 6e-10;				// wall spring (per ball)
+	public double Kr 	= 2e-11;				// internal cell spring (per ball)
+	public double Kf 	= 2e-11;				// filament spring (per ball average)
+	public double Kan	= 1e-11;				// anchor (per ball)
+	public double Ks 	= 1e-11;				// sticking (per ball average)
 //	// Slow simulations/proper gravity
 //	public double Kd 	= 2.5e3;				// drag force coefficient (per BALL)
 //	public double Kc 	= 2e7;					// collision (per ball)
 //	public double Kw 	= 1e7;					// wall spring (per ball)
-//	public double Kr 	= 2e6;					// internal cell spring (per ball)
+//	public double Kr 	= 12e6;					// internal cell spring (per ball)
 //	public double Kf 	= 1e6;					// filament spring (per ball average)
 //	public double Kan	= 2e5;					// anchor (per ball)
 //	public double Ks 	= 5e4;					// sticking (per ball average)
@@ -427,15 +427,6 @@ public class CModel implements Serializable {
 			ball.force.z = 0;
 		}}
 		// Collision forces
-		// Determine Hooke's law spring constants 
-		double[][] kc = new double[6][6];
-		for(int ii=0; ii<6; ii++) {
-			for(int jj=0; jj<6; jj++) {
-				double iiDivision = (ii<2) ? 2.0 : 4.0;
-				double jjDivision = (jj<2) ? 4.0 : 4.0;
-				kc[ii][jj] = Kc*(nCellMax[ii]/iiDivision + nCellMax[jj]/jjDivision)/2.0;
-			}
-		}
 		for(int iCell=0; iCell<cellArray.size(); iCell++) {
 			CCell cell0 = cellArray.get(iCell);
 			CBall c0b0 = cell0.ballArray[0];
@@ -453,7 +444,7 @@ public class CModel implements Serializable {
 						if(dist<R2) {
 							// We have a collision
 							dirn.normalise();
-							Vector3d Fs = dirn.times(kc[cell0.type][cell1.type]*(R2*1.01-dist));	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
+							Vector3d Fs = dirn.times(Kc*(R2*1.01-dist));	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
 							// Add forces
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
@@ -469,7 +460,7 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							// Collision detection
 							if(dist<R2) {
-								double f = kc[cell0.type][cell1.type] / dist*(dist-R2*1.01);
+								double f = Kc/dist*(dist-R2*1.01);
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
@@ -499,7 +490,7 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							// Collision detection
 							if(dist < R2) {
-								double f = kc[cell0.type][cell1.type] / dist*(dist-R2*1.01);
+								double f = Kc/dist*(dist-R2*1.01);
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
@@ -525,7 +516,7 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							double tc = C.tc;
 							if(dist<R2) {
-								double f = kc[cell0.type][cell1.type] / dist*(dist-R2*1.01);
+								double f = Kc/dist*(dist-R2*1.01);
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
@@ -543,21 +534,13 @@ public class CModel implements Serializable {
 			}
 		}
 		// Calculate gravity+bouyancy, normal forces and drag
-		// Determine Hooke's law spring constants 
-		double[] kw = new double[6];
-		double[] kd = new double[6];
-		for(int ii=0; ii<6; ii++) {
-			double iiDivision = (ii<2) ? 2.0 : 4.0;
-			kw[ii] = Kw*nCellMax[ii]/iiDivision;
-			kd[ii] = Kd*nCellMax[ii]/iiDivision;
-		}
 		for(CBall ball : ballArray) {
 			// Contact forces
 			double y = ball.pos.y;
 			double r = ball.radius;
 			if(normalForce) {
 				if(y<r){
-					ball.force.y += kw[ball.cell.type]*(r-y);
+					ball.force.y += Kw*(r-y);
 				}
 			}
 			// Gravity and buoyancy
@@ -570,7 +553,7 @@ public class CModel implements Serializable {
 			}
 			
 			// Velocity damping
-			ball.force.subtract(ball.vel.times(kd[ball.cell.type]));			// TODO Should be v^2
+			ball.force.subtract(ball.vel.times(Kd));			// TODO Should be v^2
 		}
 		
 		// Elastic forces between springs within cells (CSpring in type>1)
@@ -581,7 +564,7 @@ public class CModel implements Serializable {
 			Vector3d diff = ball1.pos.minus(ball0.pos);
 			double dn = diff.norm();
 			// Get force
-			double f = rod.k/dn * (dn - rod.restLength);
+			double f = rod.K/dn * (dn - rod.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
@@ -594,7 +577,7 @@ public class CModel implements Serializable {
 			Vector3d diff = anchor.anchor.minus(anchor.ballArray[0].pos);
 			double dn = diff.norm();
 			// Get force
-			double f = anchor.k/dn * (dn - anchor.restLength);
+			double f = anchor.K/dn * (dn - anchor.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
@@ -610,7 +593,7 @@ public class CModel implements Serializable {
 			Vector3d diff = ball1.pos.minus(ball0.pos);
 			double dn = diff.norm();
 			// Get force
-			double f = stick.k/dn * (dn - stick.restLength);
+			double f = stick.K/dn * (dn - stick.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
@@ -626,7 +609,7 @@ public class CModel implements Serializable {
 			Vector3d diff = ball1.pos.minus(ball0.pos);
 			double dn = diff.norm();
 			// Get force
-			double f = fil.k/dn * (dn - fil.restLength);
+			double f = fil.K/dn * (dn - fil.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls

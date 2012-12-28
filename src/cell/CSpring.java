@@ -7,7 +7,7 @@ public class CSpring implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
 	public CBall[] ballArray = new CBall[2];
-	public double k;
+	public double K;
 	public double restLength;
 	public int type;
 	public ArrayList<CSpring> siblingArray = new ArrayList<CSpring>(4);
@@ -76,20 +76,29 @@ public class CSpring implements Serializable {
 		CCell cell0 = ballArray[0].cell;
 		CCell cell1 = ballArray[1].cell;
 		CModel model = cell0.model;
+		int NSpring = 0;
 		switch(type) {
 		case 0:
-			k = model.Kr * model.nCellMax[cell0.type]/4.0;			// Two identical dimension balls, same cell
+			K = model.Kr;			// Two identical dimension balls, same cell
 			break;
 		case 1:														// Two different balls, possible different cell types
-			k = model.Ks * (model.nCellMax[cell0.type]/((cell0.type<2) ? 2.0 : 4.0) + model.nCellMax[cell1.type]/((cell1.type<2) ? 2.0 : 4.0)) / 2.0;
+			if(cell0.type<2 && cell1.type<2)		NSpring = 1;
+			else if(cell0.type>1 && cell1.type>1) {
+				if(cell0.type<6 && cell1.type<6) 	NSpring = 4;
+				else model.Write("Unknown cell types in ResetK", "error");
+			} else 									NSpring = 2;
+			K = model.Ks/NSpring;
 			break;
 		case 2:	case 3:												// Two different balls, same cell type
-			k = model.Kf * model.nCellMax[cell0.type]/((cell0.type<2) ? 2.0 : 4.0);
+			if(cell0.type<2)						NSpring = 1;
+			else if(cell0.type<6)					NSpring = 2;
+			else model.Write("Unknown cell types in ResetK", "error");
+			K = model.Kf/NSpring;
 			break;
 		}
 	}
 	
-	public int Break() {									// Also removes siblings
+	public int Break() {												// Also removes siblings
 		CModel model = this.ballArray[0].cell.model;
 		int count = 0;
 		CCell cell0 = ballArray[0].cell;

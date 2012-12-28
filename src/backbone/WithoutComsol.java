@@ -12,15 +12,19 @@ import cell.CSpring;
 public class WithoutComsol {
 
 	public static void Run(CModel model) throws Exception{
-		// Change default parameters
-		/////
-		model.cellRadiusMax[0] = 0.25e-6*1.5;
+		// Set parameters. This overwrites both CModel and supplied arguments
+		
+		/////////////
+		// E. COLI //
+		/////////////
 		model.cellRadiusMax[4] = 0.25e-6;
 		model.cellLengthMax[4] = 2.5e-6;
 		model.UpdateDimension();
-		int[] type = new int[]{4,4,4,0,0,0};
 		model.NInitCell = 3;
-//		model.Kf *= 10.0; 
+		int[] type = new int[]{4,4,4};
+		model.sticking = false;
+		model.filament = false;
+		model.gravity = false;
 		
 //		// Cristian
 //		model.Kan = 2e7;
