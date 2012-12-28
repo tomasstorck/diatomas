@@ -88,10 +88,10 @@ public class CModel implements Serializable {
 	// Arrays
 	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
 	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
-	public ArrayList<CSpring> rodSpringArray = new ArrayList<CSpring>(NInitCell);
-	public ArrayList<CSpring> stickSpringArray = new ArrayList<CSpring>(NInitCell);
-	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(NInitCell);
-	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(NInitCell);
+	public ArrayList<CSpring> rodSpringArray = new ArrayList<CSpring>(0);
+	public ArrayList<CSpring> stickSpringArray = new ArrayList<CSpring>(0);
+	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(0);
+	public ArrayList<CSpring> anchorSpringArray = new ArrayList<CSpring>(0);
 	// === COMSOL STUFF ===
 	// Biomass, assuming Cmol and composition CH1.8O0.5N0.2 (i.e. MW = 24.6 g/mol)
 	//							type 0					type 1					type 2					type 3					type 4					type 5
@@ -333,13 +333,13 @@ public class CModel implements Serializable {
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
-	public ArrayList<CAnchorSpring> DetectAnchorBreak(double minStretch, double maxStretch) {
-		ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
+	public ArrayList<CSpring> DetectAnchorBreak(double minStretch, double maxStretch) {
+		ArrayList<CSpring> breakArray = new ArrayList<CSpring>();
 		
-		for(CAnchorSpring pSpring : anchorSpringArray) {
-			double al = (pSpring.ballArray[0].pos.minus(pSpring.anchor)).norm();		// al = Actual Length
-			if(al < minStretch*pSpring.restLength || al > maxStretch*pSpring.restLength) {
-				breakArray.add(pSpring);
+		for(CSpring anchor : anchorSpringArray) {
+			double al = (anchor.ballArray[0].pos.minus(anchor.anchorPoint)).norm();		// al = Actual Length
+			if(al < minStretch*anchor.restLength || al > maxStretch*anchor.restLength) {
+				breakArray.add(anchor);
 			}
 		}
 		return breakArray;
@@ -573,8 +573,8 @@ public class CModel implements Serializable {
 		}
 		
 		// Apply forces due to anchor springs
-		for(CAnchorSpring anchor : anchorSpringArray) {
-			Vector3d diff = anchor.anchor.minus(anchor.ballArray[0].pos);
+		for(CSpring anchor : anchorSpringArray) {
+			Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 			double dn = diff.norm();
 			// Get force
 			double f = anchor.K/dn * (dn - anchor.restLength);
@@ -641,13 +641,13 @@ public class CModel implements Serializable {
 				CBall ball0 = cell.ballArray[0];
 				CBall ball1 = (cell.type>1) ? ball1 = cell.ballArray[1] : null;
 
-				if(cell.anchorSpringArray.length>0) { 		// This cell is already anchored
-					for(CAnchorSpring spring : cell.anchorSpringArray) {
+				if(cell.anchorSpringArray.size()>0) { 		// This cell is already anchored
+					for(CSpring spring : cell.anchorSpringArray) {
 						// Break anchor?
-						Vector3d diff = spring.anchor.minus(spring.ballArray[0].pos);
+						Vector3d diff = spring.anchorPoint.minus(spring.ballArray[0].pos);
 						double dn = diff.norm();
 						if(dn < spring.restLength*stretchLimAnchor[0] || dn > spring.restLength*stretchLimAnchor[1]) {			// too much tension || compression --> break the spring
-							Assistant.NAnchorBreak += spring.UnAnchor();
+							Assistant.NAnchorBreak += spring.Break();
 						}
 					}
 				} else {									// Cell is not yet anchored
@@ -947,7 +947,7 @@ public class CModel implements Serializable {
 	
 	public int BuildAnchor(ArrayList<CCell> collisionArray) {
 		// Make unique
-		for(CAnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.ballArray[0].cell);
+		for(CSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.ballArray[0].cell);
 		
 		// Anchor the non-stuck, collided cells to the ground
 		for(CCell cell : collisionArray) cell.Anchor();

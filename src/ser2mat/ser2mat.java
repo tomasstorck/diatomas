@@ -15,6 +15,7 @@ public class ser2mat {
 		// Model properties
 		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, 1));                                	
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	// Makes first 3 rods, then 3 spheres (I got lucky)
+		mlModel.setField("withComsol",                    new MLDouble(null, new double[] {model.withComsol?1:0}, 1));                    	
 		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	
 		mlModel.setField("anchoring",                     new MLDouble(null, new double[] {model.anchoring?1:0}, 1));                     	
 		mlModel.setField("filament",                      new MLDouble(null, new double[] {model.filament?1:0}, 1));                      	
@@ -24,25 +25,34 @@ public class ser2mat {
 		mlModel.setField("normalForce",                   new MLDouble(null, new double[] {model.normalForce?1:0}, 1));                   	// Use normal force to simulate cells colliding with substratum (at y=0)
 		mlModel.setField("initialAtSubstratum",           new MLDouble(null, new double[] {model.initialAtSubstratum?1:0}, 1));           	// All initial balls are positioned at y(t=0) = ball.radius
 		mlModel.setField("syntrophyFactor",               new MLDouble(null, new double[] {model.syntrophyFactor}, 1));                   	// Accelerated growth if two cells of different types are stuck to each other
-		// Spring constants
+		// Domain properties
+		mlModel.setField("G",                             new MLDouble(null, new double[] {model.G}, 1));                                 	// [m/s2], acceleration due to gravity
+		mlModel.setField("rhoWater",                      new MLDouble(null, new double[] {model.rhoWater}, 1));                          	// [kg/m3], density of bulk liquid (water)
+		mlModel.setField("rhoX",                          new MLDouble(null, new double[] {model.rhoX}, 1));                              	// [kg/m3], diatoma density
+		mlModel.setField("MWX",                           new MLDouble(null, new double[] {model.MWX}, 1));                               	// [kg/mol], composition CH1.8O0.5N0.2
+		mlModel.setField("L",                             new MLDouble(null, new double[] {model.L.x, model.L.y, model.L.z}, 3));         	
+		// Spring constants and drag ceoefficient
+		// Fast simulations/poor gravity
+		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient (per BALL)
 		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// collision (per ball)
 		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall spring (per ball)
 		mlModel.setField("Kr",                            new MLDouble(null, new double[] {model.Kr}, 1));                                	// internal cell spring (per ball)
 		mlModel.setField("Kf",                            new MLDouble(null, new double[] {model.Kf}, 1));                                	// filament spring (per ball average)
 		mlModel.setField("Kan",                           new MLDouble(null, new double[] {model.Kan}, 1));                               	// anchor (per ball)
 		mlModel.setField("Ks",                            new MLDouble(null, new double[] {model.Ks}, 1));                                	// sticking (per ball average)
+		//	// Slow simulations/proper gravity
+		//	public double Kd 	= 2.5e3;				// drag force coefficient (per BALL)
+		//	public double Kc 	= 2e7;					// collision (per ball)
+		//	public double Kw 	= 1e7;					// wall spring (per ball)
+		//	public double Kr 	= 12e6;					// internal cell spring (per ball)
+		//	public double Kf 	= 1e6;					// filament spring (per ball average)
+		//	public double Kan	= 2e5;					// anchor (per ball)
+		//	public double Ks 	= 5e4;					// sticking (per ball average)
 		mlModel.setField("stretchLimAnchor",              new MLDouble(null, model.stretchLimAnchor, model.stretchLimAnchor.length));     	// Maximum tension and compression (1-this value) for anchoring springs
 		mlModel.setField("formLimAnchor",                 new MLDouble(null, new double[] {model.formLimAnchor}, 1));                     	// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 		mlModel.setField("stretchLimStick",               new MLDouble(null, model.stretchLimStick, model.stretchLimStick.length));       	// Maximum tension and compression (1-this value) for sticking springs
 		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {model.formLimStick}, 1));                      	// Multiplication factor for rest length to form sticking springs.
 		mlModel.setField("stretchLimFil",                 new MLDouble(null, model.stretchLimFil, model.stretchLimFil.length));           	// Maximum tension and compression (1-this value) for sticking springs
-		// Domain properties
-		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient (per BALL)
-		mlModel.setField("G",                             new MLDouble(null, new double[] {model.G}, 1));                                 	// [m/s2], acceleration due to gravity
-		mlModel.setField("rhoWater",                      new MLDouble(null, new double[] {model.rhoWater}, 1));                          	// [kg/m3], density of bulk liquid (water)
-		mlModel.setField("rhoX",                          new MLDouble(null, new double[] {model.rhoX}, 1));                              	// [kg/m3], diatoma density
-		mlModel.setField("MWX",                           new MLDouble(null, new double[] {model.MWX}, 1));                               	// [kg/mol], composition CH1.8O0.5N0.2
-		mlModel.setField("L",                             new MLDouble(null, new double[] {model.L.x, model.L.y, model.L.z}, 3));         	
 		// Model biomass properties
 		mlModel.setField("NXComp",                        new MLDouble(null, new double[] {model.NXComp}, 1));                            	// Types of biomass
 		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {model.NdComp}, 1));                            	// d for dynamic compound (e.g. total Ac)
@@ -55,6 +65,7 @@ public class ser2mat {
 		mlModel.setField("cellRadiusMax",                 new MLDouble(null, model.cellRadiusMax, model.cellRadiusMax.length));           	
 		mlModel.setField("cellLengthMax",                 new MLDouble(null, model.cellLengthMax, model.cellLengthMax.length));           	
 		mlModel.setField("nCellMax",                      new MLDouble(null, model.nCellMax, model.nCellMax.length));                     	
+		mlModel.setField("muAvgSimple",                   new MLDouble(null, new double[] {model.muAvgSimple}, 1));                       	// Doubling every 20 minutes. Only used in GrowthSimple!
 		// Progress
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {model.growthTime}, 1));                        	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {model.growthTimeStep}, 1));                    	// [s] Time step for growth
@@ -90,8 +101,8 @@ public class ser2mat {
 			for(int jj=0; jj<obj.stickSpringArray.size(); jj++)	arrayIndex[jj] = obj.stickSpringArray.get(jj).Index();
 			mlcellArray.setField("stickSpringArray",          new MLDouble(null, arrayIndex, 1), ii);                                         	
 			
-			arrayIndex = new double[obj.anchorSpringArray.length];
-			for(int jj=0; jj<obj.anchorSpringArray.length; jj++)	arrayIndex[jj] = obj.anchorSpringArray[jj].Index();
+			arrayIndex = new double[obj.anchorSpringArray.size()];
+			for(int jj=0; jj<obj.anchorSpringArray.size(); jj++)	arrayIndex[jj] = obj.anchorSpringArray.get(jj).Index();
 			mlcellArray.setField("anchorSpringArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
 			
 			arrayIndex = new double[obj.filSpringArray.size()];
@@ -143,6 +154,7 @@ public class ser2mat {
 			arrayIndex = new double[obj.ballArray.length];
 			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlrodSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
+			mlrodSpringArray.setField("anchorPoint",          new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
 			mlrodSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlrodSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 			mlrodSpringArray.setField("type",                 new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
@@ -162,6 +174,7 @@ public class ser2mat {
 			arrayIndex = new double[obj.ballArray.length];
 			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlstickSpringArray.setField("ballArray",          new MLDouble(null, arrayIndex, 1), ii);                                         	
+			mlstickSpringArray.setField("anchorPoint",        new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
 			mlstickSpringArray.setField("K",                  new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlstickSpringArray.setField("restLength",         new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 			mlstickSpringArray.setField("type",               new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
@@ -181,6 +194,7 @@ public class ser2mat {
 			arrayIndex = new double[obj.ballArray.length];
 			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlfilSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
+			mlfilSpringArray.setField("anchorPoint",          new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
 			mlfilSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlfilSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
 			mlfilSpringArray.setField("type",                 new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
@@ -195,17 +209,18 @@ public class ser2mat {
 		N = model.anchorSpringArray.size();
 		MLStructure mlanchorSpringArray = new MLStructure(null, new int[] {model.anchorSpringArray.size() ,1});
 		for(int ii=0; ii<N; ii++) {
-			CAnchorSpring obj = model.anchorSpringArray.get(ii);
+			CSpring obj = model.anchorSpringArray.get(ii);
 			
 			arrayIndex = new double[obj.ballArray.length];
 			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
 			mlanchorSpringArray.setField("ballArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlanchorSpringArray.setField("anchor",            new MLDouble(null, new double[] {obj.anchor.x, obj.anchor.y, obj.anchor.z}, 3), ii);	
+			mlanchorSpringArray.setField("anchorPoint",       new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
 			mlanchorSpringArray.setField("K",                 new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlanchorSpringArray.setField("restLength",        new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
+			mlanchorSpringArray.setField("type",              new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
 			
-			arrayIndex = new double[obj.siblingArray.length];
-			for(int jj=0; jj<obj.siblingArray.length; jj++)	arrayIndex[jj] = obj.siblingArray[jj].Index();
+			arrayIndex = new double[obj.siblingArray.size()];
+			for(int jj=0; jj<obj.siblingArray.size(); jj++)	arrayIndex[jj] = obj.siblingArray.get(jj).Index();
 			mlanchorSpringArray.setField("siblingArray",      new MLDouble(null, arrayIndex, 1), ii);                                         	
 		}
 		mlModel.setField("anchorSpringArray", mlanchorSpringArray);

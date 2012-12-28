@@ -3,10 +3,13 @@ package cell;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import NR.Vector3d;
+
 public class CSpring implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
-	public CBall[] ballArray = new CBall[2];
+	public CBall[] ballArray;
+	public Vector3d anchorPoint;
 	public double K;
 	public double restLength;
 	public int type;
@@ -17,6 +20,8 @@ public class CSpring implements Serializable {
 	// Adds new spring to model's array, cell's array. Does NOT add to siblingArray
 	public CSpring(CBall ball0, CBall ball1, int type, CSpring[] siblingArray){			// Note that siblingArray is by default not initialised
 		CModel model = ball0.cell.model;
+		ballArray = new CBall[2];
+		anchorPoint = new Vector3d();
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
 		this.type = type;
@@ -39,13 +44,43 @@ public class CSpring implements Serializable {
 			ball0.cell.filSpringArray.add(this);
 			ball1.cell.filSpringArray.add(this);
 			break;
+		default:
+			model.Write("Error in CSpring constructor: unknown spring type " + type, "error");
+			break;
 		}
 	}
 	
 	public CSpring(CBall ball0, CBall ball1, int type) {
 		this(ball0, ball1, type, new CSpring[0]);
 	}
+	
+	public CSpring(CBall ball0, Vector3d anchorPoint, int type, CSpring[] siblingArray) {
+		CModel model = ball0.cell.model;
+		ballArray = new CBall[1];
+		ballArray[0] = ball0;
+		this.anchorPoint = anchorPoint;
+		this.type = type;
+		for(CSpring sibling : siblingArray) 	this.siblingArray.add(sibling);
+		ResetK();
+		ResetRestLength();
+		
+		switch(type) {
+		case 4:
+			model.anchorSpringArray.add(this);
+			ball0.cell.anchorSpringArray.add(this);
+			break;
+		default:	
+			model.Write("Error in CSpring constructor: unknown spring type " + type, "error");
+			break;
+		}
+	}
 
+	public CSpring(CBall ball0, Vector3d anchorPoint, int type) {
+		this(ball0, anchorPoint, type, new CSpring[0]);
+	}
+	
+	////////////////////////////////////////////
+	
 	public void ResetRestLength() {
 		switch(type) {
 		case 0:				// Rod
@@ -69,12 +104,14 @@ public class CSpring implements Serializable {
 			CCell cell1 = ballArray[1].cell;
 			restLength = 1.6*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
 			break;
+		case 4:
+			CBall ball = ballArray[0];
+			restLength = Math.max(ball.pos.y,ball.radius*1.01);			// TODO don't like this
 		}
 	}
 	
 	public void ResetK() {
 		CCell cell0 = ballArray[0].cell;
-		CCell cell1 = ballArray[1].cell;
 		CModel model = cell0.model;
 		int NSpring = 0;
 		switch(type) {
@@ -82,6 +119,7 @@ public class CSpring implements Serializable {
 			K = model.Kr;			// Two identical dimension balls, same cell
 			break;
 		case 1:														// Two different balls, possible different cell types
+			CCell cell1 = ballArray[1].cell;
 			if(cell0.type<2 && cell1.type<2)		NSpring = 1;
 			else if(cell0.type>1 && cell1.type>1) {
 				if(cell0.type<6 && cell1.type<6) 	NSpring = 4;
@@ -95,6 +133,14 @@ public class CSpring implements Serializable {
 			else model.Write("Unknown cell types in ResetK", "error");
 			K = model.Kf/NSpring;
 			break;
+		case 4:
+			if(cell0.type<2)						NSpring = 1;
+			else if(cell0.type<6)					NSpring = 2;
+			else model.Write("Unknown cell types in ResetK", "error");
+			K = model.Kan/NSpring;
+			break;
+		default:
+			model.Write("Unknown spring type in ResetK", "error");
 		}
 	}
 	
@@ -132,6 +178,18 @@ public class CSpring implements Serializable {
 				count += (model.filSpringArray.remove(sibling))?1:0;
 			}
 			break;
+		case 4:
+			// Remove this and siblings from model and cells			// Anchoring springs
+			count += (model.anchorSpringArray.remove(this))?1:0;		// Add one to counter if successfully removed
+			cell0.anchorSpringArray.remove(this);
+			for(CSpring sibling : siblingArray) {
+				cell0.anchorSpringArray.remove(sibling);
+				count += (model.anchorSpringArray.remove(sibling))?1:0;
+			}
+			break;
+		default:
+			model.Write("Unknown spring type in Break()", "error");
+			break;
 		}
 		return count;
 	}
@@ -155,6 +213,8 @@ public class CSpring implements Serializable {
 		case 2: case 3:
 			array = model.filSpringArray;
 			break;
+		case 4:
+			array = model.anchorSpringArray;
 		}
 		
 		for(int index=0; index<array.size(); index++) {

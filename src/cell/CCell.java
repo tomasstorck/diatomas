@@ -16,7 +16,7 @@ public class CCell implements Serializable {
 	public ArrayList<CSpring> rodSpringArray = new ArrayList<CSpring>(0);
 	public ArrayList<CCell> stickCellArray = new ArrayList<CCell>(0);
 	public ArrayList<CSpring> stickSpringArray = new ArrayList<CSpring>(0);
-	public CAnchorSpring[] anchorSpringArray = new CAnchorSpring[0];
+	public ArrayList<CSpring> anchorSpringArray = new ArrayList<CSpring>(0);
 	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(0);
 	public CCell mother;
 	public int motherIndex;
@@ -89,21 +89,22 @@ public class CCell implements Serializable {
 	}
 	
 	public int Anchor() {
-		int NBall = (type<2) ? 1 : 2;
-		anchorSpringArray = new CAnchorSpring[NBall];
-		for(int iBall = 0; iBall < NBall; iBall++) {
-			anchorSpringArray[iBall] = new CAnchorSpring(ballArray[iBall]);
+		for(CBall ball : ballArray) {
+			Vector3d substratumPos = new Vector3d(ball.pos);
+			substratumPos.y = ball.radius;
+			new CSpring(ball, substratumPos, 4);
 		}
-		
-		// Define siblings, just hardcode, saves time (for me)
-		if(NBall > 1) {
-			anchorSpringArray[0].siblingArray = new CAnchorSpring[1];
-			anchorSpringArray[1].siblingArray = new CAnchorSpring[1];
-			anchorSpringArray[0].siblingArray[0] = anchorSpringArray[1];
-			anchorSpringArray[1].siblingArray[0] = anchorSpringArray[0];
+
+		// Add sibling springs, assuming all anchors in this cell are siblings
+		for(int ii=0; ii<anchorSpringArray.size(); ii++) {
+			for(int jj=ii+1; jj<anchorSpringArray.size(); jj++) {
+				CSpring anchor0 = anchorSpringArray.get(ii);
+				CSpring anchor1 = anchorSpringArray.get(jj);
+				anchor0.siblingArray.add(anchor1);
+				anchor1.siblingArray.add(anchor0);
+			}
 		}
-		
-		return NBall;
+		return anchorSpringArray.size();
 	}
 	
 
@@ -144,7 +145,7 @@ public class CCell implements Serializable {
 			stickArray[iSpring] = spring;
 		}
 		
-		// Define siblings, link them
+		// Define siblings, link them OPTIMISE
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and sibling spring			
 			CSpring spring = stickArray[iSpring];			
 			for(int iSpring2 = 0; iSpring2 < NSpring; iSpring2++) {			
