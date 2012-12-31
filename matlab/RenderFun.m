@@ -6,25 +6,37 @@ camPos = [-L(1), 2*L(2),-L(3)];
 ambient = 0.8;
 diffuse = 0.4;
 keepPOV = true;
-drawSubstratum = true;
 % Colours
-filColour = [0 0 1];		% Filament spring is blue
-stickColour = [0 1 0];		% Sticking spring is green
+filColour = [.4 1 1];		% Filament spring is blue
+stickColour = [1 .1 1];		% Sticking spring is purple
+anchorColour = [.4 .4 .1];		% Anchoring spring is yellow
 
 
 NSave = length(model.ballArray(1).posSave);
-if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')
+if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iteration or when none exists, find a proper angle
 	% Create camera, background and lighting based on L
+	maxDiag = 0;
 	minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates
 	maxPos = max([model.ballArray.pos],[],2)*1e6;
 	A = camPos';										% For meaning of A, B and C, see drawing in journal, entry 121206
-	camView = (maxPos+minPos)/2;
+	camView = (maxPos+minPos)/2;		camView(2) = 0;	% Camera is at the plane, right in the middle, height zero
 	C = camView;
-	Pmax = max(max(maxPos-C,abs(minPos+C)));			% Get whichever point in whichever dimension is most extreme, be it negative or positive
-	B = C+[Pmax 0 -Pmax]';
-	BC = norm(B-C);
+	for ii=1:length(model.ballArray)
+		ball = model.ballArray(ii);
+		if (ball.pos(1)<0 && ball.pos(3)>0) || (ball.pos(1)>0 && ball.pos(3)<0)		% We're only interested in distance perpendicular to the viewing line (BC perpendicular to AC)
+			B = [ball.pos(1)*1e6; 0; ball.pos(3)*1e6];
+			BC = norm(B-C);
+			diag = BC;
+			if diag>maxDiag
+				maxDiag = diag;
+				maxB = B;
+			end
+		end
+	end
+	B = maxB;
+	BC = norm(B-C);								
 	AC = norm(A-C);
-	camAngle = 2*rad2deg(atan(BC/AC));
+	camAngle = 2*atand((BC+ball.radius+1)/AC);
 end
 
 for ii=0:NSave
@@ -249,7 +261,7 @@ parfor ii=0:NSave
 					sprintf('\t%10.3f\n', ball.radius*1e5),...	% 1e5 because it is a spring
 					'\ttexture{\n',...
 					'\t\tpigment{\n',...
-					sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', 1.0, 1.0, 0.0),...		%Anchoring springs are yellow
+					sprintf('\t\t\tcolor rgb<%10.3f,%10.3f,%10.3f>\n', anchorColour(1), anchorColour(2), anchorColour(3)),...		%Anchoring springs are yellow
 					'\t\t}\n',...
 					'\t\tfinish{\n',...
 					['\t\t\tambient ' num2str(ambient) '\n'],...
@@ -262,19 +274,20 @@ parfor ii=0:NSave
 	end
 	
 	% Create plane
-	if drawSubstratum
+	if model.normalForce
 		fprintf(fid,['union {\n',...
 			'\tbox {\n',...
 			'\t\t<-Lx, 0, -Lz>\n',...				% Corner 1. Centred around 0.5 Lx and 0.5 Lz
 			'\t\t< Lx, 0,  Lz>\n',...				% Corner 2
 			'\t\ttexture {\n',...
 			'\t\t\tpigment {\n',...
-			'\t\t\tbrick\n',...
-			'\t\t\tcolor rgb<0, 0, 0>\n',...
-			'\t\t\tcolor rgb<1, 1, 1>\n',...
-			'\t\t\tbrick_size<0.5, .5, .5>\n',...
-			'\t\t\tmortar 0.025\n',...
-			'\t\t}\n',...
+			'\t\t\t\tbrick\n',...
+			'\t\t\t\tcolor rgb<0, 0, 0>\n',...
+			'\t\t\t\tcolor rgb<1, 1, 1>\n',...
+			'\t\t\t\tbrick_size<1.0, 1.0, 1.0>\n',...
+			'\t\t\t\tmortar 0.025\n',...
+			'\t\t\t\ttranslate<0.0 0.0 0.5>\n',...
+			'\t\t\t}\n',...
 			'\t\t\tfinish {\n',...
 			['\t\t\t\tambient ' num2str(ambient) '\n'],...
 			['\t\t\t\tdiffuse ' num2str(diffuse) '\n'],...

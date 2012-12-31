@@ -46,21 +46,13 @@ public class CModel implements Serializable {
 	public Vector3d L 	= new Vector3d(20e-6, 20e-6, 20e-6);	// [m], Dimensions of domain
 	// Spring constants and drag ceoefficient
 	// Fast simulations/poor gravity
-	public double Kd 	= 1e-13;				// drag force coefficient (per BALL)
-	public double Kc 	= 1e-9;					// collision (per ball)
-	public double Kw 	= 6e-10;				// wall spring (per ball)
-	public double Kr 	= 2e-11;				// internal cell spring (per ball)
-	public double Kf 	= 2e-11;				// filament spring (per ball average)
-	public double Kan	= 1e-11;				// anchor (per ball)
-	public double Ks 	= 1e-11;				// sticking (per ball average)
-//	// Slow simulations/proper gravity
-//	public double Kd 	= 2.5e3;				// drag force coefficient (per BALL)
-//	public double Kc 	= 2e7;					// collision (per ball)
-//	public double Kw 	= 1e7;					// wall spring (per ball)
-//	public double Kr 	= 12e6;					// internal cell spring (per ball)
-//	public double Kf 	= 1e6;					// filament spring (per ball average)
-//	public double Kan	= 2e5;					// anchor (per ball)
-//	public double Ks 	= 5e4;					// sticking (per ball average)
+	public double Kd 	= 1e-13;				// drag force coefficient
+	public double Kc 	= 1e-9;					// cell-cell collision
+	public double Kw 	= 6e-10;				// wall(substratum)-cell spring
+	public double Kr 	= 2e-11;				// internal cell spring
+	public double Kf 	= 2e-11;				// filament spring
+	public double Kan	= 1e-11;				// anchor
+	public double Ks 	= 1e-11;				// sticking
 	public double[] stretchLimAnchor = {0.6, 1.4};// Maximum tension and compression (1-this value) for anchoring springs
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public double[] stretchLimStick = {0.6, 1.4};// Maximum tension and compression (1-this value) for sticking springs

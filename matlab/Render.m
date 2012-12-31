@@ -15,7 +15,7 @@ end
 loadFileNameList = dir([location filesep 'output' filesep '*.mat']);
 loadFileNameList = {loadFileNameList.name};
 
-for iFile=1:length(loadFileNameList)
+for iFile=length(loadFileNameList):-1:1
 	loadFileName = loadFileNameList{iFile};
 	fprintf([loadFileName '\n']);
 	load([location filesep 'output' filesep loadFileName]);

@@ -25,17 +25,16 @@ public class WithoutComsol {
 		model.sticking = false;
 		model.filament = false;
 		model.gravity = false;
+		model.initialAtSubstratum = true;
+		model.normalForce = true;
+		model.Kd 	= 1e-13;
+		model.Kc 	= 1e-9;
+		model.Kw 	= 6e-10;
+		model.Kr 	= 2e-11;
+		model.Kf 	= 2e-11;
+		model.Kan	= 1e-11;
+		model.Ks 	= 1e-11;
 		
-//		// Cristian
-//		model.Kan = 2e7;
-//		model.Kc = 4e7;
-//		model.Kd = 4e4;
-//		model.Kf = 4e7;
-//		model.Kr = 1.23e7;
-//		model.Ks = 2e7;
-//		model.Kw = 2e7;
-		/////
-				
 		// Initialise random seed
 		rand.Seed(model.randomSeed);
 
@@ -68,7 +67,7 @@ public class WithoutComsol {
 						model);
 				// Set cell boundary concentration to initial value
 				cell.q = 0.0;
-				// Lower cell to the substratum if desired
+				// Lower cell to the substratum if desired (INITIALATSUBSTRATUM)
 				if(model.initialAtSubstratum) {
 					for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
 				}
