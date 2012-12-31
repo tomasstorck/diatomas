@@ -2,11 +2,15 @@ package backbone;
 
 import java.util.ArrayList;
 
-import comsol.*;
-import cell.*;
-
 import random.rand;
 import ser2mat.ser2mat;
+import cell.CBall;
+import cell.CCell;
+import cell.CModel;
+import cell.CSpring;
+
+import comsol.Comsol;
+import comsol.Server;
 
 public class WithComsol {
 
@@ -105,7 +109,7 @@ public class WithComsol {
 			for(CCell cell : model.cellArray) {
 				if(cell.type<2) 		comsol.CreateSphere(cell);
 				else if(cell.type<6)	comsol.CreateRod(cell);
-				else 					model.Write("Unknown cell type while making COMSOL model: " + cell.type, "error");
+				else 					throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 			}
 			comsol.CreateBCBox();					// Create a large box where we set the "bulk" conditions
 			comsol.BuildGeometry();

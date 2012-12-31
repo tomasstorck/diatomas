@@ -45,7 +45,7 @@ public class CCell implements Serializable {
 			new CBall(base1x, base1y, base1z, n/2.0, 1, this);		// Constructor adds it to the array
 			new CSpring(ballArray[0],ballArray[1], 0);				// Constructor adds it to the array
 		} else {
-			model.Write("Unknown cell type during cell creation: " + type, "error");
+			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
 	}
 	
@@ -63,8 +63,7 @@ public class CCell implements Serializable {
 			} else if(type<6) {
 				distance = ballArray[0].cell.GetAmount()*model.MWX/(Math.PI*model.rhoX*ballArray[0].radius*ballArray[0].radius) - 4.0/3.0*ballArray[0].radius;					// type == 4||5 is variable ball-ball distance. Correct? TODO
 			} else {
-				model.Write("Unknown type in cell creation: " + type, "error");
-				distance = 0;
+				throw new IndexOutOfBoundsException("Cell type: " + type);
 			}
 			double base1x = base0x + direction.x * distance;
 			double base1y = base0y + direction.y * distance;
@@ -120,10 +119,10 @@ public class CCell implements Serializable {
 		int NSpring0 = 0, NSpring1 = 0;
 		if(type<2) 			NSpring0 = 1; else 
 		if(type<6)			NSpring0 = 2; else
-			model.Write("Unknown cell type while sticking: " + type, "error");
+			throw new IndexOutOfBoundsException("Cell type: " + type);
 		if(cell.type<2) 	NSpring1 = 1; else 
 		if(cell.type<6) 	NSpring1 = 2; else
-			model.Write("Unknown cell type while sticking: " + type, "error");
+			throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 		
 		int NSpring = NSpring0 * NSpring1;
 		CCell cell0, cell1;
@@ -181,7 +180,7 @@ public class CCell implements Serializable {
 			// Reset rod spring length
 			for(CSpring rod : ballArray[0].cell.rodSpringArray) rod.ResetRestLength();
 		} else {
-			model.Write("Unknown cell type while setting cell amount: " + type,"error");
+			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
 	}
 	
@@ -196,8 +195,7 @@ public class CCell implements Serializable {
 			double Acyl = 	2*Math.PI * ballArray[0].radius * height;			// area of wall of cylinder. NOTE: Matt subtracted 2*radius, I don't see why
 			return Aballs + Acyl;
 		} else {
-			model.Write("Unknown type during surface calculations", "error");
-			return -1.0;
+			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
 	}
 }

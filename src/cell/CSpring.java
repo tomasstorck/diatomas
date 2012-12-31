@@ -45,8 +45,7 @@ public class CSpring implements Serializable {
 			ball1.cell.filSpringArray.add(this);
 			break;
 		default:
-			model.Write("Error in CSpring constructor: unknown spring type " + type, "error");
-			break;
+			throw new IndexOutOfBoundsException("Spring type: " + type);
 		}
 	}
 	
@@ -70,8 +69,7 @@ public class CSpring implements Serializable {
 			ball0.cell.anchorSpringArray.add(this);
 			break;
 		default:	
-			model.Write("Error in CSpring constructor: unknown spring type " + type, "error");
-			break;
+			throw new IndexOutOfBoundsException("Spring type: " + type);
 		}
 	}
 
@@ -123,14 +121,14 @@ public class CSpring implements Serializable {
 			if(cell0.type<2 && cell1.type<2)		NSpring = 1;
 			else if(cell0.type>1 && cell1.type>1) {
 				if(cell0.type<6 && cell1.type<6) 	NSpring = 4;
-				else model.Write("Unknown cell types in ResetK", "error");
+				else throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
 			} else 									NSpring = 2;
 			K = model.Ks/NSpring;
 			break;
 		case 2:	case 3:												// Two different balls, same cell type
 			if(cell0.type<2)						NSpring = 1;
 			else if(cell0.type<6)					NSpring = 2;
-			else model.Write("Unknown cell types in ResetK", "error");
+			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
 			K = model.Kf/NSpring;
 			break;
 		case 4:
@@ -140,7 +138,7 @@ public class CSpring implements Serializable {
 			K = model.Kan/NSpring;
 			break;
 		default:
-			model.Write("Unknown spring type in ResetK", "error");
+			throw new IndexOutOfBoundsException("Spring type: " + type);
 		}
 	}
 	
@@ -188,8 +186,7 @@ public class CSpring implements Serializable {
 			}
 			break;
 		default:
-			model.Write("Unknown spring type in Break()", "error");
-			break;
+			throw new IndexOutOfBoundsException("Spring type: " + type);
 		}
 		return count;
 	}

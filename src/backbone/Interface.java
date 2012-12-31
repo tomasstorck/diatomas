@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.zip.GZIPInputStream;
 
 import ser2mat.ser2mat;
@@ -99,7 +101,7 @@ public class Interface{
 				String[] files = dir.list(filter);
 				if(files==null) throw new Exception("No .ser files found in directory " + modelPath + "/output/");
 				for(String fileName : files) { 
-					model.Write("Loading " + fileName,"",true);
+					model.Write("Loading " + fileName,"", true, false);
 					String loadPath = modelPath + "/output/" + fileName;
 					model = Load(loadPath);
 					ser2mat.Convert(model);
@@ -117,13 +119,21 @@ public class Interface{
 		// Done analysing input arguments
 		// Start model if requested
 		if(Assistant.start) {
-			model.Write("=====================================", "");
-			String message = "Starting simulation '" + model.name + "' w/ arguments: ";
-			for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
-			model.Write(message,"");
-			model.Write("=====================================", "");
-			if(model.withComsol) 					WithComsol.Run(model);
-			else									WithoutComsol.Run(model);
+			try {
+				model.Write("=====================================", "");
+				String message = "Starting simulation '" + model.name + "' w/ arguments: ";
+				for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
+				model.Write(message,"");
+				model.Write("=====================================", "");
+				if(model.withComsol) 					WithComsol.Run(model);
+				else									WithoutComsol.Run(model);
+			} catch (RuntimeException E) {
+				StringWriter sw = new StringWriter();				// We need this line and below to get the exception as a string for the log
+				PrintWriter pw = new PrintWriter(sw);
+				E.printStackTrace(pw);								// Write the exception stack trace to a print
+				model.Write(sw.toString(), "error", false, true);	// Convert stack trace to string, print to log
+				E.printStackTrace();								// Throw the error so the simulation stops running
+			}
 		}
 	}
 	

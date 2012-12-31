@@ -140,19 +140,21 @@ public class CModel implements Serializable {
 	/////////////////
 	// Log writing //
 	/////////////////
-	public void Write(String message, String format, boolean suppressFileOutput) {
+	public void Write(String message, String format, boolean suppressFileOutput, boolean suppressConsoleOutput) {
 		// Construct date and time
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Calendar cal = Calendar.getInstance();
 		// Extract format from input arguments
 		String prefix = "   ";
 		String suffix = "";
-		if(format.equalsIgnoreCase("iter")) 	{suffix = " (" + growthIter + "/" + relaxationIter + ")";} 	else
-			if(format.equalsIgnoreCase("warning")) 	{prefix = " WARNING: ";} 									else
+		if(format.equalsIgnoreCase("iter")) 			{suffix = " (" + growthIter + "/" + relaxationIter + ")";} 	else
+			if(format.equalsIgnoreCase("warning")) 		{prefix = " WARNING: ";} 									else
 				if(format.equalsIgnoreCase("error")) 	{prefix = " ERROR: ";}
 		String string = dateFormat.format(cal.getTime()) + prefix + message + suffix;
 		// Write to console
-		System.out.println(string);
+		if(!suppressConsoleOutput) {
+			System.out.println(string);
+		}
 		// Write to file
 		if(!suppressFileOutput) {
 			try {
@@ -172,7 +174,7 @@ public class CModel implements Serializable {
 	}
 	
 	public void Write(String message, String format) {
-		Write(message,format,false);
+		Write(message,format,false,false);
 	}
 	
 	//////////////////////////
@@ -724,7 +726,7 @@ public class CModel implements Serializable {
 								dist = C.dist;
 							}
 						} else {
-							Write("Unknown cell type in collision detection: " + cell0.type + " or " + cell1.type,"error");
+							throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
 						}
 						// Stick if distance is small enough
 						if(dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
@@ -913,8 +915,7 @@ public class CModel implements Serializable {
 				filSmall.siblingArray.add(filBig);
 			}
 		} else {
-			Write("Unknown cell type during cell division: " + mother.type, "error");
-			return mother;		// TODO
+			throw new IndexOutOfBoundsException("Cell type: " + mother.type);
 		}
 		return daughter;
 	}

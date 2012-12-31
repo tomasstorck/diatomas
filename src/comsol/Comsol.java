@@ -5,9 +5,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import NR.Vector3d;
-import cell.*;
-import com.comsol.model.*;
-import com.comsol.model.util.*;
+import cell.CBall;
+import cell.CCell;
+import cell.CModel;
+
+import com.comsol.model.Model;
+import com.comsol.model.util.ModelUtil;
 import com.comsol.util.exceptions.FlException;
 
 public class Comsol {
@@ -352,8 +355,7 @@ public class Comsol {
 				}
 				// If we're still here, throw error
 				java.Write(message,"");
-				java.Write("Don't know how to deal with error above, exiting", "error");
-				throw new FlException("Don't know how to deal with error above, exiting");
+				throw new RuntimeException("Don't know how to deal with error above, exiting");
 			}
 		}
 				
