@@ -53,11 +53,11 @@ public class CModel implements Serializable {
 	public double Kf 	= 2e-11;				// filament spring
 	public double Kan	= 1e-11;				// anchor
 	public double Ks 	= 1e-11;				// sticking
-	public double[] stretchLimAnchor = {0.6, 1.4};// Maximum tension and compression (1-this value) for anchoring springs
+	public double stretchLimAnchor = 1.4;// Maximum tension and compression (1-this value) for anchoring springs
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-	public double[] stretchLimStick = {0.6, 1.4};// Maximum tension and compression (1-this value) for sticking springs
+	public double stretchLimStick = 1.4;// Maximum tension and compression (1-this value) for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
-	public double[] stretchLimFil = {0.4, 1.6};	// Maximum tension and compression (1-this value) for sticking springs
+	public double stretchLimFil = 1.6;	// Maximum tension and compression (1-this value) for sticking springs
 	// Model biomass properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
@@ -327,26 +327,26 @@ public class CModel implements Serializable {
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
-	public ArrayList<CSpring> DetectAnchorBreak(double minStretch, double maxStretch) {
+	public ArrayList<CSpring> DetectAnchorBreak(double maxStretch) {
 		ArrayList<CSpring> breakArray = new ArrayList<CSpring>();
 		
 		for(CSpring anchor : anchorSpringArray) {
 			double al = (anchor.ballArray[0].pos.minus(anchor.anchorPoint)).norm();		// al = Actual Length
-			if(al < minStretch*anchor.restLength || al > maxStretch*anchor.restLength) {
+			if(al > maxStretch*anchor.restLength) {
 				breakArray.add(anchor);
 			}
 		}
 		return breakArray;
 	}
 	
-	public ArrayList<CSpring> DetectStickBreak(double minStretch, double maxStretch) {
+	public ArrayList<CSpring> DetectStickBreak(double maxStretch) {
 		ArrayList<CSpring> breakArray = new ArrayList<CSpring>();
 		
 		int iSpring = 0;
 		while(iSpring < stickSpringArray.size()) {
 			CSpring spring = stickSpringArray.get(iSpring);
 			double al = (spring.ballArray[1].pos.minus(  spring.ballArray[0].pos)  ).norm();		// al = Actual Length
-			if(al < minStretch*spring.restLength || al > maxStretch*spring.restLength) {
+			if(al > maxStretch*spring.restLength) {
 				breakArray.add(spring);
 			}
 			iSpring += spring.siblingArray.size()+1;
@@ -636,14 +636,16 @@ public class CModel implements Serializable {
 				CBall ball1 = (cell.type>1) ? ball1 = cell.ballArray[1] : null;
 
 				if(cell.anchorSpringArray.size()>0) { 		// This cell is already anchored
-					for(CSpring spring : cell.anchorSpringArray) {
+					ArrayList<CSpring> breakArray = new ArrayList<CSpring>();
+					for(CSpring anchor : cell.anchorSpringArray) {
 						// Break anchor?
-						Vector3d diff = spring.anchorPoint.minus(spring.ballArray[0].pos);
+						Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 						double dn = diff.norm();
-						if(dn < spring.restLength*stretchLimAnchor[0] || dn > spring.restLength*stretchLimAnchor[1]) {			// too much tension || compression --> break the spring
-							Assistant.NAnchorBreak += spring.Break();
+						if(dn > anchor.restLength*stretchLimAnchor) {			// too much tension --> break the spring
+							breakArray.add(anchor);
 						}
 					}
+					for(CSpring anchor : breakArray)		Assistant.NAnchorBreak += anchor.Break();
 				} else {									// Cell is not yet anchored
 					// Form anchor?
 					boolean formBall0 = (ball0.pos.y < ball0.radius*formLimAnchor) ? true : false;
@@ -684,7 +686,7 @@ public class CModel implements Serializable {
 					// Don't stick this. It shouldn't be stuck so don't check if we can break sticking springs. Instead, see if we can break the filial link 
 					double distance = filamentSpring.ballArray[0].pos.minus(filamentSpring.ballArray[1].pos).norm();
 					// Check if we can break this spring
-					if(distance<filamentSpring.restLength*stretchLimFil[0] || distance>filamentSpring.restLength*stretchLimFil[1]) {
+					if(distance>filamentSpring.restLength*stretchLimFil) {
 						Assistant.NFilBreak += filamentSpring.Break();				// Also breaks its siblings
 					}
 				} else if (sticking){							// Check if we want to do sticking
@@ -693,7 +695,7 @@ public class CModel implements Serializable {
 					CBall c1b0 = cell1.ballArray[0];				
 					if(stuck) {					// Stuck --> can we break this spring (and its siblings)?
 						double dist = (c1b0.pos.minus(c0b0.pos)).norm();
-						if(dist < stickingSpring.restLength*stretchLimStick[0] || dist > stickingSpring.restLength*stretchLimStick[1]) 		Assistant.NStickBreak += stickingSpring.Break();
+						if(dist > stickingSpring.restLength*stretchLimStick) 		Assistant.NStickBreak += stickingSpring.Break();
 					} else {					// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));

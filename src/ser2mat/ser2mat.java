@@ -33,26 +33,18 @@ public class ser2mat {
 		mlModel.setField("L",                             new MLDouble(null, new double[] {model.L.x, model.L.y, model.L.z}, 3));         	
 		// Spring constants and drag ceoefficient
 		// Fast simulations/poor gravity
-		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient (per BALL)
-		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// collision (per ball)
-		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall spring (per ball)
-		mlModel.setField("Kr",                            new MLDouble(null, new double[] {model.Kr}, 1));                                	// internal cell spring (per ball)
-		mlModel.setField("Kf",                            new MLDouble(null, new double[] {model.Kf}, 1));                                	// filament spring (per ball average)
-		mlModel.setField("Kan",                           new MLDouble(null, new double[] {model.Kan}, 1));                               	// anchor (per ball)
-		mlModel.setField("Ks",                            new MLDouble(null, new double[] {model.Ks}, 1));                                	// sticking (per ball average)
-		//	// Slow simulations/proper gravity
-		//	public double Kd 	= 2.5e3;				// drag force coefficient (per BALL)
-		//	public double Kc 	= 2e7;					// collision (per ball)
-		//	public double Kw 	= 1e7;					// wall spring (per ball)
-		//	public double Kr 	= 12e6;					// internal cell spring (per ball)
-		//	public double Kf 	= 1e6;					// filament spring (per ball average)
-		//	public double Kan	= 2e5;					// anchor (per ball)
-		//	public double Ks 	= 5e4;					// sticking (per ball average)
-		mlModel.setField("stretchLimAnchor",              new MLDouble(null, model.stretchLimAnchor, model.stretchLimAnchor.length));     	// Maximum tension and compression (1-this value) for anchoring springs
+		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
+		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// cell-cell collision
+		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall(substratum)-cell spring
+		mlModel.setField("Kr",                            new MLDouble(null, new double[] {model.Kr}, 1));                                	// internal cell spring
+		mlModel.setField("Kf",                            new MLDouble(null, new double[] {model.Kf}, 1));                                	// filament spring
+		mlModel.setField("Kan",                           new MLDouble(null, new double[] {model.Kan}, 1));                               	// anchor
+		mlModel.setField("Ks",                            new MLDouble(null, new double[] {model.Ks}, 1));                                	// sticking
+		mlModel.setField("stretchLimAnchor",              new MLDouble(null, new double[] {model.stretchLimAnchor}, 1));                  	// Maximum tension and compression (1-this value) for anchoring springs
 		mlModel.setField("formLimAnchor",                 new MLDouble(null, new double[] {model.formLimAnchor}, 1));                     	// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-		mlModel.setField("stretchLimStick",               new MLDouble(null, model.stretchLimStick, model.stretchLimStick.length));       	// Maximum tension and compression (1-this value) for sticking springs
+		mlModel.setField("stretchLimStick",               new MLDouble(null, new double[] {model.stretchLimStick}, 1));                   	// Maximum tension and compression (1-this value) for sticking springs
 		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {model.formLimStick}, 1));                      	// Multiplication factor for rest length to form sticking springs.
-		mlModel.setField("stretchLimFil",                 new MLDouble(null, model.stretchLimFil, model.stretchLimFil.length));           	// Maximum tension and compression (1-this value) for sticking springs
+		mlModel.setField("stretchLimFil",                 new MLDouble(null, new double[] {model.stretchLimFil}, 1));                     	// Maximum tension and compression (1-this value) for sticking springs
 		// Model biomass properties
 		mlModel.setField("NXComp",                        new MLDouble(null, new double[] {model.NXComp}, 1));                            	// Types of biomass
 		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {model.NdComp}, 1));                            	// d for dynamic compound (e.g. total Ac)

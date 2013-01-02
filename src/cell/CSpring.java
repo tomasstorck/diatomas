@@ -146,13 +146,14 @@ public class CSpring implements Serializable {
 		CModel model = this.ballArray[0].cell.model;
 		int count = 0;
 		CCell cell0 = ballArray[0].cell;
-		CCell cell1 = ballArray[1].cell;
+		CCell cell1 = null;
 		
 		switch (type) {
 		case 0: 														// Rod spring
 			// Can't Break()
 			break;
 		case 1:															// Sticking spring
+			cell1 = ballArray[1].cell;
 			cell0.stickCellArray.remove(cell1);
 			cell1.stickCellArray.remove(cell0);	
 			// Remove this and siblings from model and cells
@@ -165,7 +166,8 @@ public class CSpring implements Serializable {
 				count += (model.stickSpringArray.remove(sibling))?1:0;
 			}
 			break;
-		case 2:	case 3:													// Filament springs		
+		case 2:	case 3:													// Filament springs
+			cell1 = ballArray[1].cell;
 			// Remove this and siblings from model and cells
 			count += (model.filSpringArray.remove(this))?1:0;			// Add one to counter if successfully removed
 			cell0.filSpringArray.remove(this);

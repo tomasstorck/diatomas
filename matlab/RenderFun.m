@@ -5,12 +5,11 @@ imageHeight = 768;
 camPos = [-L(1), 2*L(2),-L(3)];
 ambient = 0.8;
 diffuse = 0.4;
-keepPOV = true;
+keepPOV = false;
 % Colours
 filColour = [.4 1 1];		% Filament spring is blue
 stickColour = [1 .1 1];		% Sticking spring is purple
 anchorColour = [.4 .4 .1];		% Anchoring spring is yellow
-
 
 NSave = length(model.ballArray(1).posSave);
 if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iteration or when none exists, find a proper angle
@@ -45,7 +44,7 @@ for ii=0:NSave
 	povName{ii+1} = [location sprintf('/output/pov_g%04dm%04d_%02d.pov', model.growthIter, model.relaxationIter, ii)];
 end
 	
-parfor ii=0:NSave
+for ii=0:NSave			% Can be replaced with parfor
 	if(exist(imageLoc{ii+1},'file')) && ~exist('keepgoing','var')
 		fprintf(['File already found, skipping: ' imageName{ii+1} '\n']);
 		skip = true;
@@ -253,11 +252,11 @@ parfor ii=0:NSave
 			else
 				position= sprintf('\t < %10.3f,%10.3f,%10.3f > \n', ball.pos(1)*1e6, ball.pos(2)*1e6, ball.pos(3)*1e6);
 			end
-			if ~all(spring.anchor==ball.pos)
+			if ~all(spring.anchorPoint==ball.pos)
 				fprintf(fid,['cylinder\n',...
 					'{\n',...
 					position,...
-					sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', spring.anchor(1)*1e6, spring.anchor(2)*1e6, spring.anchor(3)*1e6),...
+					sprintf('\t<%10.3f,%10.3f,%10.3f>,\n', spring.anchorPoint(1)*1e6, spring.anchorPoint(2)*1e6, spring.anchorPoint(3)*1e6),...
 					sprintf('\t%10.3f\n', ball.radius*1e5),...	% 1e5 because it is a spring
 					'\ttexture{\n',...
 					'\t\tpigment{\n',...
@@ -323,6 +322,6 @@ parfor ii=0:NSave
 	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''1 um'' ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 	system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 
-	% Remove if desired
+	% Remove POV file if desired
 	[~,~] = system(['cd ' location ' ; ' remove ' ; cd ..']);
 end
