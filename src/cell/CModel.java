@@ -48,8 +48,8 @@ public class CModel implements Serializable {
 	// Fast simulations/poor gravity
 	public double Kd 	= 1e-13;				// drag force coefficient
 	public double Kc 	= 1e-9;					// cell-cell collision
-	public double Kw 	= 6e-10;				// wall(substratum)-cell spring
-	public double Kr 	= 2e-11;				// internal cell spring
+	public double Kw 	= 5e-10;				// wall(substratum)-cell spring
+	public double Kr 	= 5e-11;				// internal cell spring
 	public double Kf 	= 2e-11;				// filament spring
 	public double Kan	= 1e-11;				// anchor
 	public double Ks 	= 1e-11;				// sticking

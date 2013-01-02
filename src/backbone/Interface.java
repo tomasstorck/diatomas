@@ -83,6 +83,23 @@ public class Interface{
 			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("load")){
 				String loadPath = args[ii+1];
+				if(!loadPath.contains("/")) {
+					// loadPath doesn't state which simulation to load --> load the most recent one
+					// Open directory
+					File dir = new File(loadPath + "/output/");
+					// Construct filter
+					FilenameFilter filter = new FilenameFilter() {
+					    public boolean accept(File dir, String name) {
+					    	return name.endsWith(".ser");
+					    }
+					};
+					// List filtered files
+					String[] files = dir.list(filter);
+					if(files==null) throw new Exception("No .ser files found in directory " + loadPath + "/output/");
+					// Update loadPath based on found .ser files
+					java.util.Arrays.sort(files);
+					loadPath = loadPath + "/output/" + files[files.length-1];
+				}
 				model.Write("Loading " + loadPath, "");
 				model = Load(loadPath);
 				Assistant.start = true;
@@ -97,9 +114,10 @@ public class Interface{
 				    	return name.endsWith(".ser");
 				    }
 				};
-				// List filtered files
+				// List filtered files and convert
 				String[] files = dir.list(filter);
 				if(files==null) throw new Exception("No .ser files found in directory " + modelPath + "/output/");
+				java.util.Arrays.sort(files);
 				for(String fileName : files) { 
 					model.Write("Loading " + fileName,"", true, false);
 					String loadPath = modelPath + "/output/" + fileName;

@@ -11,49 +11,49 @@ import cell.CSpring;
 
 public class WithoutComsol {
 
-	public static void Run(CModel model) throws Exception{
-		// Set parameters. This overwrites both CModel and supplied arguments
-		
-		/////////////
-		// E. COLI //
-		/////////////
-		model.cellRadiusMax[4] = 0.25e-6;
-		model.cellLengthMax[4] = 2.5e-6;
-		model.UpdateDimension();
-		model.NInitCell = 3;
-		int[] type = new int[]{4,4,4};
-		model.sticking = false;
-		model.filament = false;
-		model.gravity = false;
-		model.initialAtSubstratum = true;
-		model.normalForce = true;
-		model.Kd 	= 1e-13;
-		model.Kc 	= 1e-9;
-		model.Kw 	= 6e-10;
-		model.Kr 	= 2e-11;
-		model.Kf 	= 2e-11;
-		model.Kan	= 1e-11;
-		model.Ks 	= 1e-11;
-		
-		// Initialise random seed
-		rand.Seed(model.randomSeed);
-
-		// Create cells
-		double[][] colour = new double[][]{
-				{1.0,0.7,0.7},
-				{0.1,1.0,0.1},
-				{0.1,0.1,0.4},
-				{1.0,1.0,0.7},
-				{0.1,1.0,1.0},
-				{0.4,0.1,0.4},
-				{0.4,0.1,0.1},
-				{0.4,1.0,0.4},
-				{0.1,0.1,1.0},
-				{0.4,0.4,0.1},
-				{0.4,1.0,1.0},
-				{1.0,0.1,1.0}};
-				
+	public static void Run(CModel model) throws Exception{				
 		if(model.growthIter==0 && model.relaxationIter==0) {
+			// Set parameters. This overwrites both CModel and supplied arguments
+			
+			/////////////
+			// E. COLI //
+			/////////////
+			model.cellRadiusMax[4] = 0.25e-6;
+			model.cellLengthMax[4] = 2.5e-6;
+			model.UpdateDimension();
+			model.NInitCell = 3;
+			int[] type = new int[]{4,4,4};
+			model.sticking = false;
+			model.filament = false;
+			model.gravity = false;
+			model.initialAtSubstratum = true;
+			model.normalForce = true;
+			model.Kd 	= 1e-13;
+			model.Kc 	= 1e-9;
+			model.Kw 	= 5e-10;
+			model.Kr 	= 5e-11;
+			model.Kf 	= 2e-11;
+			model.Kan	= 1e-11;
+			model.Ks 	= 1e-11;
+			
+			// Initialise random seed
+			rand.Seed(model.randomSeed);
+
+			// Create cell colours
+			double[][] colour = new double[][]{
+					{1.0,0.7,0.7},
+					{0.1,1.0,0.1},
+					{0.1,0.1,0.4},
+					{1.0,1.0,0.7},
+					{0.1,1.0,1.0},
+					{0.4,0.1,0.4},
+					{0.4,0.1,0.1},
+					{0.4,1.0,0.4},
+					{0.1,0.1,1.0},
+					{0.4,0.4,0.1},
+					{0.4,1.0,1.0},
+					{1.0,0.1,1.0}};
+			
 			// Create initial cells, not overlapping
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				double n = model.nCellMax[type[iCell]]/2.0+(model.nCellMax[type[iCell]]/2.0)*rand.Double();

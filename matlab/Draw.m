@@ -21,7 +21,7 @@ for ii = 1:length(model.ballArray);
 	ball = model.ballArray(ii);
 	
 	% CONDITION
-%  	if ball.cellIndex== 10 || ball.cellIndex==16
+%  	if ball.cellIndex== 6 || ball.cellIndex==13
 	%%%%%%%%%
 
 	% colour balls based on cellIndex
