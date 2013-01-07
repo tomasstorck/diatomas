@@ -90,7 +90,7 @@ public class CCell implements Serializable {
 	public int Anchor() {
 		for(CBall ball : ballArray) {
 			Vector3d substratumPos = new Vector3d(ball.pos);
-			substratumPos.y = ball.radius;
+			substratumPos.y = 0.0;
 			new CSpring(ball, substratumPos, 4);
 		}
 
@@ -190,9 +190,9 @@ public class CCell implements Serializable {
 		if(type<2) {
 			return 4*Math.PI * Math.pow(ballArray[0].radius, 2);
 		} else if(type<6) {	// Assuming radii are equal
-			double Aballs = 4*Math.PI * Math.pow(ballArray[0].radius, 2); 		// Two half balls
+			double Aballs = 4.0*Math.PI * Math.pow(ballArray[0].radius, 2); 		// Two half balls
 			double height = ballArray[1].pos.minus(ballArray[0].pos).norm();	// height == distance between balls
-			double Acyl = 	2*Math.PI * ballArray[0].radius * height;			// area of wall of cylinder. NOTE: Matt subtracted 2*radius, I don't see why
+			double Acyl = 	2.0*Math.PI * ballArray[0].radius * height;			// area of wall of cylinder. NOTE: Matt subtracted 2*radius, I don't see why
 			return Aballs + Acyl;
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);

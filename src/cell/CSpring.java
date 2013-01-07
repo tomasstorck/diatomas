@@ -111,31 +111,31 @@ public class CSpring implements Serializable {
 	public void ResetK() {
 		CCell cell0 = ballArray[0].cell;
 		CModel model = cell0.model;
-		int NSpring = 0;
+		double springDiv = 0.0;
 		switch(type) {
 		case 0:
 			K = model.Kr;			// Two identical dimension balls, same cell
 			break;
 		case 1:														// Two different balls, possible different cell types
 			CCell cell1 = ballArray[1].cell;
-			if(cell0.type<2 && cell1.type<2)		NSpring = 1;
+			if(cell0.type<2 && cell1.type<2)		springDiv = 1.0;
 			else if(cell0.type>1 && cell1.type>1) {
-				if(cell0.type<6 && cell1.type<6) 	NSpring = 4;
+				if(cell0.type<6 && cell1.type<6) 	springDiv = 4.0;
 				else throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
-			} else 									NSpring = 2;
-			K = model.Ks/NSpring;
+			} else 									springDiv = 2.0;
+			K = model.Ks/springDiv;
 			break;
 		case 2:	case 3:												// Two different balls, same cell type
-			if(cell0.type<2)						NSpring = 1;
-			else if(cell0.type<6)					NSpring = 2;
+			if(cell0.type<2)						springDiv = 1.0;
+			else if(cell0.type<6)					springDiv = 2.0;
 			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
-			K = model.Kf/NSpring;
+			K = model.Kf/springDiv;
 			break;
 		case 4:
-			if(cell0.type<2)						NSpring = 1;
-			else if(cell0.type<6)					NSpring = 2;
+			if(cell0.type<2)						springDiv = 1.0;
+			else if(cell0.type<6)					springDiv = 2.0;
 			else model.Write("Unknown cell types in ResetK", "error");
-			K = model.Kan/NSpring;
+			K = model.Kan/springDiv;
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);
