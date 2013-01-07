@@ -13,7 +13,7 @@ public class ser2mat {
 		double[] arrayIndex;
 		// Set serializable information
 		// Model properties
-		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, 1));                                	
+		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, model.name.length()));              	
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	// Makes first 3 rods, then 3 spheres (I got lucky)
 		mlModel.setField("withComsol",                    new MLDouble(null, new double[] {model.withComsol?1:0}, 1));                    	
 		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	

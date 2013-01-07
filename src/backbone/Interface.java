@@ -100,8 +100,8 @@ public class Interface{
 					java.util.Arrays.sort(files);
 					loadPath = loadPath + "/output/" + files[files.length-1];
 				}
-				model.Write("Loading " + loadPath, "");
 				model = Load(loadPath);
+				model.Write("Loaded " + loadPath, "");
 				Assistant.start = true;
 				continue;}
 			if(arg.equalsIgnoreCase("ser2mat")){
@@ -172,6 +172,10 @@ public class Interface{
 		} catch (ClassNotFoundException ex) {
 			ex.printStackTrace();
 		}
+		
+		// Update model name
+		String[] splitLoadPath = loadPath.split("/");
+		model.name = splitLoadPath[0];
 		
 		return model;
 	}
