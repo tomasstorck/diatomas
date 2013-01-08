@@ -255,8 +255,9 @@ public class CModel implements Serializable {
 		}
 		return collisionCell;
 	}
-	
-	// Ericson collision detection
+	/////////////////////////////////
+	// Ericson collision detection //
+	/////////////////////////////////
 	
 	private double Clamp(double n, double min, double max) {
 		if(n<min)	return min;
@@ -354,9 +355,9 @@ public class CModel implements Serializable {
 		return breakArray;
 	} 
 
-	////////////////////
+	//////////////////////
 	// Relaxation stuff //
-	////////////////////
+	//////////////////////
 	public int Relaxation() throws Exception {
 		// Reset counter
 		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NFilBreak = Assistant.NStickBreak = Assistant.NStickForm = 0;
@@ -726,6 +727,7 @@ public class CModel implements Serializable {
 								// calculate the distance between the two segments
 								EricsonObject C = DetectLinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
 								dist = C.dist;
+//								dist = 42.0;		// FIXME
 							} else continue;
 						} else {
 							throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
@@ -863,7 +865,7 @@ public class CModel implements Serializable {
 			double radius = c0b0.radius;
 			Vector3d middle = c0b1.pos.minus(c0b0.pos).divide(2.0);				// Vector from c0b0 --> halfway c0b1
 			double L = middle.norm();
-			Vector3d ball1Vector = middle.times((L-radius)/L);				// Vector from c0b0 --> new c0b1 position (halfway with radius subtracted)
+			Vector3d ball1Vector = middle.times((L-radius)/L);					// Vector from c0b0 --> new c0b1 position (halfway with radius subtracted)
 			// Make a new, displaced cell
 			c1 = new CCell(c0.type,												// Same type as cell
 					c0.GetAmount(),												// Same mass as (already slimmed down) mother cell
@@ -873,7 +875,8 @@ public class CModel implements Serializable {
 					c0.colour,
 					this);														// Same filament boolean as cell and pointer to the model
 			// Displace old cell, 2nd ball (1st ball stays in place)
-			c0b1.pos = c0b0.pos.plus(ball1Vector); 
+			c0b1.pos = c0b0.pos.plus(ball1Vector);
+			c0b1.pos.y *= 1.01;													// Required to prevent deadlock! 
 			c0.rodSpringArray.get(0).ResetRestLength();
 			// Contain cells to y dimension of domain
 			for(int iBall=0; iBall<2; iBall++) {
@@ -897,17 +900,17 @@ public class CModel implements Serializable {
 				ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
 				for(CSpring fil : c0.filSpringArray) {
 					boolean found=false;
-					if( fil.ballArray[0] == c0b0) {
-						fil.ballArray[0] = 	c1b0;
-						found = true;}
-					if( fil.ballArray[0] == c0b1) {
+					if( fil.type == 2 && fil.ballArray[0] == c0b1) {
 						fil.ballArray[0] = 	c1b1;
 						found = true;}
-					if( fil.ballArray[1] == c0b0) {
-						fil.ballArray[1] = 	c1b0;
-						found = true;}
-					if( fil.ballArray[1] == c0b1) {
+					if( fil.type == 2 && fil.ballArray[1] == c0b1) {
 						fil.ballArray[1] = 	c1b1;
+						found = true;}
+					if( fil.type == 3 && fil.ballArray[0] == c0b0) {
+						fil.ballArray[0] = 	c1b0;
+						found = true;}
+					if( fil.type == 3 && fil.ballArray[1] == c0b0) {
+						fil.ballArray[1] = 	c1b0;
 						found = true;}
 					if(found) {
 						// Mark filament spring for donation from mother to daughter

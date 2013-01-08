@@ -14,7 +14,7 @@ anchorColour = [.4 .4 .1];		% Anchoring spring is yellow
 NSave = length(model.ballArray(1).posSave);
 if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iteration or when none exists, find a proper angle
 	% Create camera, background and lighting based on L
-	maxDiag = 0;
+	maxDiag = 0;	maxB = 0;
 	minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates
 	maxPos = max([model.ballArray.pos],[],2)*1e6;
 	A = camPos';										% For meaning of A, B and C, see drawing in journal, entry 121206
