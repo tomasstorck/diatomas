@@ -2,6 +2,8 @@ package backbone;
 
 import java.util.ArrayList;
 
+import NR.Vector3d;
+
 import random.rand;
 import ser2mat.ser2mat;
 import cell.CBall;
@@ -45,22 +47,24 @@ public class WithoutComsol {
 			model.UpdateDimension();
 			model.NInitCell = 6;
 			int[] type = new int[]{4,4,4,0,0,0};
-			model.sticking = true;
+//			model.sticking = true;
 			model.filament = true;
+			model.anchoring = false;
 			model.gravity = false;
 			model.initialAtSubstratum = false;
 			model.normalForce = false;
 			model.syntrophyFactor = 2.0;
+			model.L.y 	= 0.0;
 			model.Kd 	= 1e-13;
 			model.Kc 	= 1e-9;
 			model.Kw 	= 5e-10;
 			model.Kr 	= 5e-11;
-			model.Kf 	= 2e-11;
+			model.Kf 	= 2e-10;
 			model.Kan	= 1e-11;
-			model.Ks 	= 1e-11;
+			model.Ks 	= 1e-12;
 			
 			// Initialise random seed
-			rand.Seed(model.randomSeed);
+			rand.Seed(model.randomSeed+1000000);
 
 			// Create cell colours
 			double[][] colour = new double[][]{
@@ -77,14 +81,33 @@ public class WithoutComsol {
 					{0.4,1.0,1.0},
 					{1.0,0.1,1.0}};
 			
+			// Create cell positions
+//			// Defined OR
+//			Vector3d[] position = new Vector3d[]{
+//					new Vector3d(0.0,0.0,1.0).times(1e-6),
+//					new Vector3d(2.0,0.0,1.0).times(1e-6),
+//					new Vector3d(-2.0,0.0,1.0).times(1e-6),
+//					new Vector3d(0.0,0.0,-1.0).times(1e-6),
+//					new Vector3d(2.0,0.0,-1.0).times(1e-6),
+//					new Vector3d(-2.0,0.0,-1.0).times(1e-6)};
+			// OR Random
+			Vector3d[] position = new Vector3d[model.NInitCell];
+			for(int ii=0; ii<position.length; ii++) {
+				position[ii] = new Vector3d(
+						(0.2*rand.Double()-0.1)*model.L.x,			// Anywhere between -0.1*Lx and 0.1*Lx
+						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
+						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
+			}
+			
 			// Create initial cells, not overlapping
+			rand.Seed(model.randomSeed);							// Reinitialise random seed, below shouldn't depend on positions above
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				double n = model.nCellMax[type[iCell]]/2.0+(model.nCellMax[type[iCell]]/2.0)*rand.Double();
 				CCell cell = new CCell(type[iCell], 						// Type of biomass
 						n,											// Initial cell mass is random between initial and max
-						(0.2*rand.Double()-0.1)*model.L.x, 			// Anywhere between -0.1*Lx and 0.1*Lx
-						(0.2*rand.Double()+0.9)*model.L.y, 			// Anywhere between 0.9*Ly and 1.1*Ly
-						(0.2*rand.Double()-0.1)*model.L.z,			// Anywhere between -0.1*Lz and 0.1*Lz
+						position[iCell].x,
+						position[iCell].y,
+						position[iCell].z,
 						model.filament,								// With filament?
 						colour[iCell],
 						model);

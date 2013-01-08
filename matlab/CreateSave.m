@@ -75,7 +75,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 	% String
 	if hasstr(c,'String ')
 		[n comment] = splitline(c,'String');
-		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLChar(null, new String[] {model.' n '}, 1));'], comment);
+		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLChar(null, new String[] {model.' n '}, model.' n '.length()));'], comment);
 		continue
 	end
 	% String[]

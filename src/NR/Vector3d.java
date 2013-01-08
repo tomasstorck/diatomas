@@ -17,6 +17,13 @@ public class Vector3d implements Serializable {
 		this.z = z;
 	}
 	
+	public Vector3d(double[] pos) {
+		if(pos.length != 3)		throw new IndexOutOfBoundsException("pos.length must be equal to 3");
+		this.x = pos[0];
+		this.y = pos[1];
+		this.z = pos[2];
+	}
+	
 	public Vector3d(Vector3d v) {
 		this.x = v.x;
 		this.y = v.y;

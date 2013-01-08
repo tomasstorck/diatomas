@@ -699,7 +699,7 @@ public class CModel implements Serializable {
 					} else {					// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
-						double dist=0;
+						double dist;
 						if(cell0.type<2 && cell1.type<2) {							// both spheres
 							dist = (c1b0.pos.minus(c0b0.pos)).norm();
 						} else if(cell0.type<2) {									// 1st sphere, 2nd rod
@@ -709,7 +709,7 @@ public class CModel implements Serializable {
 								// do a sphere-rod collision detection
 								EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 								dist = C.dist;
-							}
+							} else continue;
 						} else if(cell1.type<2) {									// 2nd sphere, 1st rod
 							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
@@ -717,7 +717,7 @@ public class CModel implements Serializable {
 								// do a sphere-rod collision detection
 								EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
 								dist = C.dist;
-							}
+							} else continue;
 						} else if(cell0.type<6 && cell1.type<6) {  					// both rod
 							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2));
 							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
@@ -726,11 +726,11 @@ public class CModel implements Serializable {
 								// calculate the distance between the two segments
 								EricsonObject C = DetectLinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
 								dist = C.dist;
-							}
+							} else continue;
 						} else {
 							throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
 						}
-						// Stick if distance is small enough
+						// Stick if distancdiste is small enough
 						if(dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
 					}
 				}
