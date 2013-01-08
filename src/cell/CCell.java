@@ -49,6 +49,10 @@ public class CCell implements Serializable {
 		}
 	}
 	
+	public CCell(int type, double n, Vector3d base0, Vector3d base1, boolean filament, double[] colour, CModel model) {
+		this(type, n, base0.x, base0.y, base0.z, base1.x, base1.y, base1.z, filament, colour, model);
+	}
+	
 	public CCell(int type, double n, double base0x, double base0y, double base0z, boolean filament, double[] colour, CModel model) {
 		// Set cell based on other constructor
 		this(type, n, base0x, base0y, base0z, base0x, base0y, base0z, filament, colour, model);

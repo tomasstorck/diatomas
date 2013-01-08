@@ -667,15 +667,15 @@ public class CModel implements Serializable {
 				// Are these cells connected to each other, either through sticking spring or filament?
 				boolean stuck = false, filament = false;
 				CSpring stickingSpring = null, filamentSpring = null; 
-				for(CSpring fil : cell0.filSpringArray) {				// Will be empty if filaments are disabled --> no need to add further if statements 
-					// That's the one containing both cells
-					if( (fil.ballArray[0].cell.equals(cell0) && fil.ballArray[1].cell.equals(cell1)) || (fil.ballArray[0].cell.equals(cell1) && fil.ballArray[1].cell.equals(cell0)) ) {
+				for(CSpring fil : cell0.filSpringArray) {		// Will be empty if filaments are disabled --> no need to add further if statements 
+					if( (fil.ballArray[0].cell.equals(cell0) && fil.ballArray[1].cell.equals(cell1)) || (fil.ballArray[0].cell.equals(cell1) && fil.ballArray[1].cell.equals(cell0)) ) {	// OPTIMISE
+						// That's the one containing both cells
 						filament = true;
 						filamentSpring = fil;
-						break;									// That's all we need
+						break;									// That's all we need, thank you for loop
 					}
 				}
-				for(CSpring stick : cell0.stickSpringArray) {			// Will be empty if sticking springs are disabled --> no need to add further if statements 
+				for(CSpring stick : cell0.stickSpringArray) {	// Will be empty if sticking springs are disabled --> no need to add further if statements 
 					if( (stick.ballArray[0].cell.equals(cell0) && stick.ballArray[1].cell.equals(cell1)) || (stick.ballArray[0].cell.equals(cell1) && stick.ballArray[1].cell.equals(cell0)) ) {
 						stuck = true;
 						stickingSpring = stick;
@@ -791,44 +791,44 @@ public class CModel implements Serializable {
 		return newCell;
 	}
 	
-	public CCell GrowCell(CCell mother) {
-		double n = mother.GetAmount();
-		CCell daughter;
-		if(mother.type<2) {
+	public CCell GrowCell(CCell c0) {
+		// Nomenclature: c0 == mother, c1 == daughter
+		double n = c0.GetAmount();
+		CCell c1;
+		if(c0.type<2) {
+			// Set amount for both cells
+			c0.SetAmount(0.5*n);
 			// Come up with a nice direction in which to place the new cell
 			Vector3d direction = new Vector3d(rand.Double()-0.5,rand.Double()-0.5,rand.Double()-0.5);			
 			direction.normalise();
-			double displacement = mother.ballArray[0].radius;
+			double displacement = c0.ballArray[0].radius;						// Displacement is done for both balls --> total of 1.0*radius displacement
 			// Make a new, displaced cell
-			daughter = new CCell(mother.type,											// Same type as cell
-					mother.GetAmount(),
-					mother.ballArray[0].pos.x - displacement * direction.x,				// The new location is the old one plus some displacement					
-					mother.ballArray[0].pos.y - displacement * direction.y,	
-					mother.ballArray[0].pos.z - displacement * direction.z,
-					mother.filament,
-					mother.colour,
+			c1 = new CCell(c0.type,											// Same type as cell
+					c0.GetAmount(),
+					c0.ballArray[0].pos.x - displacement * direction.x,				// The new location is the old one plus some displacement					
+					c0.ballArray[0].pos.y - displacement * direction.y,	
+					c0.ballArray[0].pos.z - displacement * direction.z,
+					c0.filament,
+					c0.colour,
 					this);														// Same filament boolean as cell and pointer to the model
-			// Set amount for both cells
-			daughter.SetAmount(n/2.0);		// Radius is updated in this method
-			mother.SetAmount(n/2.0);
 			// Set properties for new cell
-			daughter.ballArray[0].vel = 	new Vector3d(mother.ballArray[0].vel);
-			daughter.ballArray[0].force = 	new Vector3d(mother.ballArray[0].force);
-			daughter.colour =				mother.colour;							// copy of reference
-			daughter.mother = 				mother;
-			daughter.q = 					mother.q;
+			c1.ballArray[0].vel = 	new Vector3d(c0.ballArray[0].vel);
+			c1.ballArray[0].force = new Vector3d(c0.ballArray[0].force);
+			c1.colour =				c0.colour;							// copy of reference
+			c1.mother = 			c0;
+			c1.q = 					c0.q;
 			// Displace old cell
-			mother.ballArray[0].pos = mother.ballArray[0].pos.plus(  direction.times( displacement )  );
+			c0.ballArray[0].pos = c0.ballArray[0].pos.plus(  direction.times( displacement )  );
 			// Contain cells to y dimension of domain
-			if(mother.ballArray[0].pos.y 	< mother.ballArray[0].radius) 		{mother.ballArray[0].pos.y 	= mother.ballArray[0].radius;};
-			if(daughter.ballArray[0].pos.y < daughter.ballArray[0].radius)  	{daughter.ballArray[0].pos.y 	= daughter.ballArray[0].radius;};
+			if(c0.ballArray[0].pos.y < c0.ballArray[0].radius) 		{c0.ballArray[0].pos.y 	= c0.ballArray[0].radius;};
+			if(c1.ballArray[0].pos.y < c1.ballArray[0].radius)  	{c1.ballArray[0].pos.y 	= c1.ballArray[0].radius;};
 			// Set filament springs
-			if(daughter.filament) {
+			if(c1.filament) {
 				if(sphereStraightFil) {								// Reorganise if we want straight fils, otherwise just attach resulting in random structures
-					CBall motherBall0 = mother.ballArray[0];
-					CBall daughterBall0 = daughter.ballArray[0];
+					CBall motherBall0 = c0.ballArray[0];
+					CBall daughterBall0 = c1.ballArray[0];
 					ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
-					for(CSpring fil : mother.filSpringArray) {
+					for(CSpring fil : c0.filSpringArray) {
 						boolean found=false;
 						if( fil.ballArray[0] == motherBall0) {		// Only replace half the balls for daughter's
 							fil.ballArray[0] = daughterBall0;
@@ -839,66 +839,75 @@ public class CModel implements Serializable {
 						}
 					}
 					for(CSpring fil : donateFilArray) {
-						daughter.filSpringArray.add(fil);
-						mother.filSpringArray.remove(fil);
+						c1.filSpringArray.add(fil);
+						c0.filSpringArray.remove(fil);
 						// Reset rest lengths. Spring constant won't change because it depends on cell type
 						fil.ResetRestLength();
 					}
 				}
-				new CSpring(mother.ballArray[0], daughter.ballArray[0], 2);
+				new CSpring(c0.ballArray[0], c1.ballArray[0], 2);
 			}
-		} else if (mother.type<6) {
-			CBall motherBall0 = mother.ballArray[0];
-			CBall motherBall1 = mother.ballArray[1];
-			// Direction
-			Vector3d direction = motherBall1.pos.minus( motherBall0.pos );
-			direction.normalise();
-			// Displacement
-			double displacement = motherBall1.radius/2.0;
+		} else if (c0.type<6) {
+			///////
+			// Original cell:
+			// (00)============(01)
+			// New cells:
+			// (00)==(01)(10)==(11)
+			///////
 			// Half mass of mother cell
-			mother.SetAmount(mother.GetAmount()/2.0);
+			c0.SetAmount(0.5*c0.GetAmount());
+			// Define balls
+			CBall c0b0 = c0.ballArray[0];
+			CBall c0b1 = c0.ballArray[1];
+			// Determine displacement
+			double radius = c0b0.radius;
+			Vector3d middle = c0b1.pos.minus(c0b0.pos).divide(2.0);				// Vector from c0b0 --> halfway c0b1
+			double L = middle.norm();
+			Vector3d ball1Vector = middle.times((L-radius)/L);				// Vector from c0b0 --> new c0b1 position (halfway with radius subtracted)
 			// Make a new, displaced cell
-			Vector3d middle = motherBall1.pos.plus(motherBall0.pos).divide(2.0); 
-			daughter = new CCell(mother.type,													// Same type as cell
-					mother.GetAmount(),															// Same mass as (already slimmed down) mother cell
-					middle.x+	  displacement*direction.x,										// First ball. First ball and second ball were swapped in MATLAB and possibly C++					
-					middle.y+1.01*displacement*direction.y,										// ought to be displaced slightly in original C++ code but is displaced significantly this way (change 1.01 to 2.01)
-					middle.z+	  displacement*direction.z,
-					motherBall1.pos.x,															// Second ball
-					motherBall1.pos.y,
-					motherBall1.pos.z,
-					mother.filament,
-					mother.colour,
-					this);																		// Same filament boolean as cell and pointer to the model
-			// Displace old cell, 2nd ball
-			motherBall1.pos = middle.minus(direction.times(displacement));
-			mother.rodSpringArray.get(0).ResetRestLength();
+			c1 = new CCell(c0.type,												// Same type as cell
+					c0.GetAmount(),												// Same mass as (already slimmed down) mother cell
+					c0b1.pos.minus(ball1Vector),								// First ball. First ball and second ball were swapped in MATLAB and possibly C++					
+					c0b1.pos,
+					c0.filament,
+					c0.colour,
+					this);														// Same filament boolean as cell and pointer to the model
+			// Displace old cell, 2nd ball (1st ball stays in place)
+			c0b1.pos = c0b0.pos.plus(ball1Vector); 
+			c0.rodSpringArray.get(0).ResetRestLength();
 			// Contain cells to y dimension of domain
 			for(int iBall=0; iBall<2; iBall++) {
-				if(mother.ballArray[iBall].pos.y 		< mother.ballArray[iBall].radius) 		{mother.ballArray[0].pos.y 	= mother.ballArray[0].radius;};
-				if( daughter.ballArray[iBall].pos.y 	< daughter.ballArray[iBall].radius) 	{daughter.ballArray[0].pos.y 	= daughter.ballArray[0].radius;};
+				if(c0.ballArray[iBall].pos.y 	< c0.ballArray[iBall].radius) 	{c0.ballArray[0].pos.y 	= c0.ballArray[0].radius;};
+				if(c1.ballArray[iBall].pos.y 	< c1.ballArray[iBall].radius) 	{c1.ballArray[0].pos.y 	= c1.ballArray[0].radius;};
 			}
 			// Set properties for new cell
 			for(int iBall=0; iBall<2; iBall++) {
-				daughter.ballArray[iBall].vel = 	new Vector3d(mother.ballArray[iBall].vel);
-				daughter.ballArray[iBall].force = 	new Vector3d(mother.ballArray[iBall].force);
+				c1.ballArray[iBall].vel = 	new Vector3d(c0.ballArray[iBall].vel);
+				c1.ballArray[iBall].force = new Vector3d(c0.ballArray[iBall].force);
 			}
-			daughter.colour =	mother.colour;
-			daughter.mother = 	mother;
-			daughter.motherIndex = mother.Index();
-			daughter.rodSpringArray.get(0).restLength = mother.rodSpringArray.get(0).restLength;
+			c1.colour =	c0.colour;
+			c1.mother = c0;
+			c1.motherIndex = c0.Index();
+			c1.rodSpringArray.get(0).restLength = c0.rodSpringArray.get(0).restLength;
 
 			// Set filament springs
-			if(daughter.filament) {
-				CBall daughterBall0 = daughter.ballArray[0];
+			if(c1.filament) {
+				CBall c1b0 = c1.ballArray[0];
+				CBall c1b1 = c1.ballArray[1];
 				ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
-				for(CSpring fil : mother.filSpringArray) {
+				for(CSpring fil : c0.filSpringArray) {
 					boolean found=false;
-					if( fil.ballArray[0] == motherBall0) {
-						fil.ballArray[0] = daughterBall0;
+					if( fil.ballArray[0] == c0b0) {
+						fil.ballArray[0] = 	c1b0;
 						found = true;}
-					if( fil.ballArray[1] == motherBall0) {
-						fil.ballArray[1] = daughterBall0;
+					if( fil.ballArray[0] == c0b1) {
+						fil.ballArray[0] = 	c1b1;
+						found = true;}
+					if( fil.ballArray[1] == c0b0) {
+						fil.ballArray[1] = 	c1b0;
+						found = true;}
+					if( fil.ballArray[1] == c0b1) {
+						fil.ballArray[1] = 	c1b1;
 						found = true;}
 					if(found) {
 						// Mark filament spring for donation from mother to daughter
@@ -906,20 +915,20 @@ public class CModel implements Serializable {
 					}
 				}
 				for(CSpring fil : donateFilArray) {
-					daughter.filSpringArray.add(fil);
-					mother.filSpringArray.remove(fil);
+					c1.filSpringArray.add(fil);
+					c0.filSpringArray.remove(fil);
 					// Reset rest lengths
 					fil.ResetRestLength();
 				}
 				// Make new filial link between mother and daughter
-				CSpring filSmall = new CSpring(daughter.ballArray[0], mother.ballArray[1], 2);		// type==2 --> Small spring
-				CSpring filBig = new CSpring(daughter.ballArray[1], mother.ballArray[0], 3, new CSpring[]{filSmall});		// type==3 --> Big spring
+				CSpring filSmall = new CSpring(c1.ballArray[0], c0.ballArray[1], 2);		// type==2 --> Small spring
+				CSpring filBig = new CSpring(c1.ballArray[1], c0.ballArray[0], 3, new CSpring[]{filSmall});		// type==3 --> Big spring
 				filSmall.siblingArray.add(filBig);
 			}
 		} else {
-			throw new IndexOutOfBoundsException("Cell type: " + mother.type);
+			throw new IndexOutOfBoundsException("Cell type: " + c0.type);
 		}
-		return daughter;
+		return c1;
 	}
 	
 	////////////////////////////
