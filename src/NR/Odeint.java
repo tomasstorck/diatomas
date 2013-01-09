@@ -61,7 +61,6 @@ public class Odeint<Stepper extends StepperBase> {
 				++nok;
 				/////////////////////////////
 				// What else do we want to do after a successful step --> model specific! Remove this if solver applied to other model
-				model.AnchorUnAnchor();
 				model.FormBreak();
 				/////////////////////////////
 			} else {

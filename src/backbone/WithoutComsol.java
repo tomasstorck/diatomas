@@ -44,10 +44,11 @@ public class WithoutComsol {
 			model.cellRadiusMax[0] = 0.25e-6 * 1.25;
 			model.cellRadiusMax[4] = 0.25e-6;
 			model.cellLengthMax[4] = 2.5e-6;
-			model.UpdateDimension();
+			model.UpdateAmountCellMax();
 			model.NInitCell = 6;
 			int[] type = new int[]{4,4,4,0,0,0};
 			model.sticking = true;
+			model.stickRodRod = false;
 			model.filament = true;
 			model.anchoring = false;
 			model.gravity = false;

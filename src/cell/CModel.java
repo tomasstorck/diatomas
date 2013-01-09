@@ -27,9 +27,12 @@ public class CModel implements Serializable {
 	private static final long serialVersionUID = 1L;
 	// Model properties
 	public String name = "default";
-	public int randomSeed = 1;					// Makes first 3 rods, then 3 spheres (I got lucky)
+	public int randomSeed = 1;
 	public boolean withComsol = false;
 	public boolean sticking = true;
+	public boolean stickSphereSphere = true;
+	public boolean stickSphereRod = true;
+	public boolean stickRodRod = true;
 	public boolean anchoring = false;
 	public boolean filament = false;
 	public boolean gravity = false;
@@ -130,12 +133,22 @@ public class CModel implements Serializable {
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
-	//////////////////
-	// Constructors //
-	//////////////////
+	/////////////////////////////////////
+	// Constructors and initialisation //
+	/////////////////////////////////////
 	public CModel(String name) {	// Default constructor, includes default values
 		this.name = name;
 	}
+	
+	public void UpdateAmountCellMax() {	// Updates the nCellMax based on the supplied parameters 
+		for(int ii = 0; ii<2; ii++) {
+			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(cellRadiusMax[ii],3))*rhoX/MWX; 
+		}
+		for(int ii = 2; ii<6; ii++) {
+			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(cellRadiusMax[ii],3) + Math.PI*Math.pow(cellRadiusMax[ii],2)*cellLengthMax[ii])*rhoX/MWX; 
+		}
+	}
+	
 	
 	/////////////////
 	// Log writing //
@@ -279,7 +292,7 @@ public class CModel implements Serializable {
 		double b = d1.dot(d2);
 		double denom = a*e-b*b;			// Always >0
 		
-		// If segments are not parallel, compute closts point on L1 to L2 and clamp to segment S1, otherwise pick arbitrary s (=0)
+		// If segments are not parallel, compute closest point on L1 to L2 and clamp to segment S1, otherwise pick arbitrary s (=0)
 		double s;
 		if(denom!=0.0) {
 			s = Clamp((b*f-c*e) /  denom, 0.0, 1.0);
@@ -628,17 +641,17 @@ public class CModel implements Serializable {
 		return dydx;
 	}
 	
+	public void FormBreak() {									// Breaks and forms sticking, filament springs when needed. Used during Relaxation()
+		for(int ii=0; ii<cellArray.size(); ii++) {
+			CCell cell0 = cellArray.get(ii);
+			// Anchoring
+			if(anchoring) {
+				CBall ball0 = cell0.ballArray[0];
+				CBall ball1 = (cell0.type>1) ? ball1 = cell0.ballArray[1] : null;
 
-	public void AnchorUnAnchor() {
-		if(anchoring) {
-			// See what we need to anchor or break
-			for(CCell cell : cellArray) {
-				CBall ball0 = cell.ballArray[0];
-				CBall ball1 = (cell.type>1) ? ball1 = cell.ballArray[1] : null;
-
-				if(cell.anchorSpringArray.size()>0) { 		// This cell is already anchored
+				if(cell0.anchorSpringArray.size()>0) { 		// This cell is already anchored
 					ArrayList<CSpring> breakArray = new ArrayList<CSpring>();
-					for(CSpring anchor : cell.anchorSpringArray) {
+					for(CSpring anchor : cell0.anchorSpringArray) {
 						// Break anchor?
 						Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 						double dn = diff.norm();
@@ -651,35 +664,30 @@ public class CModel implements Serializable {
 					// Form anchor?
 					boolean formBall0 = (ball0.pos.y < ball0.radius*formLimAnchor) ? true : false;
 					boolean formBall1 = false;
-					if(cell.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
+					if(cell0.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
 					if(formBall0 || formBall1) {
-						Assistant.NAnchorForm += cell.Anchor();					
+						Assistant.NAnchorForm += cell0.Anchor();					
 					}
 				}
 			}
-		}
-	}
-	
-	public void FormBreak() {									// Breaks and forms sticking, filament springs when needed. Used during Relaxation()
-		for(int ii=0; ii<cellArray.size(); ii++) {
-			CCell cell0 = cellArray.get(ii);
+			// Sticking and filial links
 			for(int jj=ii+1; jj<cellArray.size(); jj++) {		// Only check OTHER cells not already checked in a different order (i.e. factorial elimination)
 				CCell cell1 = cellArray.get(jj);
 				// Are these cells connected to each other, either through sticking spring or filament?
 				boolean stuck = false, filament = false;
 				CSpring stickingSpring = null, filamentSpring = null; 
 				for(CSpring fil : cell0.filSpringArray) {		// Will be empty if filaments are disabled --> no need to add further if statements 
-					if( (fil.ballArray[0].cell.equals(cell0) && fil.ballArray[1].cell.equals(cell1)) || (fil.ballArray[0].cell.equals(cell1) && fil.ballArray[1].cell.equals(cell0)) ) {	// OPTIMISE
+					if(fil.ballArray[0].cell.equals(cell1) || fil.ballArray[1].cell.equals(cell1))  {		// We already know it is a filial spring with cell0
 						// That's the one containing both cells
 						filament = true;
 						filamentSpring = fil;
-						break;									// That's all we need, thank you for loop
+						break;									// That is all we need: only one set of filial springs exists between two cells
 					}
 				}
 				for(CSpring stick : cell0.stickSpringArray) {	// Will be empty if sticking springs are disabled --> no need to add further if statements 
-					if( (stick.ballArray[0].cell.equals(cell0) && stick.ballArray[1].cell.equals(cell1)) || (stick.ballArray[0].cell.equals(cell1) && stick.ballArray[1].cell.equals(cell0)) ) {
+					if(stick.ballArray[0].cell.equals(cell1) || stick.ballArray[1].cell.equals(cell1)) {	// We already know it is stick to cell0
 						stuck = true;
-						stickingSpring = stick;
+						stickingSpring = stick;					// That is all we need: only one set of sticking springs exists between two cells
 						break;						
 					}
 				}
@@ -701,38 +709,39 @@ public class CModel implements Serializable {
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
 						double dist;
-						if(cell0.type<2 && cell1.type<2) {							// both spheres
-							dist = (c1b0.pos.minus(c0b0.pos)).norm();
-						} else if(cell0.type<2) {									// 1st sphere, 2nd rod
+						if(cell0.type<2 && cell1.type<2) {			// both spheres
+							if(stickSphereSphere) { 
+								dist = (c1b0.pos.minus(c0b0.pos)).norm();
+							} else continue;
+						} else if(cell0.type<2) {					// 1st sphere, 2nd rod
 							double H2f =  1.5*(formLimStick*(cellLengthMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c1b1 = cell1.ballArray[1];
 								// do a sphere-rod collision detection
 								EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 								dist = C.dist;
 							} else continue;
-						} else if(cell1.type<2) {									// 2nd sphere, 1st rod
+						} else if(cell1.type<2) {					// 2nd sphere, 1st rod
 							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								// do a sphere-rod collision detection
 								EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
 								dist = C.dist;
 							} else continue;
-						} else if(cell0.type<6 && cell1.type<6) {  					// both rod
+						} else if(cell0.type<6 && cell1.type<6) {  	// both rod
 							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2));
-							if(dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+							if(stickRodRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								CBall c1b1 = cell1.ballArray[1];
 								// calculate the distance between the two segments
 								EricsonObject C = DetectLinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
 								dist = C.dist;
-//								dist = 42.0;		// FIXME
 							} else continue;
 						} else {
 							throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
 						}
-						// Stick if distancdiste is small enough
+						// Stick if distance is small enough
 						if(dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
 					}
 				}
@@ -981,19 +990,9 @@ public class CModel implements Serializable {
 		return counter;
 	}
 	
-	public void UpdateDimension() {
-		for(int ii = 0; ii<2; ii++) {
-			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(cellRadiusMax[ii],3))*rhoX/MWX; 
-		}
-		for(int ii = 2; ii<6; ii++) {
-			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(cellRadiusMax[ii],3) + Math.PI*Math.pow(cellRadiusMax[ii],2)*cellLengthMax[ii])*rhoX/MWX; 
-		}
-	}
-	
 	////////////
 	// Saving //
 	////////////
-	
 	public void Save() {		// Save as serialised file, later to be converted to .mat file
 		FileOutputStream fos = null;
 		GZIPOutputStream gz = null;
