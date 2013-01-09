@@ -8,13 +8,6 @@ yshadow = zeros(size(y));
 % figure;
 hold on;
 
-% Draw plane
-Vpos = [model.ballArray.pos];
-Vmax = max(Vpos,[],2);
-Vmin = min(Vpos,[],2);
-
-patch([Vmin(1) Vmax(1) Vmax(1) Vmin(1)], [Vmin(3) Vmin(3) Vmax(3) Vmax(3)], [-0.01e-6 -0.01e-6 -0.01e-6 -0.01e-6], [0.7 0.7 0.7])
-
 % colour = [0.300000000000000,0.300000000000000,0.300000000000000;0.300000000000000,0.300000000000000,1;0.300000000000000,1,0.300000000000000;0.300000000000000,1,1;1,0.300000000000000,0.300000000000000;1,0.300000000000000,1;1,1,0.300000000000000;1,1,1;0.100000000000000,0.100000000000000,0.100000000000000;0.100000000000000,0.100000000000000,0.400000000000000;0.100000000000000,0.400000000000000,0.100000000000000;0.100000000000000,0.400000000000000,0.400000000000000;0.400000000000000,0.100000000000000,0.100000000000000;0.400000000000000,0.100000000000000,0.400000000000000;0.400000000000000,0.400000000000000,0.100000000000000];
 
 for ii = 1:length(model.ballArray);
@@ -45,23 +38,33 @@ for ii = 1:length(model.ballArray);
 	%%%%%%%%%
 end
 
-% Shadows
-for ii = 1:length(model.ballArray);
-	ball = model.ballArray(ii);
+if model.normalForce
 	
-	% CONDITION
-%  	if ball.cellIndex== 10 || ball.cellIndex==16
-	%%%%%%%%%
+	% Draw plane
+	Vpos = [model.ballArray.pos];
+	Vmax = max(Vpos,[],2);
+	Vmin = min(Vpos,[],2);
 
-	% colour balls based on cellIndex
-	C=zeros(n+1);
-	
-	%	  scale ball*x+x pos ball , ... , ...
-	surf(ball.radius*x+ball.pos(1),ball.radius*z+ball.pos(3),ball.radius*yshadow,C);
-	
-	%%%%%%%%%
-%  	end
-	%%%%%%%%%
+	patch([Vmin(1) Vmax(1) Vmax(1) Vmin(1)], [Vmin(3) Vmin(3) Vmax(3) Vmax(3)], [-0.01e-6 -0.01e-6 -0.01e-6 -0.01e-6], [0.7 0.7 0.7])
+
+	% Shadows
+	for ii = 1:length(model.ballArray);
+		ball = model.ballArray(ii);
+
+		% CONDITION
+	%  	if ball.cellIndex== 10 || ball.cellIndex==16
+		%%%%%%%%%
+
+		% colour balls based on cellIndex
+		C=zeros(n+1);
+
+		%	  scale ball*x+x pos ball , ... , ...
+		surf(ball.radius*x+ball.pos(1),ball.radius*z+ball.pos(3),ball.radius*yshadow,C);
+
+		%%%%%%%%%
+	%  	end
+		%%%%%%%%%
+	end
 end
 
 colorbar
@@ -73,3 +76,9 @@ zlabel('z')
 %axis tight
 axis equal
 box
+
+% set view to correspond more or less to POVRay
+AZ = -35.197696406078933;
+EL = 17.875288325852580;
+view(AZ,EL);
+							

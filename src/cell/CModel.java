@@ -887,11 +887,11 @@ public class CModel implements Serializable {
 			c0b1.pos = c0b0.pos.plus(ball1Vector);
 			c0b1.pos.y *= 1.01;													// Required to prevent deadlock! 
 			c0.rodSpringArray.get(0).ResetRestLength();
-			// Contain cells to y dimension of domain
-			for(int iBall=0; iBall<2; iBall++) {
-				if(c0.ballArray[iBall].pos.y 	< c0.ballArray[iBall].radius) 	{c0.ballArray[0].pos.y 	= c0.ballArray[0].radius;};
-				if(c1.ballArray[iBall].pos.y 	< c1.ballArray[iBall].radius) 	{c1.ballArray[0].pos.y 	= c1.ballArray[0].radius;};
-			}
+//			// Contain cells to y dimension of domain
+//			for(int iBall=0; iBall<2; iBall++) {
+//				if(c0.ballArray[iBall].pos.y 	< c0.ballArray[iBall].radius) 	{c0.ballArray[0].pos.y 	= c0.ballArray[0].radius;};
+//				if(c1.ballArray[iBall].pos.y 	< c1.ballArray[iBall].radius) 	{c1.ballArray[0].pos.y 	= c1.ballArray[0].radius;};
+//			}
 			// Set properties for new cell
 			for(int iBall=0; iBall<2; iBall++) {
 				c1.ballArray[iBall].vel = 	new Vector3d(c0.ballArray[iBall].vel);
