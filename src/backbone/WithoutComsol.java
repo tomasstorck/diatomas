@@ -98,6 +98,8 @@ public class WithoutComsol {
 //						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
 //			}
 			
+			// COMSOL was here
+			
 			// Create initial cells, not overlapping
 			rand.Seed(model.randomSeed);							// Reinitialise random seed, below shouldn't depend on positions above
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
@@ -145,13 +147,17 @@ public class WithoutComsol {
 			// Grow cells
 			if(!overlap) {
 				model.Write("Growing cells", "iter");
-				int newCell = model.GrowthSimple();
+				ArrayList<CCell> dividedCellArray = model.GrowthSimple();
 				
 				// Advance growth
 				model.growthIter++;
 				model.growthTime += model.growthTimeStep;
-				
-				model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");
+				if(dividedCellArray.size()>0) {
+					String cellNumber = "" + dividedCellArray.get(0).Index();
+					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
+					model.Write(dividedCellArray.size() + " new cells grown, total " + model.cellArray.size() + " cells","iter");
+					model.Write("Cells grown: " + cellNumber,"iter");
+				}
 
 				model.Write("Resetting springs","iter");
 				for(CSpring rod : model.rodSpringArray) {
@@ -205,8 +211,8 @@ public class WithoutComsol {
 			if(!overlapCellArray.isEmpty()) {
 				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
 				String cellNumber = "" + overlapCellArray.get(0).Index();
-				for(int ii=1; ii<overlapCellArray.size(); ii++) 	cellNumber += " & " + overlapCellArray.get(ii).Index();
-				model.Write("Cell numbers " + cellNumber,"iter");
+				for(int ii=1; ii<overlapCellArray.size(); ii++) 	cellNumber += ", " + overlapCellArray.get(ii).Index();
+				model.Write("Cells overlapping: " + cellNumber,"iter");
 				overlap = true;
 			} else {
 				overlap = false;

@@ -752,9 +752,9 @@ public class CModel implements Serializable {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public int GrowthSimple() throws Exception {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+	public ArrayList<CCell> GrowthSimple() throws Exception {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int NCell = cellArray.size();
-		int newCell = 0;
+		ArrayList<CCell> dividedCell = new ArrayList<CCell>(); 
 		for(int iCell=0; iCell<NCell; iCell++){
 			CCell mother = cellArray.get(iCell);
 			double amount = mother.GetAmount();
@@ -776,33 +776,34 @@ public class CModel implements Serializable {
 			
 			// Cell growth or division
 			if(mother.GetAmount()>nCellMax[mother.type]) {
-				newCell++;
-				GrowCell(mother);
+				DivideCell(mother);
+				dividedCell.add(mother);
 			}	
 		}
-		return newCell;
+		
+		return dividedCell;
 	}
 	
-	public int GrowthFlux() throws Exception {
-		int newCell=0;
+	public ArrayList<CCell> GrowthFlux() throws Exception {
 		int NCell = cellArray.size();
+		ArrayList<CCell> dividedCell = new ArrayList<CCell>();
 		for(int iCell=0; iCell<NCell; iCell++){
-			CCell cell = cellArray.get(iCell);
+			CCell mother = cellArray.get(iCell);
 			// Obtain mol increase based on flux
-			double molIn = cell.q * cell.GetAmount() * growthTimeStep * SMX[cell.type];
+			double molIn = mother.q * mother.GetAmount() * growthTimeStep * SMX[mother.type];
 			// Grow mother cell
-			double newAmount = cell.GetAmount()+molIn;
-			cell.SetAmount(newAmount);
+			double newAmount = mother.GetAmount()+molIn;
+			mother.SetAmount(newAmount);
 			// divide mother cell if ready 
-			if(newAmount>nCellMax[cell.type]) {
-				newCell++;
-				GrowCell(cell);
+			if(newAmount>nCellMax[mother.type]) {
+				DivideCell(mother);
+				dividedCell.add(mother);
 			}
 		}
-		return newCell;
+		return dividedCell;
 	}
 	
-	public CCell GrowCell(CCell c0) {
+	public CCell DivideCell(CCell c0) {
 		// Nomenclature: c0 == mother, c1 == daughter
 		double n = c0.GetAmount();
 		CCell c1;
@@ -998,7 +999,7 @@ public class CModel implements Serializable {
 		GZIPOutputStream gz = null;
 		ObjectOutputStream oos = null;
 		try {
-			fos = new FileOutputStream(String.format("%s/output/g%04dm%04d.ser", name, growthIter, relaxationIter));
+			fos = new FileOutputStream(String.format("%s/output/g%04dr%04d.ser", name, growthIter, relaxationIter));
 			gz = new GZIPOutputStream(fos);
 			oos = new ObjectOutputStream(gz);
 			oos.writeObject(this);

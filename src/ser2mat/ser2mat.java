@@ -14,9 +14,12 @@ public class ser2mat {
 		// Set serializable information
 		// Model properties
 		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, model.name.length()));              	
-		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	// Makes first 3 rods, then 3 spheres (I got lucky)
+		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	
 		mlModel.setField("withComsol",                    new MLDouble(null, new double[] {model.withComsol?1:0}, 1));                    	
 		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	
+		mlModel.setField("stickSphereSphere",             new MLDouble(null, new double[] {model.stickSphereSphere?1:0}, 1));             	
+		mlModel.setField("stickSphereRod",                new MLDouble(null, new double[] {model.stickSphereRod?1:0}, 1));                	
+		mlModel.setField("stickRodRod",                   new MLDouble(null, new double[] {model.stickRodRod?1:0}, 1));                   	
 		mlModel.setField("anchoring",                     new MLDouble(null, new double[] {model.anchoring?1:0}, 1));                     	
 		mlModel.setField("filament",                      new MLDouble(null, new double[] {model.filament?1:0}, 1));                      	
 		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
@@ -240,7 +243,7 @@ public class ser2mat {
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);
 		list.add(mlModel);
 		try {
-			new MatFileWriter(model.name + "/output/" + String.format("g%04dm%04d", model.growthIter, model.relaxationIter) + ".mat",list);
+			new MatFileWriter(model.name + "/output/" + String.format("g%04dr%04d", model.growthIter, model.relaxationIter) + ".mat",list);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

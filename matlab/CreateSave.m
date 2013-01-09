@@ -252,7 +252,7 @@ fprintf(fid2,'\n\t\t// Create a list and add mlModel\n');
 fprintf(fid2,'\t\tArrayList<MLArray> list = new ArrayList<MLArray>(1);\n');
 fprintf(fid2,'\t\tlist.add(mlModel);\n');
 fprintf(fid2,'\t\ttry {\n');
-fprintf(fid2,'\t\t\tnew MatFileWriter(model.name + "/output/" + String.format("g%%04dm%%04d", model.growthIter, model.relaxationIter) + ".mat",list);\n');
+fprintf(fid2,'\t\t\tnew MatFileWriter(model.name + "/output/" + String.format("g%%04dr%%04d", model.growthIter, model.relaxationIter) + ".mat",list);\n');
 fprintf(fid2,'\t\t} catch (IOException e) {\n');
 fprintf(fid2,'\t\t\te.printStackTrace();\n');
 fprintf(fid2,'\t\t}\n');

@@ -39,9 +39,9 @@ if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iterat
 end
 
 for ii=0:NSave
-	imageName{ii+1} = sprintf('pov_g%04dm%04d_%02d', model.growthIter, model.relaxationIter, ii);
+	imageName{ii+1} = sprintf('pov_g%04dr%04d_%02d', model.growthIter, model.relaxationIter, ii);
 	imageLoc{ii+1} = [location '/image/' imageName{ii+1} '.png'];
-	povName{ii+1} = [location sprintf('/output/pov_g%04dm%04d_%02d.pov', model.growthIter, model.relaxationIter, ii)];
+	povName{ii+1} = [location sprintf('/output/pov_g%04dr%04d_%02d.pov', model.growthIter, model.relaxationIter, ii)];
 end
 	
 for ii=0:NSave			% Can be replaced with parfor

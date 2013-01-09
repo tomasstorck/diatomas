@@ -2,6 +2,8 @@ package backbone;
 
 import java.util.ArrayList;
 
+import NR.Vector3d;
+
 import random.rand;
 import ser2mat.ser2mat;
 import cell.CBall;
@@ -13,64 +15,112 @@ import comsol.Comsol;
 import comsol.Server;
 
 public class WithComsol {
-
 	public static void Run(CModel model) throws Exception{
-		// Change default parameters
-		/////
-		model.randomSeed = 4;		// Results in 7 rods, 8 spheres
-//		model.cellType = new int[]{1,3};
-//		// Cristian
-//		model.Kan = 2e7;
-//		model.Kc = 4e7;
-//		model.Kd = 4e4;
-//		model.Kf = 4e7;
-//		model.Kr = 1.23e7;
-//		model.Ks = 2e7;
-//		model.Kw = 2e7;
-		/////
-		model.growthTimeStep = 8.0*3600.0;
-		/////
-
-		// Start server and connect
-		model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
-//		Server.Stop(false);
-		Server.Start(Assistant.port);
-		Server.Connect(Assistant.port);
-		
-		// Initialise random seed
-		rand.Seed(model.randomSeed);
-
-		// Create cells
-		double[][] colour = new double[][]{
-				{1.0,0.7,0.7},
-				{0.1,1.0,0.1},
-				{0.1,0.1,0.4},
-				{1.0,1.0,0.7},
-				{0.1,1.0,1.0},
-				{0.4,0.1,0.4},
-				{0.4,0.1,0.1},
-				{0.4,1.0,0.4},
-				{0.1,0.1,1.0},
-				{0.4,0.4,0.1},
-				{0.4,1.0,1.0},
-				{1.0,0.1,1.0}};
-				
 		if(model.growthIter==0 && model.relaxationIter==0) {
+			// Set parameters. This overwrites both CModel and supplied arguments
+			
+//			/////////////
+//			// E. COLI //
+//			/////////////
+//			model.cellRadiusMax[4] = 0.25e-6;
+//			model.cellLengthMax[4] = 2.5e-6;
+//			model.UpdateDimension();
+//			model.NInitCell = 3;
+//			int[] type = new int[]{4,4,4};
+//			model.sticking = false;
+//			model.filament = false;
+//			model.gravity = false;
+//			model.initialAtSubstratum = true;
+//			model.normalForce = true;
+//			model.Kd 	= 1e-13;
+//			model.Kc 	= 1e-9;
+//			model.Kw 	= 5e-10;
+//			model.Kr 	= 5e-11;
+//			model.Kf 	= 2e-11;
+//			model.Kan	= 1e-11;
+//			model.Ks 	= 1e-11;
+			
+			/////////////
+			// DENTAL  //
+			/////////////
+			model.cellRadiusMax[0] = 0.25e-6 * 1.25;
+			model.cellRadiusMax[4] = 0.25e-6;
+			model.cellLengthMax[4] = 2.5e-6;
+			model.UpdateAmountCellMax();
+			model.NInitCell = 6;
+			int[] type = new int[]{4,4,4,0,0,0};
+			model.sticking = true;
+			model.stickRodRod = false;
+			model.filament = true;
+			model.anchoring = false;
+			model.gravity = false;
+			model.initialAtSubstratum = true;
+			model.normalForce = false;
+			model.syntrophyFactor = 2.0;
+			model.L.y 	= 0.0;
+			model.Kd 	= 1e-13;
+			model.Kc 	= 1e-9;
+			model.Kw 	= 5e-10;
+			model.Kr 	= 5e-11;
+			model.Kf 	= 2e-11;
+			model.Kan	= 1e-11;
+			model.Ks 	= 1e-11;
+			
+			// Create cell colours
+			double[][] colour = new double[][]{
+					{1.0,0.7,0.7},
+					{0.1,1.0,0.1},
+					{0.1,0.1,0.4},
+					{1.0,1.0,0.7},
+					{0.1,1.0,1.0},
+					{0.4,0.1,0.4},
+					{0.4,0.1,0.1},
+					{0.4,1.0,0.4},
+					{0.1,0.1,1.0},
+					{0.4,0.4,0.1},
+					{0.4,1.0,1.0},
+					{1.0,0.1,1.0}};
+			
+			// Create cell positions
+			// Defined OR
+			Vector3d[] position = new Vector3d[]{
+					new Vector3d(0.0,0.0,1.0).times(1e-6),
+					new Vector3d(2.0,0.0,1.0).times(1e-6),
+					new Vector3d(-2.0,0.0,1.0).times(1e-6),
+					new Vector3d(0.0,0.0,-1.0).times(1e-6),
+					new Vector3d(2.0,0.0,-1.0).times(1e-6),
+					new Vector3d(-2.0,0.0,-1.0).times(1e-6)};
+//			// OR Random
+//			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
+//			Vector3d[] position = new Vector3d[model.NInitCell];
+//			for(int ii=0; ii<position.length; ii++) {
+//				position[ii] = new Vector3d(
+//						(0.2*rand.Double()-0.1)*model.L.x,			// Anywhere between -0.1*Lx and 0.1*Lx
+//						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
+//						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
+//			}
+			
+			// Start server and connect
+			model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
+//			Server.Stop(false);
+			Server.Start(Assistant.port);
+			Server.Connect(Assistant.port);
+			
 			// Create initial cells, not overlapping
+			rand.Seed(model.randomSeed);							// Reinitialise random seed, below shouldn't depend on positions above
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				int type = rand.IntChoose(model.cellType);
-				double n = model.nCellMax[type]/2.0+(model.nCellMax[type]/2.0)*rand.Double();
-				CCell cell = new CCell(type, 						// Type of biomass
+				double n = model.nCellMax[type[iCell]]/2.0+(model.nCellMax[type[iCell]]/2.0)*rand.Double();
+				CCell cell = new CCell(type[iCell], 						// Type of biomass
 						n,											// Initial cell mass is random between initial and max
-						(0.2*rand.Double()-0.1)*model.L.x, 			// Anywhere between -0.1*Lx and 0.1*Lx
-						(0.2*rand.Double()+0.9)*model.L.y, 			// Anywhere between 0.9*Ly and 1.1*Ly
-						(0.2*rand.Double()-0.1)*model.L.z,			// Anywhere between -0.1*Lz and 0.1*Lz
+						position[iCell].x,
+						position[iCell].y,
+						position[iCell].z,
 						model.filament,								// With filament?
 						colour[iCell],
 						model);
 				// Set cell boundary concentration to initial value
 				cell.q = 0.0;
-				// Lower cell to the substratum if desired
+				// Lower cell to the substratum if desired (INITIALATSUBSTRATUM)
 				if(model.initialAtSubstratum) {
 					for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
 				}
@@ -133,14 +183,18 @@ public class WithComsol {
 			// Grow cells
 			if(!overlap) {
 				model.Write("Growing cells", "iter");
-				int newCell = model.GrowthFlux();
+				ArrayList<CCell> dividedCellArray = model.GrowthFlux();
 				
 				// Advance growth
 				model.growthIter++;
 				model.growthTime += model.growthTimeStep;
-
-				model.Write(newCell + " new cells grown, total " + model.cellArray.size() + " cells","iter");
-
+				if(dividedCellArray.size()>0) {
+					String cellNumber = "" + dividedCellArray.get(0).Index();
+					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
+					model.Write(dividedCellArray.size() + " new cells grown, total " + model.cellArray.size() + " cells","iter");
+					model.Write("Cells grown: " + cellNumber,"iter");
+				}
+				
 				model.Write("Resetting springs","iter");
 				for(CSpring rod : model.rodSpringArray) {
 					rod.ResetRestLength();
@@ -193,8 +247,8 @@ public class WithComsol {
 			if(!overlapCellArray.isEmpty()) {
 				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
 				String cellNumber = "" + overlapCellArray.get(0).Index();
-				for(int ii=1; ii<overlapCellArray.size(); ii++) 	cellNumber += " & " + overlapCellArray.get(ii).Index();
-				model.Write("Cell numbers " + cellNumber,"iter");
+				for(int ii=1; ii<overlapCellArray.size(); ii++) 	cellNumber += ", " + overlapCellArray.get(ii).Index();
+				model.Write("Cells overlapping: " + cellNumber,"iter");
 				overlap = true;
 			} else {
 				overlap = false;
