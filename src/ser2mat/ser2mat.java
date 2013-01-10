@@ -103,7 +103,6 @@ public class ser2mat {
 			arrayIndex = new double[obj.filSpringArray.size()];
 			for(int jj=0; jj<obj.filSpringArray.size(); jj++)	arrayIndex[jj] = obj.filSpringArray.get(jj).Index();
 			mlcellArray.setField("filSpringArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlcellArray.setField("motherIndex",               new MLDouble(null, new double[] {obj.motherIndex}, 1), ii);                     	
 			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.q}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
 		}
 		mlModel.setField("cellArray", mlcellArray);

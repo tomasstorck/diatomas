@@ -19,9 +19,6 @@ public class CCell implements Serializable {
 	public ArrayList<CSpring> anchorSpringArray = new ArrayList<CSpring>(0);
 	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(0);
 	public CCell mother;
-	public int motherIndex;
-//	public int index;
-//	public int[] ballArrayIndex;
 	// CFD stuff
 	public double q;													// [mol reactions (CmolX * s)-1]
 	// Pointer stuff

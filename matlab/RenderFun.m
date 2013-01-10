@@ -5,7 +5,7 @@ imageHeight = 768;
 camPos = [-L(1), 2*L(2),-L(3)];
 ambient = 0.8;
 diffuse = 0.4;
-keepPOV = false;
+keepPOV = true;
 % Colours
 filColour = [.4 1 1];		% Filament spring is blue
 stickColour = [1 .1 1];		% Sticking spring is purple
@@ -14,26 +14,37 @@ anchorColour = [.4 .4 .1];		% Anchoring spring is yellow
 NSave = length(model.ballArray(1).posSave);
 if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iteration or when none exists, find a proper angle
 	% Create camera, background and lighting based on L
-	maxDiag = 0;	maxB = 0;
+	maxBC = 0;	maxB = 0;
 	minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates
 	maxPos = max([model.ballArray.pos],[],2)*1e6;
 	A = camPos';										% For meaning of A, B and C, see drawing in journal, entry 121206
-	camView = (maxPos+minPos)/2;		camView(2) = 0;	% Camera is at the plane, right in the middle, height zero
+	camView = (maxPos+minPos)/2;		camView(2) = 0.250;	% Camera is at the plane, right in the middle, height == radius
 	C = camView;
 	for ii=1:length(model.ballArray)
 		ball = model.ballArray(ii);
 		if (ball.pos(1)<0 && ball.pos(3)>0) || (ball.pos(1)>0 && ball.pos(3)<0)		% We're only interested in distance perpendicular to the viewing line (BC perpendicular to AC)
-			B = [ball.pos(1)*1e6; 0; ball.pos(3)*1e6];
-			BC = norm(B-C);
-			diag = BC;
-			if diag>maxDiag
-				maxDiag = diag;
+			% Try parallel to the y=0 plane
+			Bll = [ball.pos(1)*1e6; 0.250; ball.pos(3)*1e6];
+			BCll = norm(Bll-C);
+			% Try perpenticular to the y=0 plane
+			Bt = [0; ball.pos(2)*1e6*(imageWidth/imageHeight); 0];	% Multiply with aspect ratio because y is represented vertically, but in POVRay the width is defined
+			BCt = norm(Bt-C);
+			if BCll>BCt
+				B = Bll;
+				BC = BCll;
+			else
+				B = Bt;
+				BC = BCt;
+			end
+			% Continue working with whichever is max
+			if BC>maxBC
 				maxB = B;
+				maxBC = BC;
 			end
 		end
 	end
 	B = maxB;
-	BC = norm(B-C);								
+	BC = maxBC;
 	AC = norm(A-C);
 	camAngle = 2*atand((BC+ball.radius+1)/AC);
 end

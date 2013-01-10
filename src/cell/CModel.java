@@ -760,7 +760,7 @@ public class CModel implements Serializable {
 			double amount = mother.GetAmount();
 
 			// Random growth, with syntrophy if required
-			double mu = muAvgSimple + (rand.Double()-0.25)/5.0;					// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
+			double mu = muAvgSimple + (rand.Double()-0.5)/5.0;					// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
 			double syntrophyAcceleration = 1.0;
 			for(CCell stickCell : mother.stickCellArray) {
 				if(mother.type != stickCell.type) {
@@ -808,32 +808,52 @@ public class CModel implements Serializable {
 		double n = c0.GetAmount();
 		CCell c1;
 		if(c0.type<2) {
+			///////
+			// Original cell:
+			//     (     )
+			// New cells:
+			//    (   )(   )
+			///////
 			// Set amount for both cells
 			c0.SetAmount(0.5*n);
-			// Come up with a nice direction in which to place the new cell
-			Vector3d direction = new Vector3d(rand.Double()-0.5,rand.Double()-0.5,rand.Double()-0.5);			
-			direction.normalise();
-			double displacement = c0.ballArray[0].radius;						// Displacement is done for both balls --> total of 1.0*radius displacement
-			// Make a new, displaced cell
-			c1 = new CCell(c0.type,											// Same type as cell
+			// Make a new cell
+			c1 = new CCell(c0.type,												// Same type as cell
 					c0.GetAmount(),
-					c0.ballArray[0].pos.x - displacement * direction.x,				// The new location is the old one plus some displacement					
-					c0.ballArray[0].pos.y - displacement * direction.y,	
-					c0.ballArray[0].pos.z - displacement * direction.z,
+					c0.ballArray[0].pos.x,			// The new location is the old one plus some displacement					
+					c0.ballArray[0].pos.y,	
+					c0.ballArray[0].pos.z,
 					c0.filament,
 					c0.colour,
 					this);														// Same filament boolean as cell and pointer to the model
+			// Displace new and old cell. Rods won't need this while loop, because they'll just be cut in half 
+			Vector3d posOld = new Vector3d(c0.ballArray[0].pos);
+			int overlapIter = 0;
+			while(true) {
+				overlapIter++;
+				// Come up with a nice direction in which to place the new cell
+				Vector3d direction = new Vector3d(rand.Double()-0.5,rand.Double()-0.5,rand.Double()-0.5);			
+				direction.normalise();
+				double displacement = c0.ballArray[0].radius;						// Displacement is done for both balls --> total of 1.0*radius displacement
+				// Displace
+				c0.ballArray[0].pos = posOld.plus(  direction.times(displacement) );
+				c1.ballArray[0].pos = posOld.minus( direction.times(displacement) );
+				ArrayList<CCell> overlapArray = DetectCellCollision_Proper(1.0);
+				if(overlapArray.isEmpty())	break;
+				if(overlapIter>100) {
+					Write("No direction in which to grow without colliding, cells " + c0.Index() + "/" + c1.Index() + " will overlap after growth","warning");
+					break;
+				}
+			}
+						
 			// Set properties for new cell
 			c1.ballArray[0].vel = 	new Vector3d(c0.ballArray[0].vel);
 			c1.ballArray[0].force = new Vector3d(c0.ballArray[0].force);
-			c1.colour =				c0.colour;							// copy of reference
+			c1.colour =				c0.colour;									// copy of reference
 			c1.mother = 			c0;
 			c1.q = 					c0.q;
-			// Displace old cell
-			c0.ballArray[0].pos = c0.ballArray[0].pos.plus(  direction.times( displacement )  );
-			// Contain cells to y dimension of domain
-			if(c0.ballArray[0].pos.y < c0.ballArray[0].radius) 		{c0.ballArray[0].pos.y 	= c0.ballArray[0].radius;};
-			if(c1.ballArray[0].pos.y < c1.ballArray[0].radius)  	{c1.ballArray[0].pos.y 	= c1.ballArray[0].radius;};
+//			// Contain cells to y dimension of domain
+//			if(c0.ballArray[0].pos.y < c0.ballArray[0].radius) 		{c0.ballArray[0].pos.y 	= c0.ballArray[0].radius;};
+//			if(c1.ballArray[0].pos.y < c1.ballArray[0].radius)  	{c1.ballArray[0].pos.y 	= c1.ballArray[0].radius;};
 			// Set filament springs
 			if(c1.filament) {
 				if(sphereStraightFil) {								// Reorganise if we want straight fils, otherwise just attach resulting in random structures
@@ -900,7 +920,6 @@ public class CModel implements Serializable {
 			}
 			c1.colour =	c0.colour;
 			c1.mother = c0;
-			c1.motherIndex = c0.Index();
 			c1.rodSpringArray.get(0).restLength = c0.rodSpringArray.get(0).restLength;
 
 			// Set filament springs
