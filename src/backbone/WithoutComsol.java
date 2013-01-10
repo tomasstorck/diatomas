@@ -52,12 +52,12 @@ public class WithoutComsol {
 			model.filament = true;
 			model.anchoring = false;
 			model.gravity = false;
-			model.initialAtSubstratum = true;
+			model.initialAtSubstratum = false;
 			model.normalForce = false;
 			model.syntrophyFactor = 2.0;
 			model.L.y 	= 0.0;
 			model.Kd 	= 1e-13;
-			model.Kc 	= 1e-9;
+			model.Kc 	= 1e-9*10.0;
 			model.Kw 	= 5e-10;
 			model.Kr 	= 5e-11;
 			model.Kf 	= 2e-11;
@@ -83,10 +83,10 @@ public class WithoutComsol {
 			// Defined OR
 			Vector3d[] position = new Vector3d[]{
 					new Vector3d(0.0,0.0,1.0).times(1e-6),
-					new Vector3d(2.0,0.0,1.0).times(1e-6),
+					new Vector3d(2.0,0.0,-1.0).times(1e-6),
 					new Vector3d(-2.0,0.0,1.0).times(1e-6),
 					new Vector3d(0.0,0.0,-1.0).times(1e-6),
-					new Vector3d(2.0,0.0,-1.0).times(1e-6),
+					new Vector3d(2.0,0.0,1.0).times(1e-6),
 					new Vector3d(-2.0,0.0,-1.0).times(1e-6)};
 //			// OR Random
 //			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
