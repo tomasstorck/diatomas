@@ -831,14 +831,21 @@ public class CModel implements Serializable {
 			while(true) {
 				overlapIter++;
 				// Come up with a nice direction in which to place the new cell
-				Vector3d direction = new Vector3d(rand.Double()-0.5,rand.Double()-0.5,rand.Double()-0.5);			
+				Vector3d direction = new Vector3d(rand.Double()-0.5,rand.Double()-0.5,rand.Double()-0.5);
 				direction.normalise();
 				double displacement = c0.ballArray[0].radius;						// Displacement is done for both balls --> total of 1.0*radius displacement
 				// Displace
 				c0.ballArray[0].pos = posOld.plus(  direction.times(displacement) );
 				c1.ballArray[0].pos = posOld.minus( direction.times(displacement) );
+				// Contain cells to y dimension of domain
+				if(normalForce) {
+					c0.ballArray[0].pos.y = Math.max(c0.ballArray[0].radius, c0.ballArray[0].pos.y);					
+					c1.ballArray[0].pos.y = Math.max(c1.ballArray[0].radius, c1.ballArray[0].pos.y);
+				}
+				// Check if all went well
 				ArrayList<CCell> overlapArray = DetectCellCollision_Proper(1.0);
 				if(overlapArray.isEmpty())	break;
+				// Continue if no proper direction can be found
 				if(overlapIter>100) {
 					Write("No direction in which to grow without colliding, cells " + c0.Index() + "/" + c1.Index() + " will overlap after growth","warning");
 					break;
@@ -908,6 +915,13 @@ public class CModel implements Serializable {
 			c0b1.pos = c0b0.pos.plus(ball1Vector);
 			c0b1.pos.y *= 1.01;													// Required to prevent deadlock! 
 			c0.rodSpringArray.get(0).ResetRestLength();
+			// Contain cells to y dimension of domain
+			if(normalForce) {
+				for(int iBall=0; iBall<2; iBall++) {
+					c0.ballArray[iBall].pos.y = Math.max(c0.ballArray[iBall].radius, c0.ballArray[iBall].pos.y);					
+					c1.ballArray[iBall].pos.y = Math.max(c1.ballArray[iBall].radius, c1.ballArray[iBall].pos.y);
+				}
+			}
 //			// Contain cells to y dimension of domain
 //			for(int iBall=0; iBall<2; iBall++) {
 //				if(c0.ballArray[iBall].pos.y 	< c0.ballArray[iBall].radius) 	{c0.ballArray[0].pos.y 	= c0.ballArray[0].radius;};
