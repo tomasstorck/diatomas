@@ -1,8 +1,8 @@
 % Settings
-L = [20,5,20];
+L = [20,20,20];
 imageWidth = 1024;
 imageHeight = 768;
-camPos = [-L(1), 2*L(2),-L(3)];
+camPos = [0.0; 0.5*L(2); -L(3)];
 ambient = 0.8;
 diffuse = 0.4;
 keepPOV = true;
@@ -14,41 +14,54 @@ anchorColour = [.4 .4 .1];		% Anchoring spring is yellow
 NSave = length(model.ballArray(1).posSave);
 if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iteration or when none exists, find a proper angle
 	% Create camera, background and lighting based on L
-	maxBC = 0;	maxB = 0;
+	%%%%%%%%
+	%
+	%   ^ |  /^
+	%   | | //
+	% O y |/z   OB
+	% ____C__O_________
+	%  VD/ x->  &
+	% A /
+	%  /
+	%
+	%%%%%%%%
+	aspect = imageWidth/imageHeight;
+	A = camPos;
 	minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates
 	maxPos = max([model.ballArray.pos],[],2)*1e6;
-	A = camPos';										% For meaning of A, B and C, see drawing in journal, entry 121206
-	camView = (maxPos+minPos)/2;		camView(2) = 0.250;	% Camera is at the plane, right in the middle, height == radius
-	C = camView;
+	C = (maxPos+minPos)/2;		C(2) = 0.0;	% Camera is at the plane, right in the middle, height == radius
+	camView = C;
+	C = [0;0;0];
+	% Find vector perpendicular to x axis AND camera axis
+	vertAxis = cross(C-A, [1; 0; 0]);
+	% Reset ranges
+	horRange = 0.0;
+	vertRange = 0.0;
+	
 	for ii=1:length(model.ballArray)
 		ball = model.ballArray(ii);
-		if (ball.pos(1)<0 && ball.pos(3)>0) || (ball.pos(1)>0 && ball.pos(3)<0)		% We're only interested in distance perpendicular to the viewing line (BC perpendicular to AC)
-			% Try parallel to the y=0 plane
-			Bll = [ball.pos(1)*1e6; 0.250; ball.pos(3)*1e6];
-			BCll = norm(Bll-C);
-			% Try perpenticular to the y=0 plane
-			Bt = [0; ball.pos(2)*1e6*(imageWidth/imageHeight); 0];	% Multiply with aspect ratio because y is represented vertically, but in POVRay the width is defined
-			BCt = norm(Bt-C);
-			if BCll>BCt
-				B = Bll;
-				BC = BCll;
+		B = ball.pos*1e6;
+		% Find horizontal range (easy)
+		horRangeNew = abs(C(1)-ball.pos(1)*1e6 + ball.radius*1e6);
+		% Find vertical range (harder)
+		% Project position onto vertAxis, convert to right
+		BC = C-B;
+		projBC = dot(vertAxis, BC)/norm(vertAxis);
+		vertRangeNew = abs(projBC)+ball.radius*1e6;
+		if horRangeNew>horRange || vertRangeNew>vertRange
+			if horRangeNew > vertRangeNew*aspect
+				horRange = horRangeNew;
+				vertRange = horRangeNew/aspect;
+				right = 2*horRange;						% From which we'll derive up vector
 			else
-				B = Bt;
-				BC = BCt;
-			end
-			% Continue working with whichever is max
-			if BC>maxBC
-				maxB = B;
-				maxBC = BC;
+				horRange = vertRangeNew*aspect;
+				vertRange = vertRangeNew;
+				right = 2*vertRange*aspect;				% From which we'll derive up vector
 			end
 		end
 	end
-	B = maxB;
-	BC = maxBC;
-	AC = norm(A-C);
-	camAngle = 2*atand((BC+ball.radius+1)/AC);
 end
-
+		
 for ii=0:NSave
 	imageName{ii+1} = sprintf('pov_g%04dr%04d_%02d', model.growthIter, model.relaxationIter, ii);
 	imageLoc{ii+1} = [location '/image/' imageName{ii+1} '.png'];
@@ -85,11 +98,11 @@ for ii=0:NSave			% Can be replaced with parfor
 		'\torthographic\n',...
 		sprintf('\tlocation <%g, %g, %g>\n', camPos(1), camPos(2), camPos(3)),...
 		sprintf('\tlook_at  <%g, %g, %g>\n', camView(1), camView(2), camView(3)),...
-		'\tright x*image_width/image_height\n',...		% Makes aspect ratio dynamic, fixing width/varying height while width>height
-		['\tangle ' num2str(camAngle) '\n'],...
+		sprintf('\tright <%g, 0.0, 0.0>\n', right),...
+		sprintf('\tup <0.0, %g/%g, 0.0>\n', right, aspect),...
 		'}\n\n']);
 	fprintf(fid,'background { color rgb <1, 1, 1> }\n\n');
-	fprintf(fid,'light_source { < Lx/2,  10*Ly,  Lz/2> color rgb <1,1,1> }\n');
+	fprintf(fid,'light_source { < 0.0,  2*Ly,  0.0> color rgb <1,1,1> }\n');
 	
 	% Build spheres and rods
 	for iCell=1:length(model.cellArray)
@@ -290,6 +303,7 @@ for ii=0:NSave			% Can be replaced with parfor
 			'\tbox {\n',...
 			'\t\t<-Lx, 0, -Lz>\n',...				% Corner 1. Centred around 0.5 Lx and 0.5 Lz
 			'\t\t< Lx, 0,  Lz>\n',...				% Corner 2
+			'\t\trotate<0.0, 45, 0.0>\n',...
 			'\t\ttexture {\n',...
 			'\t\t\tpigment {\n',...
 			'\t\t\t\tbrick\n',...
@@ -298,16 +312,15 @@ for ii=0:NSave			% Can be replaced with parfor
 			'\t\t\t\tbrick_size<1.0, 1.0, 1.0>\n',...
 			'\t\t\t\tmortar 0.025\n',...
 			'\t\t\t\ttranslate<0.0 0.0 0.5>\n',...
+			'\t\t\t\trotate<0.0 45 0.0>\n',...
 			'\t\t\t}\n',...
 			'\t\t\tfinish {\n',...
 			['\t\t\t\tambient ' num2str(ambient) '\n'],...
 			['\t\t\t\tdiffuse ' num2str(diffuse) '\n'],...
 			'\t\t\t}\n',...
 			'\t\t}\n',...
-			'\t}\n\n']);
-	fprintf(fid,['\ttranslate <0,0,0>\n',...
-		'\trotate <0,0,0>\n']);
-	fprintf(fid,'}\n\n');						% Yes, we actually need this bracket
+			'\t}\n',...
+			'}\n']);
 	end
 	% Finalise the file
 	fclose(fid);
@@ -323,16 +336,16 @@ for ii=0:NSave			% Can be replaced with parfor
 	[~,~] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
 	% Append text for relaxation and growth
 	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStepEnd+ii*model.relaxationTimeStep)  imageLoc{ii+1} ' ' imageLoc{ii+1}]);
-	% Append scale bar
-	A = camPos';
-	C = camView;
-	AC = norm(A-C);
-	BC = tan(deg2rad(0.5*camAngle))*AC;
-
-	LLine = 1/BC * imageWidth/2;
-
-	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''1 um'' ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
-	system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
+% 	% Append scale bar
+% 	A = camPos;
+% 	C = camView;
+% 	AC = norm(A-C);
+% 	BC = tan(deg2rad(0.5*camAngle))*AC;
+% 
+% 	LLine = 1/BC * imageWidth/2;
+% 
+% 	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''1 um'' ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
+% 	system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 
 	% Remove POV file if desired
 	[~,~] = system(['cd ' location ' ; ' remove ' ; cd ..']);
