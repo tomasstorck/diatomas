@@ -858,9 +858,6 @@ public class CModel implements Serializable {
 			c1.colour =				c0.colour;									// copy of reference
 			c1.mother = 			c0;
 			c1.q = 					c0.q;
-//			// Contain cells to y dimension of domain
-//			if(c0.ballArray[0].pos.y < c0.ballArray[0].radius) 		{c0.ballArray[0].pos.y 	= c0.ballArray[0].radius;};
-//			if(c1.ballArray[0].pos.y < c1.ballArray[0].radius)  	{c1.ballArray[0].pos.y 	= c1.ballArray[0].radius;};
 			// Set filament springs
 			if(c1.filament) {
 				if(sphereStraightFil) {								// Reorganise if we want straight fils, otherwise just attach resulting in random structures
@@ -913,7 +910,7 @@ public class CModel implements Serializable {
 					this);														// Same filament boolean as cell and pointer to the model
 			// Displace old cell, 2nd ball (1st ball stays in place)
 			c0b1.pos = c0b0.pos.plus(ball1Vector);
-			c0b1.pos.y *= 1.01;													// Required to prevent deadlock! 
+//			c0b1.pos.z += 1e-8;													// Move in z direction by 0.01 micron. Required to prevent deadlock??? TODO 
 			c0.rodSpringArray.get(0).ResetRestLength();
 			// Contain cells to y dimension of domain
 			if(normalForce) {
@@ -922,11 +919,6 @@ public class CModel implements Serializable {
 					c1.ballArray[iBall].pos.y = Math.max(c1.ballArray[iBall].radius, c1.ballArray[iBall].pos.y);
 				}
 			}
-//			// Contain cells to y dimension of domain
-//			for(int iBall=0; iBall<2; iBall++) {
-//				if(c0.ballArray[iBall].pos.y 	< c0.ballArray[iBall].radius) 	{c0.ballArray[0].pos.y 	= c0.ballArray[0].radius;};
-//				if(c1.ballArray[iBall].pos.y 	< c1.ballArray[iBall].radius) 	{c1.ballArray[0].pos.y 	= c1.ballArray[0].radius;};
-//			}
 			// Set properties for new cell
 			for(int iBall=0; iBall<2; iBall++) {
 				c1.ballArray[iBall].vel = 	new Vector3d(c0.ballArray[iBall].vel);
