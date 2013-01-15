@@ -56,11 +56,11 @@ public class CModel implements Serializable {
 	public double Kf 	= 2e-11;				// filament spring
 	public double Kan	= 1e-11;				// anchor
 	public double Ks 	= 1e-11;				// sticking
-	public double stretchLimAnchor = 1.4;// Maximum tension and compression (1-this value) for anchoring springs
+	public double stretchLimAnchor = 1.4;		// Maximum tension for anchoring springs
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-	public double stretchLimStick = 1.4;// Maximum tension and compression (1-this value) for sticking springs
+	public double stretchLimStick = 1.4;		// Maximum tension for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
-	public double stretchLimFil = 1.6;	// Maximum tension and compression (1-this value) for sticking springs
+	public double stretchLimFil = 1.6;			// Maximum tension for sticking springs
 	// Model biomass properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
@@ -641,7 +641,7 @@ public class CModel implements Serializable {
 		return dydx;
 	}
 	
-	public void FormBreak() {									// Breaks and forms sticking, filament springs when needed. Used during Relaxation()
+	public void FormBreak() {								// Breaks and forms sticking, filament springs when needed. Used during Relaxation()
 		for(int ii=0; ii<cellArray.size(); ii++) {
 			CCell cell0 = cellArray.get(ii);
 			// Anchoring
@@ -655,7 +655,7 @@ public class CModel implements Serializable {
 						// Break anchor?
 						Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 						double dn = diff.norm();
-						if(dn > anchor.restLength*stretchLimAnchor) {			// too much tension --> break the spring
+						if(dn > anchor.restLength*stretchLimAnchor) {	// too much tension --> break the spring
 							breakArray.add(anchor);
 						}
 					}
@@ -671,49 +671,49 @@ public class CModel implements Serializable {
 				}
 			}
 			// Sticking and filial links
-			for(int jj=ii+1; jj<cellArray.size(); jj++) {		// Only check OTHER cells not already checked in a different order (i.e. factorial elimination)
+			for(int jj=ii+1; jj<cellArray.size(); jj++) {	// Only check OTHER cells not already checked in a different order (i.e. factorial elimination)
 				CCell cell1 = cellArray.get(jj);
 				// Are these cells connected to each other, either through sticking spring or filament?
 				boolean stuck = false, filament = false;
 				CSpring stickingSpring = null, filamentSpring = null; 
-				for(CSpring fil : cell0.filSpringArray) {		// Will be empty if filaments are disabled --> no need to add further if statements 
+				for(CSpring fil : cell0.filSpringArray) {	// Will be empty if filaments are disabled --> no need to add further if statements 
 					if(fil.ballArray[0].cell.equals(cell1) || fil.ballArray[1].cell.equals(cell1))  {		// We already know it is a filial spring with cell0
 						// That's the one containing both cells
 						filament = true;
 						filamentSpring = fil;
-						break;									// That is all we need: only one set of filial springs exists between two cells
+						break;								// That is all we need: only one set of filial springs exists between two cells
 					}
 				}
-				for(CSpring stick : cell0.stickSpringArray) {	// Will be empty if sticking springs are disabled --> no need to add further if statements 
-					if(stick.ballArray[0].cell.equals(cell1) || stick.ballArray[1].cell.equals(cell1)) {	// We already know it is stick to cell0
+				for(CSpring stick : cell0.stickSpringArray) { 
+					if(stick.ballArray[0].cell.equals(cell1) || stick.ballArray[1].cell.equals(cell1)) {
 						stuck = true;
-						stickingSpring = stick;					// That is all we need: only one set of sticking springs exists between two cells
+						stickingSpring = stick;				// Only one set of sticking springs exists between two cells
 						break;						
 					}
 				}
-				if(filament) {									// Can only be true if filaments are enabled 
+				if(filament) {								// Can only be true if filaments are enabled 
 					// Don't stick this. It shouldn't be stuck so don't check if we can break sticking springs. Instead, see if we can break the filial link 
 					double distance = filamentSpring.ballArray[0].pos.minus(filamentSpring.ballArray[1].pos).norm();
 					// Check if we can break this spring
 					if(distance>filamentSpring.restLength*stretchLimFil) {
-						Assistant.NFilBreak += filamentSpring.Break();				// Also breaks its siblings
+						Assistant.NFilBreak += filamentSpring.Break();	// Also breaks its siblings
 					}
-				} else if (sticking){							// Check if we want to do sticking
+				} else if (sticking){						// Check if we want to do sticking
 					// Determine current distance, required for formation and breaking
 					CBall c0b0 = cell0.ballArray[0];
 					CBall c1b0 = cell1.ballArray[0];				
-					if(stuck) {					// Stuck --> can we break this spring (and its siblings)?
+					if(stuck) {								// Stuck --> can we break this spring (and its siblings)?
 						double dist = (c1b0.pos.minus(c0b0.pos)).norm();
 						if(dist > stickingSpring.restLength*stretchLimStick) 		Assistant.NStickBreak += stickingSpring.Break();
-					} else {					// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case
+					} else {								// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
 						double dist;
-						if(cell0.type<2 && cell1.type<2) {			// both spheres
+						if(cell0.type<2 && cell1.type<2) {	// both spheres
 							if(stickSphereSphere) { 
 								dist = (c1b0.pos.minus(c0b0.pos)).norm();
 							} else continue;
-						} else if(cell0.type<2) {					// 1st sphere, 2nd rod
+						} else if(cell0.type<2) {			// 1st sphere, 2nd rod
 							double H2f =  1.5*(formLimStick*(cellLengthMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c1b1 = cell1.ballArray[1];
@@ -721,7 +721,7 @@ public class CModel implements Serializable {
 								EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 								dist = C.dist;
 							} else continue;
-						} else if(cell1.type<2) {					// 2nd sphere, 1st rod
+						} else if(cell1.type<2) {			// 2nd sphere, 1st rod
 							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
@@ -847,7 +847,7 @@ public class CModel implements Serializable {
 				if(overlapArray.isEmpty())	break;
 				// Continue if no proper direction can be found
 				if(overlapIter>100) {
-					Write("No direction in which to grow without colliding, cells " + c0.Index() + "/" + c1.Index() + " will overlap after growth","warning");
+					Write("Cell " + c0.Index() + " or " + c1.Index() + " will overlap after growth","warning");
 					break;
 				}
 			}

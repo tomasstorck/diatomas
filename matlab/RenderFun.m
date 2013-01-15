@@ -2,7 +2,7 @@
 L = [20,20,20];
 imageWidth = 1024;
 imageHeight = 768;
-camPos = [0.0; 0.5*L(2); -L(3)];
+camPosDifference = [0.0; 0.5*L(2); -L(3)];		% Where the camera will hover compared to camView
 ambient = 0.8;
 diffuse = 0.4;
 keepPOV = true;
@@ -26,12 +26,12 @@ if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iterat
 	%
 	%%%%%%%%
 	aspect = imageWidth/imageHeight;
-	A = camPos;
 	minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates
 	maxPos = max([model.ballArray.pos],[],2)*1e6;
-	C = (maxPos+minPos)/2;		C(2) = 0.0;	% Camera is at the plane, right in the middle, height == radius
+	C = (maxPos+minPos)/2;	% Camera is at the plane, right in the middle, height == radius
 	camView = C;
-	C = [0;0;0];
+	camPos = C + camPosDifference;
+	A = camPos;
 	% Find vector perpendicular to x axis AND camera axis
 	vertAxis = cross(C-A, [1; 0; 0]);
 	% Reset ranges
