@@ -445,13 +445,13 @@ public class CModel implements Serializable {
 					CCell cell1 = cellArray.get(jCell);
 					CBall c1b0 = cell1.ballArray[0];
 					double R2 = c0b0.radius + c1b0.radius;
-					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
+					Vector3d dir = c0b0.pos.minus(c1b0.pos);
+					Vector3d dirn = dir.normalise();
 					if(cell1.type<2) {									// The other cell1 is a ball too
 						double dist = dirn.norm();
 						// do a simple collision detection if close enough
 						if(dist<R2) {
 							// We have a collision
-							dirn.normalise();
 							Vector3d Fs = dirn.times(Kc*(R2*1.01-dist));	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
 							// Add forces
 							c0b0.force = c0b0.force.plus(Fs);
@@ -473,10 +473,10 @@ public class CModel implements Serializable {
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
 								// both balls in rod
-								c1b0.force.subtract(Fs.times(sc1));
-								c1b1.force.subtract(Fs.times(sc));
+								c1b0.force = c1b0.force.minus(Fs.times(sc1));
+								c1b1.force = c1b1.force.minus(Fs.times(sc));
 								// ball in sphere
-								c0b0.force.add(Fs);
+								c0b0.force = c0b0.force.plus(Fs);
 							}	
 						}
 					}
@@ -503,10 +503,10 @@ public class CModel implements Serializable {
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
 								// both balls in rod
-								c0b0.force.subtract(Fs.times(sc1));
-								c0b1.force.subtract(Fs.times(sc));
+								c0b0.force = c0b0.force.minus(Fs.times(sc1));
+								c0b1.force = c0b1.force.minus(Fs.times(sc));
 								// ball in sphere
-								c1b0.force.add(Fs);
+								c1b0.force = c1b0.force.plus(Fs);
 							}	
 						}
 					} else {	// type>1 --> the other cell is a rod too. This is where it gets tricky
@@ -530,11 +530,11 @@ public class CModel implements Serializable {
 								double sc1 = 1-sc;
 								double tc1 = 1-tc;
 								// both balls in 1st rod
-								c0b0.force.subtract(Fs.times(sc1));
-								c0b1.force.subtract(Fs.times(sc));
+								c0b0.force = c0b0.force.minus(Fs.times(sc1));
+								c0b1.force = c0b1.force.minus(Fs.times(sc));
 								// both balls in 1st rod
-								c1b0.force.add(Fs.times(tc1));
-								c1b1.force.add(Fs.times(tc));
+								c1b0.force = c1b0.force.plus(Fs.times(tc1));
+								c1b1.force = c1b1.force.plus(Fs.times(tc));
 							}
 						}
 					}
@@ -561,7 +561,7 @@ public class CModel implements Serializable {
 			}
 			
 			// Velocity damping
-			ball.force.subtract(ball.vel.times(Kd));			// TODO Should be v^2
+			ball.force = ball.force.minus(ball.vel.times(Kd));			// TODO Should be v^2
 		}
 		
 		// Elastic forces between springs within cells (CSpring in type>1)
@@ -576,8 +576,8 @@ public class CModel implements Serializable {
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			ball0.force.add(Fs);
-			ball1.force.subtract(Fs);
+			ball0.force = ball0.force.plus(Fs);
+			ball1.force = ball1.force.minus(Fs);
 		}
 		
 		// Apply forces due to anchor springs
@@ -589,7 +589,7 @@ public class CModel implements Serializable {
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			anchor.ballArray[0].force.add(Fs);
+			anchor.ballArray[0].force = anchor.ballArray[0].force.plus(Fs);
 
 		}
 		
@@ -605,8 +605,8 @@ public class CModel implements Serializable {
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			ball0.force.add(Fs);
-			ball1.force.subtract(Fs);
+			ball0.force = ball0.force.plus(Fs);
+			ball1.force = ball1.force.minus(Fs);
 		}
 		
 		// Filament spring elastic force (CSpring in filSpringArray)
@@ -621,8 +621,8 @@ public class CModel implements Serializable {
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
 			// apply forces on balls
-			ball0.force.add(Fs);
-			ball1.force.subtract(Fs);
+			ball0.force = ball0.force.plus(Fs);
+			ball1.force = ball1.force.minus(Fs);
 			}
 		}
 		
@@ -832,7 +832,7 @@ public class CModel implements Serializable {
 				overlapIter++;
 				// Come up with a nice direction in which to place the new cell
 				Vector3d direction = new Vector3d(rand.Double()-0.5,rand.Double()-0.5,rand.Double()-0.5);
-				direction.normalise();
+				direction = direction.normalise();
 				double displacement = c0.ballArray[0].radius;						// Displacement is done for both balls --> total of 1.0*radius displacement
 				// Displace
 				c0.ballArray[0].pos = posOld.plus(  direction.times(displacement) );

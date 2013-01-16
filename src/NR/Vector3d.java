@@ -38,11 +38,9 @@ public class Vector3d implements Serializable {
 		return Math.sqrt(x*x+y*y+z*z);
 	}
 	
-	public void normalise() {
+	public Vector3d normalise() {
 		double L = this.norm();
-		x = x/L;
-		y = y/L;
-		z = z/L;
+		return new Vector3d(x/L, y/L, z/L);
 	}
 	
 	public boolean equals(Vector3d v) {
@@ -93,30 +91,6 @@ public class Vector3d implements Serializable {
 		Vector3d plus = new Vector3d(newx, newy, newz);
 		
 		return plus;
-	}
-	
-	public void subtract(double n) {
-		this.x -= n;
-		this.y -= n;
-		this.z -= n;
-	}
-	
-	public void subtract(Vector3d v) {
-		this.x -= v.x;
-		this.y -= v.y;
-		this.z -= v.z;
-	}
-
-	public void add(double n) {
-		this.x += n;
-		this.y += n;
-		this.z += n;
-	}
-	
-	public void add(Vector3d v) {
-		this.x += v.x;
-		this.y += v.y;
-		this.z += v.z;
 	}
 	
 	public Vector3d times(double number) {

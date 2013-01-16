@@ -38,6 +38,29 @@ public class WithoutComsol {
 			model.Kf 	= 2e-11;
 			model.Kan	= 1e-11;
 			model.Ks 	= 1e-11;
+			// Create cell colours
+			double[][] colour = new double[][]{
+					{1.0,0.7,0.7},
+					{0.1,1.0,0.1},
+					{0.1,0.1,0.4},
+					{1.0,1.0,0.7},
+					{0.1,1.0,1.0},
+					{0.4,0.1,0.4},
+					{0.4,0.1,0.1},
+					{0.4,1.0,0.4},
+					{0.1,0.1,1.0},
+					{0.4,0.4,0.1},
+					{0.4,1.0,1.0},
+					{1.0,0.1,1.0}};
+			// Set initial positions
+			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
+			Vector3d[] position = new Vector3d[model.NInitCell];
+			for(int ii=0; ii<position.length; ii++) {
+				position[ii] = new Vector3d(
+						(0.2*rand.Double()-0.1)*model.L.x,			// Anywhere between -0.1*Lx and 0.1*Lx
+						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
+						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
+			}
 			
 //			/////////////
 //			// DENTAL  //
@@ -67,25 +90,34 @@ public class WithoutComsol {
 //			model.Kf 	= 2e-11;
 //			model.Kan	= 1e-11;
 //			model.Ks 	= 1e-11;
-
+//			// Create cell colours
+//			double[][] colour = new double[][]{
+//					{1.0,0.7,0.7},
+//					{0.1,1.0,0.1},
+//					{0.1,0.1,0.4},
+//					{1.0,1.0,0.7},
+//					{0.1,1.0,1.0},
+//					{0.4,0.1,0.4},
+//					{0.4,0.1,0.1},
+//					{0.4,1.0,0.4},
+//					{0.1,0.1,1.0},
+//					{0.4,0.4,0.1},
+//					{0.4,1.0,1.0},
+//					{1.0,0.1,1.0}};
+			// Set initial positions
+//			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
+//			Vector3d[] position = new Vector3d[model.NInitCell];
+//			for(int ii=0; ii<position.length; ii++) {
+//				position[ii] = new Vector3d(
+//						(0.2*rand.Double()-0.1)*model.L.x,			// Anywhere between -0.1*Lx and 0.1*Lx
+//						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
+//						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
+//			}
 			
-			// Create cell colours
-			double[][] colour = new double[][]{
-					{1.0,0.7,0.7},
-					{0.1,1.0,0.1},
-					{0.1,0.1,0.4},
-					{1.0,1.0,0.7},
-					{0.1,1.0,1.0},
-					{0.4,0.1,0.4},
-					{0.4,0.1,0.1},
-					{0.4,1.0,0.4},
-					{0.1,0.1,1.0},
-					{0.4,0.4,0.1},
-					{0.4,1.0,1.0},
-					{1.0,0.1,1.0}};
+			
 			
 //			// Create cell positions
-//			// Defined OR
+//			// Defined
 //			Vector3d[] position = new Vector3d[]{
 //					new Vector3d(0.0,0.0,1.0).times(1e-6),
 //					new Vector3d(2.0,0.0,-1.0).times(1e-6),
@@ -93,15 +125,6 @@ public class WithoutComsol {
 //					new Vector3d(0.0,0.0,-1.0).times(1e-6),
 //					new Vector3d(2.0,0.0,1.0).times(1e-6),
 //					new Vector3d(-2.0,0.0,-1.0).times(1e-6)};
-			// OR Random
-			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
-			Vector3d[] position = new Vector3d[model.NInitCell];
-			for(int ii=0; ii<position.length; ii++) {
-				position[ii] = new Vector3d(
-						(0.2*rand.Double()-0.1)*model.L.x,			// Anywhere between -0.1*Lx and 0.1*Lx
-						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
-						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
-			}
 			
 			// COMSOL was here
 			

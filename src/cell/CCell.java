@@ -57,7 +57,7 @@ public class CCell implements Serializable {
 		if(type>1 && type<6) { 
 			// Put cell in correct position
 			Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());
-			direction.normalise();	// Normalise direction
+			direction = direction.normalise();	// Normalise direction
 			double distance;
 			if(type<4) {
 				distance = ballArray[0].radius * model.cellLengthMax[ballArray[0].cell.type]/model.cellRadiusMax[ballArray[0].cell.type];										// type == 2||3 is fixed ball-ball distance
