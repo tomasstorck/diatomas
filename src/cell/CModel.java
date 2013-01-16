@@ -71,7 +71,7 @@ public class CModel implements Serializable {
 	public double[] cellRadiusMax = {0.125e-6,	0.5e-6, 	0.125e-6, 	0.375e-6, 	0.125e-6, 	0.375e-6};
 	public double[] cellLengthMax = {0.0,		0.0,		1e-6,		1.5e-6,		1e-6,		1.5e-6};
 	public double[] nCellMax =	new double[6];
-	public double muAvgSimple = 0.33;			// Doubling every 20 minutes. Only used in GrowthSimple!
+	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// 0.33 == doubling every 20 minutes. Only used in GrowthSimple!
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
@@ -760,7 +760,7 @@ public class CModel implements Serializable {
 			double amount = mother.GetAmount();
 
 			// Random growth, with syntrophy if required
-			double mu = muAvgSimple + (rand.Double()-0.5)/5.0;					// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
+			double mu = muAvgSimple[mother.type] + (rand.Double()-0.5)/5.0;					// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
 			double syntrophyAcceleration = 1.0;
 			for(CCell stickCell : mother.stickCellArray) {
 				if(mother.type != stickCell.type) {
