@@ -35,7 +35,7 @@ for iCell = 0:length(model.cellArray)-1;
 % 	end
 % 	C0=zeros(n+1)+cii;
 %	C1=C0;
-	
+
 	% colour balls based on collision or not
 	if any(any(iBall0==overlapArray))
 			C0 = zeros(n+1)+1;
@@ -72,8 +72,8 @@ end
 
 colorbar
 xlabel('x')
-ylabel('y')
-zlabel('z')
+ylabel('z')
+zlabel('y')
 
 
 %axis tight

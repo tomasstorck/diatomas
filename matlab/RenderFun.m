@@ -69,6 +69,11 @@ for ii=0:NSave
 end
 	
 for ii=0:NSave			% Can be replaced with parfor
+	% Skip half if this is a sketch
+	if sketch && rem(ii,2)==1
+		continue
+	end
+	
 	if(exist(imageLoc{ii+1},'file')) && ~exist('keepgoing','var')
 		fprintf(['File already found, skipping: ' imageName{ii+1} '\n']);
 		skip = true;
@@ -326,8 +331,12 @@ for ii=0:NSave			% Can be replaced with parfor
 	fclose(fid);
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	if sketch
+		systemInput = ['povray ' povName{ii+1} ' +W' num2str(imageWidth/2) ' +H' num2str(imageHeight/2) ' +O' location '/image/' imageName{ii+1} ' +A +Q4'];
+	else
+		systemInput = ['povray ' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' location '/image/' imageName{ii+1} ' +A -J'];
+	end
 	
-	systemInput = ['povray ' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' location '/image/' imageName{ii+1} ' +A -J'];
 	if keepPOV
 		remove = '';
 	else

@@ -1,5 +1,9 @@
 %%%%%%%%%
 
+sketch = true;
+
+%%%%%%%%%
+
 if ~exist('location','var')
 	location = uigetdir;
 	if isempty(location)

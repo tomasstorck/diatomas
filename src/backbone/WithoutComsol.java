@@ -31,6 +31,7 @@ public class WithoutComsol {
 //			model.gravity = false;
 //			model.initialAtSubstratum = true;
 //			model.normalForce = true;
+//			model.limOverlap = new double[]{1e-3, 1e-2};
 //			model.Kd 	= 1e-13;
 //			model.Kc 	= 1e-9;
 //			model.Kw 	= 5e-10;
@@ -78,10 +79,12 @@ public class WithoutComsol {
 			model.stickSphereSphere = false;
 			model.stretchLimStick = 1.6;
 			model.filament = true;
+			model.filSphere = false;
 			model.anchoring = false;
 			model.gravity = false;
 			model.initialAtSubstratum = false;
 			model.normalForce = true;
+			model.limOverlap = new double[]{5e-3, 1e-2};
 			model.syntrophyFactor = 2.0;
 			model.L.y 	= model.cellRadiusMax[4];
 			model.Kd 	= 1e-13;
@@ -133,12 +136,23 @@ public class WithoutComsol {
 			rand.Seed(model.randomSeed);							// Reinitialise random seed, below shouldn't depend on positions above
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				double n = model.nCellMax[type[iCell]]/2.0+(model.nCellMax[type[iCell]]/2.0)*rand.Double();
-				CCell cell = new CCell(type[iCell], 						// Type of biomass
+				boolean filament = false;
+				if(model.filament) {
+					if(type[iCell]<2) {
+						filament = model.filSphere; 
+					} else if(type[iCell]<6){
+						filament = model.filRod;
+					} else {
+						throw new IndexOutOfBoundsException("Cell type: " + type); 
+					}
+				}
+				
+				CCell cell = new CCell(type[iCell], 				// Type of biomass
 						n,											// Initial cell mass is random between initial and max
 						position[iCell].x,
 						position[iCell].y,
 						position[iCell].z,
-						model.filament,								// With filament?
+						filament,									// With capability to form filaments?
 						colour[iCell],
 						model);
 				// Set cell boundary concentration to initial value
@@ -166,7 +180,7 @@ public class WithoutComsol {
 		model.Save();
 		ser2mat.Convert(model);
 		
-		boolean overlap = false;
+		boolean overlap = model.DetectCellCollision_Proper(1.0).isEmpty() ? false : true;
 		while(true) {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.relaxationIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.

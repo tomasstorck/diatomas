@@ -36,6 +36,8 @@ public class CModel implements Serializable {
 	public boolean stickRodRod = true;
 	public boolean anchoring = false;
 	public boolean filament = false;
+	public boolean filSphere = true;
+	public boolean filRod = true;
 	public boolean gravity = false;
 	public boolean gravityZ = false;
 	public boolean sphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci

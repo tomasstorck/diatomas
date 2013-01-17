@@ -224,4 +224,14 @@ public class CSpring implements Serializable {
 		return -1;
 	}
 
+	public Vector3d GetL() {
+		switch(type) {
+		case 0: case 1: case 2: case 3:
+			return ballArray[1].pos.minus(ballArray[0].pos);
+		case 4:
+			return ballArray[0].pos.minus(anchorPoint);
+		default:
+			throw new IndexOutOfBoundsException("Spring type: " + type);						
+		}
+	}
 } 
