@@ -92,7 +92,7 @@ public class CCell implements Serializable {
 		for(CBall ball : ballArray) {
 			Vector3d substratumPos = new Vector3d(ball.pos);
 			substratumPos.y = 0.0;
-			new CSpring(ball, substratumPos, 4);
+			new CSpring(ball, substratumPos, 2);
 		}
 
 		// Add sibling springs, assuming all anchors in this cell are siblings

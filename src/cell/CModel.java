@@ -879,7 +879,7 @@ public class CModel implements Serializable {
 						fil.ResetRestLength();
 					}
 				}
-				new CSpring(c0.ballArray[0], c1.ballArray[0], 2);
+				new CSpring(c0.ballArray[0], c1.ballArray[0], 3);
 			}
 		} else if (c0.type<6) {
 			///////
@@ -933,16 +933,16 @@ public class CModel implements Serializable {
 				ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
 				for(CSpring fil : c0.filSpringArray) {
 					boolean found=false;
-					if( fil.type == 2 && fil.ballArray[0] == c0b1) {
+					if( fil.type == 4 && fil.ballArray[0] == c0b1) {
 						fil.ballArray[0] = 	c1b1;
 						found = true;}
-					if( fil.type == 2 && fil.ballArray[1] == c0b1) {
+					if( fil.type == 4 && fil.ballArray[1] == c0b1) {
 						fil.ballArray[1] = 	c1b1;
 						found = true;}
-					if( fil.type == 3 && fil.ballArray[0] == c0b0) {
+					if( fil.type == 5 && fil.ballArray[0] == c0b0) {
 						fil.ballArray[0] = 	c1b0;
 						found = true;}
-					if( fil.type == 3 && fil.ballArray[1] == c0b0) {
+					if( fil.type == 5 && fil.ballArray[1] == c0b0) {
 						fil.ballArray[1] = 	c1b0;
 						found = true;}
 					if(found) {
@@ -957,8 +957,8 @@ public class CModel implements Serializable {
 					fil.ResetRestLength();
 				}
 				// Make new filial link between mother and daughter
-				CSpring filSmall = new CSpring(c1.ballArray[0], c0.ballArray[1], 2);		// type==2 --> Small spring
-				CSpring filBig = new CSpring(c1.ballArray[1], c0.ballArray[0], 3, new CSpring[]{filSmall});		// type==3 --> Big spring
+				CSpring filSmall = new CSpring(c1.ballArray[0], c0.ballArray[1], 4);		// type==2 --> Small spring
+				CSpring filBig = new CSpring(c1.ballArray[1], c0.ballArray[0], 5, new CSpring[]{filSmall});		// type==3 --> Big spring
 				filSmall.siblingArray.add(filBig);
 			}
 		} else {

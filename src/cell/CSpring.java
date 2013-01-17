@@ -39,7 +39,7 @@ public class CSpring implements Serializable {
 			ball0.cell.stickSpringArray.add(this);
 			ball1.cell.stickSpringArray.add(this);
 			break;
-		case 2:	case 3: // 2: Small filament spring, continue to doing whatever is in case 3: big filament spring
+		case 3:	case 4: case 5:
 			model.filSpringArray.add(this);
 			ball0.cell.filSpringArray.add(this);
 			ball1.cell.filSpringArray.add(this);
@@ -64,7 +64,7 @@ public class CSpring implements Serializable {
 		ResetRestLength();
 		
 		switch(type) {
-		case 4:
+		case 2:
 			model.anchorSpringArray.add(this);
 			ball0.cell.anchorSpringArray.add(this);
 			break;
@@ -96,17 +96,19 @@ public class CSpring implements Serializable {
 					ballArray[1].pos.minus(ballArray[0].pos).norm(),		// The rest length we desire
 					1.1*(ballArray[0].radius + ballArray[1].radius));		// But we want the spring not to cause cell overlap in relaxed state
 			break;
-		case 2:				// Small fil spring
+			
+		case 3:				// Small fil spring
 			restLength = 1.1*(ballArray[0].radius + ballArray[1].radius);
 			break;
-		case 3:				// Big fil spring
+		case 4:				// Small fil spring
+			restLength = 0.9*(ballArray[0].radius + ballArray[1].radius);
+			break;
+		case 5:				// Big fil spring
 			CCell cell0 = ballArray[0].cell;
 			CCell cell1 = ballArray[1].cell;
-			restLength = 1.6*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
+			restLength = 1.4*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
 			break;
-		case 4:				// Anchoring spring
-			CBall ball = ballArray[0];
-			restLength = Math.max(ball.pos.y,ball.radius*1.01);			// TODO don't like this
+		
 		}
 	}
 	
@@ -127,17 +129,17 @@ public class CSpring implements Serializable {
 			} else 									springDiv = 2.0;
 			K = model.Ks/springDiv;
 			break;
-		case 2:	case 3:												// Two different balls, same cell type
-			if(cell0.type<2)						springDiv = 1.0;
-			else if(cell0.type<6)					springDiv = 2.0;
-			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
-			K = model.Kf/springDiv;
-			break;
-		case 4:
+		case 2:
 			if(cell0.type<2)						springDiv = 1.0;
 			else if(cell0.type<6)					springDiv = 2.0;
 			else model.Write("Unknown cell types in ResetK", "error");
 			K = model.Kan/springDiv;
+			break;
+		case 3:	case 4:	case 5:											// Two different balls, same cell type
+			if(cell0.type<2)						springDiv = 1.0;
+			else if(cell0.type<6)					springDiv = 2.0;
+			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
+			K = model.Kf/springDiv;
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);
@@ -168,7 +170,16 @@ public class CSpring implements Serializable {
 				count += (model.stickSpringArray.remove(sibling))?1:0;
 			}
 			break;
-		case 2:	case 3:													// Filament springs
+		case 2:
+			// Remove this and siblings from model and cells			// Anchoring springs
+			count += (model.anchorSpringArray.remove(this))?1:0;		// Add one to counter if successfully removed
+			cell0.anchorSpringArray.remove(this);
+			for(CSpring sibling : siblingArray) {
+				cell0.anchorSpringArray.remove(sibling);
+				count += (model.anchorSpringArray.remove(sibling))?1:0;
+			}
+			break;
+		case 3:	case 4: case 5:													// Filament springs
 			cell1 = ballArray[1].cell;
 			// Remove this and siblings from model and cells
 			count += (model.filSpringArray.remove(this))?1:0;			// Add one to counter if successfully removed
@@ -178,15 +189,6 @@ public class CSpring implements Serializable {
 				cell0.filSpringArray.remove(sibling);
 				cell1.filSpringArray.remove(sibling);
 				count += (model.filSpringArray.remove(sibling))?1:0;
-			}
-			break;
-		case 4:
-			// Remove this and siblings from model and cells			// Anchoring springs
-			count += (model.anchorSpringArray.remove(this))?1:0;		// Add one to counter if successfully removed
-			cell0.anchorSpringArray.remove(this);
-			for(CSpring sibling : siblingArray) {
-				cell0.anchorSpringArray.remove(sibling);
-				count += (model.anchorSpringArray.remove(sibling))?1:0;
 			}
 			break;
 		default:
@@ -211,11 +213,12 @@ public class CSpring implements Serializable {
 		case 1:
 			array = model.stickSpringArray;
 			break;
-		case 2: case 3:
+		case 2:
+			array = model.anchorSpringArray;
+			break;
+		case 3: case 4: case 5:
 			array = model.filSpringArray;
 			break;
-		case 4:
-			array = model.anchorSpringArray;
 		}
 		
 		for(int index=0; index<array.size(); index++) {
@@ -226,9 +229,9 @@ public class CSpring implements Serializable {
 
 	public Vector3d GetL() {
 		switch(type) {
-		case 0: case 1: case 2: case 3:
+		case 0: case 1: case 3: case 4: case 5:
 			return ballArray[1].pos.minus(ballArray[0].pos);
-		case 4:
+		case 2:
 			return ballArray[0].pos.minus(anchorPoint);
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);						
