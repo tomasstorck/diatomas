@@ -62,6 +62,7 @@ public class CModel implements Serializable {
 	public double stretchLimStick = 1.4;		// Maximum tension for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	public double stretchLimFil = 1.6;			// Maximum tension for sticking springs
+	public double[] limOverlap = {1e-3, 1e-2};	// The boundaries of the magnitude of overlap vector d. It will be Clamp() to these limits times R2 (stick) or R (anchor) 
 	// Model biomass properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
@@ -437,15 +438,14 @@ public class CModel implements Serializable {
 					CCell cell1 = cellArray.get(jCell);
 					CBall c1b0 = cell1.ballArray[0];
 					double R2 = c0b0.radius + c1b0.radius;
-					Vector3d dir = c0b0.pos.minus(c1b0.pos);
-					Vector3d dirn = dir.normalise();
+					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
 					if(cell1.type<2) {										// The other cell1 is a ball too
 						double dist = dirn.norm();
 						// do a simple collision detection if close enough
 						if(dist<R2) {
 							// We have a collision
-							double d = Common.Clamp(R2-dist, 1e-3*R2, 1e-2*R2);	// d is the magnitude of the overlap vector, as defined in the IbM paper 
-							Vector3d Fs = dirn.times(Kc*d);
+							double d = Common.Clamp(R2-dist, limOverlap[0]*R2, limOverlap[1]*R2);	// d is the magnitude of the overlap vector, as defined in the IbM paper 
+							Vector3d Fs = dirn.normalise().times(Kc*d);
 							// Add forces
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
@@ -461,7 +461,7 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							// Collision detection
 							if(dist<R2) {
-								double d = Common.Clamp(R2-dist, 1e-3*R2, 1e-2*R2);
+								double d = Common.Clamp(R2-dist, limOverlap[0]*R2, limOverlap[1]*R2);
 								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
@@ -492,7 +492,7 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							// Collision detection
 							if(dist < R2) {
-								double d = Common.Clamp(R2-dist, 1e-3*R2, 1e-2*R2);
+								double d = Common.Clamp(R2-dist, limOverlap[0]*R2, limOverlap[1]*R2);
 								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
@@ -519,7 +519,7 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							double tc = C.tc;
 							if(dist<R2) {
-								double d = Common.Clamp(R2-dist, 1e-3*R2, 1e-2*R2);
+								double d = Common.Clamp(R2-dist, limOverlap[0]*R2, limOverlap[1]*R2);
 								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
@@ -670,35 +670,35 @@ public class CModel implements Serializable {
 			for(int jj=ii+1; jj<cellArray.size(); jj++) {	// Only check OTHER cells not already checked in a different order (i.e. factorial elimination)
 				CCell cell1 = cellArray.get(jj);
 				// Are these cells connected to each other, either through sticking spring or filament?
-				boolean stuck = false, filament = false;
+				boolean isStuck = false, isFilament = false;
 				CSpring stickingSpring = null, filamentSpring = null; 
 				for(CSpring fil : cell0.filSpringArray) {	// Will be empty if filaments are disabled --> no need to add further if statements 
 					if(fil.ballArray[0].cell.equals(cell1) || fil.ballArray[1].cell.equals(cell1))  {		// We already know it is a filial spring with cell0
 						// That's the one containing both cells
-						filament = true;
+						isFilament = true;
 						filamentSpring = fil;
 						break;								// That is all we need: only one set of filial springs exists between two cells
 					}
 				}
 				for(CSpring stick : cell0.stickSpringArray) { 
 					if(stick.ballArray[0].cell.equals(cell1) || stick.ballArray[1].cell.equals(cell1)) {
-						stuck = true;
+						isStuck = true;
 						stickingSpring = stick;				// Only one set of sticking springs exists between two cells
 						break;						
 					}
 				}
-				if(filament) {								// Can only be true if filaments are enabled 
+				if(isFilament) {							// Can only be true if filaments are enabled 
 					// Don't stick this. It shouldn't be stuck so don't check if we can break sticking springs. Instead, see if we can break the filial link 
 					double distance = filamentSpring.ballArray[0].pos.minus(filamentSpring.ballArray[1].pos).norm();
 					// Check if we can break this spring
 					if(distance>filamentSpring.restLength*stretchLimFil) {
 						Assistant.NFilBreak += filamentSpring.Break();	// Also breaks its siblings
 					}
-				} else if (sticking){						// Check if we want to do sticking
+				} else if (sticking){						// Check if we want to do sticking, or break the sticking spring
 					// Determine current distance, required for formation and breaking
 					CBall c0b0 = cell0.ballArray[0];
 					CBall c1b0 = cell1.ballArray[0];				
-					if(stuck) {								// Stuck --> can we break this spring (and its siblings)?
+					if(isStuck) {							// Stuck --> can we break this spring (and its siblings)?
 						double dist = (c1b0.pos.minus(c0b0.pos)).norm();
 						if(dist > stickingSpring.restLength*stretchLimStick) 		Assistant.NStickBreak += stickingSpring.Break();
 					} else {								// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case

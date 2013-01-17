@@ -17,20 +17,73 @@ public class WithoutComsol {
 		if(model.growthIter==0 && model.relaxationIter==0) {
 			// Set parameters. This overwrites both CModel and supplied arguments
 			
+//			/////////////
+//			// E. COLI //
+//			/////////////
+//			model.cellRadiusMax[4] = 0.25e-6;
+//			model.cellLengthMax[4] = 2.5e-6;
+//			model.muAvgSimple[4] = 0.33;
+//			model.UpdateAmountCellMax();
+//			model.NInitCell = 3;
+//			int[] type = new int[]{4,4,4};
+//			model.sticking = false;
+//			model.filament = false;
+//			model.gravity = false;
+//			model.initialAtSubstratum = true;
+//			model.normalForce = true;
+//			model.Kd 	= 1e-13;
+//			model.Kc 	= 1e-9;
+//			model.Kw 	= 5e-10;
+//			model.Kr 	= 5e-11;
+//			model.Kf 	= 2e-11;
+//			model.Kan	= 1e-11;
+//			model.Ks 	= 1e-11;
+//			// Create cell colours
+//			double[][] colour = new double[][]{
+//					{1.0,0.7,0.7},
+//					{0.1,1.0,0.1},
+//					{0.1,0.1,0.4},
+//					{1.0,1.0,0.7},
+//					{0.1,1.0,1.0},
+//					{0.4,0.1,0.4},
+//					{0.4,0.1,0.1},
+//					{0.4,1.0,0.4},
+//					{0.1,0.1,1.0},
+//					{0.4,0.4,0.1},
+//					{0.4,1.0,1.0},
+//					{1.0,0.1,1.0}};
+//			// Set initial positions
+//			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
+//			Vector3d[] position = new Vector3d[model.NInitCell];
+//			for(int ii=0; ii<position.length; ii++) {
+//				position[ii] = new Vector3d(
+//						(0.2*rand.Double()-0.1)*model.L.x,			// Anywhere between -0.1*Lx and 0.1*Lx
+//						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
+//						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
+//			}
+			
 			/////////////
-			// E. COLI //
+			// DENTAL  //
 			/////////////
+			model.cellRadiusMax[0] = 0.25e-6 * 1.25;
+			model.muAvgSimple[0] = 0.33;
 			model.cellRadiusMax[4] = 0.25e-6;
 			model.cellLengthMax[4] = 2.5e-6;
 			model.muAvgSimple[4] = 0.33;
 			model.UpdateAmountCellMax();
-			model.NInitCell = 3;
-			int[] type = new int[]{4,4,4};
-			model.sticking = false;
-			model.filament = false;
+			model.NInitCell = 6;
+			int[] type = new int[]{4,4,4,0,0,0};
+			model.sticking = true;
+			model.stickRodRod = false;
+			model.stickSphereSphere = false;
+			model.stretchLimStick = 1.6;
+			model.filament = true;
+			model.anchoring = false;
 			model.gravity = false;
-			model.initialAtSubstratum = true;
+			model.initialAtSubstratum = false;
 			model.normalForce = true;
+			model.syntrophyFactor = 2.0;
+			model.L.y 	= model.cellRadiusMax[4];
 			model.Kd 	= 1e-13;
 			model.Kc 	= 1e-9;
 			model.Kw 	= 5e-10;
@@ -61,58 +114,6 @@ public class WithoutComsol {
 						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
 						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
 			}
-			
-//			/////////////
-//			// DENTAL  //
-//			/////////////
-//			model.cellRadiusMax[0] = 0.25e-6 * 1.25;
-//			model.muAvgSimple[0] = 0.33;
-//			model.cellRadiusMax[4] = 0.25e-6;
-//			model.cellLengthMax[4] = 2.5e-6;
-//			model.muAvgSimple[4] = 0.33;
-//			model.UpdateAmountCellMax();
-//			model.NInitCell = 6;
-//			int[] type = new int[]{4,4,4,0,0,0};
-//			model.sticking = true;
-//			model.stickRodRod = false;
-//			model.stretchLimStick = 1.6;
-//			model.filament = true;
-//			model.anchoring = false;
-//			model.gravity = false;
-//			model.initialAtSubstratum = false;
-//			model.normalForce = true;
-//			model.syntrophyFactor = 2.0;
-//			model.L.y 	= model.cellRadiusMax[4];
-//			model.Kd 	= 1e-13;
-//			model.Kc 	= 1e-9;
-//			model.Kw 	= 5e-10;
-//			model.Kr 	= 5e-11;
-//			model.Kf 	= 2e-11;
-//			model.Kan	= 1e-11;
-//			model.Ks 	= 1e-11;
-//			// Create cell colours
-//			double[][] colour = new double[][]{
-//					{1.0,0.7,0.7},
-//					{0.1,1.0,0.1},
-//					{0.1,0.1,0.4},
-//					{1.0,1.0,0.7},
-//					{0.1,1.0,1.0},
-//					{0.4,0.1,0.4},
-//					{0.4,0.1,0.1},
-//					{0.4,1.0,0.4},
-//					{0.1,0.1,1.0},
-//					{0.4,0.4,0.1},
-//					{0.4,1.0,1.0},
-//					{1.0,0.1,1.0}};
-			// Set initial positions
-//			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
-//			Vector3d[] position = new Vector3d[model.NInitCell];
-//			for(int ii=0; ii<position.length; ii++) {
-//				position[ii] = new Vector3d(
-//						(0.2*rand.Double()-0.1)*model.L.x,			// Anywhere between -0.1*Lx and 0.1*Lx
-//						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
-//						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
-//			}
 			
 			
 			

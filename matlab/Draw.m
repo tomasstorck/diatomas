@@ -4,38 +4,53 @@ n = 10;		% resolution of the sphere (lower = faster)
 
 [x,y,z] = sphere(n);		
 yshadow = zeros(size(y));
-
 % figure;
 hold on;
 
-% colour = [0.300000000000000,0.300000000000000,0.300000000000000;0.300000000000000,0.300000000000000,1;0.300000000000000,1,0.300000000000000;0.300000000000000,1,1;1,0.300000000000000,0.300000000000000;1,0.300000000000000,1;1,1,0.300000000000000;1,1,1;0.100000000000000,0.100000000000000,0.100000000000000;0.100000000000000,0.100000000000000,0.400000000000000;0.100000000000000,0.400000000000000,0.100000000000000;0.100000000000000,0.400000000000000,0.400000000000000;0.400000000000000,0.100000000000000,0.100000000000000;0.400000000000000,0.100000000000000,0.400000000000000;0.400000000000000,0.400000000000000,0.100000000000000];
+overlapArray = CheckOverlap(model.ballArray);
 
-for ii = 1:length(model.ballArray);
-	ball = model.ballArray(ii);
-	
-	% CONDITION
-%  	if ball.cellIndex== 6 || ball.cellIndex==13
-	%%%%%%%%%
+for iCell = 0:length(model.cellArray)-1;
+	C0 = zeros(n+1);
+	C1 = zeros(n+1);
 
-	% colour balls based on cellIndex
-	C=zeros(n+1)+ball.cellIndex;
+	cell = model.cellArray(iCell+1);
+	iBall0 = cell.ballArray(1);
+	ball0 = model.ballArray(iBall0+1);
+	if cell.type>1
+		iBall1 = cell.ballArray(2);
+		ball1 = model.ballArray(iBall1+1);
+	end
+		
+% 	% colour balls based on cellIndex
+% 	C0==zeros(n+1)+ball0.cellIndex;
+%	C1==zeros(n+1)+ball1.cellIndex;
 	
 % 	% colour balls based on ancestor's cellIndex
 % 	cii=-1;
-% 	for i=1:model.NInitCell
-% 		if all(model.cellArray(ball.cellIndex+1).colour == model.cellArray(i).colour);
+% 	for jCell=1:model.NInitCell
+% 		if all(cell.colour == model.cellArray(jCell).colour);
 % 			cii = i;
 % 			break;
 % 		end
 % 	end
-% 	C=zeros(n+1)+cii;
-		
-	%	  scale ball*x+x pos ball , ... , ...
-	surf(ball.radius*x+ball.pos(1),ball.radius*z+ball.pos(3),ball.radius*y+ball.pos(2),C);
+% 	C0=zeros(n+1)+cii;
+%	C1=C0;
 	
-	%%%%%%%%%
-%  	end
-	%%%%%%%%%
+	% colour balls based on collision or not
+	if any(any(iBall0==overlapArray))
+			C0 = zeros(n+1)+1;
+	end
+	if cell.type>1 && any(any(iBall1==overlapArray))
+			C1 = zeros(n+1)+1;
+	end
+	%
+	if cell.type>1
+		surf(ball0.radius*x+ball0.pos(1),ball0.radius*z+ball0.pos(3),ball0.radius*y+ball0.pos(2),C0);
+		surf(ball1.radius*x+ball1.pos(1),ball1.radius*z+ball1.pos(3),ball1.radius*y+ball1.pos(2),C1);
+		plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],'k');
+	else
+		surf(ball0.radius*x+ball0.pos(1),ball0.radius*z+ball0.pos(3),ball0.radius*y+ball0.pos(2),C0);
+	end
 end
 
 if model.normalForce
@@ -50,20 +65,8 @@ if model.normalForce
 	% Shadows
 	for ii = 1:length(model.ballArray);
 		ball = model.ballArray(ii);
-
-		% CONDITION
-	%  	if ball.cellIndex== 10 || ball.cellIndex==16
-		%%%%%%%%%
-
-		% colour balls based on cellIndex
 		C=zeros(n+1);
-
-		%	  scale ball*x+x pos ball , ... , ...
 		surf(ball.radius*x+ball.pos(1),ball.radius*z+ball.pos(3),ball.radius*yshadow,C);
-
-		%%%%%%%%%
-	%  	end
-		%%%%%%%%%
 	end
 end
 
