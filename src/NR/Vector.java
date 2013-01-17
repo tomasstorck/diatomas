@@ -1,4 +1,6 @@
 // Initial idea and part of the code based on Numerical Recipes, with more additions over the whole project
+// This function makes a vector as a list with variable size. It is very similar to a MATLAB vector, or an ArrayList<> in Java
+// It might be nice to rewrite the ODE code to utilise ArrayList<> instead of this.
 
 package NR;
 

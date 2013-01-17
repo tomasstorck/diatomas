@@ -20,6 +20,7 @@ import NR.StepperDopr853;
 import NR.Vector;
 import NR.Vector3d;
 import NR.feval;
+import NR.Common;
 import backbone.Assistant;
 
 public class CModel implements Serializable {
@@ -268,15 +269,6 @@ public class CModel implements Serializable {
 		}
 		return collisionCell;
 	}
-	/////////////////////////////////
-	// Ericson collision detection //
-	/////////////////////////////////
-	
-	private double Clamp(double n, double min, double max) {
-		if(n<min)	return min;
-		if(n>max) 	return max;
-		return n;
-	}
 		
 	// Collision detection rod-rod
 	public EricsonObject DetectLinesegLineseg(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {		// This is line segment - line segment collision detection. 
@@ -295,7 +287,7 @@ public class CModel implements Serializable {
 		// If segments are not parallel, compute closest point on L1 to L2 and clamp to segment S1, otherwise pick arbitrary s (=0)
 		double s;
 		if(denom!=0.0) {
-			s = Clamp((b*f-c*e) /  denom, 0.0, 1.0);
+			s = Common.Clamp((b*f-c*e) /  denom, 0.0, 1.0);
 		} else	s = 0.0;
 		// Compute point on L2 closest to S1(s) using t = ((P1+D1*s) - P2).dot(D2) / D2.dot(D2) = (b*s + f) / e
 		double t = (b*s + f) / e;
@@ -303,10 +295,10 @@ public class CModel implements Serializable {
 		// If t is in [0,1] done. Else Clamp(t), recompute s for the new value of t using s = ((P2+D2*t) - P1).dot(D1) / D1.dot(D1) = (t*b - c) / a and clamp s to [0,1]
 		if(t<0.0) {
 			t = 0.0;
-			s = Clamp(-c/a, 0.0, 1.0);
+			s = Common.Clamp(-c/a, 0.0, 1.0);
 		} else if (t>1.0) {
 			t = 1.0;
-			s = Clamp((b-c)/a, 0.0, 1.0);
+			s = Common.Clamp((b-c)/a, 0.0, 1.0);
 		}
 		
 		Vector3d c1 = p1.plus(d1.times(s));
@@ -327,7 +319,7 @@ public class CModel implements Serializable {
 		Vector3d w = p2.minus(p1);	//point-line
 		//Project c onto ab, computing parameterized position d(t) = a + t*(b-a)
 		double rpos = w.dot(ab)/ab.dot(ab);
-		//if outside segment, clamp t and therefore d to the closest endpoint
+		//if outside segment, clamp t and therefore d to the closest endpoint TODO
 		if ( rpos<0.0 ) rpos = 0.0;
 		if ( rpos>1.0 ) rpos = 1.0;
 		//compute projected position from the clamped t
@@ -439,7 +431,7 @@ public class CModel implements Serializable {
 			CCell cell0 = cellArray.get(iCell);
 			CBall c0b0 = cell0.ballArray[0];
 			// Base collision on the cell type
-			if(cell0.type<2) {											// cell0 is a ball
+			if(cell0.type<2) {												// cell0 is a ball
 				// Check for all remaining cells
 				for(int jCell=iCell+1; jCell<cellArray.size(); jCell++) {
 					CCell cell1 = cellArray.get(jCell);
@@ -447,12 +439,13 @@ public class CModel implements Serializable {
 					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dir = c0b0.pos.minus(c1b0.pos);
 					Vector3d dirn = dir.normalise();
-					if(cell1.type<2) {									// The other cell1 is a ball too
+					if(cell1.type<2) {										// The other cell1 is a ball too
 						double dist = dirn.norm();
 						// do a simple collision detection if close enough
 						if(dist<R2) {
 							// We have a collision
-							Vector3d Fs = dirn.times(Kc*(R2*1.01-dist));	// Add *1.01 to R2 to give an extra push at collisions (prevent asymptote at touching)
+							double d = Common.Clamp(R2-dist, 1e-3*R2, 1e-2*R2);	// d is the magnitude of the overlap vector, as defined in the IbM paper 
+							Vector3d Fs = dirn.times(Kc*d);
 							// Add forces
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
@@ -464,19 +457,20 @@ public class CModel implements Serializable {
 							CBall c1b1 = cell1.ballArray[1];
 							EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 							Vector3d dP = C.dP;
-							double dist = C.dist;						// Make distance more accurate
+							double dist = C.dist;							// Make distance more accurate
 							double sc = C.sc;
 							// Collision detection
 							if(dist<R2) {
-								double f = Kc/dist*(dist-R2*1.01);
+								double d = Common.Clamp(R2-dist, 1e-3*R2, 1e-2*R2);
+								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
 								// both balls in rod
-								c1b0.force = c1b0.force.minus(Fs.times(sc1));
-								c1b1.force = c1b1.force.minus(Fs.times(sc));
+								c1b0.force = c1b0.force.plus(Fs.times(sc1));
+								c1b1.force = c1b1.force.plus(Fs.times(sc));
 								// ball in sphere
-								c0b0.force = c0b0.force.plus(Fs);
+								c0b0.force = c0b0.force.minus(Fs);
 							}	
 						}
 					}
@@ -498,15 +492,16 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							// Collision detection
 							if(dist < R2) {
-								double f = Kc/dist*(dist-R2*1.01);
+								double d = Common.Clamp(R2-dist, 1e-3*R2, 1e-2*R2);
+								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
 								// both balls in rod
-								c0b0.force = c0b0.force.minus(Fs.times(sc1));
-								c0b1.force = c0b1.force.minus(Fs.times(sc));
+								c0b0.force = c0b0.force.plus(Fs.times(sc1));
+								c0b1.force = c0b1.force.plus(Fs.times(sc));
 								// ball in sphere
-								c1b0.force = c1b0.force.plus(Fs);
+								c1b0.force = c1b0.force.minus(Fs);
 							}	
 						}
 					} else {	// type>1 --> the other cell is a rod too. This is where it gets tricky
@@ -524,17 +519,18 @@ public class CModel implements Serializable {
 							double sc = C.sc;
 							double tc = C.tc;
 							if(dist<R2) {
-								double f = Kc/dist*(dist-R2*1.01);
+								double d = Common.Clamp(R2-dist, 1e-3*R2, 1e-2*R2);
+								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
 								double sc1 = 1-sc;
 								double tc1 = 1-tc;
 								// both balls in 1st rod
-								c0b0.force = c0b0.force.minus(Fs.times(sc1));
-								c0b1.force = c0b1.force.minus(Fs.times(sc));
+								c0b0.force = c0b0.force.plus(Fs.times(sc1));
+								c0b1.force = c0b1.force.plus(Fs.times(sc));
 								// both balls in 1st rod
-								c1b0.force = c1b0.force.plus(Fs.times(tc1));
-								c1b1.force = c1b1.force.plus(Fs.times(tc));
+								c1b0.force = c1b0.force.minus(Fs.times(tc1));
+								c1b1.force = c1b1.force.minus(Fs.times(tc));
 							}
 						}
 					}

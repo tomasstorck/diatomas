@@ -1,3 +1,5 @@
+// This function is NOT AT ALL like Vector.java. This is a vector as you would encounter in linear algebra, i.e. a collection of three dimensional locations [x, y, z]. 
+
 package NR;
 
 import java.io.Serializable;
