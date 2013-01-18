@@ -22,12 +22,16 @@ public class ser2mat {
 		mlModel.setField("stickRodRod",                   new MLDouble(null, new double[] {model.stickRodRod?1:0}, 1));                   	
 		mlModel.setField("anchoring",                     new MLDouble(null, new double[] {model.anchoring?1:0}, 1));                     	
 		mlModel.setField("filament",                      new MLDouble(null, new double[] {model.filament?1:0}, 1));                      	
+		mlModel.setField("filSphere",                     new MLDouble(null, new double[] {model.filSphere?1:0}, 1));                     	
+		mlModel.setField("filRod",                        new MLDouble(null, new double[] {model.filRod?1:0}, 1));                        	
 		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
 		mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      	
 		mlModel.setField("sphereStraightFil",             new MLDouble(null, new double[] {model.sphereStraightFil?1:0}, 1));             	// Make streptococci-like structures if true, otherwise staphylococci
 		mlModel.setField("normalForce",                   new MLDouble(null, new double[] {model.normalForce?1:0}, 1));                   	// Use normal force to simulate cells colliding with substratum (at y=0)
 		mlModel.setField("initialAtSubstratum",           new MLDouble(null, new double[] {model.initialAtSubstratum?1:0}, 1));           	// All initial balls are positioned at y(t=0) = ball.radius
 		mlModel.setField("syntrophyFactor",               new MLDouble(null, new double[] {model.syntrophyFactor}, 1));                   	// Accelerated growth if two cells of different types are stuck to each other
+		mlModel.setField("allowOverlapDuringGrowth",      new MLDouble(null, new double[] {model.allowOverlapDuringGrowth?1:0}, 1));      	// If growth can occur despite cells overlapping
+		mlModel.setField("colour",                        new MLDouble(null, model.colour));                                              
 		// Domain properties
 		mlModel.setField("G",                             new MLDouble(null, new double[] {model.G}, 1));                                 	// [m/s2], acceleration due to gravity
 		mlModel.setField("rhoWater",                      new MLDouble(null, new double[] {model.rhoWater}, 1));                          	// [kg/m3], density of bulk liquid (water)
@@ -48,6 +52,7 @@ public class ser2mat {
 		mlModel.setField("stretchLimStick",               new MLDouble(null, new double[] {model.stretchLimStick}, 1));                   	// Maximum tension for sticking springs
 		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {model.formLimStick}, 1));                      	// Multiplication factor for rest length to form sticking springs.
 		mlModel.setField("stretchLimFil",                 new MLDouble(null, new double[] {model.stretchLimFil}, 1));                     	// Maximum tension for sticking springs
+		mlModel.setField("limOverlap",                    new MLDouble(null, model.limOverlap, model.limOverlap.length));                 	// The boundaries of the magnitude of overlap vector d. It will be Clamp() to these limits times R2 (stick) or R (anchor)
 		// Model biomass properties
 		mlModel.setField("NXComp",                        new MLDouble(null, new double[] {model.NXComp}, 1));                            	// Types of biomass
 		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {model.NdComp}, 1));                            	// d for dynamic compound (e.g. total Ac)
@@ -60,7 +65,8 @@ public class ser2mat {
 		mlModel.setField("cellRadiusMax",                 new MLDouble(null, model.cellRadiusMax, model.cellRadiusMax.length));           	
 		mlModel.setField("cellLengthMax",                 new MLDouble(null, model.cellLengthMax, model.cellLengthMax.length));           	
 		mlModel.setField("nCellMax",                      new MLDouble(null, model.nCellMax, model.nCellMax.length));                     	
-		mlModel.setField("muAvgSimple",                   new MLDouble(null, model.muAvgSimple, model.muAvgSimple.length));               	// 0.33 == doubling every 20 minutes. Only used in GrowthSimple!
+		mlModel.setField("muAvgSimple",                   new MLDouble(null, model.muAvgSimple, model.muAvgSimple.length));               	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
+		mlModel.setField("rateAttachment",                new MLDouble(null, new double[] {model.rateAttachment}, 1));                    	// [h-1] Number of cells newly attached per hour
 		// Progress
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {model.growthTime}, 1));                        	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {model.growthTimeStep}, 1));                    	// [s] Time step for growth

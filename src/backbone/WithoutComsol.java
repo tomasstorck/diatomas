@@ -39,20 +39,6 @@ public class WithoutComsol {
 //			model.Kf 	= 2e-11;
 //			model.Kan	= 1e-11;
 //			model.Ks 	= 1e-11;
-//			// Create cell colours
-//			double[][] colour = new double[][]{
-//					{1.0,0.7,0.7},
-//					{0.1,1.0,0.1},
-//					{0.1,0.1,0.4},
-//					{1.0,1.0,0.7},
-//					{0.1,1.0,1.0},
-//					{0.4,0.1,0.4},
-//					{0.4,0.1,0.1},
-//					{0.4,1.0,0.4},
-//					{0.1,0.1,1.0},
-//					{0.4,0.4,0.1},
-//					{0.4,1.0,1.0},
-//					{1.0,0.1,1.0}};
 //			// Set initial positions
 //			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
 //			Vector3d[] position = new Vector3d[model.NInitCell];
@@ -66,11 +52,12 @@ public class WithoutComsol {
 			/////////////
 			// DENTAL  //
 			/////////////
+			model.randomSeed = 3;
 			model.cellRadiusMax[0] = 0.25e-6 * 1.25;
 			model.muAvgSimple[0] = 0.33;
 			model.cellRadiusMax[4] = 0.25e-6;
 			model.cellLengthMax[4] = 2.5e-6;
-			model.muAvgSimple[4] = 0.33;
+			model.muAvgSimple[4] = 0.15;
 			model.UpdateAmountCellMax();
 			model.NInitCell = 6;
 			int[] type = new int[]{4,4,4,0,0,0};
@@ -81,7 +68,6 @@ public class WithoutComsol {
 			model.filament = true;
 			model.filSphere = false;
 			model.anchoring = false;
-			model.gravity = false;
 			model.initialAtSubstratum = false;
 			model.normalForce = true;
 			model.limOverlap = new double[]{5e-3, 1e-2};
@@ -94,20 +80,9 @@ public class WithoutComsol {
 			model.Kf 	= 2e-11;
 			model.Kan	= 1e-11;
 			model.Ks 	= 1e-11;
-			// Create cell colours
-			double[][] colour = new double[][]{
-					{1.0,0.7,0.7},
-					{0.1,1.0,0.1},
-					{0.1,0.1,0.4},
-					{1.0,1.0,0.7},
-					{0.1,1.0,1.0},
-					{0.4,0.1,0.4},
-					{0.4,0.1,0.1},
-					{0.4,1.0,0.4},
-					{0.1,0.1,1.0},
-					{0.4,0.4,0.1},
-					{0.4,1.0,1.0},
-					{1.0,0.1,1.0}};
+			model.allowOverlapDuringGrowth = true;
+			model.relaxationTimeStep *= 2.0;
+			model.relaxationTimeStepEnd *= 2.0;
 			// Set initial positions
 			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
 			Vector3d[] position = new Vector3d[model.NInitCell];
@@ -135,7 +110,7 @@ public class WithoutComsol {
 			// Create initial cells, not overlapping
 			rand.Seed(model.randomSeed);							// Reinitialise random seed, below shouldn't depend on positions above
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				double n = model.nCellMax[type[iCell]]/2.0+(model.nCellMax[type[iCell]]/2.0)*rand.Double();
+				double n = 0.5 * model.nCellMax[type[iCell]] * (1.0 + rand.Double());
 				boolean filament = false;
 				if(model.filament) {
 					if(type[iCell]<2) {
@@ -153,7 +128,7 @@ public class WithoutComsol {
 						position[iCell].y,
 						position[iCell].z,
 						filament,									// With capability to form filaments?
-						colour[iCell],
+						model.colour[iCell],
 						model);
 				// Set cell boundary concentration to initial value
 				cell.q = 0.0;
@@ -175,12 +150,16 @@ public class WithoutComsol {
 			}
 			model.Write(model.cellArray.size() + " initial non-overlapping cells created","iter");
 			model.Write((NSpring[1]-NSpring[0]) + " anchor and " + (NSpring[3]-NSpring[2]) + " sticking springs formed", "iter");
+			
+			// Try to save and convert the file
+			model.Save();
+			ser2mat.Convert(model);	
 		}
 		
-		model.Save();
-		ser2mat.Convert(model);
+		boolean allowGrowth;
+		if(model.allowOverlapDuringGrowth || model.DetectCellCollision_Proper(1.0).isEmpty())	allowGrowth = true;
+		else 	allowGrowth=false;
 		
-		boolean overlap = model.DetectCellCollision_Proper(1.0).isEmpty() ? false : true;
 		while(true) {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.relaxationIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
@@ -188,7 +167,7 @@ public class WithoutComsol {
 			// COMSOL was here
 			
 			// Grow cells
-			if(!overlap) {
+			if(allowGrowth) {
 				model.Write("Growing cells", "iter");
 				ArrayList<CCell> dividedCellArray = model.GrowthSimple();
 				
@@ -210,6 +189,11 @@ public class WithoutComsol {
 					fil.ResetRestLength();
 				}
 			}
+			
+			// Attach new cells
+			final int NNew = (int) (model.growthTimeStep/3600.0 * model.rateAttachment);
+			model.Write("Attaching " + NNew + " new cells", "iter");
+			model.Attachment(NNew);
 			
 			// Below code is only required if sticking/anchoring is not done in the ODE solver
 //			if(model.anchoring) {
@@ -251,14 +235,14 @@ public class WithoutComsol {
 			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
-			if(!overlapCellArray.isEmpty()) {
+			if(model.allowOverlapDuringGrowth || overlapCellArray.isEmpty()) {
+				allowGrowth = true;
+			} else {
 				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
 				String cellNumber = "" + overlapCellArray.get(0).Index();
 				for(int ii=1; ii<overlapCellArray.size(); ii++) 	cellNumber += ", " + overlapCellArray.get(ii).Index();
 				model.Write("Cells overlapping: " + cellNumber,"iter");
-				overlap = true;
-			} else {
-				overlap = false;
+				allowGrowth = false;
 			}
 
 			// And finally: save stuff

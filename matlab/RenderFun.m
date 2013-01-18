@@ -52,11 +52,11 @@ if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iterat
 			if horRangeNew > vertRangeNew*aspect
 				horRange = horRangeNew;
 				vertRange = horRangeNew/aspect;
-				right = 2*horRange;						% From which we'll derive up vector
+				right = 2*horRange+0.5;						% From which we'll derive up vector
 			else
 				horRange = vertRangeNew*aspect;
 				vertRange = vertRangeNew;
-				right = 2*vertRange*aspect;				% From which we'll derive up vector
+				right = 2*vertRange*aspect+0.5;				% From which we'll derive up vector
 			end
 		end
 	end

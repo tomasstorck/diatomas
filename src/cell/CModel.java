@@ -44,6 +44,20 @@ public class CModel implements Serializable {
 	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
 	public double syntrophyFactor = 1.0; 	// Accelerated growth if two cells of different types are stuck to each other
+	public boolean allowOverlapDuringGrowth = false;	// If growth can occur despite cells overlapping
+	public double[][] colour = new double[][]{
+			{1.0,0.7,0.7},
+			{0.1,1.0,0.1},
+			{0.1,0.1,0.4},
+			{1.0,1.0,0.7},
+			{0.1,1.0,1.0},
+			{0.4,0.1,0.4},
+			{0.4,0.1,0.1},
+			{0.4,1.0,0.4},
+			{0.1,0.1,1.0},
+			{0.4,0.4,0.1},
+			{0.4,1.0,1.0},
+			{1.0,0.1,1.0}};
 	// Domain properties
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
@@ -75,7 +89,8 @@ public class CModel implements Serializable {
 	public double[] cellRadiusMax = {0.125e-6,	0.5e-6, 	0.125e-6, 	0.375e-6, 	0.125e-6, 	0.375e-6};
 	public double[] cellLengthMax = {0.0,		0.0,		1e-6,		1.5e-6,		1e-6,		1.5e-6};
 	public double[] nCellMax =	new double[6];
-	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// 0.33 == doubling every 20 minutes. Only used in GrowthSimple!
+	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
+	public int rateAttachment = 12;				// [h-1] Number of cells newly attached per hour 
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
@@ -758,16 +773,16 @@ public class CModel implements Serializable {
 			double amount = mother.GetAmount();
 
 			// Random growth, with syntrophy if required
-			double mu = muAvgSimple[mother.type] + (rand.Double()-0.5)/5.0;					// Come up with a mu for this cell, this iteration, between 0.95 and 1.15
-			double syntrophyAcceleration = 1.0;
+			double mu = muAvgSimple[mother.type] + (rand.Double()-0.5)/5.0;					// Come up with a mu for this cell, this iteration
+			double growthAcceleration = 1.0;
 			for(CCell stickCell : mother.stickCellArray) {
 				if(mother.type != stickCell.type) {
 					// The cell types are different on the other end of the spring
-					syntrophyAcceleration *= syntrophyFactor;
+					growthAcceleration *= syntrophyFactor;
 					break;
 				}
 			}
-			amount *= Math.exp(mu*syntrophyAcceleration*growthTimeStep/3600.0);							// We need growthTimeStep s-1 --> h-1
+			amount *= Math.exp(mu*growthAcceleration*growthTimeStep/3600.0);							// We need growthTimeStep s-1 --> h-1
 
 			// Syntrophic growth for sticking cells
 			mother.SetAmount(amount);
@@ -965,6 +980,50 @@ public class CModel implements Serializable {
 			throw new IndexOutOfBoundsException("Cell type: " + c0.type);
 		}
 		return c1;
+	}
+	
+	public void Attachment(int NNew) {
+		for(int iA=0; iA<NNew; iA++) {
+			// Define the cell we will attach
+			int typeNew = 0; 
+			double nNew = 0.5 * nCellMax[typeNew] * (1.0 + rand.Double());
+			boolean filNew = filament && filSphere;
+			double[] colourNew = colour[NInitCell];			// Choose a colour not chosen for initial cell creation  
+			CCell cellNew = new CCell(0, nNew, 0.0, 0.0, 0.0, filNew, colourNew, this);
+			double rNew = cellNew.ballArray[0].radius; 
+			// Find P based on random ball for first point
+			CBall PBall = ballArray.get(rand.Int(ballArray.size()-1));
+			Vector3d P = PBall.pos;
+			// Find dirn, any direction away from P (including below substratum TODO)
+			Vector3d dirn = new Vector3d(rand.Double()-0.5, rand.Double()-0.5, rand.Double()-0.5).normalise();
+			// Check how far all balls are from P and in the correct dirn. Also select our winner
+			CBall championBall = PBall;
+			double championDist = 0.0;
+			for(CBall ball : ballArray) {
+				// Find Q, the vector pointing to ball.pos from P
+				Vector3d Q = ball.pos.minus(P);
+				// Is Q interesting enough to further analyse or already too far away?
+				double dotQdirn = Q.dot(dirn);
+				if(dotQdirn<0)		continue;				// Wrong direction: angle between Q and dirn >90 degrees
+				// Project Q onto dirn
+				Vector3d projQ = dirn.times(dotQdirn);		// Vector projection of vector Q onto dirn. dirn is already normalised, so no need to divide over dirn.norm()
+				// Check if Q is close enough to dirn to touch by analysing the vector R, from projection to Q
+				Vector3d R = Q.minus(projQ);
+				if( R.norm() < rNew+ball.radius ) {
+					// Good, if it would be lowered from dirn to P it would collide with ball. 
+					// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from P is the largest yet
+					if(projQ.norm() > championDist) {
+						// Set new record, state this is our current champion
+						championDist = projQ.norm();
+						championBall = ball; 
+					}
+				}
+			}
+			// Position the new cell to this champion ball. Position it in the direction of dirn
+			Vector3d posNew = P.plus(dirn.times(rNew + championBall.radius));
+			cellNew.ballArray[0].pos = posNew;
+			// It will stick/anchor when needed during movement, so we're done
+		}
 	}
 	
 	////////////////////////////
