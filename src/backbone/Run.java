@@ -20,19 +20,56 @@ public class Run {
 		if(model.growthIter==0 && model.relaxationIter==0) {
 			// Set parameters. This overwrites both CModel and supplied arguments
 			
+			/////////////
+			// E. COLI //
+			/////////////
+			int[] type = new int[]{4,4,4};
+			model.cellRadiusMax[4] = 0.25e-6;
+			model.cellLengthMax[4] = 2.5e-6;
+			model.UpdateAmountCellMax();
+			model.NInitCell = 3;
+			double restLength = 0.75*model.cellLengthMax[4];			// 0.75 is a fair estimate
+			Vector3d[] direction = new Vector3d[]{
+					new Vector3d(0.3,		0.0,					0.2).normalise(),
+					new Vector3d(1.0,		0.0,					-0.2).normalise(),
+					new Vector3d(-0.5,		0.0,					1.0).normalise()};
+			Vector3d[] position0 = new Vector3d[]{
+					new Vector3d(0.6e-6,	model.cellRadiusMax[4],	-0.2e-6),
+					new Vector3d(-0.5e-6,	model.cellRadiusMax[4],	-0.1e-6),
+					new Vector3d(0.1e-6,	model.cellRadiusMax[4],	0.3e-6)};
+			Vector3d[] position1 = new Vector3d[]{
+					position0[0].plus(direction[0].times(restLength)),
+					position0[1].plus(direction[1].times(restLength)),
+					position0[2].plus(direction[2].times(restLength))};
+			model.muAvgSimple[4] = 0.33;
+			model.sticking = false;
+			model.filament = false;
+			model.gravity = false;
+			model.initialAtSubstratum = true;
+			model.normalForce = true;
+			model.limOverlap = new double[]{5e-3, 1e-2};
+			model.Kd 	= 1e-13;
+			model.Kc 	= 1e-9;
+			model.Kw 	= 5e-10;
+			model.Kr 	= 5e-11;
+			model.Kf 	= 2e-11;
+			model.Kan	= 1e-11;
+			model.Ks 	= 1e-11;
+			
 //			/////////////
-//			// E. COLI //
+//			// DENTAL  //
 //			/////////////
-//			int[] type = new int[]{4,4,4};
+//			int[] type = new int[]{4,4,4,0,0,0};
+//			model.cellRadiusMax[0] = 0.25e-6 * 1.25;
 //			model.cellRadiusMax[4] = 0.25e-6;
 //			model.cellLengthMax[4] = 2.5e-6;
 //			model.UpdateAmountCellMax();
-//			model.NInitCell = 3;
+//			model.NInitCell = 6;
 //			double restLength = 0.75*model.cellLengthMax[4];			// 0.75 is a fair estimate
 //			Vector3d[] direction = new Vector3d[]{
-//					new Vector3d(0.3,		0.0,					0.2).normalise(),
-//					new Vector3d(1.0,		0.0,					-0.2).normalise(),
-//					new Vector3d(-0.5,		0.0,					1.0).normalise()};
+//					new Vector3d(0.3,		1.0,					0.2).normalise(),
+//					new Vector3d(1.0,		0.1,					-0.2).normalise(),
+//					new Vector3d(-0.5,		0.4,					1.0).normalise()};
 //			Vector3d[] position0 = new Vector3d[]{
 //					new Vector3d(0.6e-6,	model.cellRadiusMax[4],	-0.2e-6),
 //					new Vector3d(-0.5e-6,	model.cellRadiusMax[4],	-0.1e-6),
@@ -47,13 +84,16 @@ public class Run {
 //					new Vector3d(),
 //					new Vector3d(),
 //					new Vector3d()};
-//			model.muAvgSimple[4] = 0.33;
-//			model.sticking = false;
-//			model.filament = false;
-//			model.gravity = false;
-//			model.initialAtSubstratum = true;
+//			model.muAvgSimple[0] = 0.33;
+//			model.muAvgSimple[4] = 0.15;
+//			model.sticking = true;
+//			model.stickRodRod = false;
+//			model.stickSphereSphere = false;
+//			model.filament = true;
+//			model.filSphere = false;
+//			model.anchoring = false;
+//			model.initialAtSubstratum = false;
 //			model.normalForce = true;
-//			model.limOverlap = new double[]{1e-3, 1e-2};
 //			model.Kd 	= 1e-13;
 //			model.Kc 	= 1e-9;
 //			model.Kw 	= 5e-10;
@@ -61,60 +101,14 @@ public class Run {
 //			model.Kf 	= 2e-11;
 //			model.Kan	= 1e-11;
 //			model.Ks 	= 1e-11;
+//			model.allowOverlapDuringGrowth = true;
+//			model.relaxationTimeStep *= 2.0;
+//			model.relaxationTimeStepEnd *= 2.0;
+//			model.limOverlap = new double[]{5e-3, 1e-2};
+//			model.syntrophyFactor = 2.0;
+//			model.attachmentRate = 3.0;
 			
-			/////////////
-			// DENTAL  //
-			/////////////
-			int[] type = new int[]{4,4,4,0,0,0};
-			model.cellRadiusMax[0] = 0.25e-6 * 1.25;
-			model.cellRadiusMax[4] = 0.25e-6;
-			model.cellLengthMax[4] = 2.5e-6;
-			model.UpdateAmountCellMax();
-			model.NInitCell = 6;
-			double restLength = 0.75*model.cellLengthMax[4];			// 0.75 is a fair estimate
-			Vector3d[] direction = new Vector3d[]{
-					new Vector3d(0.3,		1.0,					0.2).normalise(),
-					new Vector3d(1.0,		0.1,					-0.2).normalise(),
-					new Vector3d(-0.5,		0.4,					1.0).normalise()};
-			Vector3d[] position0 = new Vector3d[]{
-					new Vector3d(0.6e-6,	model.cellRadiusMax[4],	-0.2e-6),
-					new Vector3d(-0.5e-6,	model.cellRadiusMax[4],	-0.1e-6),
-					new Vector3d(0.1e-6,	model.cellRadiusMax[4],	0.3e-6),
-					new Vector3d(0.4e-6,	model.cellRadiusMax[0],	0.4e-6),
-					new Vector3d(-0.3e-6,	model.cellRadiusMax[0],	-0.3e-6),
-					new Vector3d(0.0e-6,	model.cellRadiusMax[0],	0.0e-6)};
-			Vector3d[] position1 = new Vector3d[]{
-					position0[0].plus(direction[0].times(restLength)),
-					position0[1].plus(direction[1].times(restLength)),
-					position0[2].plus(direction[2].times(restLength)),
-					new Vector3d(),
-					new Vector3d(),
-					new Vector3d()};
-			model.muAvgSimple[0] = 0.33;
-			model.muAvgSimple[4] = 0.15;
-			model.sticking = true;
-			model.stickRodRod = false;
-			model.stickSphereSphere = false;
-			model.filament = true;
-			model.filSphere = false;
-			model.anchoring = false;
-			model.initialAtSubstratum = false;
-			model.normalForce = true;
-			model.Kd 	= 1e-13;
-			model.Kc 	= 1e-9;
-			model.Kw 	= 5e-10;
-			model.Kr 	= 5e-11;
-			model.Kf 	= 2e-11;
-			model.Kan	= 1e-11;
-			model.Ks 	= 1e-11;
-			model.allowOverlapDuringGrowth = true;
-			model.relaxationTimeStep *= 2.0;
-			model.relaxationTimeStepEnd *= 2.0;
-			model.limOverlap = new double[]{5e-3, 1e-2};
-			model.syntrophyFactor = 2.0;
-			model.attachmentRate = 3.0;
-			
-			// Create initial cells, not overlapping
+			// Create initial cells
 			rand.Seed(model.randomSeed);							// Reinitialise random seed, below shouldn't depend on positions above
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				double n = 0.5 * model.nCellMax[type[iCell]] * (1.0 + rand.Double());
@@ -127,19 +121,17 @@ public class Run {
 				@SuppressWarnings("unused")
 				CCell cell = new CCell(type[iCell], 				// Type of biomass
 						n,											// Initial cell mass is random between initial and max
-						position0[iCell].x,
-						position0[iCell].y,
-						position0[iCell].z,
-						position1[iCell].x,
-						position1[iCell].y,
-						position1[iCell].z,
+						position0[iCell],
+						position1[iCell],
 						filament,									// With capability to form filaments?
 						model.colour[iCell],
 						model);
+				// Lower balls to substratum if needed
+				if(model.initialAtSubstratum)		for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
 			}
 			model.Write(model.cellArray.size() + " initial cells created","iter");
 			
-			// Try to save and convert the file
+			// Save and convert the file
 			model.Save();
 			ser2mat.Convert(model);	
 			
@@ -152,9 +144,8 @@ public class Run {
 			}
 		}
 		
-		boolean allowGrowth;
+		boolean allowGrowth = false;
 		if(model.allowOverlapDuringGrowth || model.DetectCellCollision_Proper(1.0).isEmpty())	allowGrowth = true;
-		else 	allowGrowth=false;
 		
 		while(true) {
 			// Reset the random seed
@@ -210,7 +201,7 @@ public class Run {
 				if(dividedCellArray.size()>0) {
 					String cellNumber = "" + dividedCellArray.get(0).Index();
 					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
-					model.Write(dividedCellArray.size() + " new cells grown, total " + model.cellArray.size() + " cells","iter");
+					model.Write(dividedCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
 					model.Write("Cells grown: " + cellNumber,"iter");
 				}
 				// Reset springs where needed

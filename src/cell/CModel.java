@@ -341,8 +341,7 @@ public class CModel implements Serializable {
 		//Project c onto ab, computing parameterized position d(t) = a + t*(b-a)
 		double rpos = w.dot(ab)/ab.dot(ab);
 		//if outside segment, clamp t and therefore d to the closest endpoint TODO
-		if ( rpos<0.0 ) rpos = 0.0;
-		if ( rpos>1.0 ) rpos = 1.0;
+		rpos = Common.Clamp(rpos, 0.0, 1.0);
 		//compute projected position from the clamped t
 		Vector3d d = p1.plus(ab.times(rpos));
 		//calculate the vector p2 --> d
