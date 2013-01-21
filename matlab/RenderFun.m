@@ -12,6 +12,10 @@ stickColour = [1 .1 1];		% Sticking spring is purple
 anchorColour = [.4 .4 .1];		% Anchoring spring is yellow
 
 NSave = length(model.ballArray(1).posSave);
+if model.relaxationIter==0 && model.growthIter==0
+	NSave = 0;
+end
+	
 if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iteration or when none exists, find a proper angle
 	% Create camera, background and lighting based on L
 	%%%%%%%%
@@ -342,7 +346,7 @@ for ii=0:NSave			% Can be replaced with parfor
 	else
 		remove = ['rm ' povName{ii+1}];
 	end
-	[~,~] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
+	[~,message] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
 	% Append text for relaxation and growth
 	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStepEnd+ii*model.relaxationTimeStep)  imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 % 	% Append scale bar

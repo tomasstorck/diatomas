@@ -72,7 +72,7 @@ public class Interface{
 			if(arg.equalsIgnoreCase("gravityz")) 			{model.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("growthTimeStep"))		{model.growthTimeStep = Double.parseDouble(args[ii+1]);							continue;}
 			if(arg.equalsIgnoreCase("initialatsubstratum")) {model.initialAtSubstratum = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
-			if(arg.equalsIgnoreCase("relaxationtimeStep"))	{model.relaxationTimeStep = Double.parseDouble(args[ii+1]);						continue;}
+			if(arg.equalsIgnoreCase("relaxationtimeStep"))	{model.relaxationTimeStepdt = Double.parseDouble(args[ii+1]);						continue;}
 			if(arg.equalsIgnoreCase("normalforce"))			{model.normalForce = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}			
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
 			if(arg.equalsIgnoreCase("seed")) 				{model.randomSeed = Integer.parseInt(args[ii+1]);								continue;}

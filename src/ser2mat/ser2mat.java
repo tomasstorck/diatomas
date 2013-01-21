@@ -12,33 +12,33 @@ public class ser2mat {
 		int N;
 		double[] arrayIndex;
 		// Set serializable information
-		// Model properties
+		// Model miscellaneous settings
 		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, model.name.length()));              	
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	
+		mlModel.setField("colour",                        new MLDouble(null, model.colour));                                              
 		mlModel.setField("comsol",                        new MLDouble(null, new double[] {model.comsol?1:0}, 1));                        	
+		// --> Sticking
 		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	
 		mlModel.setField("stickSphereSphere",             new MLDouble(null, new double[] {model.stickSphereSphere?1:0}, 1));             	
 		mlModel.setField("stickSphereRod",                new MLDouble(null, new double[] {model.stickSphereRod?1:0}, 1));                	
 		mlModel.setField("stickRodRod",                   new MLDouble(null, new double[] {model.stickRodRod?1:0}, 1));                   	
 		mlModel.setField("anchoring",                     new MLDouble(null, new double[] {model.anchoring?1:0}, 1));                     	
+		// --> Filaments
 		mlModel.setField("filament",                      new MLDouble(null, new double[] {model.filament?1:0}, 1));                      	
+		mlModel.setField("sphereStraightFil",             new MLDouble(null, new double[] {model.sphereStraightFil?1:0}, 1));             	// Make streptococci-like structures if true, otherwise staphylococci
 		mlModel.setField("filSphere",                     new MLDouble(null, new double[] {model.filSphere?1:0}, 1));                     	
 		mlModel.setField("filRod",                        new MLDouble(null, new double[] {model.filRod?1:0}, 1));                        	
 		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
 		mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      	
-		mlModel.setField("sphereStraightFil",             new MLDouble(null, new double[] {model.sphereStraightFil?1:0}, 1));             	// Make streptococci-like structures if true, otherwise staphylococci
+		// --> Substratum
 		mlModel.setField("normalForce",                   new MLDouble(null, new double[] {model.normalForce?1:0}, 1));                   	// Use normal force to simulate cells colliding with substratum (at y=0)
 		mlModel.setField("initialAtSubstratum",           new MLDouble(null, new double[] {model.initialAtSubstratum?1:0}, 1));           	// All initial balls are positioned at y(t=0) = ball.radius
-		mlModel.setField("syntrophyFactor",               new MLDouble(null, new double[] {model.syntrophyFactor}, 1));                   	// Accelerated growth if two cells of different types are stuck to each other
-		mlModel.setField("allowOverlapDuringGrowth",      new MLDouble(null, new double[] {model.allowOverlapDuringGrowth?1:0}, 1));      	// If growth can occur despite cells overlapping
-		mlModel.setField("colour",                        new MLDouble(null, model.colour));                                              
 		// Domain properties
 		mlModel.setField("G",                             new MLDouble(null, new double[] {model.G}, 1));                                 	// [m/s2], acceleration due to gravity
 		mlModel.setField("rhoWater",                      new MLDouble(null, new double[] {model.rhoWater}, 1));                          	// [kg/m3], density of bulk liquid (water)
 		mlModel.setField("rhoX",                          new MLDouble(null, new double[] {model.rhoX}, 1));                              	// [kg/m3], diatoma density
 		mlModel.setField("MWX",                           new MLDouble(null, new double[] {model.MWX}, 1));                               	// [kg/mol], composition CH1.8O0.5N0.2
 		// Spring constants and drag ceoefficient
-		// Fast simulations/poor gravity
 		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
 		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// cell-cell collision
 		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall(substratum)-cell spring
@@ -52,7 +52,7 @@ public class ser2mat {
 		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {model.formLimStick}, 1));                      	// Multiplication factor for rest length to form sticking springs.
 		mlModel.setField("stretchLimFil",                 new MLDouble(null, new double[] {model.stretchLimFil}, 1));                     	// Maximum tension for sticking springs
 		mlModel.setField("limOverlap",                    new MLDouble(null, model.limOverlap, model.limOverlap.length));                 	// The boundaries of the magnitude of overlap vector d. It will be Clamp() to these limits times R2 (stick) or R (anchor)
-		// Model biomass properties
+		// Model biomass and growth properties
 		mlModel.setField("NXComp",                        new MLDouble(null, new double[] {model.NXComp}, 1));                            	// Types of biomass
 		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {model.NdComp}, 1));                            	// d for dynamic compound (e.g. total Ac)
 		mlModel.setField("NcComp",                        new MLDouble(null, new double[] {model.NcComp}, 1));                            	// c for concentration (or virtual compound, e.g. Ac-)
@@ -68,13 +68,15 @@ public class ser2mat {
 		mlModel.setField("muSpread",                      new MLDouble(null, new double[] {model.muSpread}, 1));                          	// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!
 		mlModel.setField("attachmentRate",                new MLDouble(null, new double[] {model.attachmentRate}, 1));                    	// [h-1] Number of cells newly attached per hour
 		mlModel.setField("attachmentStack",               new MLDouble(null, new double[] {model.attachmentStack}, 1));                   	// How many cells should be attached at the next growth iteration
+		mlModel.setField("syntrophyFactor",               new MLDouble(null, new double[] {model.syntrophyFactor}, 1));                   	// Accelerated growth if two cells of different types are stuck to each other
+		mlModel.setField("allowOverlapDuringGrowth",      new MLDouble(null, new double[] {model.allowOverlapDuringGrowth?1:0}, 1));      	// If growth can occur despite cells overlapping
 		// Progress
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {model.growthTime}, 1));                        	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {model.growthTimeStep}, 1));                    	// [s] Time step for growth
 		mlModel.setField("growthIter",                    new MLDouble(null, new double[] {model.growthIter}, 1));                        	// [-] Counter time iterations for growth
 		mlModel.setField("relaxationTime",                new MLDouble(null, new double[] {model.relaxationTime}, 1));                    	// [s] initial time for relaxation (for ODE solver)
-		mlModel.setField("relaxationTimeStep",            new MLDouble(null, new double[] {model.relaxationTimeStep}, 1));                	// [s] output time step  for relaxation
-		mlModel.setField("relaxationTimeStepEnd",         new MLDouble(null, new double[] {model.relaxationTimeStepEnd}, 1));             	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
+		mlModel.setField("relaxationTimeStepdt",          new MLDouble(null, new double[] {model.relaxationTimeStepdt}, 1));              	// [s] output time step  for relaxation
+		mlModel.setField("relaxationTimeStep",            new MLDouble(null, new double[] {model.relaxationTimeStep}, 1));                	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
 		mlModel.setField("relaxationIter",                new MLDouble(null, new double[] {model.relaxationIter}, 1));                    	// [-] counter time iterations for relaxation
 		// Arrays
 

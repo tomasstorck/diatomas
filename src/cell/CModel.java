@@ -25,25 +25,9 @@ import backbone.Assistant;
 public class CModel implements Serializable {
 	// Set serializable information
 	private static final long serialVersionUID = 1L;
-	// Model properties
+	// Model miscellaneous settings
 	public String name = "default";
 	public int randomSeed = 1;
-	public boolean comsol = false;
-	public boolean sticking = true;
-	public boolean stickSphereSphere = true;
-	public boolean stickSphereRod = true;
-	public boolean stickRodRod = true;
-	public boolean anchoring = false;
-	public boolean filament = false;
-	public boolean filSphere = true;
-	public boolean filRod = true;
-	public boolean gravity = false;
-	public boolean gravityZ = false;
-	public boolean sphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci
-	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
-	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
-	public double syntrophyFactor = 1.0; 	// Accelerated growth if two cells of different types are stuck to each other
-	public boolean allowOverlapDuringGrowth = false;	// If growth can occur despite cells overlapping
 	public double[][] colour = new double[][]{
 			{1.0,0.7,0.7},
 			{0.1,1.0,0.1},
@@ -57,13 +41,29 @@ public class CModel implements Serializable {
 			{0.4,0.4,0.1},
 			{0.4,1.0,1.0},
 			{1.0,0.1,1.0}};
+	public boolean comsol = false;
+	// --> Sticking
+	public boolean sticking = true;
+	public boolean stickSphereSphere = true;
+	public boolean stickSphereRod = true;
+	public boolean stickRodRod = true;
+	public boolean anchoring = false;
+	// --> Filaments
+	public boolean filament = false;
+	public boolean sphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci
+	public boolean filSphere = true;
+	public boolean filRod = true;
+	public boolean gravity = false;
+	public boolean gravityZ = false;
+	// --> Substratum
+	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
+	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
 	// Domain properties
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
 	// Spring constants and drag ceoefficient
-	// Fast simulations/poor gravity
 	public double Kd 	= 1e-13;				// drag force coefficient
 	public double Kc 	= 1e-9;					// cell-cell collision
 	public double Kw 	= 5e-10;				// wall(substratum)-cell spring
@@ -77,7 +77,7 @@ public class CModel implements Serializable {
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	public double stretchLimFil = 1.6;			// Maximum tension for sticking springs
 	public double[] limOverlap = {1e-3, 1e-2};	// The boundaries of the magnitude of overlap vector d. It will be Clamp() to these limits times R2 (stick) or R (anchor) 
-	// Model biomass properties
+	// Model biomass and growth properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
@@ -91,13 +91,16 @@ public class CModel implements Serializable {
 	public double muSpread = 0.25;				// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!    
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public double attachmentStack = 0.0;		// How many cells should be attached at the next growth iteration
+	public double syntrophyFactor = 1.0; 		// Accelerated growth if two cells of different types are stuck to each other
+	public boolean allowOverlapDuringGrowth = false;	// If growth can occur despite cells overlapping
+
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
 	public int growthIter = 0;					// [-] Counter time iterations for growth
 	public double relaxationTime = 0.0;			// [s] initial time for relaxation (for ODE solver)
-	public double relaxationTimeStep = 2e-2;		// [s] output time step  for relaxation
-	public double relaxationTimeStepEnd = 10e-2;	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
+	public double relaxationTimeStepdt = 2e-2;		// [s] output time step  for relaxation
+	public double relaxationTimeStep = 10e-2;	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
 	public int relaxationIter = 0;				// [-] counter time iterations for relaxation
 	// Arrays
 	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
@@ -388,11 +391,11 @@ public class CModel implements Serializable {
 		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NFilBreak = Assistant.NStickBreak = Assistant.NStickForm = 0;
 		
 		int nvar = 6*ballArray.size();
-		int ntimes = (int) (relaxationTimeStepEnd/relaxationTimeStep);
+		int ntimes = (int) (relaxationTimeStep/relaxationTimeStepdt);
 		double atol = 1.0e-6, rtol = atol;
 		double h1 = 0.00001, hmin = 0;
 		double t1 = relaxationTime; 
-		double t2 = t1 + relaxationTimeStepEnd;
+		double t2 = t1 + relaxationTimeStep;
 		Vector ystart = new Vector(nvar,0.0);
 
 		int ii=0;											// Determine initial value vector
