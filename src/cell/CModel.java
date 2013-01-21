@@ -63,7 +63,6 @@ public class CModel implements Serializable {
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
-	public Vector3d L 	= new Vector3d(20e-6, 20e-6, 20e-6);	// [m], Dimensions of domain
 	// Spring constants and drag ceoefficient
 	// Fast simulations/poor gravity
 	public double Kd 	= 1e-13;				// drag force coefficient
@@ -75,7 +74,7 @@ public class CModel implements Serializable {
 	public double Ks 	= 1e-11;				// sticking
 	public double stretchLimAnchor = 1.4;		// Maximum tension for anchoring springs
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-	public double stretchLimStick = 1.4;		// Maximum tension for sticking springs
+	public double stretchLimStick = 1.6;		// Maximum tension for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	public double stretchLimFil = 1.6;			// Maximum tension for sticking springs
 	public double[] limOverlap = {1e-3, 1e-2};	// The boundaries of the magnitude of overlap vector d. It will be Clamp() to these limits times R2 (stick) or R (anchor) 

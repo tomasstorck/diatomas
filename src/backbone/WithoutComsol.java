@@ -20,12 +20,31 @@ public class WithoutComsol {
 //			/////////////
 //			// E. COLI //
 //			/////////////
+//			int[] type = new int[]{4,4,4};
 //			model.cellRadiusMax[4] = 0.25e-6;
 //			model.cellLengthMax[4] = 2.5e-6;
-//			model.muAvgSimple[4] = 0.33;
 //			model.UpdateAmountCellMax();
 //			model.NInitCell = 3;
-//			int[] type = new int[]{4,4,4};
+//			double restLength = 0.75*model.cellLengthMax[4];			// 0.75 is a fair estimate
+//			Vector3d[] direction = new Vector3d[]{
+//					new Vector3d(0.3,		0.0,					0.2).normalise(),
+//					new Vector3d(1.0,		0.0,					-0.2).normalise(),
+//					new Vector3d(-0.5,		0.0,					1.0).normalise()};
+//			Vector3d[] position0 = new Vector3d[]{
+//					new Vector3d(0.6e-6,	model.cellRadiusMax[4],	-0.2e-6),
+//					new Vector3d(-0.5e-6,	model.cellRadiusMax[4],	-0.1e-6),
+//					new Vector3d(0.1e-6,	model.cellRadiusMax[4],	0.3e-6),
+//					new Vector3d(0.4e-6,	model.cellRadiusMax[0],	0.4e-6),
+//					new Vector3d(-0.3e-6,	model.cellRadiusMax[0],	-0.3e-6),
+//					new Vector3d(0.0e-6,	model.cellRadiusMax[0],	0.0e-6)};
+//			Vector3d[] position1 = new Vector3d[]{
+//					position0[0].plus(direction[0].times(restLength)),
+//					position0[1].plus(direction[1].times(restLength)),
+//					position0[2].plus(direction[2].times(restLength)),
+//					new Vector3d(),
+//					new Vector3d(),
+//					new Vector3d()};
+//			model.muAvgSimple[4] = 0.33;
 //			model.sticking = false;
 //			model.filament = false;
 //			model.gravity = false;
@@ -39,40 +58,45 @@ public class WithoutComsol {
 //			model.Kf 	= 2e-11;
 //			model.Kan	= 1e-11;
 //			model.Ks 	= 1e-11;
-//			// Set initial positions
-//			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
-//			Vector3d[] position = new Vector3d[model.NInitCell];
-//			for(int ii=0; ii<position.length; ii++) {
-//				position[ii] = new Vector3d(
-//						(0.2*rand.Double()-0.1)*model.L.x,			// Anywhere between -0.1*Lx and 0.1*Lx
-//						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
-//						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
-//			}
 			
 			/////////////
 			// DENTAL  //
 			/////////////
-			model.randomSeed = 3;
+			int[] type = new int[]{4,4,4,0,0,0};
 			model.cellRadiusMax[0] = 0.25e-6 * 1.25;
-			model.muAvgSimple[0] = 0.33;
 			model.cellRadiusMax[4] = 0.25e-6;
 			model.cellLengthMax[4] = 2.5e-6;
-			model.muAvgSimple[4] = 0.15;
 			model.UpdateAmountCellMax();
 			model.NInitCell = 6;
-			int[] type = new int[]{4,4,4,0,0,0};
+			double restLength = 0.75*model.cellLengthMax[4];			// 0.75 is a fair estimate
+			Vector3d[] direction = new Vector3d[]{
+					new Vector3d(0.3,		1.0,					0.2).normalise(),
+					new Vector3d(1.0,		0.1,					-0.2).normalise(),
+					new Vector3d(-0.5,		0.4,					1.0).normalise()};
+			Vector3d[] position0 = new Vector3d[]{
+					new Vector3d(0.6e-6,	model.cellRadiusMax[4],	-0.2e-6),
+					new Vector3d(-0.5e-6,	model.cellRadiusMax[4],	-0.1e-6),
+					new Vector3d(0.1e-6,	model.cellRadiusMax[4],	0.3e-6),
+					new Vector3d(0.4e-6,	model.cellRadiusMax[0],	0.4e-6),
+					new Vector3d(-0.3e-6,	model.cellRadiusMax[0],	-0.3e-6),
+					new Vector3d(0.0e-6,	model.cellRadiusMax[0],	0.0e-6)};
+			Vector3d[] position1 = new Vector3d[]{
+					position0[0].plus(direction[0].times(restLength)),
+					position0[1].plus(direction[1].times(restLength)),
+					position0[2].plus(direction[2].times(restLength)),
+					new Vector3d(),
+					new Vector3d(),
+					new Vector3d()};
+			model.muAvgSimple[0] = 0.33;
+			model.muAvgSimple[4] = 0.15;
 			model.sticking = true;
 			model.stickRodRod = false;
 			model.stickSphereSphere = false;
-			model.stretchLimStick = 1.6;
 			model.filament = true;
 			model.filSphere = false;
 			model.anchoring = false;
 			model.initialAtSubstratum = false;
 			model.normalForce = true;
-			model.limOverlap = new double[]{5e-3, 1e-2};
-			model.syntrophyFactor = 2.0;
-			model.L.y 	= model.cellRadiusMax[4];
 			model.Kd 	= 1e-13;
 			model.Kc 	= 1e-9;
 			model.Kw 	= 5e-10;
@@ -83,31 +107,9 @@ public class WithoutComsol {
 			model.allowOverlapDuringGrowth = true;
 			model.relaxationTimeStep *= 2.0;
 			model.relaxationTimeStepEnd *= 2.0;
-			model.attachmentRate = 3.0; 
-			// Set initial positions
-			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
-			Vector3d[] position = new Vector3d[model.NInitCell];
-			for(int ii=0; ii<position.length; ii++) {
-				position[ii] = new Vector3d(
-						(0.2*rand.Double()-0.1)*model.L.x,			// Anywhere between -0.1*Lx and 0.1*Lx
-						(0.2*rand.Double()+0.9)*model.L.y,			// Anywhere between 0.9*Ly and 1.1*Ly
-						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
-			}
-			
-//			
-//			model.muAvgSimple[0] =model.muAvgSimple[4] = 0.0;
-//			model.muSpread = 0.0;
-//			
-			
-//			// Create cell positions
-//			// Defined
-//			Vector3d[] position = new Vector3d[]{
-//					new Vector3d(0.0,0.0,1.0).times(1e-6),
-//					new Vector3d(2.0,0.0,-1.0).times(1e-6),
-//					new Vector3d(-2.0,0.0,1.0).times(1e-6),
-//					new Vector3d(0.0,0.0,-1.0).times(1e-6),
-//					new Vector3d(2.0,0.0,1.0).times(1e-6),
-//					new Vector3d(-2.0,0.0,-1.0).times(1e-6)};
+			model.limOverlap = new double[]{5e-3, 1e-2};
+			model.syntrophyFactor = 2.0;
+			model.attachmentRate = 3.0;
 			
 			// COMSOL was here
 			
@@ -117,43 +119,24 @@ public class WithoutComsol {
 				double n = 0.5 * model.nCellMax[type[iCell]] * (1.0 + rand.Double());
 				boolean filament = false;
 				if(model.filament) {
-					if(type[iCell]<2) {
-						filament = model.filSphere; 
-					} else if(type[iCell]<6){
-						filament = model.filRod;
-					} else {
-						throw new IndexOutOfBoundsException("Cell type: " + type); 
-					}
+					if(type[iCell]<2) 		filament = model.filSphere; 
+					else if(type[iCell]<6)	filament = model.filRod;
+					else throw new IndexOutOfBoundsException("Cell type: " + type); 
 				}
-				
+				@SuppressWarnings("unused")
 				CCell cell = new CCell(type[iCell], 				// Type of biomass
 						n,											// Initial cell mass is random between initial and max
-						position[iCell].x,
-						position[iCell].y,
-						position[iCell].z,
+						position0[iCell].x,
+						position0[iCell].y,
+						position0[iCell].z,
+						position1[iCell].x,
+						position1[iCell].y,
+						position1[iCell].z,
 						filament,									// With capability to form filaments?
 						model.colour[iCell],
 						model);
-				// Set cell boundary concentration to initial value
-				cell.q = 0.0;
-				// Lower cell to the substratum if desired (INITIALATSUBSTRATUM)
-				if(model.initialAtSubstratum) {
-					for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
-				}
 			}
-			boolean overlap = true;
-			int[] NSpring = {0,0,0,0};
-			while(overlap) {
-				model.Relaxation();
-				// We want to save the number of springs formed and broken
-				NSpring[0] += Assistant.NAnchorBreak;
-				NSpring[1] += Assistant.NAnchorForm;
-				NSpring[2] += Assistant.NStickBreak;
-				NSpring[3] += Assistant.NStickForm;
-				if(model.DetectCellCollision_Simple(1.0).isEmpty()) 	overlap = false;
-			}
-			model.Write(model.cellArray.size() + " initial non-overlapping cells created","iter");
-			model.Write((NSpring[1]-NSpring[0]) + " anchor and " + (NSpring[3]-NSpring[2]) + " sticking springs formed", "iter");
+			model.Write(model.cellArray.size() + " initial cells created","iter");
 			
 			// Try to save and convert the file
 			model.Save();

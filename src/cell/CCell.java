@@ -12,7 +12,7 @@ public class CCell implements Serializable {
 	public int type;
 	public boolean filament;
 	public double[] colour = 	new double[3];
-	public CBall[] ballArray = 	new CBall[1];							// Note that this ballArray has the same name as CModel's
+	public CBall[] ballArray = 	new CBall[1];								// Note that this ballArray has the same name as CModel's
 	public ArrayList<CSpring> rodSpringArray = new ArrayList<CSpring>(0);
 	public ArrayList<CCell> stickCellArray = new ArrayList<CCell>(0);
 	public ArrayList<CSpring> stickSpringArray = new ArrayList<CSpring>(0);
@@ -20,7 +20,7 @@ public class CCell implements Serializable {
 	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(0);
 	public CCell mother;
 	// CFD stuff
-	public double q;													// [mol reactions (CmolX * s)-1]
+	public double q = 0.0;													// [mol reactions (CmolX * s)-1]
 	// Pointer stuff
 	public CModel model;
 	
