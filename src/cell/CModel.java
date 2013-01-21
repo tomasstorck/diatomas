@@ -90,7 +90,9 @@ public class CModel implements Serializable {
 	public double[] cellLengthMax = {0.0,		0.0,		1e-6,		1.5e-6,		1e-6,		1.5e-6};
 	public double[] nCellMax =	new double[6];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
-	public int rateAttachment = 12;				// [h-1] Number of cells newly attached per hour 
+	public double muSpread = 0.25;				// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!    
+	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
+	public double attachmentStack = 0.0;		// How many cells should be attached at the next growth iteration
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
@@ -106,6 +108,9 @@ public class CModel implements Serializable {
 	public ArrayList<CSpring> stickSpringArray = new ArrayList<CSpring>(0);
 	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(0);
 	public ArrayList<CSpring> anchorSpringArray = new ArrayList<CSpring>(0);
+	// === SOLVER STUFF ===
+	public double ODEbeta = 0.08;
+	public double ODEalpha = 1.0/8.0-ODEbeta*0.2;
 	// === COMSOL STUFF ===
 	// Biomass, assuming Cmol and composition CH1.8O0.5N0.2 (i.e. MW = 24.6 g/mol)
 	//							type 0					type 1					type 2					type 3					type 4					type 5
@@ -405,6 +410,10 @@ public class CModel implements Serializable {
 		Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
 		feval dydt = new feval(this);
 		Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt, this);
+		// Update alpha and beta
+		ode.s.alpha = ODEalpha;
+		ode.s.beta = ODEbeta;
+		// Integrate to find solution
 		int nstp = ode.integrate();
 		for(int iTime=0; iTime<out.nsave; iTime++) {		// Save all intermediate results to the save variables
 			int iVar = 0;
@@ -765,7 +774,7 @@ public class CModel implements Serializable {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public ArrayList<CCell> GrowthSimple() throws Exception {						// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+	public ArrayList<CCell> GrowthSimple() throws Exception {									// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int NCell = cellArray.size();
 		ArrayList<CCell> dividedCell = new ArrayList<CCell>(); 
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -773,7 +782,7 @@ public class CModel implements Serializable {
 			double amount = mother.GetAmount();
 
 			// Random growth, with syntrophy if required
-			double mu = muAvgSimple[mother.type] + (rand.Double()-0.5)/5.0;					// Come up with a mu for this cell, this iteration
+			double mu = muAvgSimple[mother.type] * (1.0 + muSpread*2.0*(rand.Double()-0.5));	// Come up with a mu for this cell, this iteration
 			double growthAcceleration = 1.0;
 			for(CCell stickCell : mother.stickCellArray) {
 				if(mother.type != stickCell.type) {
@@ -782,7 +791,7 @@ public class CModel implements Serializable {
 					break;
 				}
 			}
-			amount *= Math.exp(mu*growthAcceleration*growthTimeStep/3600.0);							// We need growthTimeStep s-1 --> h-1
+			amount *= Math.exp(mu*growthAcceleration*growthTimeStep/3600.0);					// We need growthTimeStep s-1 --> h-1
 
 			// Syntrophic growth for sticking cells
 			mother.SetAmount(amount);
@@ -860,7 +869,7 @@ public class CModel implements Serializable {
 				if(overlapArray.isEmpty())	break;
 				// Continue if no proper direction can be found
 				if(overlapIter>100) {
-					Write("Cell " + c0.Index() + " or " + c1.Index() + " will overlap after growth","warning");
+//					Write("Cell " + c0.Index() + " or " + c1.Index() + " will overlap after growth","warning");
 					break;
 				}
 			}

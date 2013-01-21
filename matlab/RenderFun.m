@@ -69,10 +69,10 @@ for ii=0:NSave
 end
 	
 for ii=0:NSave			% Can be replaced with parfor
-	% Skip half if this is a sketch
-	if sketch && rem(ii,2)==1
-		continue
-	end
+% 	% Skip half if this is a sketch
+% 	if sketch && rem(ii,2)==1
+% 		continue
+% 	end
 	
 	if(exist(imageLoc{ii+1},'file')) && ~exist('keepgoing','var')
 		fprintf(['File already found, skipping: ' imageName{ii+1} '\n']);

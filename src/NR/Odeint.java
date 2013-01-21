@@ -18,7 +18,7 @@ public class Odeint<Stepper extends StepperBase> {
 	Vector ystart;					// initial values
 	Output<StepperDopr853> out;		// The out structure, see way below
 	feval derivs; 					// feval object containing information about the derivatives, including method to calculate them
-	StepperDopr853 s;				// Our stepper
+	public StepperDopr853 s;		// Our stepper. Made public to be able to alter alpha and beta
 	CModel model;
 
 	public Odeint(Vector ystartt, double xx1, double xx2, 			// initial values, intial integration interval point, end of interval 

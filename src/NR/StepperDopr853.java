@@ -4,11 +4,11 @@ package NR;
 public class StepperDopr853 extends StepperBase {
 	// Stepsize control parameters
 	// STABLE //
-	final double beta=0.08;				// "Set beta to !=0 for PI control. Beta 0.04-0.08 is a good default." Makes things more stable: used to improve stability for solution quality (i.e. less twitching), not solver stability (i.e. won't solve systems that otherwise couldn't be solved).
-	final double alpha=1.0/8.0-beta*0.2;
-	final double safe=0.9;
-	final double minscale=0.333;
-	final double maxscale=6.0;
+	public double beta=0.08;				// "Set beta to !=0 for PI control. Beta 0.04-0.08 is a good default." Makes things more stable: used to improve stability for solution quality (i.e. less twitching), not solver stability (i.e. won't solve systems that otherwise couldn't be solved).
+	public double alpha=1.0/8.0-beta*0.2;	// Note that in diatomas alpha and beta will always be overwritten from 130121 onwards
+	public double safe=0.9;
+	public double minscale=0.333;
+	public double maxscale=6.0;
 //	// FAST //
 //	final double beta=0.0;				
 //	final double alpha=1.0/8.0-beta*0.2;

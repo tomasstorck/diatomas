@@ -83,6 +83,7 @@ public class WithoutComsol {
 			model.allowOverlapDuringGrowth = true;
 			model.relaxationTimeStep *= 2.0;
 			model.relaxationTimeStepEnd *= 2.0;
+			model.attachmentRate = 3.0; 
 			// Set initial positions
 			rand.Seed(model.randomSeed+1000000);					// Make new random seed to use
 			Vector3d[] position = new Vector3d[model.NInitCell];
@@ -93,7 +94,10 @@ public class WithoutComsol {
 						(0.2*rand.Double()-0.1)*model.L.z);			// Anywhere between -0.1*Lz and 0.1*Lz
 			}
 			
-			
+//			
+//			model.muAvgSimple[0] =model.muAvgSimple[4] = 0.0;
+//			model.muSpread = 0.0;
+//			
 			
 //			// Create cell positions
 //			// Defined
@@ -180,7 +184,7 @@ public class WithoutComsol {
 					model.Write(dividedCellArray.size() + " new cells grown, total " + model.cellArray.size() + " cells","iter");
 					model.Write("Cells grown: " + cellNumber,"iter");
 				}
-
+				
 				model.Write("Resetting springs","iter");
 				for(CSpring rod : model.rodSpringArray) {
 					rod.ResetRestLength();
@@ -191,40 +195,12 @@ public class WithoutComsol {
 			}
 			
 			// Attach new cells
-			final int NNew = (int) (model.growthTimeStep/3600.0 * model.rateAttachment);
+			model.attachmentStack += (model.growthTimeStep/3600.0 * model.attachmentRate);
+			int NNew = (int) model.attachmentStack;
+			model.attachmentStack -= NNew;
 			model.Write("Attaching " + NNew + " new cells", "iter");
 			model.Attachment(NNew);
-			
-			// Below code is only required if sticking/anchoring is not done in the ODE solver
-//			if(model.anchoring) {
-//				// Break anchor springs
-//				// {} to make sure objects are destroyed when we're done (aka scope)
-//				ArrayList<CAnchorSpring> breakArray = model.DetectAnchorBreak(0.6,1.4);	// Returns lonely anchors, without their siblings
-//				int counter = 0;
-//				for(CAnchorSpring anchor : breakArray) {
-//					counter += anchor.UnAnchor();
-//				}
-//				model.Write(counter + " anchor springs broken","iter");
-//				// Build anchor springs
-//				model.Write("Detecting cell-floor collisions","iter");
-//				ArrayList<CCell> collisionArray = model.DetectFloorCollision(1.1);		// Returns already anchored cells
-//				int NNewAnchor = model.BuildAnchor(collisionArray);
-//				model.Write(NNewAnchor + " anchor springs built","iter");
-//			}
-
-//			if(model.sticking) {
-//				// Break stick springs
-//				ArrayList<CStickSpring> breakArray = model.DetectStickBreak(0.6,1.4);		// Returns all springs that'll be broken (<rl*first argument, >rl*second argument). Should not contain any duplicates in the form of siblingsprings
-//				model.BreakStick(breakArray);
-//				model.Write(breakArray.size() + " sticking springs broken","iter");
-//				// Build stick springs
-//				model.Write("Detecting cell-cell collisions","iter");
-//				ArrayList<CCell> collisionArray = model.DetectCellCollision_Simple(1.1);	 // Note that this one returns already stuck and duplicate cells
-//				model.Write("Building new sticking springs","iter");
-//				int NNewStick = model.BuildStick(collisionArray);
-//				model.Write(NNewStick + " cell pairs sticked","iter");				// Divided by two, as array is based on origin and other cell (see for loop)
-//			}
-			
+						
 			// Relaxation
 			model.Write("Starting relaxation calculations","iter");
 			int nstp = model.Relaxation();
@@ -234,11 +210,18 @@ public class WithoutComsol {
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
 			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
+			// Lower beta in ODE solver if too many steps
+			if(nstp>4000) {
+				model.ODEbeta *= 0.75;
+				model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
+				model.Write("Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
+			}
+			// Check if we can continue growth, or need to relax a bit longer
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
 			if(model.allowOverlapDuringGrowth || overlapCellArray.isEmpty()) {
 				allowGrowth = true;
 			} else {
-				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","warning");
+				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","iter");
 				String cellNumber = "" + overlapCellArray.get(0).Index();
 				for(int ii=1; ii<overlapCellArray.size(); ii++) 	cellNumber += ", " + overlapCellArray.get(ii).Index();
 				model.Write("Cells overlapping: " + cellNumber,"iter");
