@@ -29,7 +29,7 @@ public class CModel implements Serializable {
 	// Model properties
 	public String name = "default";
 	public int randomSeed = 1;
-	public boolean withComsol = false;
+	public boolean comsol = false;
 	public boolean sticking = true;
 	public boolean stickSphereSphere = true;
 	public boolean stickSphereRod = true;

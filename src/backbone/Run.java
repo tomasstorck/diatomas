@@ -2,6 +2,9 @@ package backbone;
 
 import java.util.ArrayList;
 
+import comsol.Comsol;
+import comsol.Server;
+
 import NR.Vector3d;
 
 import random.rand;
@@ -11,9 +14,9 @@ import cell.CCell;
 import cell.CModel;
 import cell.CSpring;
 
-public class WithoutComsol {
+public class Run {
 
-	public static void Run(CModel model) throws Exception{				
+	public Run(CModel model) throws Exception{				
 		if(model.growthIter==0 && model.relaxationIter==0) {
 			// Set parameters. This overwrites both CModel and supplied arguments
 			
@@ -111,8 +114,6 @@ public class WithoutComsol {
 			model.syntrophyFactor = 2.0;
 			model.attachmentRate = 3.0;
 			
-			// COMSOL was here
-			
 			// Create initial cells, not overlapping
 			rand.Seed(model.randomSeed);							// Reinitialise random seed, below shouldn't depend on positions above
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
@@ -141,6 +142,14 @@ public class WithoutComsol {
 			// Try to save and convert the file
 			model.Save();
 			ser2mat.Convert(model);	
+			
+			// Start server and connect if we're using COMSOL
+			if(model.comsol) {
+				model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
+//				Server.Stop(false);
+				Server.Start(Assistant.port);
+				Server.Connect(Assistant.port);
+			}
 		}
 		
 		boolean allowGrowth;
@@ -151,13 +160,50 @@ public class WithoutComsol {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.relaxationIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
 
-			// COMSOL was here
+			if(model.comsol) {
+				// Do COMSOL things
+				model.Write("Calculating cell steady state concentrations (COMSOL)","iter");
+				// Make the model
+				Comsol comsol = new Comsol(model);
+				model.Write("\tInitialising geometry", "iter");
+				comsol.Initialise();
+				model.Write("\tCreating cells", "iter");
+				// Create cells in the COMSOL model
+				for(CCell cell : model.cellArray) {
+					if(cell.type<2) 		comsol.CreateSphere(cell);
+					else if(cell.type<6)	comsol.CreateRod(cell);
+					else 					throw new IndexOutOfBoundsException("Cell type: " + cell.type);
+				}
+				comsol.CreateBCBox();					// Create a large box where we set the "bulk" conditions
+				comsol.BuildGeometry();
+				// Set fluxes
+				for(CCell cell : model.cellArray) {
+					comsol.SetFlux(cell);
+				}
+				model.Write("\tSaving model", "iter");
+				comsol.Save();							// Save .mph file
+				// Calculate and extract the results
+				model.Write("\tRunning model", "iter");
+				comsol.Run();							// Run model to calculate concentrations
+				model.Write("\tCalculating cell surface concentrations", "iter");
+				for(CCell cell : model.cellArray) {
+					cell.q = comsol.GetParameter(cell, "q" + Integer.toString(cell.type));
+				}
+				// Clean up after ourselves 
+				model.Write("\tCleaning model from server", "iter");
+				comsol.RemoveModel();
+			}
 			
 			// Grow cells
 			if(allowGrowth) {
+				// Grow cells either with COMSOL or simple 
 				model.Write("Growing cells", "iter");
-				ArrayList<CCell> dividedCellArray = model.GrowthSimple();
-				
+				ArrayList<CCell> dividedCellArray;
+				if(model.comsol) {
+					dividedCellArray = model.GrowthFlux();
+				} else {
+					dividedCellArray = model.GrowthSimple();
+				}
 				// Advance growth
 				model.growthIter++;
 				model.growthTime += model.growthTimeStep;
@@ -167,7 +213,7 @@ public class WithoutComsol {
 					model.Write(dividedCellArray.size() + " new cells grown, total " + model.cellArray.size() + " cells","iter");
 					model.Write("Cells grown: " + cellNumber,"iter");
 				}
-				
+				// Reset springs where needed
 				model.Write("Resetting springs","iter");
 				for(CSpring rod : model.rodSpringArray) {
 					rod.ResetRestLength();
@@ -175,14 +221,13 @@ public class WithoutComsol {
 				for(CSpring fil : model.filSpringArray) 	{
 					fil.ResetRestLength();
 				}
+				// Attach new cells
+				model.attachmentStack += (model.growthTimeStep/3600.0 * model.attachmentRate);
+				int NNew = (int) model.attachmentStack;
+				model.attachmentStack -= NNew;
+				model.Write("Attaching " + NNew + " new cells", "iter");
+				model.Attachment(NNew);
 			}
-			
-			// Attach new cells
-			model.attachmentStack += (model.growthTimeStep/3600.0 * model.attachmentRate);
-			int NNew = (int) model.attachmentStack;
-			model.attachmentStack -= NNew;
-			model.Write("Attaching " + NNew + " new cells", "iter");
-			model.Attachment(NNew);
 						
 			// Relaxation
 			model.Write("Starting relaxation calculations","iter");
@@ -199,7 +244,7 @@ public class WithoutComsol {
 				model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
 				model.Write("Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
 			}
-			// Check if we can continue growth, or need to relax a bit longer
+			// Check if we can continue growth next iteration, or need to relax a bit longer
 			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
 			if(model.allowOverlapDuringGrowth || overlapCellArray.isEmpty()) {
 				allowGrowth = true;

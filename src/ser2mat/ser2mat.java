@@ -15,7 +15,7 @@ public class ser2mat {
 		// Model properties
 		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, model.name.length()));              	
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	
-		mlModel.setField("withComsol",                    new MLDouble(null, new double[] {model.withComsol?1:0}, 1));                    	
+		mlModel.setField("comsol",                        new MLDouble(null, new double[] {model.comsol?1:0}, 1));                        	
 		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	
 		mlModel.setField("stickSphereSphere",             new MLDouble(null, new double[] {model.stickSphereSphere?1:0}, 1));             	
 		mlModel.setField("stickSphereRod",                new MLDouble(null, new double[] {model.stickSphereRod?1:0}, 1));                	

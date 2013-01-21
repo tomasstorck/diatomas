@@ -65,7 +65,7 @@ public class Interface{
 															{Assistant.bit64 = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("anchoring") || arg.equalsIgnoreCase("anchor"))
 															{model.anchoring = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("comsol")) 				{model.withComsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			if(arg.equalsIgnoreCase("comsol")) 				{model.comsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("echocommand")) 		{Assistant.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("filament")) 			{model.filament = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("gravity")) 			{model.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
@@ -143,8 +143,7 @@ public class Interface{
 				for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
 				model.Write(message,"");
 				model.Write("=====================================", "");
-				if(model.withComsol) 					WithComsol.Run(model);
-				else									WithoutComsol.Run(model);
+				new Run(model);
 			} catch (RuntimeException E) {
 				StringWriter sw = new StringWriter();				// We need this line and below to get the exception as a string for the log
 				PrintWriter pw = new PrintWriter(sw);
