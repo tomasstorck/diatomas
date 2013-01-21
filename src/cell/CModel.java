@@ -18,7 +18,6 @@ import NR.Odeint;
 import NR.Output;
 import NR.StepperDopr853;
 import NR.Vector;
-import NR.Vector3d;
 import NR.feval;
 import NR.Common;
 import backbone.Assistant;
@@ -838,16 +837,15 @@ public class CModel implements Serializable {
 			// Set amount for both cells
 			c0.SetAmount(0.5*n);
 			// Make a new cell
+			Vector3d posOld = new Vector3d(c0.ballArray[0].pos);
 			c1 = new CCell(c0.type,												// Same type as cell
 					c0.GetAmount(),
-					c0.ballArray[0].pos.x,			// The new location is the old one plus some displacement					
-					c0.ballArray[0].pos.y,	
-					c0.ballArray[0].pos.z,
+					posOld,					
+					new Vector3d(),
 					c0.filament,
 					c0.colour,
 					this);														// Same filament boolean as cell and pointer to the model
 			// Displace new and old cell. Rods won't need this while loop, because they'll just be cut in half 
-			Vector3d posOld = new Vector3d(c0.ballArray[0].pos);
 			int overlapIter = 0;
 			while(true) {
 				overlapIter++;
@@ -997,7 +995,7 @@ public class CModel implements Serializable {
 			double nNew = 0.5 * nCellMax[typeNew] * (1.0 + rand.Double());
 			boolean filNew = filament && filSphere;
 			double[] colourNew = colour[NInitCell];			// Choose a colour not chosen for initial cell creation  
-			CCell cellNew = new CCell(0, nNew, 0.0, 0.0, 0.0, filNew, colourNew, this);
+			CCell cellNew = new CCell(0, nNew, new Vector3d(), new Vector3d(), filNew, colourNew, this);
 			double rNew = cellNew.ballArray[0].radius; 
 			// Find P based on random ball for first point
 			CBall PBall = ballArray.get(rand.Int(ballArray.size()-1));

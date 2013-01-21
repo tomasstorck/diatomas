@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import comsol.Comsol;
 import comsol.Server;
 
-import NR.Vector3d;
 
 import random.rand;
 import ser2mat.ser2mat;
@@ -13,6 +12,7 @@ import cell.CBall;
 import cell.CCell;
 import cell.CModel;
 import cell.CSpring;
+import cell.Vector3d;
 
 public class Run {
 

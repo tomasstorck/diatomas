@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 import random.rand;
-import NR.Vector3d;
 
 public class CCell implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -49,34 +48,6 @@ public class CCell implements Serializable {
 	public CCell(int type, double n, Vector3d base0, Vector3d base1, boolean filament, double[] colour, CModel model) {
 		this(type, n, base0.x, base0.y, base0.z, base1.x, base1.y, base1.z, filament, colour, model);
 	}
-	
-	public CCell(int type, double n, double base0x, double base0y, double base0z, boolean filament, double[] colour, CModel model) {
-		// Set cell based on other constructor
-		this(type, n, base0x, base0y, base0z, base0x, base0y, base0z, filament, colour, model);
-		// Leaves ballArray and springArray if rod cell
-		if(type>1 && type<6) { 
-			// Put cell in correct position
-			Vector3d direction = new Vector3d(rand.Double(),rand.Double(),rand.Double());
-			direction = direction.normalise();	// Normalise direction
-			double distance;
-			if(type<4) {
-				distance = ballArray[0].radius * model.cellLengthMax[ballArray[0].cell.type]/model.cellRadiusMax[ballArray[0].cell.type];										// type == 2||3 is fixed ball-ball distance
-			} else if(type<6) {
-				distance = ballArray[0].cell.GetAmount()*model.MWX/(Math.PI*model.rhoX*ballArray[0].radius*ballArray[0].radius) - 4.0/3.0*ballArray[0].radius;					// type == 4||5 is variable ball-ball distance. Correct? TODO
-			} else {
-				throw new IndexOutOfBoundsException("Cell type: " + type);
-			}
-			double base1x = base0x + direction.x * distance;
-			double base1y = base0y + direction.y * distance;
-			double base1z = base0z + direction.z * distance;
-			// Set pos. Rest length is function of mass, not position, so no need to reset
-			ballArray[1].pos.x = base1x;
-			ballArray[1].pos.y = base1y;
-			ballArray[1].pos.z = base1z;
-		}
-	}
-	
-	public CCell() {}		// Empty constructor for loading, note that this doesn't add the cell to the array!
 	
 	/////////////////////////////////////////////////////////
 	

@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import NR.Vector3d;
 import cell.CBall;
 import cell.CCell;
 import cell.CModel;
+import cell.Vector3d;
 
 import com.comsol.model.Model;
 import com.comsol.model.util.ModelUtil;
