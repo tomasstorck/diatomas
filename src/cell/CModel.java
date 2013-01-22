@@ -27,6 +27,7 @@ public class CModel implements Serializable {
 	private static final long serialVersionUID = 1L;
 	// Model miscellaneous settings
 	public String name = "default";
+	public int simulation = 0;					// The simulation type: see Run
 	public int randomSeed = 1;
 	public double[][] colour = new double[][]{
 			{1.0,0.7,0.7},

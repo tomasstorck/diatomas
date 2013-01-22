@@ -30,6 +30,7 @@ public class Interface{
 				
 				System.out.println("  Model:");
 				System.out.println("seed\t\t\t Set random seed");
+				System.out.println("simulation\t\t Set simulation type: (0) E. coli (1) dental/biofilm (2) dental/flock");
 				System.out.println("sticking\t\t\t Enable or disable cell-cell EPS links (sticking springs)");
 				System.out.println("filament\t\t\t Enable or disable filial links between mother and daughter cells");
 				System.out.println("gravity\t\t\t Enable or disable gravity");
@@ -65,21 +66,22 @@ public class Interface{
 															{Assistant.bit64 = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("anchoring") || arg.equalsIgnoreCase("anchor"))
 															{model.anchoring = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
-			if(arg.equalsIgnoreCase("comsol")) 				{model.comsol = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
+			if(arg.equalsIgnoreCase("comsol")) 				{model.comsol = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("echocommand")) 		{Assistant.echoCommand = (Integer.parseInt(args[ii+1])==1)?true:false;			continue;}
 			if(arg.equalsIgnoreCase("filament")) 			{model.filament = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("gravity")) 			{model.gravity = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("gravityz")) 			{model.gravityZ = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
 			if(arg.equalsIgnoreCase("growthTimeStep"))		{model.growthTimeStep = Double.parseDouble(args[ii+1]);							continue;}
 			if(arg.equalsIgnoreCase("initialatsubstratum")) {model.initialAtSubstratum = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
-			if(arg.equalsIgnoreCase("relaxationtimeStep"))	{model.relaxationTimeStepdt = Double.parseDouble(args[ii+1]);						continue;}
+			if(arg.equalsIgnoreCase("relaxationtimeStep"))	{model.relaxationTimeStepdt = Double.parseDouble(args[ii+1]);					continue;}
 			if(arg.equalsIgnoreCase("normalforce"))			{model.normalForce = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}			
 			if(arg.equalsIgnoreCase("port")) 				{Assistant.port = Integer.parseInt(args[ii+1]);									continue;}
 			if(arg.equalsIgnoreCase("seed")) 				{model.randomSeed = Integer.parseInt(args[ii+1]);								continue;}
+			if(arg.equalsIgnoreCase("simulation")) 			{model.simulation = Integer.parseInt(args[ii+1]);								continue;}
 			if(arg.equalsIgnoreCase("start"))				{Assistant.start = (Integer.parseInt(args[ii+1])==1)?true:false;				continue;}
 			if(arg.equalsIgnoreCase("spherestraightfil")) 	{model.sphereStraightFil = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("sticking")) 			{model.sticking = (Integer.parseInt(args[ii+1])==1)?true:false;					continue;}
-			if(arg.equalsIgnoreCase("syntrophyFactor"))		{model.syntrophyFactor = Double.parseDouble(args[ii+1]);					continue;}
+			if(arg.equalsIgnoreCase("syntrophyFactor"))		{model.syntrophyFactor = Double.parseDouble(args[ii+1]);						continue;}
 			if(arg.equalsIgnoreCase("waitforfinish")) 		{Assistant.waitForFinish = (Integer.parseInt(args[ii+1])==1)?true:false;		continue;}
 			if(arg.equalsIgnoreCase("load")){
 				String loadPath = args[ii+1];
