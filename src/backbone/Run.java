@@ -52,7 +52,7 @@ public class Run {
 			model.Kw 	= 5e-10;
 			model.Kr 	= 5e-11;
 			model.Kf 	= 2e-11;
-			model.Kan	= 1e-11;
+			model.Kan	= 1e-11*0.1;
 			model.Ks 	= 1e-11;
 			
 //			/////////////

@@ -95,7 +95,10 @@ public class CSpring implements Serializable {
 					ballArray[1].pos.minus(ballArray[0].pos).norm(),		// The rest length we desire
 					1.1*(ballArray[0].radius + ballArray[1].radius));		// But we want the spring not to cause cell overlap in relaxed state
 			break;
-			
+		case 2:				// Anchoring spring
+			CBall ball = ballArray[0];
+			restLength = Math.max(ball.pos.y,ball.radius*1.01);				// TODO don't like this
+			break;
 		case 3:				// Small fil spring
 			restLength = 1.1*(ballArray[0].radius + ballArray[1].radius);
 			break;
@@ -107,7 +110,8 @@ public class CSpring implements Serializable {
 			CCell cell1 = ballArray[1].cell;
 			restLength = 1.4*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
 			break;
-		
+		default:
+			throw new IndexOutOfBoundsException("Spring type: " + type);
 		}
 	}
 	
