@@ -77,7 +77,6 @@ public class CModel implements Serializable {
 	public double stretchLimStick = 1.6;		// Maximum tension for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	public double stretchLimFil = 1.6;			// Maximum tension for sticking springs
-	public double[] limOverlap = {5e-3, 1e-2};	// The boundaries of the magnitude of overlap vector d. It will be Clamp() to these limits times R2 (stick) or R (anchor) 
 	// Model biomass and growth properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
@@ -472,36 +471,36 @@ public class CModel implements Serializable {
 			CCell cell0 = cellArray.get(iCell);
 			CBall c0b0 = cell0.ballArray[0];
 			// Base collision on the cell type
-			if(cell0.type<2) {												// cell0 is a ball
+			if(cell0.type<2) {														// cell0 is a ball
 				// Check for all remaining cells
 				for(int jCell=iCell+1; jCell<cellArray.size(); jCell++) {
 					CCell cell1 = cellArray.get(jCell);
 					CBall c1b0 = cell1.ballArray[0];
 					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					if(cell1.type<2) {										// The other cell1 is a ball too
+					if(cell1.type<2) {												// The other cell1 is a ball too
 						double dist = dirn.norm();
 						// do a simple collision detection if close enough
-						if(dist<R2) {
+						double d = R2*1.01-dist;									// d is the magnitude of the overlap vector, as defined in the IbM paper
+						if(d>0.0) {
 							// We have a collision
-							double d = Common.Clamp(R2-dist, limOverlap[0]*R2, limOverlap[1]*R2);	// d is the magnitude of the overlap vector, as defined in the IbM paper 
 							Vector3d Fs = dirn.normalise().times(Kc*d);
 							// Add forces
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
 						}
-					} else {												// cell0 is a ball, cell1 is a rod
-						double H2 = 1.5*(cellLengthMax[cell1.type] + R2);	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect. 1.5 is to make it more robust (stretching)
+					} else {														// cell0 is a ball, cell1 is a rod
+						double H2 = 1.5*(cellLengthMax[cell1.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect. 1.5 is to make it more robust (stretching)
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a sphere-rod collision detection
 							CBall c1b1 = cell1.ballArray[1];
 							EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 							Vector3d dP = C.dP;
-							double dist = C.dist;							// Make distance more accurate
+							double dist = C.dist;									// Make distance more accurate
 							double sc = C.sc;
 							// Collision detection
-							if(dist<R2) {
-								double d = Common.Clamp(R2-dist, limOverlap[0]*R2, limOverlap[1]*R2);
+							double d = R2*1.01-dist;								// d is the magnitude of the overlap vector, as defined in the IbM paper
+							if(d>0.0) {
 								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
@@ -522,8 +521,8 @@ public class CModel implements Serializable {
 					CBall c1b0 = cell1.ballArray[0];
 					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					if(cell1.type<2) {										// cell0 is a rod, the cell1 is a ball
-						double H2 = 1.5*(cellLengthMax[cell0.type] + R2);	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+					if(cell1.type<2) {												// cell0 is a rod, the cell1 is a ball
+						double H2 = 1.5*(cellLengthMax[cell0.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a rod-sphere collision detection
 							EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
@@ -531,8 +530,8 @@ public class CModel implements Serializable {
 							double dist = C.dist;
 							double sc = C.sc;
 							// Collision detection
-							if(dist < R2) {
-								double d = Common.Clamp(R2-dist, limOverlap[0]*R2, limOverlap[1]*R2);
+							double d = R2*1.01-dist;								// d is the magnitude of the overlap vector, as defined in the IbM paper
+							if(d>0.0) {
 								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
@@ -558,8 +557,8 @@ public class CModel implements Serializable {
 							double dist = C.dist;
 							double sc = C.sc;
 							double tc = C.tc;
-							if(dist<R2) {
-								double d = Common.Clamp(R2-dist, limOverlap[0]*R2, limOverlap[1]*R2);
+							double d = R2*1.01-dist;								// d is the magnitude of the overlap vector, as defined in the IbM paper
+							if(d>0.0) {
 								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
@@ -921,9 +920,9 @@ public class CModel implements Serializable {
 		} else if (c0.type<6) {
 			///////
 			// Original cell:
-			// (00)============(01)
+			// (00)~~~~~~~~~~~~(01)
 			// New cells:
-			// (00)==(01)(10)==(11)
+			// (00)~~(01)(10)~~(11)
 			///////
 			// Half mass of mother cell
 			c0.SetAmount(0.5*c0.GetAmount());
@@ -945,7 +944,7 @@ public class CModel implements Serializable {
 					this);														// Same filament boolean as cell and pointer to the model
 			// Displace old cell, 2nd ball (1st ball stays in place)
 			c0b1.pos = c0b0.pos.plus(ball1Vector);
-			c0b1.pos.z += 1e-8;													// Move in z direction by 0.01 micron. Required to prevent deadlock??? TODO 
+			c0b1.pos.z += 1e-8;													// Move in z direction by 0.01 micron. Required to prevent deadlock 
 			c0.rodSpringArray.get(0).ResetRestLength();
 			// Contain cells to y dimension of domain
 			if(normalForce) {
@@ -994,8 +993,8 @@ public class CModel implements Serializable {
 					fil.ResetRestLength();
 				}
 				// Make new filial link between mother and daughter
-				CSpring filSmall = new CSpring(c1.ballArray[0], c0.ballArray[1], 4);		// type==2 --> Small spring
-				CSpring filBig = new CSpring(c1.ballArray[1], c0.ballArray[0], 5, new CSpring[]{filSmall});		// type==3 --> Big spring
+				CSpring filSmall = new CSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
+				CSpring filBig = new CSpring(c1.ballArray[1], c0.ballArray[0], 5, new CSpring[]{filSmall});		// type==5 --> Big spring
 				filSmall.siblingArray.add(filBig);
 			}
 		} else {

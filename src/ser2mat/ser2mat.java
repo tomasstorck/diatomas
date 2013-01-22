@@ -14,6 +14,7 @@ public class ser2mat {
 		// Set serializable information
 		// Model miscellaneous settings
 		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, model.name.length()));              	
+		mlModel.setField("simulation",                    new MLDouble(null, new double[] {model.simulation}, 1));                        	// The simulation type: see Run
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	
 		mlModel.setField("colour",                        new MLDouble(null, model.colour));                                              
 		mlModel.setField("comsol",                        new MLDouble(null, new double[] {model.comsol?1:0}, 1));                        	
@@ -51,7 +52,6 @@ public class ser2mat {
 		mlModel.setField("stretchLimStick",               new MLDouble(null, new double[] {model.stretchLimStick}, 1));                   	// Maximum tension for sticking springs
 		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {model.formLimStick}, 1));                      	// Multiplication factor for rest length to form sticking springs.
 		mlModel.setField("stretchLimFil",                 new MLDouble(null, new double[] {model.stretchLimFil}, 1));                     	// Maximum tension for sticking springs
-		mlModel.setField("limOverlap",                    new MLDouble(null, model.limOverlap, model.limOverlap.length));                 	// The boundaries of the magnitude of overlap vector d. It will be Clamp() to these limits times R2 (stick) or R (anchor)
 		// Model biomass and growth properties
 		mlModel.setField("NXComp",                        new MLDouble(null, new double[] {model.NXComp}, 1));                            	// Types of biomass
 		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {model.NdComp}, 1));                            	// d for dynamic compound (e.g. total Ac)

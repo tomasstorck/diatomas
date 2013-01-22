@@ -18,6 +18,11 @@ public class Run {
 
 	public Run(CModel model) throws Exception{				
 		if(model.growthIter==0 && model.relaxationIter==0) {
+			
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////
+			//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////
+			
 			// Set parameters. This overwrites both CModel and supplied arguments
 			int[] type;
 			double restLength;
@@ -59,7 +64,7 @@ public class Run {
 				model.Kw 	= 5e-10;
 				model.Kr 	= 5e-11;
 				model.Kf 	= 2e-11;
-				model.Kan	= 1e-11*10.0;
+				model.Kan	= 1e-11;
 				model.Ks 	= 1e-11;
 				break;
 			case 1: case 2:
@@ -93,7 +98,7 @@ public class Run {
 				model.relaxationTimeStepdt *= 2.0;
 				model.relaxationTimeStep *= 2.0;
 				model.syntrophyFactor = 2.0;
-				model.attachmentRate = 3.0;
+				model.attachmentRate = 1.0;
 				if(model.simulation==1) {
 					model.Write("Loading parameters for dental/biofilm","");
 					// Biofilm-like
@@ -125,7 +130,7 @@ public class Run {
 							new Vector3d(-0.5,		0.4,					1.0).normalise()};
 					position0 = new Vector3d[]{
 							new Vector3d(0.6e-6,	0.3e-6,					-0.2e-6),
-							new Vector3d(-0.5e-6,	-0.5e-6,					-0.1e-6),
+							new Vector3d(-0.5e-6,	-0.5e-6,				-0.1e-6),
 							new Vector3d(0.1e-6,	-0.1e-6,				0.3e-6),
 							new Vector3d(0.4e-6,	0.2e-6,					0.4e-6),
 							new Vector3d(-0.3e-6,	-0.4e-6,				-0.3e-6),
