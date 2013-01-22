@@ -69,7 +69,8 @@ public class ser2mat {
 		mlModel.setField("attachmentRate",                new MLDouble(null, new double[] {model.attachmentRate}, 1));                    	// [h-1] Number of cells newly attached per hour
 		mlModel.setField("attachmentStack",               new MLDouble(null, new double[] {model.attachmentStack}, 1));                   	// How many cells should be attached at the next growth iteration
 		mlModel.setField("syntrophyFactor",               new MLDouble(null, new double[] {model.syntrophyFactor}, 1));                   	// Accelerated growth if two cells of different types are stuck to each other
-		mlModel.setField("allowOverlapDuringGrowth",      new MLDouble(null, new double[] {model.allowOverlapDuringGrowth?1:0}, 1));      	// If growth can occur despite cells overlapping
+		mlModel.setField("growthSkipMax",                 new MLDouble(null, new double[] {model.growthSkipMax}, 1));                     	// The maximum number of growth iterations we are allowed to skip before we should do growth again
+		mlModel.setField("growthSkip",                    new MLDouble(null, new double[] {model.growthSkip}, 1));                        	// How many growth iterations we have skipped
 		// Progress
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {model.growthTime}, 1));                        	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {model.growthTimeStep}, 1));                    	// [s] Time step for growth
@@ -115,7 +116,7 @@ public class ser2mat {
 			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.q}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
 		}
 		mlModel.setField("cellArray", mlcellArray);
-
+		
 		// ballArray
 		N = model.ballArray.size();
 		MLStructure mlballArray = new MLStructure(null, new int[] {model.ballArray.size() ,1});

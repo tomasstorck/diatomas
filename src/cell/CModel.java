@@ -92,7 +92,8 @@ public class CModel implements Serializable {
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public double attachmentStack = 0.0;		// How many cells should be attached at the next growth iteration
 	public double syntrophyFactor = 1.0; 		// Accelerated growth if two cells of different types are stuck to each other
-	public boolean allowOverlapDuringGrowth = false;	// If growth can occur despite cells overlapping
+	public int growthSkipMax = Integer.MAX_VALUE;	// The maximum number of growth iterations we are allowed to skip before we should do growth again
+	public int growthSkip = 0;					// How many growth iterations we have skipped
 
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth

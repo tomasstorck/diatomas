@@ -66,6 +66,7 @@ public class Run {
 				model.Kf 	= 2e-11;
 				model.Kan	= 1e-11;
 				model.Ks 	= 1e-11;
+				model.growthSkipMax = 10;
 				break;
 			case 1: case 2:
 				/////////////
@@ -94,7 +95,7 @@ public class Run {
 				model.Kf 	= 2e-11;
 				model.Kan	= 1e-11;
 				model.Ks 	= 1e-11;
-				model.allowOverlapDuringGrowth = true;
+				model.growthSkipMax = 10;
 				model.relaxationTimeStepdt *= 2.0;
 				model.relaxationTimeStep *= 2.0;
 				model.syntrophyFactor = 2.0;
@@ -149,7 +150,7 @@ public class Run {
 				throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 			}
 			
-//			model.Kan *= 10.0;
+			model.Kan *= 10.0;
 			
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////
 			//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
@@ -191,49 +192,50 @@ public class Run {
 			}
 		}
 		
-		boolean allowGrowth = false;
-		if(model.allowOverlapDuringGrowth || model.DetectCellCollision_Proper(1.0).isEmpty())	allowGrowth = true;
-		
 		while(true) {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.relaxationIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
-
-			if(model.comsol) {
-				// Do COMSOL things
-				model.Write("Calculating cell steady state concentrations (COMSOL)","iter");
-				// Make the model
-				Comsol comsol = new Comsol(model);
-				model.Write("\tInitialising geometry", "iter");
-				comsol.Initialise();
-				model.Write("\tCreating cells", "iter");
-				// Create cells in the COMSOL model
-				for(CCell cell : model.cellArray) {
-					if(cell.type<2) 		comsol.CreateSphere(cell);
-					else if(cell.type<6)	comsol.CreateRod(cell);
-					else 					throw new IndexOutOfBoundsException("Cell type: " + cell.type);
-				}
-				comsol.CreateBCBox();					// Create a large box where we set the "bulk" conditions
-				comsol.BuildGeometry();
-				// Set fluxes
-				for(CCell cell : model.cellArray) {
-					comsol.SetFlux(cell);
-				}
-				model.Write("\tSaving model", "iter");
-				comsol.Save();							// Save .mph file
-				// Calculate and extract the results
-				model.Write("\tRunning model", "iter");
-				comsol.Run();							// Run model to calculate concentrations
-				model.Write("\tCalculating cell surface concentrations", "iter");
-				for(CCell cell : model.cellArray) {
-					cell.q = comsol.GetParameter(cell, "q" + Integer.toString(cell.type));
-				}
-				// Clean up after ourselves 
-				model.Write("\tCleaning model from server", "iter");
-				comsol.RemoveModel();
-			}
 			
 			// Grow cells
-			if(allowGrowth) {
+			ArrayList<CCell> overlapCellArray = new ArrayList<CCell>(0);
+			if(model.growthSkip < model.growthSkipMax)		overlapCellArray = model.DetectCellCollision_Proper(1.0);
+			if(model.growthSkip >= model.growthSkipMax || overlapCellArray.isEmpty()) {
+				model.growthSkip = 0;
+				model.Write("Maximum number of growth iters skipped", "warning");
+				// Compute concentration fields with COMSOL
+				if(model.comsol) {
+					// Do COMSOL things
+					model.Write("Calculating cell steady state concentrations (COMSOL)","iter");
+					// Make the model
+					Comsol comsol = new Comsol(model);
+					model.Write("\tInitialising geometry", "iter");
+					comsol.Initialise();
+					model.Write("\tCreating cells", "iter");
+					// Create cells in the COMSOL model
+					for(CCell cell : model.cellArray) {
+						if(cell.type<2) 		comsol.CreateSphere(cell);
+						else if(cell.type<6)	comsol.CreateRod(cell);
+						else 					throw new IndexOutOfBoundsException("Cell type: " + cell.type);
+					}
+					comsol.CreateBCBox();					// Create a large box where we set the "bulk" conditions
+					comsol.BuildGeometry();
+					// Set fluxes
+					for(CCell cell : model.cellArray) {
+						comsol.SetFlux(cell);
+					}
+					model.Write("\tSaving model", "iter");
+					comsol.Save();							// Save .mph file
+					// Calculate and extract the results
+					model.Write("\tRunning model", "iter");
+					comsol.Run();							// Run model to calculate concentrations
+					model.Write("\tCalculating cell surface concentrations", "iter");
+					for(CCell cell : model.cellArray) {
+						cell.q = comsol.GetParameter(cell, "q" + Integer.toString(cell.type));
+					}
+					// Clean up after ourselves 
+					model.Write("\tCleaning model from server", "iter");
+					comsol.RemoveModel();
+				}
 				// Grow cells either with COMSOL or simple 
 				model.Write("Growing cells", "iter");
 				ArrayList<CCell> dividedCellArray;
@@ -265,6 +267,12 @@ public class Run {
 				model.attachmentStack -= NNew;
 				model.Write("Attaching " + NNew + " new cells", "iter");
 				model.Attachment(NNew);
+			} else {
+				model.growthSkip++;
+				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","iter");
+				String cellNumber = "" + overlapCellArray.get(0).Index();
+				for(int ii=1; ii<overlapCellArray.size(); ii++) 	cellNumber += ", " + overlapCellArray.get(ii).Index();
+				model.Write("Cells overlapping: " + cellNumber,"iter");
 			}
 						
 			// Relaxation
@@ -277,23 +285,14 @@ public class Run {
 			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			// Lower beta in ODE solver if too many steps
-			if(nstp>4000) {
-				model.ODEbeta *= 0.75;
+			if(model.ODEbeta>0.0 && nstp>40000*(int)model.relaxationTimeStep) {
+				if(model.ODEbeta>1e-3) 	model.ODEbeta *= 0.75;
+				else 					model.ODEbeta = 0.0;
 				model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
 				model.Write("Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
+				
 			}
-			// Check if we can continue growth next iteration, or need to relax a bit longer
-			ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.0);
-			if(model.allowOverlapDuringGrowth || overlapCellArray.isEmpty()) {
-				allowGrowth = true;
-			} else {
-				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","iter");
-				String cellNumber = "" + overlapCellArray.get(0).Index();
-				for(int ii=1; ii<overlapCellArray.size(); ii++) 	cellNumber += ", " + overlapCellArray.get(ii).Index();
-				model.Write("Cells overlapping: " + cellNumber,"iter");
-				allowGrowth = false;
-			}
-
+			
 			// And finally: save stuff
 			model.Write("Saving model as serialised file", "iter");
 			model.Save();
