@@ -7,7 +7,8 @@ yshadow = zeros(size(y));
 % figure;
 hold on;
 
-overlapArray = CheckOverlap(model.ballArray);
+overlapArray = CheckOverlap(model.ballArray)
+
 
 for iCell = 0:length(model.cellArray)-1;
 	C0 = zeros(n+1);

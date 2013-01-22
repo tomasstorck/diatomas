@@ -84,9 +84,9 @@ public class CModel implements Serializable {
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
 	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
 	public int NInitCell = 6;					// Initial number of cells
-	public int[] cellType = {1, 5};				// Cell types used by default
-	public double[] cellRadiusMax = {0.125e-6,	0.5e-6, 	0.125e-6, 	0.375e-6, 	0.125e-6, 	0.375e-6};
-	public double[] cellLengthMax = {0.0,		0.0,		1e-6,		1.5e-6,		1e-6,		1.5e-6};
+	public int[] cellType = {0, 4};				// Cell types used by default
+	public double[] cellRadiusMax = {0.25e-6,	0.5e-6, 	0.25e-6*1.25, 	0.375e-6, 	0.25e-6*1.25, 	0.375e-6};
+	public double[] cellLengthMax = {0.0,		0.0,		2.0e-6,			2.0e-6,		2.5e-6,			2.5e-6};
 	public double[] nCellMax =	new double[6];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 	public double muSpread = 0.25;				// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!    
@@ -270,24 +270,37 @@ public class CModel implements Serializable {
 					}
 				} else {
 					double H2;
-					Vector3d diff = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos);;
+					Vector3d diff = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos);
+					CCell rod;	CCell sphere;							// Initialise rod and sphere, should we need it later on (rod-sphere collision detection)
+					double dist;
 					if(cell0.type > 1 && cell1.type > 1) {				// Rod-rod
-						H2 = 1.5*(touchFactor*( cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still  
-					} else {											// Rod-ball
-						CCell rod;
+						H2 = 1.5*(touchFactor*( cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still
+						if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
+							// Do good collision detection
+							EricsonObject C = DetectLinesegLineseg(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos, cell1.ballArray[1].pos);
+							dist = C.dist;
+						} else 		continue;							// Not close enough, continue to next cell pair
+					} else if(cell0.type<6 && cell1.type<6) {			// Rod-ball
 						if(cell0.type<2) {
 							rod=cell1;
+							sphere=cell0;
 						} else {
 							rod=cell0;
+							sphere=cell1;
 						}
 						H2 = 1.5*(touchFactor*( cellLengthMax[rod.type] + R2 ));// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+						if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
+							// Do good collision detection
+							EricsonObject C = DetectLinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos);
+							dist = C.dist;
+						} else 		continue;							// Not close enough, continue to next cell pair
+					} else {
+						throw new IndexOutOfBoundsException("Cell type: " + cell0.type + "/" + cell1.type);
 					}
-					if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
-						double dist = diff.norm();
-						if(dist<R2*touchFactor)	{
-							collisionCell.add(cell0);
-							collisionCell.add(cell1);
-						}
+					// Add cells to collision array if they are close enough after proper collision detection
+					if(dist<R2*touchFactor)	{
+						collisionCell.add(cell0);
+						collisionCell.add(cell1);
 					}
 				}
 			}
