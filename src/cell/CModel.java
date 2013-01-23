@@ -83,9 +83,9 @@ public class CModel implements Serializable {
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
 	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
 	public int NInitCell = 6;					// Initial number of cells
-	public int[] cellType = {0, 4};				// Cell types used by default
-	public double[] cellRadiusMax = {0.25e-6,	0.5e-6, 	0.25e-6*1.25, 	0.375e-6, 	0.25e-6*1.25, 	0.375e-6};
-	public double[] cellLengthMax = {0.0,		0.0,		2.0e-6,			2.0e-6,		2.5e-6,			2.5e-6};
+	public int[] typeCell = {0, 4};				// Cell types used by default
+	public double[] radiusCellMax = {0.25e-6,	0.5e-6, 	0.25e-6*1.25, 	0.375e-6, 	0.25e-6*1.25, 	0.375e-6};
+	public double[] lengthCellMax = {0.0,		0.0,		2.0e-6,			2.0e-6,		2.5e-6,			2.5e-6};
 	public double[] nCellMax =	new double[6];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 	public double muSpread = 0.25;				// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!    
@@ -167,10 +167,10 @@ public class CModel implements Serializable {
 	
 	public void UpdateAmountCellMax() {	// Updates the nCellMax based on the supplied parameters 
 		for(int ii = 0; ii<2; ii++) {
-			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(cellRadiusMax[ii],3))*rhoX/MWX; 
+			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3))*rhoX/MWX; 
 		}
 		for(int ii = 2; ii<6; ii++) {
-			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(cellRadiusMax[ii],3) + Math.PI*Math.pow(cellRadiusMax[ii],2)*cellLengthMax[ii])*rhoX/MWX; 
+			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3) + Math.PI*Math.pow(radiusCellMax[ii],2)*lengthCellMax[ii])*rhoX/MWX; 
 		}
 	}
 	
@@ -273,7 +273,7 @@ public class CModel implements Serializable {
 					CCell rod;	CCell sphere;							// Initialise rod and sphere, should we need it later on (rod-sphere collision detection)
 					double dist;
 					if(cell0.type > 1 && cell1.type > 1) {				// Rod-rod
-						H2 = 1.5*(touchFactor*( cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still
+						H2 = 1.5*(touchFactor*( lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still
 						if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
 							// Do good collision detection
 							EricsonObject C = DetectLinesegLineseg(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos, cell1.ballArray[1].pos);
@@ -287,7 +287,7 @@ public class CModel implements Serializable {
 							rod=cell0;
 							sphere=cell1;
 						}
-						H2 = 1.5*(touchFactor*( cellLengthMax[rod.type] + R2 ));// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+						H2 = 1.5*(touchFactor*( lengthCellMax[rod.type] + R2 ));// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 						if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
 							// Do good collision detection
 							EricsonObject C = DetectLinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos);
@@ -490,7 +490,7 @@ public class CModel implements Serializable {
 							c1b0.force = c1b0.force.minus(Fs);
 						}
 					} else {														// cell0 is a ball, cell1 is a rod
-						double H2 = 1.5*(cellLengthMax[cell1.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect. 1.5 is to make it more robust (stretching)
+						double H2 = 1.5*(lengthCellMax[cell1.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect. 1.5 is to make it more robust (stretching)
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a sphere-rod collision detection
 							CBall c1b1 = cell1.ballArray[1];
@@ -522,7 +522,7 @@ public class CModel implements Serializable {
 					double R2 = c0b0.radius + c1b0.radius;
 					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
 					if(cell1.type<2) {												// cell0 is a rod, the cell1 is a ball
-						double H2 = 1.5*(cellLengthMax[cell0.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+						double H2 = 1.5*(lengthCellMax[cell0.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a rod-sphere collision detection
 							EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
@@ -549,7 +549,7 @@ public class CModel implements Serializable {
 						Vector3d c1b0pos = new Vector3d(c1b0.pos);
 						CBall c1b1 = cell1.ballArray[1];
 						Vector3d c1b1pos = new Vector3d(c1b1.pos);
-						double H2 = 1.5*( cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2 );		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
+						double H2 = 1.5*( lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2 );		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// calculate the distance between the two diatoma segments
 							EricsonObject C = DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
@@ -749,7 +749,7 @@ public class CModel implements Serializable {
 								dist = (c1b0.pos.minus(c0b0.pos)).norm();
 							} else continue;
 						} else if(cell0.type<2) {			// 1st sphere, 2nd rod
-							double H2f =  1.5*(formLimStick*(cellLengthMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							double H2f =  1.5*(formLimStick*(lengthCellMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c1b1 = cell1.ballArray[1];
 								// do a sphere-rod collision detection
@@ -757,7 +757,7 @@ public class CModel implements Serializable {
 								dist = C.dist;
 							} else continue;
 						} else if(cell1.type<2) {			// 2nd sphere, 1st rod
-							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							double H2f = 1.5*(formLimStick*(lengthCellMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								// do a sphere-rod collision detection
@@ -765,7 +765,7 @@ public class CModel implements Serializable {
 								dist = C.dist;
 							} else continue;
 						} else if(cell0.type<6 && cell1.type<6) {  	// both rod
-							double H2f = 1.5*(formLimStick*(cellLengthMax[cell0.type] + cellLengthMax[cell1.type] + R2));
+							double H2f = 1.5*(formLimStick*(lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2));
 							if(stickRodRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								CBall c1b1 = cell1.ballArray[1];
@@ -1010,7 +1010,7 @@ public class CModel implements Serializable {
 			final double nNew = 0.5 * nCellMax[typeNew] * (1.0 + rand.Double());
 			final boolean filNew = filament && filSphere;
 			final double[] colourNew = colour[NInitCell];			// Choose a colour not chosen for initial cell creation  
-			final double rNew = cellRadiusMax[typeNew]*Math.pow(0.5, 1.0/3.0); 
+			final double rNew = radiusCellMax[typeNew]*Math.pow(0.5, 1.0/3.0); 
 			// Find P based on random ball for first point
 			CBall PBall = ballArray.get(rand.Int(ballArray.size()-1));
 			Vector3d P = PBall.pos;

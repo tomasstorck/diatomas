@@ -36,19 +36,19 @@ public class Run {
 				// E. COLI //
 				/////////////
 				type = new int[]{4,4,4};
-				model.cellRadiusMax[4] = 0.25e-6;
-				model.cellLengthMax[4] = 2.5e-6;
+				model.radiusCellMax[4] = 0.25e-6;
+				model.lengthCellMax[4] = 2.5e-6;
 				model.UpdateAmountCellMax();
 				model.NInitCell = 3;
-				restLength = 0.75*model.cellLengthMax[4];			// 0.75 is a fair estimate
+				restLength = 0.75*model.lengthCellMax[4];			// 0.75 is a fair estimate
 				direction = new Vector3d[]{
 						new Vector3d(0.3,		0.0,					0.2).normalise(),
 						new Vector3d(1.0,		0.0,					-0.2).normalise(),
 						new Vector3d(-0.5,		0.0,					1.0).normalise()};
 				position0 = new Vector3d[]{
-						new Vector3d(0.6e-6,	model.cellRadiusMax[4],	-0.2e-6),
-						new Vector3d(-0.5e-6,	model.cellRadiusMax[4],	-0.1e-6),
-						new Vector3d(0.1e-6,	model.cellRadiusMax[4],	0.3e-6)};
+						new Vector3d(0.6e-6,	model.radiusCellMax[4],	-0.2e-6),
+						new Vector3d(-0.5e-6,	model.radiusCellMax[4],	-0.1e-6),
+						new Vector3d(0.1e-6,	model.radiusCellMax[4],	0.3e-6)};
 				position1 = new Vector3d[]{
 						position0[0].plus(direction[0].times(restLength)),
 						position0[1].plus(direction[1].times(restLength)),
@@ -73,12 +73,12 @@ public class Run {
 				// DENTAL  //
 				/////////////
 				type = new int[]{4,4,4,0,0,0};
-				model.cellRadiusMax[0] = 0.25e-6 * 1.25;
-				model.cellRadiusMax[4] = 0.25e-6;
-				model.cellLengthMax[4] = 2.5e-6;
+				model.radiusCellMax[0] = 0.25e-6 * 1.25;
+				model.radiusCellMax[4] = 0.25e-6;
+				model.lengthCellMax[4] = 2.5e-6;
 				model.UpdateAmountCellMax();
 				model.NInitCell = 6;
-				restLength = 0.75*model.cellLengthMax[4];			// 0.75 is a fair estimate
+				restLength = 0.75*model.lengthCellMax[4];			// 0.75 is a fair estimate
 				model.muAvgSimple[0] = 0.33;
 				model.muAvgSimple[4] = 0.15;
 				model.sticking = true;
@@ -108,12 +108,12 @@ public class Run {
 							new Vector3d(0.2,		1.0,					-0.2).normalise(),
 							new Vector3d(-0.1,		1.0,					0.1).normalise()};
 					position0 = new Vector3d[]{
-							new Vector3d(0.6e-6,	model.cellRadiusMax[4],	-0.2e-6),
-							new Vector3d(-0.5e-6,	model.cellRadiusMax[4],	-0.1e-6),
-							new Vector3d(0.1e-6,	model.cellRadiusMax[4],	0.3e-6),
-							new Vector3d(0.4e-6,	model.cellRadiusMax[0],	0.4e-6),
-							new Vector3d(-0.3e-6,	model.cellRadiusMax[0],	-0.3e-6),
-							new Vector3d(0.0e-6,	model.cellRadiusMax[0],	0.0e-6)};
+							new Vector3d(0.6e-6,	model.radiusCellMax[4],	-0.2e-6),
+							new Vector3d(-0.5e-6,	model.radiusCellMax[4],	-0.1e-6),
+							new Vector3d(0.1e-6,	model.radiusCellMax[4],	0.3e-6),
+							new Vector3d(0.4e-6,	model.radiusCellMax[0],	0.4e-6),
+							new Vector3d(-0.3e-6,	model.radiusCellMax[0],	-0.3e-6),
+							new Vector3d(0.0e-6,	model.radiusCellMax[0],	0.0e-6)};
 					position1 = new Vector3d[]{
 							position0[0].plus(direction[0].times(restLength)),
 							position0[1].plus(direction[1].times(restLength)),
@@ -203,7 +203,8 @@ public class Run {
 			
 			// Grow cells
 			ArrayList<CCell> overlapCellArray = new ArrayList<CCell>(0);
-			boolean grow = true;
+			boolean grow = false;
+			// Find out if we want to grow
 			if(model.growthSkip < model.growthSkipMax) {
 				overlapCellArray = model.DetectCellCollision_Proper(1.0);
 				if(overlapCellArray.isEmpty())		grow = true;									// Grow if there are no overlapping cells
@@ -301,7 +302,6 @@ public class Run {
 				else 					model.ODEbeta = 0.0;
 				model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
 				model.Write("Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
-				
 			}
 			
 			// And finally: save stuff

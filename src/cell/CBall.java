@@ -59,7 +59,7 @@ public class CBall implements Serializable {
 		if (cell.type<2) {
 			return Math.pow( 							n*model.MWX / (Math.PI * model.rhoX * 4.0/3.0), .333333);
 		} else {
-			double aspect = cell.model.cellLengthMax[cell.type] / cell.model.cellRadiusMax[cell.type];		// Aspect = length over radius (not diameter) 
+			double aspect = cell.model.lengthCellMax[cell.type] / cell.model.radiusCellMax[cell.type];		// Aspect = length over radius (not diameter) 
 			if(cell.type<4) {			// type == 2 || 3 is variable radius balls
 				return Math.pow(						2.0*n*model.MWX / (Math.PI * model.rhoX * (aspect + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
 			} else {					// type == 4 || 5 is fixed radius (variable length) rod

@@ -59,15 +59,14 @@ public class ser2mat {
 		mlModel.setField("NAcidDiss",                     new MLDouble(null, new double[] {model.NAcidDiss}, 1));                         	// Number of acid dissociation reactions
 		mlModel.setField("NInitCell",                     new MLDouble(null, new double[] {model.NInitCell}, 1));                         	// Initial number of cells
 		//
-		double[] DcellType = new double[model.cellType.length];		for(int ii=0; ii<model.cellType.length; ii++)		DcellType[ii] = model.cellType[ii];		mlModel.setField("cellType",                      new MLDouble(null, DcellType, model.cellType.length));                          	// Cell types used by default
+		double[] DtypeCell = new double[model.typeCell.length];		for(int ii=0; ii<model.typeCell.length; ii++)		DtypeCell[ii] = model.typeCell[ii];		mlModel.setField("typeCell",                      new MLDouble(null, DtypeCell, model.typeCell.length));                          	// Cell types used by default
 		//
-		mlModel.setField("cellRadiusMax",                 new MLDouble(null, model.cellRadiusMax, model.cellRadiusMax.length));           	
-		mlModel.setField("cellLengthMax",                 new MLDouble(null, model.cellLengthMax, model.cellLengthMax.length));           	
+		mlModel.setField("radiusCellMax",                 new MLDouble(null, model.radiusCellMax, model.radiusCellMax.length));           	
+		mlModel.setField("lengthCellMax",                 new MLDouble(null, model.lengthCellMax, model.lengthCellMax.length));           	
 		mlModel.setField("nCellMax",                      new MLDouble(null, model.nCellMax, model.nCellMax.length));                     	
 		mlModel.setField("muAvgSimple",                   new MLDouble(null, model.muAvgSimple, model.muAvgSimple.length));               	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 		mlModel.setField("muSpread",                      new MLDouble(null, new double[] {model.muSpread}, 1));                          	// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!
 		mlModel.setField("attachmentRate",                new MLDouble(null, new double[] {model.attachmentRate}, 1));                    	// [h-1] Number of cells newly attached per hour
-		mlModel.setField("attachmentStack",               new MLDouble(null, new double[] {model.attachmentStack}, 1));                   	// How many cells should be attached at the next growth iteration
 		mlModel.setField("syntrophyFactor",               new MLDouble(null, new double[] {model.syntrophyFactor}, 1));                   	// Accelerated growth if two cells of different types are stuck to each other
 		mlModel.setField("growthSkipMax",                 new MLDouble(null, new double[] {model.growthSkipMax}, 1));                     	// The maximum number of growth iterations we are allowed to skip before we should do growth again
 		mlModel.setField("growthSkip",                    new MLDouble(null, new double[] {model.growthSkip}, 1));                        	// How many growth iterations we have skipped
@@ -116,7 +115,7 @@ public class ser2mat {
 			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.q}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
 		}
 		mlModel.setField("cellArray", mlcellArray);
-		
+
 		// ballArray
 		N = model.ballArray.size();
 		MLStructure mlballArray = new MLStructure(null, new int[] {model.ballArray.size() ,1});
