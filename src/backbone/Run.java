@@ -273,10 +273,10 @@ public class Run {
 					fil.ResetRestLength();
 				}
 				// Attach new cells
-				model.attachmentStack += (model.growthTimeStep/3600.0 * model.attachmentRate);
-				int NNew = (int) model.attachmentStack;
-				model.attachmentStack -= NNew;
-				model.Write("Attaching " + NNew + " new cells (stack = " + model.attachmentStack + ")", "iter");
+				final double NNewPerStep = model.attachmentRate*(model.growthTimeStep/3600.0);
+				//			N guaranteed	+ 1 the integer of this iteration is not equal to the previous one (this will be wrong for growthIter==0)
+				int NNew = (int)NNewPerStep + (int)(model.growthIter*NNewPerStep)==(int)((model.growthIter-1)*NNewPerStep) ? 0:1;
+				model.Write("Attaching " + NNew + " new cells", "iter");
 				model.Attachment(NNew);
 			} else {
 				model.growthSkip++;

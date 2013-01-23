@@ -90,7 +90,6 @@ public class CModel implements Serializable {
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 	public double muSpread = 0.25;				// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!    
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
-	public double attachmentStack = 0.0;		// How many cells should be attached at the next growth iteration
 	public double syntrophyFactor = 1.0; 		// Accelerated growth if two cells of different types are stuck to each other
 	public int growthSkipMax = Integer.MAX_VALUE;	// The maximum number of growth iterations we are allowed to skip before we should do growth again
 	public int growthSkip = 0;					// How many growth iterations we have skipped
