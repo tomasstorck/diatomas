@@ -53,7 +53,7 @@ public class Run {
 						position0[0].plus(direction[0].times(restLength)),
 						position0[1].plus(direction[1].times(restLength)),
 						position0[2].plus(direction[2].times(restLength))};
-				model.muAvgSimple[4] = 0.33;
+//				model.muAvgSimple[4] = 0.15;
 				model.sticking = false;
 				model.filament = false;
 				model.gravity = false;
@@ -80,7 +80,7 @@ public class Run {
 				model.NInitCell = 6;
 				restLength = 0.75*model.lengthCellMax[4];			// 0.75 is a fair estimate
 				model.muAvgSimple[0] = 0.33;
-				model.muAvgSimple[4] = 0.15;
+				model.muAvgSimple[4] = 0.20;
 				model.sticking = true;
 				model.stickRodRod = false;
 				model.stickSphereSphere = false;
@@ -96,8 +96,6 @@ public class Run {
 				model.Kan	= 1e-11;
 				model.Ks 	= 1e-11;
 				model.growthSkipMax = 10;
-				model.relaxationTimeStepdt *= 2.0;
-				model.relaxationTimeStep *= 2.0;
 				model.syntrophyFactor = 2.0;
 				model.attachmentRate = 1.0;
 				if(model.simulation==1) {

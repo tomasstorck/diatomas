@@ -1011,36 +1011,51 @@ public class CModel implements Serializable {
 			final boolean filNew = filament && filSphere;
 			final double[] colourNew = colour[NInitCell];			// Choose a colour not chosen for initial cell creation  
 			final double rNew = radiusCellMax[typeNew]*Math.pow(0.5, 1.0/3.0); 
-			// Find P based on random ball for first point
-			CBall PBall = ballArray.get(rand.Int(ballArray.size()-1));
-			Vector3d P = PBall.pos;
-			// Find dirn, any direction away from P (including below substratum TODO)
-			Vector3d dirn = new Vector3d(rand.Double()-0.5, rand.Double()-0.5, rand.Double()-0.5).normalise();
-			// Check how far all balls are from P and in the correct dirn. Also select our winner
-			CBall championBall = PBall;
-			double championDist = 0.0;
-			for(CBall ball : ballArray) {
-				// Find Q, the vector pointing to ball.pos from P
-				Vector3d Q = ball.pos.minus(P);
-				// Is Q interesting enough to further analyse or already too far away?
-				double dotQdirn = Q.dot(dirn);
-				if(dotQdirn<0)		continue;				// Wrong direction: angle between Q and dirn >90 degrees
-				// Project Q onto dirn
-				Vector3d projQ = dirn.times(dotQdirn);		// Vector projection of vector Q onto dirn. dirn is already normalised, so no need to divide over dirn.norm()
-				// Check if Q is close enough to dirn to touch by analysing the vector R, from projection to Q
-				Vector3d R = Q.minus(projQ);
-				if( R.norm() < rNew+ball.radius ) {
-					// Good, if it would be lowered from dirn to P it would collide with ball. 
-					// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from P is the largest yet
-					if(projQ.norm() > championDist) {
-						// Set new record, state this is our current champion
-						championDist = projQ.norm();
-						championBall = ball; 
+			// Create array of balls in non-spherical cells 
+			ArrayList<CBall> ballArrayRod = new ArrayList<CBall>(ballArray.size());
+			for(CBall ball : ballArray) 	if(ball.cell.type>1) 	ballArrayRod.add(ball);
+			// Find a random rod's ball position P and move the ball there until we find one without colliding with a sphere's ball
+			Vector3d posNew;
+			int NGame = 0;
+			while(true) {
+				NGame++;
+				// Find P based on random non-spherical ball for first point
+				CBall PBall = ballArrayRod.get(rand.Int(ballArrayRod.size()-1));
+				Vector3d P = PBall.pos;
+				// Find dirn, any direction away from P (including below substratum TODO)
+				Vector3d dirn = new Vector3d(rand.Double()-0.5, rand.Double()-0.5, rand.Double()-0.5).normalise();
+				// Check how far all (incl. spherical) balls are from P and in the correct dirn. Also select our winner (any cell type)
+				CBall championBall = PBall;
+				double championDist = 0.0;
+				for(CBall ball : ballArray) {
+					// Find Q, the vector pointing to ball.pos from P
+					Vector3d Q = ball.pos.minus(P);
+					// Does Q qualify to be further analysed or already too far away?
+					double dotQdirn = Q.dot(dirn);
+					if(dotQdirn<0)		continue;				// Wrong direction: angle between Q and dirn >90 degrees
+					// Project Q onto dirn
+					Vector3d projQ = dirn.times(dotQdirn);		// Vector projection of vector Q onto dirn. dirn is already normalised
+					// Check if Q is close enough to dirn to touch (and reach the finals) by analysing the vector R, from projection to Q
+					Vector3d R = Q.minus(projQ);
+					if( R.norm() < rNew+ball.radius ) {
+						// Good, if it would be lowered from dirn to P it would collide with ball. 
+						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from P is the largest yet 
+						if(projQ.norm() > championDist) {
+							// Set new record, state this is our current champion
+							championDist = projQ.norm();
+							championBall = ball; 
+						}
 					}
 				}
+				// Get new position. Check if it is valid in case we have a substratum
+				posNew = championBall.pos.plus(dirn.times(rNew + championBall.radius));
+				if(normalForce && posNew.y<rNew)	continue;	// the championBall went through the plane		
+				// If a non-sphere's ball wins, we're happy and conclude the games. If not, rematch with new P and dirn
+				if(championBall.cell.type > 1)	break;
+				// If after 100 games we still didn't win, forfeit 
+				if(NGame>100)		throw new RuntimeException("Could not find a cell to attach to");
 			}
 			// Create and position the new cell to this champion ball. Position it in the direction of dirn
-			Vector3d posNew = P.plus(dirn.times(rNew + championBall.radius));
 			new CCell(typeNew, nNew, posNew, new Vector3d(), filNew, colourNew, this);
 			// It will stick/anchor when needed during movement, so we're done
 		}
