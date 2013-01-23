@@ -106,12 +106,12 @@ public class Run {
 							new Vector3d(0.2,		1.0,					-0.2).normalise(),
 							new Vector3d(-0.1,		1.0,					0.1).normalise()};
 					position0 = new Vector3d[]{
-							new Vector3d(0.6e-6,	model.radiusCellMax[4],	-0.2e-6),
+							new Vector3d(0.7e-6,	model.radiusCellMax[4],	-0.2e-6),
 							new Vector3d(-0.5e-6,	model.radiusCellMax[4],	-0.1e-6),
 							new Vector3d(0.1e-6,	model.radiusCellMax[4],	0.3e-6),
-							new Vector3d(0.4e-6,	model.radiusCellMax[0],	0.4e-6),
-							new Vector3d(-0.3e-6,	model.radiusCellMax[0],	-0.3e-6),
-							new Vector3d(0.0e-6,	model.radiusCellMax[0],	0.0e-6)};
+							new Vector3d(0.7e-6,	model.radiusCellMax[0],	0.4e-6),
+							new Vector3d(0.1e-6,	model.radiusCellMax[0],	-0.3e-6),
+							new Vector3d(-0.4e-6,	model.radiusCellMax[0],	0.4e-6)};
 					position1 = new Vector3d[]{
 							position0[0].plus(direction[0].times(restLength)),
 							position0[1].plus(direction[1].times(restLength)),
@@ -129,12 +129,12 @@ public class Run {
 							new Vector3d(0.2,		1.0,					-0.2).normalise(),
 							new Vector3d(-0.1,		1.0,					0.1).normalise()};
 					position0 = new Vector3d[]{
-							new Vector3d(0.6e-6,	0.3e-6,					-0.2e-6),
-							new Vector3d(-0.5e-6,	-0.5e-6,				-0.1e-6),
-							new Vector3d(0.1e-6,	-0.1e-6,				0.3e-6),
-							new Vector3d(0.4e-6,	0.2e-6,					0.4e-6),
-							new Vector3d(-0.3e-6,	-0.4e-6,				-0.3e-6),
-							new Vector3d(0.0e-6,	0.0e-6,					0.0e-6)};
+							new Vector3d(0.7e-6,	0.1e-6,					-0.2e-6),
+							new Vector3d(-0.5e-6,	-0.1e-6,				-0.1e-6),
+							new Vector3d(0.1e-6,	-0.2e-6,				0.3e-6),
+							new Vector3d(0.7e-6,	0.2e-6,					0.4e-6),
+							new Vector3d(0.1e-6,	-0.2e-6,				-0.3e-6),
+							new Vector3d(-0.4e-6,	0.0e-6,					0.4e-6)};
 					position1 = new Vector3d[]{
 							position0[0].plus(direction[0].times(restLength)),
 							position0[1].plus(direction[1].times(restLength)),
