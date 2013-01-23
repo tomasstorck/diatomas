@@ -105,8 +105,8 @@ public class Run {
 					// Biofilm-like
 					direction = new Vector3d[]{
 							new Vector3d(0.3,		1.0,					0.2).normalise(),
-							new Vector3d(1.0,		0.1,					-0.2).normalise(),
-							new Vector3d(-0.5,		0.4,					1.0).normalise()};
+							new Vector3d(0.2,		1.0,					-0.2).normalise(),
+							new Vector3d(-0.1,		1.0,					0.1).normalise()};
 					position0 = new Vector3d[]{
 							new Vector3d(0.6e-6,	model.cellRadiusMax[4],	-0.2e-6),
 							new Vector3d(-0.5e-6,	model.cellRadiusMax[4],	-0.1e-6),
@@ -128,8 +128,8 @@ public class Run {
 					// Flock-like
 					direction = new Vector3d[]{
 							new Vector3d(0.3,		1.0,					0.2).normalise(),
-							new Vector3d(1.0,		0.1,					-0.2).normalise(),
-							new Vector3d(-0.5,		0.4,					1.0).normalise()};
+							new Vector3d(0.2,		1.0,					-0.2).normalise(),
+							new Vector3d(-0.1,		1.0,					0.1).normalise()};
 					position0 = new Vector3d[]{
 							new Vector3d(0.6e-6,	0.3e-6,					-0.2e-6),
 							new Vector3d(-0.5e-6,	-0.5e-6,				-0.1e-6),
@@ -203,9 +203,15 @@ public class Run {
 			
 			// Grow cells
 			ArrayList<CCell> overlapCellArray = new ArrayList<CCell>(0);
-			if(model.growthSkip < model.growthSkipMax)		overlapCellArray = model.DetectCellCollision_Proper(1.0);
-			if(model.growthSkip >= model.growthSkipMax || overlapCellArray.isEmpty()) {
-				if(model.growthSkip>0)		model.Write("Maximum number of growth iters skipped", "warning");
+			boolean grow = true;
+			if(model.growthSkip < model.growthSkipMax) {
+				overlapCellArray = model.DetectCellCollision_Proper(1.0);
+				if(overlapCellArray.isEmpty())		grow = true;									// Grow if there are no overlapping cells
+			} else {
+				if(model.growthSkip!=0)				model.Write("Maximum number of growth iters skipped", "warning");	// Warn if we don't always continue with overlap
+				grow = true;																		// Grow if we have skipped the maximum number of iterations
+			}
+			if(grow) {
 				model.growthSkip = 0;
 				// Compute concentration fields with COMSOL
 				if(model.comsol) {
@@ -274,9 +280,9 @@ public class Run {
 				model.Attachment(NNew);
 			} else {
 				model.growthSkip++;
-				model.Write(overlapCellArray.size() + " overlapping cells detected, growth delayed","iter");
-				String cellNumber = "" + overlapCellArray.get(0).Index();
-				for(int ii=1; ii<overlapCellArray.size(); ii++) 	cellNumber += ", " + overlapCellArray.get(ii).Index();
+				model.Write(overlapCellArray.size()/2 + " overlapping cell pairs detected, growth delayed","iter");
+				String cellNumber = "" + overlapCellArray.get(0).Index() + " & " + overlapCellArray.get(1).Index();
+				for(int ii=2; ii<overlapCellArray.size(); ii=ii+2) 	cellNumber += ", " + overlapCellArray.get(ii).Index() + " & " + overlapCellArray.get(ii+1).Index();
 				model.Write("Cells overlapping: " + cellNumber,"iter");
 			}
 						
@@ -290,7 +296,7 @@ public class Run {
 			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 			// Lower beta in ODE solver if too many steps
-			if(model.ODEbeta>0.0 && nstp>40000*(int)model.relaxationTimeStep) {
+			if(model.ODEbeta>0.0 && nstp>(int)4e4*model.relaxationTimeStep) {
 				if(model.ODEbeta>1e-3) 	model.ODEbeta *= 0.75;
 				else 					model.ODEbeta = 0.0;
 				model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
