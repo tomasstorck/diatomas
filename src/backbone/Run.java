@@ -259,10 +259,10 @@ public class Run {
 				model.growthIter++;
 				model.growthTime += model.growthTimeStep;
 				if(dividedCellArray.size()>0) {
-					String cellNumber = "" + dividedCellArray.get(0).Index();
-					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
 					model.Write(dividedCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
-					model.Write("Cells grown: " + cellNumber,"iter");
+//					String cellNumber = "" + dividedCellArray.get(0).Index();
+//					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
+//					model.Write("Cells grown: " + cellNumber,"iter");
 				}
 				// Reset springs where needed
 				model.Write("Resetting springs","iter");
@@ -276,7 +276,7 @@ public class Run {
 				model.attachmentStack += (model.growthTimeStep/3600.0 * model.attachmentRate);
 				int NNew = (int) model.attachmentStack;
 				model.attachmentStack -= NNew;
-				model.Write("Attaching " + NNew + " new cells", "iter");
+				model.Write("Attaching " + NNew + " new cells (stack = " + model.attachmentStack + ")", "iter");
 				model.Attachment(NNew);
 			} else {
 				model.growthSkip++;
