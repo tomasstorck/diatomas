@@ -7,8 +7,9 @@ yshadow = zeros(size(y));
 % figure;
 hold on;
 
-overlapArray = CheckOverlap(model.ballArray)
+overlapArray = CheckOverlap(model.ballArray);
 
+box;
 
 for iCell = 0:length(model.cellArray)-1;
 	C0 = zeros(n+1);
@@ -22,27 +23,33 @@ for iCell = 0:length(model.cellArray)-1;
 		ball1 = model.ballArray(iBall1+1);
 	end
 		
-% 	% colour balls based on cellIndex
-% 	C0==zeros(n+1)+ball0.cellIndex;
-%	C1==zeros(n+1)+ball1.cellIndex;
-	
-% 	% colour balls based on ancestor's cellIndex
-% 	cii=-1;
-% 	for jCell=1:model.NInitCell
-% 		if all(cell.colour == model.cellArray(jCell).colour);
-% 			cii = i;
-% 			break;
-% 		end
-% 	end
-% 	C0=zeros(n+1)+cii;
-%	C1=C0;
-
-	% colour balls based on collision or not
-	if any(any(iBall0==overlapArray))
-			C0 = zeros(n+1)+1;
+	if colourMode==0
+		% colour balls based on cellIndex
+		C0=zeros(n+1)+ball0.cellIndex;
+		C1=zeros(n+1)+ball1.cellIndex;
 	end
-	if cell.type>1 && any(any(iBall1==overlapArray))
-			C1 = zeros(n+1)+1;
+	
+	if colourMode==1
+		% colour balls based on ancestor's cellIndex
+		cii=-1;
+		for jCell=1:model.NInitCell
+			if all(cell.colour == model.cellArray(jCell).colour);
+				cii = jCell;
+				break;
+			end
+		end
+		C0=zeros(n+1)+cii;
+		C1=C0;
+	end
+
+	if colourMode==2
+		% colour balls based on collision or not
+		if any(any(iBall0==overlapArray))
+				C0 = zeros(n+1)+1;
+		end
+		if cell.type>1 && any(any(iBall1==overlapArray))
+				C1 = zeros(n+1)+1;
+		end
 	end
 	%
 	if cell.type>1
@@ -81,8 +88,8 @@ zlabel('y')
 axis equal
 box
 
-% set view to correspond more or less to POVRay
-AZ = -35.197696406078933;
-EL = 17.875288325852580;
-view(AZ,EL);
+% % set view to correspond more or less to POVRay
+% AZ = -35.197696406078933;
+% EL = 17.875288325852580;
+% view(AZ,EL);
 							

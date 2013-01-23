@@ -1007,12 +1007,11 @@ public class CModel implements Serializable {
 	public void Attachment(int NNew) {
 		for(int iA=0; iA<NNew; iA++) {
 			// Define the cell we will attach
-			int typeNew = 0; 
-			double nNew = 0.5 * nCellMax[typeNew] * (1.0 + rand.Double());
-			boolean filNew = filament && filSphere;
-			double[] colourNew = colour[NInitCell];			// Choose a colour not chosen for initial cell creation  
-			CCell cellNew = new CCell(0, nNew, new Vector3d(), new Vector3d(), filNew, colourNew, this);
-			double rNew = cellNew.ballArray[0].radius; 
+			final int typeNew = 0; 
+			final double nNew = 0.5 * nCellMax[typeNew] * (1.0 + rand.Double());
+			final boolean filNew = filament && filSphere;
+			final double[] colourNew = colour[NInitCell];			// Choose a colour not chosen for initial cell creation  
+			final double rNew = cellRadiusMax[typeNew]*Math.pow(0.5, 1.0/3.0); 
 			// Find P based on random ball for first point
 			CBall PBall = ballArray.get(rand.Int(ballArray.size()-1));
 			Vector3d P = PBall.pos;
@@ -1041,9 +1040,9 @@ public class CModel implements Serializable {
 					}
 				}
 			}
-			// Position the new cell to this champion ball. Position it in the direction of dirn
+			// Create and position the new cell to this champion ball. Position it in the direction of dirn
 			Vector3d posNew = P.plus(dirn.times(rNew + championBall.radius));
-			cellNew.ballArray[0].pos = posNew;
+			new CCell(typeNew, nNew, posNew, new Vector3d(), filNew, colourNew, this);
 			// It will stick/anchor when needed during movement, so we're done
 		}
 	}

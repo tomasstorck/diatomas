@@ -121,6 +121,7 @@ public class Run {
 							new Vector3d(),
 							new Vector3d(),
 							new Vector3d()};
+					model.anchoring = true;
 					model.normalForce = true;
 				} else {
 					model.Write("Loading parameters for dental/flock","");
@@ -143,6 +144,7 @@ public class Run {
 							new Vector3d(),
 							new Vector3d(),
 							new Vector3d()};
+					model.anchoring = false;
 					model.normalForce = false;
 				}
 				break;
@@ -150,7 +152,10 @@ public class Run {
 				throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 			}
 			
-			model.Kan *= 10.0;
+//			model.Kan *= 10.0;
+//			model.muAvgSimple[0] = model.muAvgSimple[4] = model.muSpread = 0.0;
+//			model.attachmentRate = 6.0;
+//			model.growthSkipMax = 0;
 			
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////
 			//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
@@ -200,8 +205,8 @@ public class Run {
 			ArrayList<CCell> overlapCellArray = new ArrayList<CCell>(0);
 			if(model.growthSkip < model.growthSkipMax)		overlapCellArray = model.DetectCellCollision_Proper(1.0);
 			if(model.growthSkip >= model.growthSkipMax || overlapCellArray.isEmpty()) {
+				if(model.growthSkip>0)		model.Write("Maximum number of growth iters skipped", "warning");
 				model.growthSkip = 0;
-				model.Write("Maximum number of growth iters skipped", "warning");
 				// Compute concentration fields with COMSOL
 				if(model.comsol) {
 					// Do COMSOL things
