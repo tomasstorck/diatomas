@@ -54,16 +54,19 @@ public class CBall implements Serializable {
 	
 	/////////////////////////////////////////////////////
 	
-	public double Radius() {		// Note that rho is in kg m-3 but cell mass is in Cmol
-		CModel model = cell.model;
-		if (cell.type<2) {
-			return Math.pow( 							n*model.MWX / (Math.PI * model.rhoX * 4.0/3.0), .333333);
+	public double Radius() {		
+		return Radius(n, cell.type, cell.model);
+	}
+	
+	public static double Radius(double n, int type, CModel model) {
+		if (type<2) {
+			return Math.pow( 							n*model.MWX / (Math.PI * model.rhoX * 4.0/3.0), .333333);						// Note that rho is in kg m-3 but cell mass is in Cmol
 		} else {
-			double aspect = cell.model.lengthCellMax[cell.type] / cell.model.radiusCellMax[cell.type];		// Aspect = length over radius (not diameter) 
-			if(cell.type<4) {			// type == 2 || 3 is variable radius balls
-				return Math.pow(						2.0*n*model.MWX / (Math.PI * model.rhoX * (aspect + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
+			double aspect = model.lengthCellMax[type] / model.radiusCellMax[type];														// Aspect is here length over radius (not diameter) 
+			if(type<4) {			// type == 2 || 3 is variable radius balls
+				return Math.pow(				    2.0*n*model.MWX / (Math.PI * model.rhoX * (aspect + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
 			} else {					// type == 4 || 5 is fixed radius (variable length) rod
-				return Math.pow(    model.nCellMax[cell.type]*model.MWX / (Math.PI * model.rhoX * (aspect + 4.0/3.0)), .333333);			// Static
+				return Math.pow(    model.nCellMax[type]*model.MWX	/ (Math.PI * model.rhoX * (aspect + 4.0/3.0)), .333333);			// Static
 			}
 		}
 	}

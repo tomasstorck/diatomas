@@ -1010,7 +1010,7 @@ public class CModel implements Serializable {
 			final double nNew = 0.5 * nCellMax[typeNew] * (1.0 + rand.Double());
 			final boolean filNew = filament && filSphere;
 			final double[] colourNew = colour[NInitCell];			// Choose a colour not chosen for initial cell creation  
-			final double rNew = radiusCellMax[typeNew]*Math.pow(0.5, 1.0/3.0); 
+			final double rNew = CBall.Radius(nNew, typeNew, this); 
 			// Create array of balls in non-spherical cells 
 			ArrayList<CBall> ballArrayRod = new ArrayList<CBall>(ballArray.size());
 			for(CBall ball : ballArray) 	if(ball.cell.type>1) 	ballArrayRod.add(ball);
