@@ -83,7 +83,7 @@ public class Run {
 				model.stickRodRod = false;
 				model.stickSphereSphere = false;
 				model.filament = true;
-				model.filSphere = false;
+//				model.filSphere = false;
 				model.anchoring = true;
 				model.initialAtSubstratum = false;
 				model.Kd 	= 1e-13;

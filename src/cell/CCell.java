@@ -160,12 +160,37 @@ public class CCell implements Serializable {
 		if(type<2) {
 			return 4*Math.PI * Math.pow(ballArray[0].radius, 2);
 		} else if(type<6) {	// Assuming radii are equal
-			double Aballs = 4.0*Math.PI * Math.pow(ballArray[0].radius, 2); 		// Two half balls
+			double Aballs = 4.0*Math.PI * Math.pow(ballArray[0].radius, 2); 	// Two half balls
 			double height = ballArray[1].pos.minus(ballArray[0].pos).norm();	// height == distance between balls
 			double Acyl = 	2.0*Math.PI * ballArray[0].radius * height;			// area of wall of cylinder. NOTE: Matt subtracted 2*radius, I don't see why
 			return Aballs + Acyl;
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
+		}
+	}
+	
+	public double GetDistance(CCell cell) {										// This method probably has a higher overhead than the code in CollisionDetection
+		if(this.type<2) {														// Sphere-???
+			if(cell.type<2)	{													// Sphere-sphere
+				return cell.ballArray[0].pos.minus(ballArray[0].pos).norm();
+			} else if(cell.type<6) {											// Sphere-rod
+				EricsonObject C = model.DetectLinesegPoint(cell.ballArray[0].pos, cell.ballArray[1].pos, this.ballArray[0].pos);
+				return C.dist;
+			} else {															// Unknown!
+				throw new IndexOutOfBoundsException("Cell type: " + cell.type);
+			}
+		} else if(this.type<6) {												// Rod-???
+			if(cell.type<2) {													// Rod-sphere
+				EricsonObject C = model.DetectLinesegPoint(this.ballArray[0].pos, this.ballArray[1].pos, cell.ballArray[0].pos);
+				return C.dist; 
+			} else if(cell.type<6) {											// Rod-rod
+				EricsonObject C = model.DetectLinesegLineseg(this.ballArray[0].pos, this.ballArray[1].pos, cell.ballArray[0].pos, cell.ballArray[1].pos);
+				return C.dist;		
+			} else {															// Unknown!
+				throw new IndexOutOfBoundsException("Cell type: " + cell.type);
+			}
+		} else {
+			throw new IndexOutOfBoundsException("Cell type: " + this.type);
 		}
 	}
 }

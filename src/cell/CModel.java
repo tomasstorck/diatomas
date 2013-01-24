@@ -903,7 +903,7 @@ public class CModel implements Serializable {
 				}
 				// See if we can continue with these positions now
 				if(!overlap)	break;
-				// Continue the while loop if no proper direction can be found
+				// Continue the while loop if no proper direction was found
 				if(overlapIter>100) {
 //					Write("Cell " + c0.Index() + " or " + c1.Index() + " will overlap after growth","warning");
 					break;
@@ -917,7 +917,7 @@ public class CModel implements Serializable {
 			c1.mother = 			c0;
 			c1.q = 					c0.q;
 			// Set filament springs
-			if(c1.filament) {
+			if(c0.filament) {
 				if(sphereStraightFil) {											// Reorganise if we want straight fils, otherwise just attach resulting in random structures
 					CBall motherBall0 = c0.ballArray[0];
 					CBall daughterBall0 = c1.ballArray[0];
@@ -1024,6 +1024,19 @@ public class CModel implements Serializable {
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + c0.type);
 		}
+		// Set sticking springs
+		for(CCell cell : c0.stickCellArray) {
+			if(c1.GetDistance(cell) < c0.GetDistance(cell)) {
+				// c1 is closer to cell than c0, so move relevant sticking springs to c1
+				for(CSpring spring : c0.stickSpringArray) {
+					for(int ii=0; ii<2; ii++) {
+						CBall ball = spring.ballArray[ii];
+						if(ball.cell == c0) 	spring.ballArray[ii] = c1.ballArray[ii];
+					}
+				}
+			}
+		}
+		// Done, return daughter cell
 		return c1;
 	}
 	
