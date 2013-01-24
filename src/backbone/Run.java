@@ -41,7 +41,7 @@ public class Run {
 				model.radiusCellMax[4] = 0.25e-6;
 				model.lengthCellMax[4] = 2.5e-6;
 				model.UpdateAmountCellMax();
-				model.NInitCell = 3;
+				model.NInitCell = 1;
 				model.colourByType = false;
 				restLength = model.lengthCellMax[4]*0.75;
 				n = new double[model.NInitCell];
@@ -72,7 +72,7 @@ public class Run {
 				////////
 				// AS //
 				////////				
-				type = new int[]{4,4,4,0,0,0};
+				type = new int[]{4,4,4,4,4,4,0,0,0,0,0,0};
 				model.radiusCellMax[0] = 0.25e-6 * 1.25;
 				model.radiusCellMax[4] = 0.25e-6;
 				model.lengthCellMax[4] = 2.5e-6;
@@ -107,7 +107,7 @@ public class Run {
 					position1 = new Vector3d[model.NInitCell];
 					for(int ii=0; ii<model.NInitCell; ii++) {
 						n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,										(rand.Double()-0.5))			.normalise();
+						direction[ii] = new Vector3d((rand.Double()-0.5)+5.0, 			(rand.Double()-0.5),										(rand.Double()-0.5))			.normalise();
 						position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);
 						position1[ii] = position0[ii].plus(direction[ii].times(restLength));
 					}
@@ -122,7 +122,7 @@ public class Run {
 					position1 = new Vector3d[model.NInitCell];
 					for(int ii=0; ii<model.NInitCell; ii++) {
 						n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0, 										(rand.Double()-0.5))			.normalise();
+						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 										(rand.Double()-0.5))			.normalise();
 						position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y - (type[ii]>1 ? 0.5*restLength:0),(rand.Double()-0.5)*model.L.z);
 						position1[ii] = position0[ii].plus(direction[ii].times(restLength));
 					}
