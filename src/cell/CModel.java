@@ -254,57 +254,69 @@ public class CModel implements Serializable {
 	
 	public ArrayList<CCell> DetectCellCollision_Proper(double touchFactor) {
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
-		
 		int NCell = cellArray.size();
 		for(int ii=0; ii<NCell; ii++) {
 			CCell cell0 = cellArray.get(ii);
 			for(int jj=ii+1; jj<NCell; jj++) {
 				CCell cell1 = cellArray.get(jj);
-				double R2 = cell0.ballArray[0].radius + cell1.ballArray[0].radius; 
-				if(cell0.type < 2 && cell1.type < 2) {					// Ball-ball
-					double dist = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos).norm();
-					if(dist<R2*touchFactor) {
-						collisionCell.add(cell0); 
-						collisionCell.add(cell1);
-					}
-				} else {
-					double H2;
-					Vector3d diff = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos);
-					CCell rod;	CCell sphere;							// Initialise rod and sphere, should we need it later on (rod-sphere collision detection)
-					double dist;
-					if(cell0.type > 1 && cell1.type > 1) {				// Rod-rod
-						H2 = 1.5*(touchFactor*( lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still
-						if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
-							// Do good collision detection
-							EricsonObject C = DetectLinesegLineseg(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos, cell1.ballArray[1].pos);
-							dist = C.dist;
-						} else 		continue;							// Not close enough, continue to next cell pair
-					} else if(cell0.type<6 && cell1.type<6) {			// Rod-ball
-						if(cell0.type<2) {
-							rod=cell1;
-							sphere=cell0;
-						} else {
-							rod=cell0;
-							sphere=cell1;
-						}
-						H2 = 1.5*(touchFactor*( lengthCellMax[rod.type] + R2 ));// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
-							// Do good collision detection
-							EricsonObject C = DetectLinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos);
-							dist = C.dist;
-						} else 		continue;							// Not close enough, continue to next cell pair
-					} else {
-						throw new IndexOutOfBoundsException("Cell type: " + cell0.type + "/" + cell1.type);
-					}
-					// Add cells to collision array if they are close enough after proper collision detection
-					if(dist<R2*touchFactor)	{
-						collisionCell.add(cell0);
-						collisionCell.add(cell1);
-					}
+				if(DetectCellCollision_Proper(cell0, cell1, touchFactor)){
+					collisionCell.add(cell0);
+					collisionCell.add(cell1);
 				}
 			}
 		}
 		return collisionCell;
+	}
+	
+	public boolean DetectCellCollision_Proper(CCell cell0, CCell cell1, double touchFactor) {
+		double R2 = cell0.ballArray[0].radius + cell1.ballArray[0].radius; 
+		if(cell0.type < 2 && cell1.type < 2) {				// Ball-ball. Nice and simple
+			double dist = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos).norm();
+			if(dist<R2*touchFactor) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			double H2;
+			Vector3d diff = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos);
+			CCell rod;	CCell sphere;						// Initialise rod and sphere, should we need it later on (rod-sphere collision detection)
+			double dist;
+			if(cell0.type > 1 && cell1.type > 1) {			// Rod-rod
+				H2 = 1.5*(touchFactor*( lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still
+				if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
+					// Do good collision detection
+					EricsonObject C = DetectLinesegLineseg(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos, cell1.ballArray[1].pos);
+					dist = C.dist;							// Then check if dist is small enough (end of method)
+				} else {
+					return false;							// Not close enough, won't overlap
+				}
+			} else if(cell0.type<6 && cell1.type<6) {		// Rod-ball
+				if(cell0.type<2) {
+					rod=cell1;
+					sphere=cell0;
+				} else {
+					rod=cell0;
+					sphere=cell1;
+				}
+				H2 = 1.5*(touchFactor*( lengthCellMax[rod.type] + R2 ));// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+				if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
+					// Do good collision detection
+					EricsonObject C = DetectLinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos);
+					dist = C.dist;							// Then check if dist is small enough (end of method)
+				} else {
+					return false;							// Not close enough, won't overlap
+				}
+			} else {
+				throw new IndexOutOfBoundsException("Cell type: " + cell0.type + "/" + cell1.type);
+			}
+			// Add cells to collision array if they are close enough after proper collision detection
+			if(dist<R2*touchFactor)	{
+				return true;
+			} else {
+				return false;
+			}
+		}
 	}
 		
 	// Collision detection rod-rod
