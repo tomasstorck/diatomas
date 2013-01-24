@@ -888,10 +888,21 @@ public class CModel implements Serializable {
 					c0.ballArray[0].pos.y = Math.max(c0.ballArray[0].radius, c0.ballArray[0].pos.y);					
 					c1.ballArray[0].pos.y = Math.max(c1.ballArray[0].radius, c1.ballArray[0].pos.y);
 				}
-				// Check if all went well
-				ArrayList<CCell> overlapArray = DetectCellCollision_Proper(1.0);
-				if(overlapArray.isEmpty())	break;
-				// Continue if no proper direction can be found
+				// Check if all went well: collision detection
+				// Create a copy of cellArray and remove c0 and c1 from it
+				ArrayList<CCell> copyCellArray = new ArrayList<CCell>(cellArray);
+				copyCellArray.remove(c0);		copyCellArray.remove(c1);
+				boolean overlap = false;
+				if(DetectCellCollision_Proper(c0, c1, 1.0))		overlap = true; 
+				for(CCell cell : copyCellArray) {
+					if(DetectCellCollision_Proper(c0, cell, 1.0) || DetectCellCollision_Proper(c1, cell, 1.0)) {
+						overlap = true; 
+						break;
+					}
+				}
+				// See if we can continue with these positions now
+				if(!overlap)	break;
+				// Continue the while loop if no proper direction can be found
 				if(overlapIter>100) {
 //					Write("Cell " + c0.Index() + " or " + c1.Index() + " will overlap after growth","warning");
 					break;
@@ -906,13 +917,13 @@ public class CModel implements Serializable {
 			c1.q = 					c0.q;
 			// Set filament springs
 			if(c1.filament) {
-				if(sphereStraightFil) {								// Reorganise if we want straight fils, otherwise just attach resulting in random structures
+				if(sphereStraightFil) {											// Reorganise if we want straight fils, otherwise just attach resulting in random structures
 					CBall motherBall0 = c0.ballArray[0];
 					CBall daughterBall0 = c1.ballArray[0];
 					ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
 					for(CSpring fil : c0.filSpringArray) {
 						boolean found=false;
-						if( fil.ballArray[0] == motherBall0) {		// Only replace half the balls for daughter's
+						if( fil.ballArray[0] == motherBall0) {					// Only replace half the balls for daughter's
 							fil.ballArray[0] = daughterBall0;
 							found = true;}
 						if(found) {
