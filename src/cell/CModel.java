@@ -28,7 +28,7 @@ public class CModel implements Serializable {
 	// Model miscellaneous settings
 	public String name = "default";
 	public int simulation = 0;					// The simulation type: see Run
-	public int randomSeed = 2;
+	public int randomSeed = 3;
 	public double[][] colour = new double[][]{
 			{1.0,0.7,0.7},
 			{0.1,1.0,0.1},
@@ -42,6 +42,7 @@ public class CModel implements Serializable {
 			{0.4,0.4,0.1},
 			{0.4,1.0,1.0},
 			{1.0,0.1,1.0}};
+	public boolean colourByType = true;
 	public boolean comsol = false;
 	// --> Sticking
 	public boolean sticking = true;
@@ -84,7 +85,7 @@ public class CModel implements Serializable {
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
 	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
 	public int NInitCell = 6;					// Initial number of cells
-	public int[] typeCell = {0, 4};				// Cell types used by default
+	public int NType = 2;						// Cell types used by default
 	public double[] radiusCellMax = {0.25e-6,	0.5e-6, 	0.25e-6*1.25, 	0.375e-6, 	0.25e-6*1.25, 	0.375e-6};
 	public double[] lengthCellMax = {0.0,		0.0,		2.0e-6,			2.0e-6,		2.5e-6,			2.5e-6};
 	public double[] nCellMax =	new double[6];
@@ -1046,7 +1047,7 @@ public class CModel implements Serializable {
 			final int typeNew = 0; 
 			final double nNew = 0.5 * nCellMax[typeNew] * (1.0 + rand.Double());
 			final boolean filNew = filament && filSphere;
-			final double[] colourNew = colour[NInitCell];			// Choose a colour not chosen for initial cell creation  
+			final double[] colourNew = (colourByType) ? colour[NType] : colour[NInitCell];			// Choose a colour not already chosen  
 			final double rNew = CBall.Radius(nNew, typeNew, this); 
 			// Create array of balls in non-spherical cells 
 			ArrayList<CBall> ballArrayRod = new ArrayList<CBall>(ballArray.size());

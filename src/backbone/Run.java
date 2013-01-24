@@ -37,10 +37,12 @@ public class Run {
 				// E. COLI //
 				/////////////
 				type = new int[]{4,4,4};
+				model.NType = 1;
 				model.radiusCellMax[4] = 0.25e-6;
 				model.lengthCellMax[4] = 2.5e-6;
 				model.UpdateAmountCellMax();
 				model.NInitCell = 3;
+				model.colourByType = false;
 				restLength = model.lengthCellMax[4]*0.75;
 				n = new double[model.NInitCell];
 				direction = new Vector3d[model.NInitCell];
@@ -94,7 +96,7 @@ public class Run {
 				model.Kan	= 1e-11;
 				model.Ks 	= 1e-11;
 				model.growthSkipMax = 10;
-				model.syntrophyFactor = 2.0;
+				model.syntrophyFactor = 1.5;
 				model.attachmentRate = 1.0;
 				if(model.simulation==1) {
 					model.Write("Loading parameters for AS/biofilm","");
@@ -142,7 +144,6 @@ public class Run {
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////
 			
 			// Create initial cells
-			rand.Seed(model.randomSeed);							// Reinitialise random seed, below shouldn't depend on positions above
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				boolean filament = false;
 				if(model.filament) {
@@ -150,13 +151,17 @@ public class Run {
 					else if(type[iCell]<6)	filament = model.filRod;
 					else throw new IndexOutOfBoundsException("Cell type: " + type); 
 				}
+				// Use desired colour
+				double[] colour;
+				if(model.colourByType) 	colour = model.colour[type[iCell]];
+				else					colour = model.colour[iCell];
 				@SuppressWarnings("unused")
 				CCell cell = new CCell(type[iCell], 				// Type of biomass
 						n[iCell],
 						position0[iCell],
 						position1[iCell],
 						filament,									// With capability to form filaments?
-						model.colour[iCell],
+						colour,
 						model);
 				// Lower balls to substratum if needed
 				if(model.initialAtSubstratum)		for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
