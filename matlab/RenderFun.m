@@ -78,8 +78,8 @@ for ii=0:NSave			% Can be replaced with parfor
 		continue
 	end
 	
-	if(exist(imageLoc{ii+1},'file')) && ~exist('keepgoing','var')
-		fprintf(['File already found, skipping: ' imageName{ii+1} '\n']);
+	if(exist(imageLoc{ii+1},'file'))
+% 		fprintf(['File already found, skipping: ' imageName{ii+1} '\n']);
 		skip = true;
 	else
 		skip = false;
