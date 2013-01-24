@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import comsol.Comsol;
 import comsol.Server;
 
-
 import random.rand;
 import ser2mat.ser2mat;
 import cell.CBall;
@@ -23,14 +22,14 @@ public class Run {
 			//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////
 			
-			double restLength = model.lengthCellMax[4]*0.75;
-			
 			// Set parameters. This overwrites both CModel and supplied arguments
 			int[] type;
 			double[] n; 
 			Vector3d[] direction;
 			Vector3d[] position0;
 			Vector3d[] position1;
+			double restLength;
+			rand.Seed(model.randomSeed);			// Set seed
 			switch(model.simulation) {
 			case 0:
 				model.Write("Loading parameters for E. coli","");
@@ -42,23 +41,17 @@ public class Run {
 				model.lengthCellMax[4] = 2.5e-6;
 				model.UpdateAmountCellMax();
 				model.NInitCell = 3;
-				n = new double[] {
-						0.5*model.nCellMax[type[0]] * (1.0 + 0.5),
-						0.5*model.nCellMax[type[1]] * (1.0 + 0.1),
-						0.5*model.nCellMax[type[2]] * (1.0 + 0.7)};
-				direction = new Vector3d[]{
-						new Vector3d(0.3,		0.0,					0.2).normalise(),
-						new Vector3d(0.2,		0.0,					-0.2).normalise(),
-						new Vector3d(-0.2,		0.0,					0.1).normalise()};
-				position0 = new Vector3d[]{
-						new Vector3d(0.6e-6,	model.radiusCellMax[4],	-0.2e-6),
-						new Vector3d(-0.5e-6,	model.radiusCellMax[4],	-0.1e-6),
-						new Vector3d(0.1e-6,	model.radiusCellMax[4],	0.3e-6)};
-				position1 = new Vector3d[]{
-						position0[0].plus(direction[0].times(restLength)),
-						position0[1].plus(direction[1].times(restLength)),
-						position0[2].plus(direction[2].times(restLength))};
-//				model.muAvgSimple[4] = 0.15;
+				restLength = model.lengthCellMax[4]*0.75;
+				n = new double[model.NInitCell];
+				direction = new Vector3d[model.NInitCell];
+				position0 = new Vector3d[model.NInitCell];
+				position1 = new Vector3d[model.NInitCell];
+				for(int ii=0; ii<model.NInitCell; ii++) {
+					n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
+					direction[ii] = new Vector3d((rand.Double()-0.5), 			0.0*rand.Double(), 													(rand.Double()-0.5))			.normalise();
+					position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
+					position1[ii] = position0[ii].plus(direction[ii].times(restLength));
+				}
 				model.sticking = false;
 				model.filament = false;
 				model.gravity = false;
@@ -74,26 +67,16 @@ public class Run {
 				model.growthSkipMax = 10;
 				break;
 			case 1: case 2:
-				/////////////
-				// DENTAL  //
-				/////////////				
+				////////
+				// AS //
+				////////				
 				type = new int[]{4,4,4,0,0,0};
 				model.radiusCellMax[0] = 0.25e-6 * 1.25;
 				model.radiusCellMax[4] = 0.25e-6;
 				model.lengthCellMax[4] = 2.5e-6;
 				model.UpdateAmountCellMax();
 				model.NInitCell = 6;
-				n = new double[] {
-						0.5*model.nCellMax[type[0]] * (1.0 + 0.5),
-						0.5*model.nCellMax[type[1]] * (1.0 + 0.1),
-						0.5*model.nCellMax[type[2]] * (1.0 + 0.7),
-						0.5*model.nCellMax[type[3]] * (1.0 + 0.2),
-						0.5*model.nCellMax[type[4]] * (1.0 + 0.6),
-						0.5*model.nCellMax[type[5]] * (1.0 + 0.4)};
-				direction = new Vector3d[]{
-						new Vector3d(0.3,		1.0,					0.2).normalise(),
-						new Vector3d(0.2,		1.0,					-0.2).normalise(),
-						new Vector3d(-0.2,		1.0,					0.1).normalise()};
+				restLength = model.lengthCellMax[4]*0.75;
 				model.muAvgSimple[0] = 0.33;
 				model.muAvgSimple[4] = 0.20;
 				model.sticking = true;
@@ -114,38 +97,36 @@ public class Run {
 				model.syntrophyFactor = 2.0;
 				model.attachmentRate = 1.0;
 				if(model.simulation==1) {
-					model.Write("Loading parameters for dental/biofilm","");
+					model.Write("Loading parameters for AS/biofilm","");
 					// Biofilm-like
-					position0 = new Vector3d[]{
-							new Vector3d(0.7e-6,	model.radiusCellMax[4],	-0.2e-6),
-							new Vector3d(-0.5e-6,	model.radiusCellMax[4],	-0.1e-6),
-							new Vector3d(0.1e-6,	model.radiusCellMax[4],	0.3e-6),
-							new Vector3d(0.7e-6,	model.radiusCellMax[0],	0.4e-6),
-							new Vector3d(0.1e-6,	model.radiusCellMax[0],	-0.3e-6),
-							new Vector3d(-0.4e-6,	model.radiusCellMax[0],	0.4e-6)};
+					n = new double[model.NInitCell];
+					direction = new Vector3d[model.NInitCell];
+					position0 = new Vector3d[model.NInitCell];
+					position1 = new Vector3d[model.NInitCell];
+					for(int ii=0; ii<model.NInitCell; ii++) {
+						n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
+						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,										(rand.Double()-0.5))			.normalise();
+						position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);
+						position1[ii] = position0[ii].plus(direction[ii].times(restLength));
+					}
 					model.anchoring = true;
 					model.normalForce = true;
 				} else {
-					model.Write("Loading parameters for dental/flock","");
+					model.Write("Loading parameters for AS/flock","");
 					// Flock-like
-					position0 = new Vector3d[]{
-							new Vector3d(0.7e-6,	-0.9e-6,				-0.2e-6),
-							new Vector3d(-0.5e-6,	-1.1e-6,				-0.1e-6),
-							new Vector3d(0.1e-6,	-1.2e-6,				0.3e-6),
-							new Vector3d(0.7e-6,	0.2e-6,					0.4e-6),
-							new Vector3d(0.1e-6,	-0.2e-6,				-0.3e-6),
-							new Vector3d(-0.4e-6,	0.0e-6,					0.4e-6)};
+					n = new double[model.NInitCell];
+					direction = new Vector3d[model.NInitCell];
+					position0 = new Vector3d[model.NInitCell];
+					position1 = new Vector3d[model.NInitCell];
+					for(int ii=0; ii<model.NInitCell; ii++) {
+						n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
+						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0, 										(rand.Double()-0.5))			.normalise();
+						position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y - (type[ii]>1 ? 0.5*restLength:0),(rand.Double()-0.5)*model.L.z);
+						position1[ii] = position0[ii].plus(direction[ii].times(restLength));
+					}
 					model.anchoring = false;
 					model.normalForce = false;
 				}
-				position1 = new Vector3d[]{
-						position0[0].plus(direction[0].times(restLength)),
-						position0[1].plus(direction[1].times(restLength)),
-						position0[2].plus(direction[2].times(restLength)),
-						new Vector3d(),
-						new Vector3d(),
-						new Vector3d()};
-
 				break;
 			default:
 				throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);

@@ -22,7 +22,9 @@ for iCell = 0:length(model.cellArray)-1;
 		iBall1 = cell.ballArray(2);
 		ball1 = model.ballArray(iBall1+1);
 	end
-		
+	
+	if ~exist('colourMode','var')	colourMode = 0; end
+	
 	if colourMode==0
 		% colour balls based on cellIndex
 		C0=zeros(n+1)+ball0.cellIndex;

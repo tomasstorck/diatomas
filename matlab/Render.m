@@ -5,7 +5,7 @@ sketch = true;
 %%%%%%%%%
 
 if ~exist('location','var')
-	location = uigetdir;
+	location = uigetdir('../');
 	if isempty(location)
 		return
 	end

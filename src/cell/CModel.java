@@ -28,7 +28,7 @@ public class CModel implements Serializable {
 	// Model miscellaneous settings
 	public String name = "default";
 	public int simulation = 0;					// The simulation type: see Run
-	public int randomSeed = 1;
+	public int randomSeed = 2;
 	public double[][] colour = new double[][]{
 			{1.0,0.7,0.7},
 			{0.1,1.0,0.1},
@@ -60,6 +60,7 @@ public class CModel implements Serializable {
 	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
 	// Domain properties
+	public Vector3d L 	= new Vector3d(2e-6, 2e-6, 2e-6);
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
@@ -72,11 +73,11 @@ public class CModel implements Serializable {
 	public double Kf 	= 2e-11;				// filament spring
 	public double Kan	= 1e-11;				// anchor
 	public double Ks 	= 1e-11;				// sticking
-	public double stretchLimAnchor = 1.4;		// Maximum tension for anchoring springs
+	public double stretchLimAnchor = 1.6;		// Maximum tension for anchoring springs
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public double stretchLimStick = 1.6;		// Maximum tension for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
-	public double stretchLimFil = 1.6;			// Maximum tension for sticking springs
+	public double stretchLimFil = 1.8;			// Maximum tension for sticking springs
 	// Model biomass and growth properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
