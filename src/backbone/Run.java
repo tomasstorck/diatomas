@@ -54,18 +54,7 @@ public class Run {
 					position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
 					position1[ii] = position0[ii].plus(direction[ii].times(restLength));
 				}
-				model.sticking = false;
-				model.filament = false;
-				model.gravity = false;
-				model.initialAtSubstratum = true;
 				model.normalForce = true;
-				model.Kd 	= 1e-13;
-				model.Kc 	= 1e-9;
-				model.Kw 	= 5e-10;
-				model.Kr 	= 5e-11;
-				model.Kf 	= 2e-11;
-				model.Kan	= 1e-11;
-				model.Ks 	= 1e-11;
 				model.growthSkipMax = 10;
 				break;
 			case 1: case 2:
@@ -86,15 +75,6 @@ public class Run {
 				model.stickSphereSphere = false;
 				model.filament = true;
 //				model.filSphere = false;
-				model.anchoring = true;
-				model.initialAtSubstratum = false;
-				model.Kd 	= 1e-13;
-				model.Kc 	= 1e-9;
-				model.Kw 	= 5e-10;
-				model.Kr 	= 5e-11;
-				model.Kf 	= 2e-11;
-				model.Kan	= 1e-11;
-				model.Ks 	= 1e-11;
 				model.growthSkipMax = 10;
 				model.syntrophyFactor = 1.5;
 				model.attachmentRate = 1.0;
@@ -107,7 +87,7 @@ public class Run {
 					position1 = new Vector3d[model.NInitCell];
 					for(int ii=0; ii<model.NInitCell; ii++) {
 						n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-						direction[ii] = new Vector3d((rand.Double()-0.5)+5.0, 			(rand.Double()-0.5),										(rand.Double()-0.5))			.normalise();
+						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,										(rand.Double()-0.5))			.normalise();
 						position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);
 						position1[ii] = position0[ii].plus(direction[ii].times(restLength));
 					}
@@ -122,7 +102,7 @@ public class Run {
 					position1 = new Vector3d[model.NInitCell];
 					for(int ii=0; ii<model.NInitCell; ii++) {
 						n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 										(rand.Double()-0.5))			.normalise();
+						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 											(rand.Double()-0.5))			.normalise();
 						position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y - (type[ii]>1 ? 0.5*restLength:0),(rand.Double()-0.5)*model.L.z);
 						position1[ii] = position0[ii].plus(direction[ii].times(restLength));
 					}
@@ -163,8 +143,6 @@ public class Run {
 						filament,									// With capability to form filaments?
 						colour,
 						model);
-				// Lower balls to substratum if needed
-				if(model.initialAtSubstratum)		for(CBall ball : cell.ballArray) 	ball.pos.y = ball.radius;
 			}
 			model.Write(model.cellArray.size() + " initial cells created","iter");
 			

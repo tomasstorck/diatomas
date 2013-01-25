@@ -17,6 +17,7 @@ end
 
 while true
 	for ii=1:length(folderList)
+		clear right;
 		folderName = folderList{ii};
 		disp([datestr(now) '  ' folderName]);
 		location = ['../' folderName];

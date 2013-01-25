@@ -23,6 +23,10 @@ for iFile=length(loadFileNameList):-1:1
 	loadFileName = loadFileNameList{iFile};
 	fprintf([loadFileName '\n']);
 	load([location filesep 'output' filesep loadFileName]);
+
+	if rem(model.relaxationIter,10)==0
+		clear right;
+	end
 	
 	RenderFun;
 end

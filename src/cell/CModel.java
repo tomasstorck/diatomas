@@ -45,7 +45,7 @@ public class CModel implements Serializable {
 	public boolean colourByType = true;
 	public boolean comsol = false;
 	// --> Sticking
-	public boolean sticking = true;
+	public boolean sticking = false;
 	public boolean stickSphereSphere = true;
 	public boolean stickSphereRod = true;
 	public boolean stickRodRod = true;

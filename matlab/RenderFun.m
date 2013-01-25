@@ -16,7 +16,7 @@ if model.relaxationIter==0 && model.growthIter==0
 	NSave = 0;
 end
 	
-if rem(model.relaxationIter,5)==0 || ~exist('camAngle','var')	% Every 5th iteration or when none exists, find a proper angle
+if ~exist('right','var')	% Every 5th iteration or when none exists, find a proper angle
 	% Create camera, background and lighting based on L
 	%%%%%%%%
 	%
