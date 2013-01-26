@@ -21,7 +21,7 @@ public class Interface{
 		CModel model = new CModel("default");
 		
 		int NArg = args.length;
-		for(int ii=0; ii<NArg; ii+=2) {
+		args:for(int ii=0; ii<NArg; ii+=2) {
 			String arg = args[ii];
 			//
 			if(arg.equalsIgnoreCase("help") || arg.equalsIgnoreCase("--help") || arg.equalsIgnoreCase("?") || arg.equalsIgnoreCase("/?")) {
@@ -91,16 +91,28 @@ public class Interface{
 					Class fieldClass = CModel.class.getField(arg).get(model).getClass();
 					String value = args[ii+1];
 					if(fieldClass.equals(Double.class)) {				// Does the field contain a double?
-						field.setDouble(model, Double.parseDouble(value));
+						double number;
+						if(value.contains("*")) number = field.getDouble(model) * Double.parseDouble(value.substring(1));	// Cut off * and multiply
+						else number = Double.parseDouble(value);
+						field.setDouble(model, number);
+						model.Write(field.getName() + " set to " + number, "");
+						continue args;									// Check next argument (i.e. continue outer loop)
 					} else if(fieldClass.equals(Integer.class)) {		// An int?
-						field.setInt(model, Integer.parseInt(value));
-					} else if(fieldClass.equals(String.class)) {		// A string?
+						int number = Integer.parseInt(value);
+						field.setInt(model, number);
+						model.Write(field.getName() + " set to " + number, "");
+						continue args;
+					} else if(fieldClass.equals(String.class)) {		// A String?
 						field.set(model, value);
+						model.Write(field.getName() + " set to " + value, "");
+						continue args;
 					} else {
 						throw new RuntimeException("Unknown class type");
 					}
 				}
 			}
+			// Are you still here?
+			throw new RuntimeException("Unknown argument/field name: " + arg);
 		}
 		
 		// Done analysing input arguments
