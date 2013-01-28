@@ -163,9 +163,7 @@ public class CModel implements Serializable {
 	/////////////////////////////////////
 	// Constructors and initialisation //
 	/////////////////////////////////////
-	public CModel(String name) {	// Default constructor, includes default values
-		this.name = name;
-	}
+	public CModel() {}	// Default constructor, includes default values
 	
 	public void UpdateAmountCellMax() {	// Updates the nCellMax based on the supplied parameters 
 		for(int ii = 0; ii<2; ii++) {

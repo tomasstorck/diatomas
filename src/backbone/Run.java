@@ -14,155 +14,161 @@ import cell.CSpring;
 import cell.Vector3d;
 
 public class Run {
+	CModel model;
+	int[] type;
+	double[] n; 
+	Vector3d[] direction;
+	Vector3d[] position0;
+	Vector3d[] position1;
+	double restLength;
 
-	public Run(CModel model) throws Exception{				
-		if(model.growthIter==0 && model.relaxationIter==0) {
-			
-			///////////////////////////////////////////////////////////////////////////////////////////////////////////
-			//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
-			///////////////////////////////////////////////////////////////////////////////////////////////////////////
-			
-			// Set parameters. This overwrites both CModel and supplied arguments
-			int[] type;
-			double[] n; 
-			Vector3d[] direction;
-			Vector3d[] position0;
-			Vector3d[] position1;
-			double restLength;
-			rand.Seed(model.randomSeed);			// Set seed
-			switch(model.simulation) {
-			case 0:
-				model.Write("Loading parameters for E. coli","");
-				/////////////
-				// E. COLI //
-				/////////////
-				type = new int[]{4,4,4};
-				model.NType = 1;
-				model.radiusCellMax[4] = 0.25e-6;
-				model.lengthCellMax[4] = 2.5e-6;
-				model.UpdateAmountCellMax();
-				model.NInitCell = 1;
-				model.colourByType = false;
-				restLength = model.lengthCellMax[4]*0.75;
+	public Run(CModel model) {
+		this.model = model;
+	}
+	
+	public void Initialise() throws Exception{				
+
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		// Set parameters. This overwrites both CModel and supplied arguments
+		rand.Seed(model.randomSeed);			// Set seed
+		switch(model.simulation) {
+		case 0:
+			model.Write("Loading parameters for E. coli","");
+			/////////////
+			// E. COLI //
+			/////////////
+			type = new int[]{4,4,4};
+			model.NType = 1;
+			model.radiusCellMax[4] = 0.25e-6;
+			model.lengthCellMax[4] = 2.5e-6;
+			model.UpdateAmountCellMax();
+			model.NInitCell = 1;
+			model.colourByType = false;
+			restLength = model.lengthCellMax[4]*0.75;
+			n = new double[model.NInitCell];
+			direction = new Vector3d[model.NInitCell];
+			position0 = new Vector3d[model.NInitCell];
+			position1 = new Vector3d[model.NInitCell];
+			for(int ii=0; ii<model.NInitCell; ii++) {
+				n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
+				direction[ii] = new Vector3d((rand.Double()-0.5), 			0.0*rand.Double(), 													(rand.Double()-0.5))			.normalise();
+				position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
+				position1[ii] = position0[ii].plus(direction[ii].times(restLength));
+			}
+			model.normalForce = true;
+			model.growthSkipMax = 10;
+			break;
+		case 1: case 2:
+			////////
+			// AS //
+			////////				
+			type = new int[]{4,4,4,4,4,4,0,0,0,0,0,0};
+			model.radiusCellMax[0] = 0.25e-6 * 1.25;
+			model.radiusCellMax[4] = 0.25e-6;
+			model.lengthCellMax[4] = 2.5e-6;
+			model.UpdateAmountCellMax();
+			model.NInitCell = 6;
+			restLength = model.lengthCellMax[4]*0.75;
+			model.muAvgSimple[0] = 0.33;
+			model.muAvgSimple[4] = 0.20;
+			model.sticking = true;
+			model.stickRodRod = false;
+			model.stickSphereSphere = false;
+			model.filament = true;
+			//				model.filSphere = false;
+			model.growthSkipMax = 10;
+			model.syntrophyFactor = 1.5;
+			model.attachmentRate = 1.0;
+			if(model.simulation==1) {
+				model.Write("Loading parameters for AS/biofilm","");
+				// Biofilm-like
 				n = new double[model.NInitCell];
 				direction = new Vector3d[model.NInitCell];
 				position0 = new Vector3d[model.NInitCell];
 				position1 = new Vector3d[model.NInitCell];
 				for(int ii=0; ii<model.NInitCell; ii++) {
 					n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-					direction[ii] = new Vector3d((rand.Double()-0.5), 			0.0*rand.Double(), 													(rand.Double()-0.5))			.normalise();
-					position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
+					direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,										(rand.Double()-0.5))			.normalise();
+					position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);
 					position1[ii] = position0[ii].plus(direction[ii].times(restLength));
 				}
+				model.anchoring = true;
 				model.normalForce = true;
-				model.growthSkipMax = 10;
-				break;
-			case 1: case 2:
-				////////
-				// AS //
-				////////				
-				type = new int[]{4,4,4,4,4,4,0,0,0,0,0,0};
-				model.radiusCellMax[0] = 0.25e-6 * 1.25;
-				model.radiusCellMax[4] = 0.25e-6;
-				model.lengthCellMax[4] = 2.5e-6;
-				model.UpdateAmountCellMax();
-				model.NInitCell = 6;
-				restLength = model.lengthCellMax[4]*0.75;
-				model.muAvgSimple[0] = 0.33;
-				model.muAvgSimple[4] = 0.20;
-				model.sticking = true;
-				model.stickRodRod = false;
-				model.stickSphereSphere = false;
-				model.filament = true;
-//				model.filSphere = false;
-				model.growthSkipMax = 10;
-				model.syntrophyFactor = 1.5;
-				model.attachmentRate = 1.0;
-				if(model.simulation==1) {
-					model.Write("Loading parameters for AS/biofilm","");
-					// Biofilm-like
-					n = new double[model.NInitCell];
-					direction = new Vector3d[model.NInitCell];
-					position0 = new Vector3d[model.NInitCell];
-					position1 = new Vector3d[model.NInitCell];
-					for(int ii=0; ii<model.NInitCell; ii++) {
-						n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,										(rand.Double()-0.5))			.normalise();
-						position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);
-						position1[ii] = position0[ii].plus(direction[ii].times(restLength));
-					}
-					model.anchoring = true;
-					model.normalForce = true;
-				} else {
-					model.Write("Loading parameters for AS/flock","");
-					// Flock-like
-					n = new double[model.NInitCell];
-					direction = new Vector3d[model.NInitCell];
-					position0 = new Vector3d[model.NInitCell];
-					position1 = new Vector3d[model.NInitCell];
-					for(int ii=0; ii<model.NInitCell; ii++) {
-						n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-						direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 											(rand.Double()-0.5))			.normalise();
-						position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y - (type[ii]>1 ? 0.5*restLength:0),(rand.Double()-0.5)*model.L.z);
-						position1[ii] = position0[ii].plus(direction[ii].times(restLength));
-					}
-					model.anchoring = false;
-					model.normalForce = false;
+			} else {
+				model.Write("Loading parameters for AS/flock","");
+				// Flock-like
+				n = new double[model.NInitCell];
+				direction = new Vector3d[model.NInitCell];
+				position0 = new Vector3d[model.NInitCell];
+				position1 = new Vector3d[model.NInitCell];
+				for(int ii=0; ii<model.NInitCell; ii++) {
+					n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
+					direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 											(rand.Double()-0.5))			.normalise();
+					position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y - (type[ii]>1 ? 0.5*restLength:0),(rand.Double()-0.5)*model.L.z);
+					position1[ii] = position0[ii].plus(direction[ii].times(restLength));
 				}
-				break;
-			default:
-				throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
+				model.anchoring = false;
+				model.normalForce = false;
 			}
-			
-//			model.Kan *= 10.0;
-//			model.muAvgSimple[0] = model.muAvgSimple[4] = model.muSpread = 0.0;
-//			model.attachmentRate = 6.0;
-//			model.growthSkipMax = 0;
-			
-			///////////////////////////////////////////////////////////////////////////////////////////////////////////
-			//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
-			///////////////////////////////////////////////////////////////////////////////////////////////////////////
-			
-			// Create initial cells
-			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				boolean filament = false;
-				if(model.filament) {
-					if(type[iCell]<2) 		filament = model.filSphere; 
-					else if(type[iCell]<6)	filament = model.filRod;
-					else throw new IndexOutOfBoundsException("Cell type: " + type); 
-				}
-				// Use desired colour
-				double[] colour;
-				if(model.colourByType) 	colour = model.colour[type[iCell]];
-				else					colour = model.colour[iCell];
-				@SuppressWarnings("unused")
-				CCell cell = new CCell(type[iCell], 				// Type of biomass
-						n[iCell],
-						position0[iCell],
-						position1[iCell],
-						filament,									// With capability to form filaments?
-						colour,
-						model);
-			}
-			model.Write(model.cellArray.size() + " initial cells created","iter");
-			
-			// Save and convert the file
-			model.Save();
-			ser2mat.Convert(model);	
-			
-			// Start server and connect if we're using COMSOL
-			if(model.comsol) {
-				model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
-//				Server.Stop(false);
-				Server.Start(Assistant.port);
-				Server.Connect(Assistant.port);
-			}
+			break;
+		default:
+			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 		}
-		
+
+		//			model.Kan *= 10.0;
+		//			model.muAvgSimple[0] = model.muAvgSimple[4] = model.muSpread = 0.0;
+		//			model.attachmentRate = 6.0;
+		//			model.growthSkipMax = 0;
+
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	}
+
+	public void Start() throws Exception {
+		// Create initial cells
+		for(int iCell = 0; iCell < model.NInitCell; iCell++){
+			boolean filament = false;
+			if(model.filament) {
+				if(type[iCell]<2) 		filament = model.filSphere; 
+				else if(type[iCell]<6)	filament = model.filRod;
+				else throw new IndexOutOfBoundsException("Cell type: " + type); 
+			}
+			// Use desired colour
+			double[] colour;
+			if(model.colourByType) 	colour = model.colour[type[iCell]];
+			else					colour = model.colour[iCell];
+			@SuppressWarnings("unused")
+			CCell cell = new CCell(type[iCell], 				// Type of biomass
+					n[iCell],
+					position0[iCell],
+					position1[iCell],
+					filament,									// With capability to form filaments?
+					colour,
+					model);
+		}
+		model.Write(model.cellArray.size() + " initial cells created","iter");
+
+		// Save and convert the file
+		model.Save();
+		ser2mat.Convert(model);	
+
+		// Start server and connect if we're using COMSOL
+		if(model.comsol) {
+			model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
+			//				Server.Stop(false);
+			Server.Start(Assistant.port);
+			Server.Connect(Assistant.port);
+		}
+
 		while(true) {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.relaxationIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
-			
+
 			// Grow cells
 			ArrayList<CCell> overlapCellArray = new ArrayList<CCell>(0);
 			boolean grow = false;
@@ -223,9 +229,9 @@ public class Run {
 				model.growthTime += model.growthTimeStep;
 				if(dividedCellArray.size()>0) {
 					model.Write(dividedCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
-//					String cellNumber = "" + dividedCellArray.get(0).Index();
-//					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
-//					model.Write("Cells grown: " + cellNumber,"iter");
+					//					String cellNumber = "" + dividedCellArray.get(0).Index();
+					//					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
+					//					model.Write("Cells grown: " + cellNumber,"iter");
 				}
 				// Reset springs where needed
 				model.Write("Resetting springs","iter");
@@ -248,7 +254,7 @@ public class Run {
 				for(int ii=2; ii<overlapCellArray.size(); ii=ii+2) 	cellNumber += ", " + overlapCellArray.get(ii).Index() + " & " + overlapCellArray.get(ii+1).Index();
 				model.Write("Cells overlapping: " + cellNumber,"iter");
 			}
-						
+
 			// Relaxation
 			model.Write("Starting relaxation calculations","iter");
 			int nstp = model.Relaxation();
@@ -265,7 +271,7 @@ public class Run {
 				model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
 				model.Write("Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
 			}
-			
+
 			// And finally: save stuff
 			model.Write("Saving model as serialised file", "iter");
 			model.Save();
