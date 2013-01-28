@@ -32,10 +32,20 @@ public class Interface{
 			// Case help file
 			if(arg.equalsIgnoreCase("help") || arg.equalsIgnoreCase("--help") || arg.equalsIgnoreCase("?") || arg.equalsIgnoreCase("/?")) {
 				System.out.println("Usage: java -jar diatomas.jar [option0] [value0] [option1] [value1] ...");
-				System.out.println("where [value] be a number (0 == false, 1 == true) or string");
+				System.out.println("where [value] be a number (and 0 == false, 1 == true) or string");
 				System.out.println("");
 				System.out.println("load [path/filename.seg]\t Load the specified file instead of the default parameters. Automatically starts model after loading");
 				System.out.println("ser2mat [path] \t\t\t Converts all .ser files found in [path]/output/ to .mat files. Automatically inhibits model starting after loading");
+				return;
+			// Case argument enumeration
+			} else if(arg.equalsIgnoreCase("args")) {
+				System.out.println("Possible command line arguments:");
+				int counter = 1;
+				for(Field field : CModel.class.getFields()) {
+					System.out.print(String.format("%-25s",field.getName()));
+					if(counter%3==0)	System.out.println("");		
+					counter++;
+				}
 				return;
 			// Case convert serialised files to MATLAB files
 			} else if(arg.equalsIgnoreCase("ser2mat")) {
@@ -69,6 +79,11 @@ public class Interface{
 		
 		//
 		
+		model.Write("=====================================", "");
+		String message = "Starting simulation '" + model.name + "' w/ arguments: ";
+		for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
+		model.Write(message,"");
+		model.Write("=====================================", "");
 		if(argument.containsKey("load")){						// Iterations > 0
 			String loadPath = argument.get("load");
 			if(!loadPath.contains("/")) {
@@ -103,11 +118,6 @@ public class Interface{
 		modelRef = null;										// We don't need modelRef anymore, mark it for garbage collection
 		// Done analysing input arguments. Start model
 		try {
-			model.Write("=====================================", "");
-			String message = "Starting simulation '" + model.name + "' w/ arguments: ";
-			for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
-			model.Write(message,"");
-			model.Write("=====================================", "");
 			// Commence the simulation
 			instance.Start();
 		} catch (RuntimeException E) {
