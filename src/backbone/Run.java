@@ -150,44 +150,45 @@ public class Run {
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
-		
-		// Create initial cells
-		int[] types = Common.Unique(model.typeInit);
-		for(int iCell = 0; iCell < model.NInitCell; iCell++){
-			boolean filament = false;
-			if(model.filament) {
-				if(model.typeInit[iCell]<2) 		filament = model.filSphere; 
-				else if(model.typeInit[iCell]<6)	filament = model.filRod;
-				else throw new IndexOutOfBoundsException("Cell type: " + model.typeInit); 
+		if(model.growthIter == 0 && model.relaxationIter == 0) {
+			// Create initial cells
+			int[] types = Common.Unique(model.typeInit);
+			for(int iCell = 0; iCell < model.NInitCell; iCell++){
+				boolean filament = false;
+				if(model.filament) {
+					if(model.typeInit[iCell]<2) 		filament = model.filSphere; 
+					else if(model.typeInit[iCell]<6)	filament = model.filRod;
+					else throw new IndexOutOfBoundsException("Cell type: " + model.typeInit); 
+				}
+				// Use desired colour
+				double[] colour;
+				if(model.colourByType) {
+					int ci=0; for(int ii=0; ii<types.length; ii++)	if(model.typeInit[iCell]==types[ii])	ci = ii;		// Find index of this cell's type in types[]
+					colour = model.colour[ci];
+				}
+				else					colour = model.colour[iCell];
+				@SuppressWarnings("unused")
+				CCell cell = new CCell(model.typeInit[iCell], 				// Type of biomass
+						model.nInit[iCell],
+						model.position0Init[iCell],
+						model.position1Init[iCell],
+						filament,									// With capability to form filaments?
+						colour,
+						model);
 			}
-			// Use desired colour
-			double[] colour;
-			if(model.colourByType) {
-				int ci=0; for(int ii=0; ii<types.length; ii++)	if(model.typeInit[iCell]==types[ii])	ci = ii;		// Find index of this cell's type in types[]
-				colour = model.colour[ci];
+			model.Write(model.cellArray.size() + " initial cells created","iter");
+	
+			// Save and convert the file
+			model.Save();
+			ser2mat.Convert(model);	
+	
+			// Start server and connect if we're using COMSOL
+			if(model.comsol) {
+				model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
+				//				Server.Stop(false);
+				Server.Start(Assistant.port);
+				Server.Connect(Assistant.port);
 			}
-			else					colour = model.colour[iCell];
-			@SuppressWarnings("unused")
-			CCell cell = new CCell(model.typeInit[iCell], 				// Type of biomass
-					model.nInit[iCell],
-					model.position0Init[iCell],
-					model.position1Init[iCell],
-					filament,									// With capability to form filaments?
-					colour,
-					model);
-		}
-		model.Write(model.cellArray.size() + " initial cells created","iter");
-
-		// Save and convert the file
-		model.Save();
-		ser2mat.Convert(model);	
-
-		// Start server and connect if we're using COMSOL
-		if(model.comsol) {
-			model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
-			//				Server.Stop(false);
-			Server.Start(Assistant.port);
-			Server.Connect(Assistant.port);
 		}
 
 		while(true) {

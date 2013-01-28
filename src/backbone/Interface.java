@@ -23,7 +23,7 @@ public class Interface{
 		// Initialise model, simulation and create an object for a copy
 		CModel model = new CModel();
 		CModel modelRef;										// modelRef is required for loading command line arguments
-		Run instance = new Run(model);
+		Run instance;
 		// Analyse command line arguments, immediately execute some, save rest to Hashtable
 		int NArg = args.length;
 		Hashtable<String, String> argument = new Hashtable<String, String>();
@@ -79,11 +79,6 @@ public class Interface{
 		
 		//
 		
-		model.Write("=====================================", "");
-		String message = "Starting simulation '" + model.name + "' w/ arguments: ";
-		for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
-		model.Write(message,"");
-		model.Write("=====================================", "");
 		if(argument.containsKey("load")){						// Iterations > 0
 			String loadPath = argument.get("load");
 			if(!loadPath.contains("/")) {
@@ -105,11 +100,13 @@ public class Interface{
 			}
 			model = Load(loadPath);
 			modelRef = Load(loadPath); 
+			instance = new Run(model);
 			model.Write("Loaded " + loadPath, "");
 		} else {												// Start from zero
 			// Set all parameters from command line before we initialise
 			SetArgument(model, new CModel(), argument);
 			// Initialise parameters
+			instance = new Run(model);
 			instance.Initialise();
 			modelRef = new CModel();
 		}
@@ -118,6 +115,12 @@ public class Interface{
 		modelRef = null;										// We don't need modelRef anymore, mark it for garbage collection
 		// Done analysing input arguments. Start model
 		try {
+			model.Write("=====================================", "");
+			String message = "Starting simulation '" + model.name + "' w/ arguments: ";
+			for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
+			model.Write(message,"");
+			model.Write("=====================================", "");
+
 			// Commence the simulation
 			instance.Start();
 		} catch (RuntimeException E) {
@@ -184,7 +187,7 @@ public class Interface{
 				}
 			}
 			// Are you still here?
-			throw new RuntimeException("Unknown argument: " + key);
+			if(!key.equalsIgnoreCase("load"))		throw new RuntimeException("Unknown argument: " + key);
 		}
 	}
 
