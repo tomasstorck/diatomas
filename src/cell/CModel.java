@@ -30,18 +30,9 @@ public class CModel implements Serializable {
 	public int simulation = 0;					// The simulation type: see Run
 	public int randomSeed = 3;
 	public double[][] colour = new double[][]{
-			{1.0,0.7,0.7},
-			{0.1,1.0,0.1},
-			{0.1,0.1,0.4},
-			{1.0,1.0,0.7},
-			{0.1,1.0,1.0},
-			{0.4,0.1,0.4},
-			{0.4,0.1,0.1},
-			{0.4,1.0,0.4},
-			{0.1,0.1,1.0},
-			{0.4,0.4,0.1},
-			{0.4,1.0,1.0},
-			{1.0,0.1,1.0}};
+			{1.0,0.0,0.0},
+			{0.0,0.0,0.4},
+			{0.7,1.0,0.7}};
 	public boolean colourByType = true;
 	public boolean comsol = false;
 	// --> Sticking
@@ -66,6 +57,13 @@ public class CModel implements Serializable {
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
+	// Initial cell properties
+	public int[] typeInit = {4};
+	public double[] nInit = {1e-15};
+	public Vector3d[] directionInit = {new Vector3d(1.0, 0.0, 0.0)};
+	public Vector3d[] position0Init = {new Vector3d(0.0, 0.0, 0.0)};
+	public Vector3d[] position1Init = {new Vector3d(2e-6, 0.0, 0.0)};
+		
 	// Spring constants and drag ceoefficient
 	public double Kd 	= 1e-13;				// drag force coefficient
 	public double Kc 	= 1e-9;					// cell-cell collision
@@ -85,7 +83,6 @@ public class CModel implements Serializable {
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
 	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
 	public int NInitCell = 6;					// Initial number of cells
-	public int NType = 2;						// Cell types used by default
 	public double[] radiusCellMax = {0.25e-6,	0.5e-6, 	0.25e-6*1.25, 	0.375e-6, 	0.25e-6*1.25, 	0.375e-6};
 	public double[] lengthCellMax = {0.0,		0.0,		2.0e-6,			2.0e-6,		2.5e-6,			2.5e-6};
 	public double[] nCellMax =	new double[6];
@@ -1045,6 +1042,7 @@ public class CModel implements Serializable {
 			final int typeNew = 0; 
 			final double nNew = 0.5 * nCellMax[typeNew] * (1.0 + rand.Double());
 			final boolean filNew = filament && filSphere;
+			final int NType = Common.Unique(typeInit).length;
 			final double[] colourNew = (colourByType) ? colour[NType] : colour[NInitCell];			// Choose a colour not already chosen  
 			final double rNew = CBall.Radius(nNew, typeNew, this); 
 			// Create array of balls in non-spherical cells 

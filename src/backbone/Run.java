@@ -2,6 +2,8 @@ package backbone;
 
 import java.util.ArrayList;
 
+import NR.Common;
+
 import comsol.Comsol;
 import comsol.Server;
 
@@ -15,11 +17,7 @@ import cell.Vector3d;
 
 public class Run {
 	CModel model;
-	int[] type;
-	double[] n; 
-	Vector3d[] direction;
-	Vector3d[] position0;
-	Vector3d[] position1;
+	 
 	double restLength;
 
 	public Run(CModel model) {
@@ -40,7 +38,6 @@ public class Run {
 			/////////////
 			// E. COLI //
 			/////////////
-			model.NType = 1;
 			model.radiusCellMax[4] = 0.25e-6;
 			model.lengthCellMax[4] = 2.5e-6;
 			model.NInitCell = 1;
@@ -48,6 +45,13 @@ public class Run {
 			model.normalForce = true;
 			model.growthSkipMax = 10;
 			model.sticking = model.filament = false;
+			model.Kd 	= 1e-13;				// drag force coefficient
+			model.Kc 	= 1e-9;					// cell-cell collision
+			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
+			model.Kr 	= 5e-11;				// internal cell spring
+			model.Kf 	= 2e-11;				// filament spring
+			model.Kan	= 1e-11;				// anchor
+			model.Ks 	= 1e-11;				// sticking
 			break;
 		case 1: case 2:
 			////////
@@ -65,6 +69,13 @@ public class Run {
 			model.filament = model.sticking = true;
 			model.sticking = true;
 			model.stickRodRod = model.stickSphereSphere = false;
+			model.Kd 	= 1e-13;				// drag force coefficient
+			model.Kc 	= 1e-9;					// cell-cell collision
+			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
+			model.Kr 	= 5e-11;				// internal cell spring
+			model.Kf 	= 2e-11;				// filament spring
+			model.Kan	= 1e-11;				// anchor
+			model.Ks 	= 1e-11;				// sticking
 			// Anchoring and normalForce are set later
 			break;
 		default:
@@ -82,40 +93,40 @@ public class Run {
 		model.UpdateAmountCellMax();
 		switch(model.simulation) {
 		case 0:
-			type = new int[model.NInitCell];
-			n = new double[model.NInitCell];
-			direction = new Vector3d[model.NInitCell];
-			position0 = new Vector3d[model.NInitCell];
-			position1 = new Vector3d[model.NInitCell];
+			model.typeInit = new int[model.NInitCell];
+			model.nInit = new double[model.NInitCell];
+			model.directionInit = new Vector3d[model.NInitCell];
+			model.position0Init = new Vector3d[model.NInitCell];
+			model.position1Init = new Vector3d[model.NInitCell];
 			restLength = model.lengthCellMax[4]*0.75;
 			for(int ii=0; ii<model.NInitCell; ii++) {
-				type[ii] = 4;
-				n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-				direction[ii] = new Vector3d((rand.Double()-0.5), 			0.0*rand.Double(), 													(rand.Double()-0.5))			.normalise();
-				position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
-				position1[ii] = position0[ii].plus(direction[ii].times(restLength));
+				model.typeInit[ii] = 4;
+				model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
+				model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			0.0*rand.Double(), 																		(rand.Double()-0.5))			.normalise();
+				model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
+				model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
 			}
 			break;
 		case 1: case 2:
 			// Set type
-			type = new int[model.NInitCell];
-			for(int ii=0; ii<model.NInitCell/2; ii++)						type[ii] = 4;			// First half: rods
-			for(int ii=model.NInitCell/2+1; ii<model.NInitCell; ii++)		type[ii] = 0;			// Second half: spheres
+			model.typeInit = new int[model.NInitCell];
+			for(int ii=0; ii<model.NInitCell/2; ii++)						model.typeInit[ii] = 4;			// First half: rods
+			for(int ii=model.NInitCell/2+1; ii<model.NInitCell; ii++)		model.typeInit[ii] = 0;			// Second half: spheres
 			// Various
 			restLength = model.lengthCellMax[4]*0.75;
-			n = new double[model.NInitCell];
-			direction = new Vector3d[model.NInitCell];
-			position0 = new Vector3d[model.NInitCell];
-			position1 = new Vector3d[model.NInitCell];
+			model.nInit = new double[model.NInitCell];
+			model.directionInit = new Vector3d[model.NInitCell];
+			model.position0Init = new Vector3d[model.NInitCell];
+			model.position1Init = new Vector3d[model.NInitCell];
 
 			if(model.simulation==1) {
 				model.Write("Loading parameters for AS/biofilm","");
 				// Biofilm-like
 				for(int ii=0; ii<model.NInitCell; ii++) {
-					n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-					direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,										(rand.Double()-0.5))			.normalise();
-					position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);
-					position1[ii] = position0[ii].plus(direction[ii].times(restLength));
+					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
+					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,															(rand.Double()-0.5))			.normalise();
+					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);
+					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
 				}
 				model.anchoring = true;
 				model.normalForce = true;
@@ -123,10 +134,10 @@ public class Run {
 				model.Write("Loading parameters for AS/flock","");
 				// Flock-like
 				for(int ii=0; ii<model.NInitCell; ii++) {
-					n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-					direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 											(rand.Double()-0.5))			.normalise();
-					position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y - (type[ii]>1 ? 0.5*restLength:0),(rand.Double()-0.5)*model.L.z);
-					position1[ii] = position0[ii].plus(direction[ii].times(restLength));
+					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
+					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 																(rand.Double()-0.5))			.normalise();
+					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y - (model.typeInit[ii]>1 ? 0.5*restLength:0),			(rand.Double()-0.5)*model.L.z);
+					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
 				}
 				model.anchoring = false;
 				model.normalForce = false;
@@ -141,22 +152,26 @@ public class Run {
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 		
 		// Create initial cells
+		int[] types = Common.Unique(model.typeInit);
 		for(int iCell = 0; iCell < model.NInitCell; iCell++){
 			boolean filament = false;
 			if(model.filament) {
-				if(type[iCell]<2) 		filament = model.filSphere; 
-				else if(type[iCell]<6)	filament = model.filRod;
-				else throw new IndexOutOfBoundsException("Cell type: " + type); 
+				if(model.typeInit[iCell]<2) 		filament = model.filSphere; 
+				else if(model.typeInit[iCell]<6)	filament = model.filRod;
+				else throw new IndexOutOfBoundsException("Cell type: " + model.typeInit); 
 			}
 			// Use desired colour
 			double[] colour;
-			if(model.colourByType) 	colour = model.colour[type[iCell]];
+			if(model.colourByType) {
+				int ci=0; for(int ii=0; ii<types.length; ii++)	if(model.typeInit[iCell]==types[ii])	ci = ii;		// Find index of this cell's type in types[]
+				colour = model.colour[ci];
+			}
 			else					colour = model.colour[iCell];
 			@SuppressWarnings("unused")
-			CCell cell = new CCell(type[iCell], 				// Type of biomass
-					n[iCell],
-					position0[iCell],
-					position1[iCell],
+			CCell cell = new CCell(model.typeInit[iCell], 				// Type of biomass
+					model.nInit[iCell],
+					model.position0Init[iCell],
+					model.position1Init[iCell],
 					filament,									// With capability to form filaments?
 					colour,
 					model);

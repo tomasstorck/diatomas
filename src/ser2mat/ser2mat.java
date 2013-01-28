@@ -41,6 +41,11 @@ public class ser2mat {
 		mlModel.setField("rhoWater",                      new MLDouble(null, new double[] {model.rhoWater}, 1));                          	// [kg/m3], density of bulk liquid (water)
 		mlModel.setField("rhoX",                          new MLDouble(null, new double[] {model.rhoX}, 1));                              	// [kg/m3], diatoma density
 		mlModel.setField("MWX",                           new MLDouble(null, new double[] {model.MWX}, 1));                               	// [kg/mol], composition CH1.8O0.5N0.2
+		// Initial cell properties
+		//
+		double[] DtypeInit = new double[model.typeInit.length];		for(int ii=0; ii<model.typeInit.length; ii++)		DtypeInit[ii] = model.typeInit[ii];		mlModel.setField("typeInit",                      new MLDouble(null, DtypeInit, model.typeInit.length));                          	
+		//
+		mlModel.setField("nInit",                         new MLDouble(null, model.nInit, model.nInit.length));                           	
 		// Spring constants and drag ceoefficient
 		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
 		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// cell-cell collision
@@ -60,7 +65,6 @@ public class ser2mat {
 		mlModel.setField("NcComp",                        new MLDouble(null, new double[] {model.NcComp}, 1));                            	// c for concentration (or virtual compound, e.g. Ac-)
 		mlModel.setField("NAcidDiss",                     new MLDouble(null, new double[] {model.NAcidDiss}, 1));                         	// Number of acid dissociation reactions
 		mlModel.setField("NInitCell",                     new MLDouble(null, new double[] {model.NInitCell}, 1));                         	// Initial number of cells
-		mlModel.setField("NType",                         new MLDouble(null, new double[] {model.NType}, 1));                             	// Cell types used by default
 		mlModel.setField("radiusCellMax",                 new MLDouble(null, model.radiusCellMax, model.radiusCellMax.length));           	
 		mlModel.setField("lengthCellMax",                 new MLDouble(null, model.lengthCellMax, model.lengthCellMax.length));           	
 		mlModel.setField("nCellMax",                      new MLDouble(null, model.nCellMax, model.nCellMax.length));                     	

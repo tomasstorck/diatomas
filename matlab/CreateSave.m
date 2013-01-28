@@ -72,6 +72,11 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLDouble(null, new double[] {model.' n '.x, model.' n '.y, model.' n '.z}, 3));'], comment);
 		continue
 	end
+	% Vector3d[]
+	if hasstr(c,'Vector3d[] ')
+		% Ignore (TODO)
+		continue
+	end
 	% String
 	if hasstr(c,'String ')
 		[n comment] = splitline(c,'String');
