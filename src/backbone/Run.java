@@ -40,55 +40,77 @@ public class Run {
 			/////////////
 			// E. COLI //
 			/////////////
-			type = new int[]{4,4,4};
 			model.NType = 1;
 			model.radiusCellMax[4] = 0.25e-6;
 			model.lengthCellMax[4] = 2.5e-6;
-			model.UpdateAmountCellMax();
 			model.NInitCell = 1;
 			model.colourByType = false;
-			restLength = model.lengthCellMax[4]*0.75;
-			n = new double[model.NInitCell];
-			direction = new Vector3d[model.NInitCell];
-			position0 = new Vector3d[model.NInitCell];
-			position1 = new Vector3d[model.NInitCell];
-			for(int ii=0; ii<model.NInitCell; ii++) {
-				n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
-				direction[ii] = new Vector3d((rand.Double()-0.5), 			0.0*rand.Double(), 													(rand.Double()-0.5))			.normalise();
-				position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
-				position1[ii] = position0[ii].plus(direction[ii].times(restLength));
-			}
 			model.normalForce = true;
 			model.growthSkipMax = 10;
+			model.sticking = model.filament = false;
 			break;
 		case 1: case 2:
 			////////
 			// AS //
 			////////				
-			type = new int[]{4,4,4,4,4,4,0,0,0,0,0,0};
 			model.radiusCellMax[0] = 0.25e-6 * 1.25;
 			model.radiusCellMax[4] = 0.25e-6;
 			model.lengthCellMax[4] = 2.5e-6;
-			model.UpdateAmountCellMax();
 			model.NInitCell = 6;
-			restLength = model.lengthCellMax[4]*0.75;
 			model.muAvgSimple[0] = 0.33;
 			model.muAvgSimple[4] = 0.20;
-			model.sticking = true;
-			model.stickRodRod = false;
-			model.stickSphereSphere = false;
-			model.filament = true;
-			//				model.filSphere = false;
 			model.growthSkipMax = 10;
 			model.syntrophyFactor = 1.5;
 			model.attachmentRate = 1.0;
+			model.filament = model.sticking = true;
+			model.sticking = true;
+			model.stickRodRod = model.stickSphereSphere = false;
+			// Anchoring and normalForce are set later
+			break;
+		default:
+			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
+		}
+
+		//			model.Kan *= 10.0;
+		//			model.muAvgSimple[0] = model.muAvgSimple[4] = model.muSpread = 0.0;
+		//			model.attachmentRate = 6.0;
+		//			model.growthSkipMax = 0;
+	}
+	
+	public void Start() throws Exception {
+		// Set initial cell parameters based on model
+		model.UpdateAmountCellMax();
+		switch(model.simulation) {
+		case 0:
+			type = new int[model.NInitCell];
+			n = new double[model.NInitCell];
+			direction = new Vector3d[model.NInitCell];
+			position0 = new Vector3d[model.NInitCell];
+			position1 = new Vector3d[model.NInitCell];
+			restLength = model.lengthCellMax[4]*0.75;
+			for(int ii=0; ii<model.NInitCell; ii++) {
+				type[ii] = 4;
+				n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
+				direction[ii] = new Vector3d((rand.Double()-0.5), 			0.0*rand.Double(), 													(rand.Double()-0.5))			.normalise();
+				position0[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(n[ii]/2.0, type[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
+				position1[ii] = position0[ii].plus(direction[ii].times(restLength));
+			}
+			break;
+		case 1: case 2:
+			// Set type
+			type = new int[model.NInitCell];
+			for(int ii=0; ii<model.NInitCell/2; ii++)						type[ii] = 4;			// First half: rods
+			for(int ii=model.NInitCell/2+1; ii<model.NInitCell; ii++)		type[ii] = 0;			// Second half: spheres
+			// Various
+			restLength = model.lengthCellMax[4]*0.75;
+			n = new double[model.NInitCell];
+			direction = new Vector3d[model.NInitCell];
+			position0 = new Vector3d[model.NInitCell];
+			position1 = new Vector3d[model.NInitCell];
+
 			if(model.simulation==1) {
 				model.Write("Loading parameters for AS/biofilm","");
 				// Biofilm-like
-				n = new double[model.NInitCell];
-				direction = new Vector3d[model.NInitCell];
-				position0 = new Vector3d[model.NInitCell];
-				position1 = new Vector3d[model.NInitCell];
 				for(int ii=0; ii<model.NInitCell; ii++) {
 					n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
 					direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,										(rand.Double()-0.5))			.normalise();
@@ -100,10 +122,6 @@ public class Run {
 			} else {
 				model.Write("Loading parameters for AS/flock","");
 				// Flock-like
-				n = new double[model.NInitCell];
-				direction = new Vector3d[model.NInitCell];
-				position0 = new Vector3d[model.NInitCell];
-				position1 = new Vector3d[model.NInitCell];
 				for(int ii=0; ii<model.NInitCell; ii++) {
 					n[ii] = 0.5*model.nCellMax[type[ii]] * (1.0 + rand.Double());
 					direction[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 											(rand.Double()-0.5))			.normalise();
@@ -117,19 +135,11 @@ public class Run {
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 		}
-
-		//			model.Kan *= 10.0;
-		//			model.muAvgSimple[0] = model.muAvgSimple[4] = model.muSpread = 0.0;
-		//			model.attachmentRate = 6.0;
-		//			model.growthSkipMax = 0;
-
+		
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	}
-
-	public void Start() throws Exception {
+		
 		// Create initial cells
 		for(int iCell = 0; iCell < model.NInitCell; iCell++){
 			boolean filament = false;
