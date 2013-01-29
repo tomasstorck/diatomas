@@ -104,7 +104,7 @@ public class Comsol {
    		comsol.physics("dode").feature("dode1")
    			.set("f", CfList);
    		
-		// Set initial values (TODO this code is not well automated and assumes only d0[0] is non-zero) 	// UPDATE
+		// UPDATE Set initial values 
 		comsol.physics("dode").feature("init1").set("c0", Double.toString(java.BCConc[0]) + "*sqrt(Ka0)");
 		comsol.physics("dode").feature("init1").set("c1", Double.toString(java.BCConc[0]) + "*(1-sqrt(Ka0))");
 		comsol.physics("dode").feature("init1").set("c2", Double.toString(java.BCConc[0]) + "*sqrt(Ka0)");

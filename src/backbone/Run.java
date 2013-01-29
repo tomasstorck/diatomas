@@ -82,10 +82,9 @@ public class Run {
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 		}
 
-		//			model.Kan *= 10.0;
-		//			model.muAvgSimple[0] = model.muAvgSimple[4] = model.muSpread = 0.0;
-		//			model.attachmentRate = 6.0;
-		//			model.growthSkipMax = 0;
+		model.muAvgSimple[0] = model.muAvgSimple[4] = model.muSpread = 0.0;
+		model.attachmentRate = 6.0;
+		model.growthSkipMax = 0;
 	}
 	
 	public void Start() throws Exception {

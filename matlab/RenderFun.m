@@ -227,7 +227,7 @@ for ii=0:NSave			% Can be replaced with parfor
 	% Build filament springs
 	for iFil = 1:length(model.filSpringArray)
 		fil = model.filSpringArray(iFil);
-		if fil.type==3
+		if fil.type==3 || fil.type==4                   % sphere's fil spring or rod's short fil spring
 			fprintf(fid,['// Filament spring no. ' num2str(iFil-1) '\n']);
 			ball 	= model.ballArray(fil.ballArray(1)+1);
 			ballNext = model.ballArray(fil.ballArray(2)+1);

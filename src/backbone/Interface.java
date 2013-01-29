@@ -143,7 +143,15 @@ public class Interface{
 					try {
 						@SuppressWarnings("rawtypes")
 						Class fieldClass = CModel.class.getField(key).get(model).getClass();
-						if(fieldClass.equals(Double.class)) {				// Does the field contain a double?
+						if(fieldClass.equals(Boolean.class)) {
+							boolean bool = Integer.parseInt(value) == 1 ? true : false;
+							boolean modelBool = field.getBoolean(model);
+							if(modelBool != bool) {
+								field.setBoolean(model, bool);
+								model.Write(field.getName() + " set to " + (bool?"true":"false"), "");
+							}
+							continue args;
+						} else if(fieldClass.equals(Double.class)) {				// Does the field contain a double?
 							double number;
 							double modelNumber = field.getDouble(model);
 							double modelRefNumber = field.getDouble(modelRef);

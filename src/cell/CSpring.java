@@ -79,9 +79,9 @@ public class CSpring implements Serializable {
 	////////////////////////////////////////////
 	
 	public void ResetRestLength() {
+		CModel model = this.ballArray[0].cell.model;
 		switch(type) {
 		case 0:				// Rod
-			CModel model = this.ballArray[0].cell.model;
 			// If type == 1 based on mass, type==2 based on max mass
 			if(ballArray[0].cell.type<4) {
 				restLength = ballArray[0].radius * model.lengthCellMax[ballArray[0].cell.type]/model.radiusCellMax[ballArray[0].cell.type];							// About 2 balls in the same cell, so no need to make it complicated  
@@ -97,18 +97,18 @@ public class CSpring implements Serializable {
 			break;
 		case 2:				// Anchoring spring
 			CBall ball = ballArray[0];
-			restLength = Math.max(ball.pos.y,ball.radius*1.01);				// TODO don't like this
+			restLength = Math.max(ball.pos.y,ball.radius*1.01);				// Choose current position, but make sure it is not forcing the spring into the substratum
 			break;
 		case 3:				// Small fil spring
-			restLength = 1.1*(ballArray[0].radius + ballArray[1].radius);
+			restLength = model.filLengthSphere*(ballArray[0].radius + ballArray[1].radius);
 			break;
 		case 4:				// Small fil spring
-			restLength = 0.9*(ballArray[0].radius + ballArray[1].radius);
+			restLength = model.filLengthRod[0]*(ballArray[0].radius + ballArray[1].radius);
 			break;
 		case 5:				// Big fil spring
 			CCell cell0 = ballArray[0].cell;
 			CCell cell1 = ballArray[1].cell;
-			restLength = 1.4*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
+			restLength = model.filLengthRod[0]*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);

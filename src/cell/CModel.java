@@ -77,6 +77,8 @@ public class CModel implements Serializable {
 	public double stretchLimStick = 1.6;		// Maximum tension for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
 	public double stretchLimFil = 1.8;			// Maximum tension for sticking springs
+	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
+	public double[] filLengthRod = {0.8, 1.5};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 	// Model biomass and growth properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
@@ -316,7 +318,6 @@ public class CModel implements Serializable {
 		}
 	}
 		
-	// Collision detection rod-rod
 	public EricsonObject DetectLinesegLineseg(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {		// This is line segment - line segment collision detection. 
 		// Rewritten 120912 because of strange results with the original function
 		// Computes closest points C1 and C2 of S1(s) = P1+s*(Q1-P1) and S2(t) = P2+t*(Q2-P2)
@@ -350,31 +351,42 @@ public class CModel implements Serializable {
 		Vector3d c1 = p1.plus(d1.times(s));
 		Vector3d c2 = p2.plus(d2.times(t));
 		
-		// Get the difference of the two closest points
-//		Vector3d dP = r.plus(c1.times(s)).minus(c2.times(t));  // = S1(sc) - S2(tc)
-		Vector3d dP = c1.minus(c2);  // = S1(sc) - S2(tc)
+		Vector3d dP = c1.minus(c2);  	// = S1(sc) - S2(tc)
 		
 		double dist2 = (c1.minus(c2)).dot(c1.minus(c2));
 		
 		return new EricsonObject(dP, Math.sqrt(dist2), s, t, c1, c2);
 	}
 	
-	// Collision detection ball-rod
 	public EricsonObject DetectLinesegPoint(Vector3d p1, Vector3d q1, Vector3d p2) {
 		Vector3d ab = q1.minus(p1);  	// line
-		Vector3d w = p2.minus(p1);	//point-line
+		Vector3d w = p2.minus(p1);		//point-line
 		//Project c onto ab, computing parameterized position d(t) = a + t*(b-a)
 		double rpos = w.dot(ab)/ab.dot(ab);
-		//if outside segment, clamp t and therefore d to the closest endpoint TODO
+		//if outside segment, clamp t and therefore d to the closest endpoint
 		rpos = Common.Clamp(rpos, 0.0, 1.0);
 		//compute projected position from the clamped t
+		Vector3d d = p1.plus(ab.times(rpos));
+		//calculate the vector p2 --> d
+		Vector3d dP = d.minus(p2);
+		EricsonObject R = new EricsonObject(dP, dP.norm(), rpos);	// Defined at the end of the model class. OPTIMISE: we don't need dP.norm() sometimes and could leave it out
+		return R;
+	}
+	
+	public EricsonObject DetectLinePoint(Vector3d p1, Vector3d q1, Vector3d p2) {
+		Vector3d ab = q1.minus(p1);  	// vector from p1 to q1 (i.e. the line segment)
+		Vector3d w = p2.minus(p1);		// vector from p1 to p2
+		//Project c onto ab, computing parameterized position d(t) = a + t*(b-a). rpos can be >1.0, i.e. d can be longer than the line segment
+		double rpos = w.dot(ab)/ab.dot(ab);
+		// Do not clamp rpos to the range of the line segment, so our line segment becomes a line when projected onto it
+		// Compute projected position of p1 --> p2 onto p1 --> q1
 		Vector3d d = p1.plus(ab.times(rpos));
 		//calculate the vector p2 --> d
 		Vector3d dP = d.minus(p2);
 		EricsonObject R = new EricsonObject(dP, dP.norm(), rpos);	// Defined at the end of the model class
 		return R;
 	}
-	
+
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
@@ -1048,46 +1060,42 @@ public class CModel implements Serializable {
 			// Create array of balls in non-spherical cells 
 			ArrayList<CBall> ballArrayRod = new ArrayList<CBall>(ballArray.size());
 			for(CBall ball : ballArray) 	if(ball.cell.type>1) 	ballArrayRod.add(ball);
-			// Find a random rod's ball position P and move the ball there until we find one without colliding with a sphere's ball
+			// Find a random rod's ball position dest(ination) and move the ball there from dirn ("along the path") until we find a particle
 			Vector3d posNew;
-			int NGame = 0;
+			int NAttempt = 0;
 			while(true) {
-				NGame++;
-				// Find P based on random non-spherical ball for first point
-				CBall PBall = ballArrayRod.get(rand.Int(ballArrayRod.size()-1));
-				Vector3d P = PBall.pos;
-				// Find dirn, any direction away from P (including below substratum TODO)
+				NAttempt++;
+				// Find dest(ination) based on random non-spherical ball for first point
+				CBall destBall = ballArrayRod.get(rand.Int(ballArrayRod.size()-1));
+				Vector3d dest = destBall.pos;
+				// Find dirn, any direction away from dest (we take care of substratum blocking later)
 				Vector3d dirn = new Vector3d(rand.Double()-0.5, rand.Double()-0.5, rand.Double()-0.5).normalise();
-				// Check how far all (incl. spherical) balls are from P and in the correct dirn. Also select our winner (any cell type)
-				CBall championBall = PBall;
-				double championDist = 0.0;
+				// Check how far all (incl. spherical) balls are from dest and in the correct dirn. Also select our winner (any cell type)
+				CBall firstBall = destBall;
+				double firstDist = 0.0;
 				for(CBall ball : ballArray) {
-					// Find Q, the vector pointing to ball.pos from P
-					Vector3d Q = ball.pos.minus(P);
-					// Does Q qualify to be further analysed or already too far away?
-					double dotQdirn = Q.dot(dirn);
-					if(dotQdirn<0)		continue;				// Wrong direction: angle between Q and dirn >90 degrees
-					// Project Q onto dirn
-					Vector3d projQ = dirn.times(dotQdirn);		// Vector projection of vector Q onto dirn. dirn is already normalised
-					// Check if Q is close enough to dirn to touch (and reach the finals) by analysing the vector R, from projection to Q
-					Vector3d R = Q.minus(projQ);
-					if( R.norm() < rNew+ball.radius ) {
-						// Good, if it would be lowered from dirn to P it would collide with ball. 
-						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from P is the largest yet 
-						if(projQ.norm() > championDist) {
-							// Set new record, state this is our current champion
-							championDist = projQ.norm();
-							championBall = ball; 
+					// Find the distance between ball.pos and the path of the attaching particle
+					Vector3d other = ball.pos.minus(dest);
+					final Vector3d nul = new Vector3d(0.0, 0.0, 0.0);								// Since dirn is from the origin, we need a null vector as a base point 
+					EricsonObject E = DetectLinePoint(nul, dirn, other);							// Detect distance line-point, with line the path and point the ball.pos
+					// Check if ball.pos is close enough to path to touch the attaching particle by analysing the distance obtained from Ericsson
+					if( E.dist < rNew+ball.radius ) {
+						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with other 
+						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet 
+						if(E.sc > firstDist) {														// sc is the multiplier for the vector that denotes the line: since dirn.norm() == 1 we don't need to multiply
+							// Set this ball to be first to be encountered by the attaching particle
+							firstDist = E.sc;
+							firstBall = ball; 
 						}
 					}
 				}
 				// Get new position. Check if it is valid in case we have a substratum
-				posNew = championBall.pos.plus(dirn.times(rNew + championBall.radius));
+				posNew = firstBall.pos.plus(dirn.times(rNew + firstBall.radius));
 				if(normalForce && posNew.y<rNew)	continue;	// the championBall went through the plane		
-				// If a non-sphere's ball wins, we're happy and conclude the games. If not, rematch with new P and dirn
-				if(championBall.cell.type > 1)	break;
-				// If after 100 games we still didn't win, forfeit 
-				if(NGame>100)		throw new RuntimeException("Could not find a cell to attach to");
+				// If a non-sphere's ball wins, we're happy and conclude the search. If not, try again with new dest and dirn
+				if(firstBall.cell.type > 1)			break;
+				// If after 100 attempts we still didn't find a site to attach to, forfeit 
+				if(NAttempt>100)					throw new RuntimeException("Could not find a cell to attach to");
 			}
 			// Create and position the new cell to this champion ball. Position it in the direction of dirn
 			new CCell(typeNew, nNew, posNew, new Vector3d(), filNew, colourNew, this);
