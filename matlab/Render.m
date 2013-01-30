@@ -1,6 +1,6 @@
 %%%%%%%%%
 
-sketch = false;
+sketch = true;
 
 %%%%%%%%%
 
@@ -21,6 +21,9 @@ loadFileNameList = {loadFileNameList.name};
 
 for iFile=length(loadFileNameList):-1:1
 	loadFileName = loadFileNameList{iFile};
+    if exist([location filesep 'image' filesep 'pov_' loadFileName(1:end-4) '_00.png'],'file')
+        continue                % Already plotted, skip
+    end
 	fprintf([loadFileName '\n']);
 	load([location filesep 'output' filesep loadFileName]);
 

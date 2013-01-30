@@ -22,6 +22,7 @@ while true
 		disp([datestr(now) '  ' folderName]);
 		location = ['../' folderName];
 		Render;
-	end
+    end
+    disp([datestr(now) '  waiting...']);
 	pause(10);
 end

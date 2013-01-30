@@ -38,7 +38,7 @@ public class Run {
 			/////////////
 			// E. COLI //
 			/////////////
-			model.radiusCellMax[4] = 0.25e-6;
+			model.radiusCellMax[4] = 0.5e-6;
 			model.lengthCellMax[4] = 2.5e-6;
 			model.NInitCell = 1;
 			model.colourByType = false;
@@ -82,9 +82,9 @@ public class Run {
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 		}
 
-		model.muAvgSimple[0] = model.muAvgSimple[4] = model.muSpread = 0.0;
-		model.attachmentRate = 6.0;
-		model.growthSkipMax = 0;
+//		model.muAvgSimple[0] = model.muAvgSimple[4] = model.muSpread = 0.0;
+//		model.attachmentRate = 6.0;
+//		model.growthSkipMax = 0;
 	}
 	
 	public void Start() throws Exception {

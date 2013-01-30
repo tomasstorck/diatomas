@@ -103,6 +103,8 @@ public class Interface{
 			instance = new Run(model);
 			model.Write("Loaded " + loadPath, "");
 		} else {												// Start from zero
+			// Set name to prevent writing things to default folder
+			if(argument.containsKey("name"))		model.name = argument.get("name");
 			// Set all parameters from command line before we initialise
 			SetArgument(model, new CModel(), argument);
 			// Initialise parameters

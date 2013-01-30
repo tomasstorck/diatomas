@@ -78,20 +78,9 @@ for ii=0:NSave			% Can be replaced with parfor
 	% Skip half if this is a sketch
 	if sketch && rem(ii,2)==1
 		continue
-	end
+    end
 	
-	if(exist(imageLoc{ii+1},'file'))
-% 		fprintf(['File already found, skipping: ' imageName{ii+1} '\n']);
-		skip = true;
-	else
-		skip = false;
-	end
-
-	if skip
-		continue
-	end
-	
-	if(exist(povName{ii+1},'file'))
+    if(exist(povName{ii+1},'file'))
 		delete(povName{ii+1});
 	end
 	fid = fopen(povName{ii+1},'a');
@@ -358,7 +347,7 @@ for ii=0:NSave			% Can be replaced with parfor
 	end
 	[~,message] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
 	% Append text for relaxation and growth
-	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStep+ii*model.relaxationTimeStep)  imageLoc{ii+1} ' ' imageLoc{ii+1}]);
+	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStep+ii*model.relaxationTimeStepdt)  imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 % 	% Append scale bar
 % 	A = camPos;
 % 	C = camView;

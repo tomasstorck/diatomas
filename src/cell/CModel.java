@@ -510,7 +510,7 @@ public class CModel implements Serializable {
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
 						}
-					} else {														// cell0 is a ball, cell1 is a rod
+					} else if(cell1.type<6) {										// cell0 is a ball, cell1 is a rod
 						double H2 = 1.5*(lengthCellMax[cell1.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect. 1.5 is to make it more robust (stretching)
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a sphere-rod collision detection
@@ -533,9 +533,11 @@ public class CModel implements Serializable {
 								c0b0.force = c0b0.force.minus(Fs);
 							}	
 						}
+					} else {
+						throw new RuntimeException("Unknown cell type");
 					}
 				}
-			} else {	// cell0.type > 1
+			} else if (cell0.type<6) {												// cell0.type > 1
 				CBall c0b1 = cell0.ballArray[1];
 				for(int jCell = iCell+1; jCell<cellArray.size(); jCell++) {
 					CCell cell1 = cellArray.get(jCell);
@@ -564,7 +566,7 @@ public class CModel implements Serializable {
 								c1b0.force = c1b0.force.minus(Fs);
 							}	
 						}
-					} else {	// type>1 --> the other cell is a rod too. This is where it gets tricky
+					} else if (cell1.type<6){										// type>1 --> the other cell is a rod too. This is where it gets tricky
 						Vector3d c0b0pos = new Vector3d(c0b0.pos);
 						Vector3d c0b1pos = new Vector3d(c0b1.pos);
 						Vector3d c1b0pos = new Vector3d(c1b0.pos);
@@ -593,8 +595,12 @@ public class CModel implements Serializable {
 								c1b1.force = c1b1.force.minus(Fs.times(tc));
 							}
 						}
+					} else {
+						throw new RuntimeException("Unknown cell type");
 					}
 				}
+			} else {
+				throw new RuntimeException("Unknown cell type");
 			}
 		}
 		// Calculate gravity+bouyancy, normal forces and drag
