@@ -38,20 +38,18 @@ public class Run {
 			/////////////
 			// E. COLI //
 			/////////////
-			model.radiusCellMax[4] = 0.5e-6;
-			model.lengthCellMax[4] = 2.5e-6;
+			model.radiusCellMax[4] = 0.25e-6;	// From ...
+			model.lengthCellMax[4] = 2.5e-6;	// From ...
 			model.NInitCell = 1;
 			model.colourByType = false;
 			model.normalForce = true;
-			model.growthSkipMax = 10;
 			model.sticking = model.filament = false;
 			model.Kd 	= 1e-13;				// drag force coefficient
-			model.Kc 	= 1e-9;					// cell-cell collision
-			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
 			model.Kr 	= 5e-11;				// internal cell spring
-			model.Kf 	= 2e-11;				// filament spring
 			model.Kan	= 1e-11;				// anchor
-			model.Ks 	= 1e-11;				// sticking
+			model.growthTimeStep = 120;
+			model.growthSkipMax = 10;
+			model.muAvgSimple[4] = 2.08;		// h-1, i.e. doubling time of 20 minutes
 			break;
 		case 1: case 2:
 			////////
@@ -73,10 +71,18 @@ public class Run {
 			model.Kc 	= 1e-9;					// cell-cell collision
 			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
 			model.Kr 	= 5e-11;				// internal cell spring
-			model.Kf 	= 2e-11;				// filament spring
+			model.KfSphere 	= 2e-11;			// filament spring
+			model.KfRod0 = 2e-11;
+			model.KfRod1 = 2e-11;
 			model.Kan	= 1e-11;				// anchor
 			model.Ks 	= 1e-11;				// sticking
-			// Anchoring and normalForce are set later
+			if(model.simulation==1) {
+				model.anchoring = true;
+				model.normalForce = true;
+			} else {
+				model.anchoring = false;
+				model.normalForce = false;
+			}
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
@@ -127,8 +133,6 @@ public class Run {
 					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);
 					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
 				}
-				model.anchoring = true;
-				model.normalForce = true;
 			} else {
 				model.Write("Loading parameters for AS/flock","");
 				// Flock-like
@@ -138,8 +142,6 @@ public class Run {
 					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y - (model.typeInit[ii]>1 ? 0.5*restLength:0),			(rand.Double()-0.5)*model.L.z);
 					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
 				}
-				model.anchoring = false;
-				model.normalForce = false;
 			}
 			break;
 		default:

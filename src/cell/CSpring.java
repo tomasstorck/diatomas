@@ -17,7 +17,7 @@ public class CSpring implements Serializable {
 	///////////////////////////////////////////////////////////////////
 
 	// Adds new spring to model's array, cell's array. Does NOT add to siblingArray
-	public CSpring(CBall ball0, CBall ball1, int type, CSpring[] siblingArray){			// Note that siblingArray is by default not initialised
+	public CSpring(CBall ball0, CBall ball1, int type){			// Note that siblingArray is by default not initialised
 		CModel model = ball0.cell.model;
 		ballArray = new CBall[2];
 		anchorPoint = new Vector3d();
@@ -47,11 +47,7 @@ public class CSpring implements Serializable {
 			throw new IndexOutOfBoundsException("Spring type: " + type);
 		}
 	}
-	
-	public CSpring(CBall ball0, CBall ball1, int type) {
-		this(ball0, ball1, type, new CSpring[0]);
-	}
-	
+		
 	public CSpring(CBall ball0, Vector3d anchorPoint, int type, CSpring[] siblingArray) {
 		CModel model = ball0.cell.model;
 		ballArray = new CBall[1];
@@ -85,10 +81,11 @@ public class CSpring implements Serializable {
 			// If type == 1 based on mass, type==2 based on max mass
 			if(ballArray[0].cell.type<4) {
 				restLength = ballArray[0].radius * model.lengthCellMax[ballArray[0].cell.type]/model.radiusCellMax[ballArray[0].cell.type];							// About 2 balls in the same cell, so no need to make it complicated  
-			} else {
+			} else if (ballArray[0].cell.type<6) {
 				restLength = ballArray[0].cell.GetAmount()*model.MWX/(Math.PI*model.rhoX*ballArray[0].radius*ballArray[0].radius) - 4.0/3.0*ballArray[0].radius;
-//				restLength = 2.0*ballArray[0].radius*model.aspect[ballArray[0].cell.type] * ballArray[0].cell.GetMass()/model.MCellMax[ballArray[0].cell.type];
-			};
+			} else {
+				throw new IndexOutOfBoundsException("Cell type: " + type);
+			}
 			break;
 		case 1:				// Stick
 			restLength = Math.max(
@@ -106,9 +103,7 @@ public class CSpring implements Serializable {
 			restLength = model.filLengthRod[0]*(ballArray[0].radius + ballArray[1].radius);
 			break;
 		case 5:				// Big fil spring
-			CCell cell0 = ballArray[0].cell;
-			CCell cell1 = ballArray[1].cell;
-			restLength = model.filLengthRod[0]*siblingArray.get(0).restLength + cell0.rodSpringArray.get(0).restLength + cell1.rodSpringArray.get(0).restLength;
+			restLength = model.filLengthRod[1]*(ballArray[0].radius + ballArray[1].radius) + ballArray[0].cell.rodSpringArray.get(0).restLength + ballArray[1].cell.rodSpringArray.get(0).restLength;
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);
@@ -135,14 +130,26 @@ public class CSpring implements Serializable {
 		case 2:
 			if(cell0.type<2)						springDiv = 1.0;
 			else if(cell0.type<6)					springDiv = 2.0;
-			else model.Write("Unknown cell types in ResetK", "error");
+			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
 			K = model.Kan/springDiv;
 			break;
-		case 3:	case 4:	case 5:											// Two different balls, same cell type
+		case 3:														// Two different balls, same cell type
 			if(cell0.type<2)						springDiv = 1.0;
 			else if(cell0.type<6)					springDiv = 2.0;
 			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
-			K = model.Kf/springDiv;
+			K = model.KfSphere/springDiv;
+			break;
+		case 4:														// Two different balls, same cell type
+			if(cell0.type<2)						springDiv = 1.0;
+			else if(cell0.type<6)					springDiv = 2.0;
+			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
+			K = model.KfRod0/springDiv;
+			break;
+		case 5:														// Two different balls, same cell type
+			if(cell0.type<2)						springDiv = 1.0;
+			else if(cell0.type<6)					springDiv = 2.0;
+			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
+			K = model.KfRod0/springDiv;
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);

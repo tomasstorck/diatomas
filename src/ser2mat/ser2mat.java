@@ -51,7 +51,9 @@ public class ser2mat {
 		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// cell-cell collision
 		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall(substratum)-cell spring
 		mlModel.setField("Kr",                            new MLDouble(null, new double[] {model.Kr}, 1));                                	// internal cell spring
-		mlModel.setField("Kf",                            new MLDouble(null, new double[] {model.Kf}, 1));                                	// filament spring
+		mlModel.setField("KfSphere",                      new MLDouble(null, new double[] {model.KfSphere}, 1));                          	// filament spring for sphere-sphere filial links
+		mlModel.setField("KfRod0",                        new MLDouble(null, new double[] {model.KfRod0}, 1));                            	// filament spring for rod-rod filial links, short spring
+		mlModel.setField("KfRod1",                        new MLDouble(null, new double[] {model.KfRod1}, 1));                            	// filament spring for rod-rod filial links, long sprong
 		mlModel.setField("Kan",                           new MLDouble(null, new double[] {model.Kan}, 1));                               	// anchor
 		mlModel.setField("Ks",                            new MLDouble(null, new double[] {model.Ks}, 1));                                	// sticking
 		mlModel.setField("stretchLimAnchor",              new MLDouble(null, new double[] {model.stretchLimAnchor}, 1));                  	// Maximum tension for anchoring springs
@@ -59,6 +61,8 @@ public class ser2mat {
 		mlModel.setField("stretchLimStick",               new MLDouble(null, new double[] {model.stretchLimStick}, 1));                   	// Maximum tension for sticking springs
 		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {model.formLimStick}, 1));                      	// Multiplication factor for rest length to form sticking springs.
 		mlModel.setField("stretchLimFil",                 new MLDouble(null, new double[] {model.stretchLimFil}, 1));                     	// Maximum tension for sticking springs
+		mlModel.setField("filLengthSphere",               new MLDouble(null, new double[] {model.filLengthSphere}, 1));                   	// How many times R2 the sphere filament's rest length is
+		mlModel.setField("filLengthRod",                  new MLDouble(null, model.filLengthRod, model.filLengthRod.length));             	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 		// Model biomass and growth properties
 		mlModel.setField("NXComp",                        new MLDouble(null, new double[] {model.NXComp}, 1));                            	// Types of biomass
 		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {model.NdComp}, 1));                            	// d for dynamic compound (e.g. total Ac)

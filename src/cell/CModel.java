@@ -69,16 +69,18 @@ public class CModel implements Serializable {
 	public double Kc 	= 1e-9;					// cell-cell collision
 	public double Kw 	= 5e-10;				// wall(substratum)-cell spring
 	public double Kr 	= 5e-11;				// internal cell spring
-	public double Kf 	= 2e-11;				// filament spring
+	public double KfSphere 	= 2e-11;			// filament spring for sphere-sphere filial links
+	public double KfRod0 	= 2e-11;			// filament spring for rod-rod filial links, short spring
+	public double KfRod1 	= 2e-11;			// filament spring for rod-rod filial links, long sprong
 	public double Kan	= 1e-11;				// anchor
 	public double Ks 	= 1e-11;				// sticking
 	public double stretchLimAnchor = 1.6;		// Maximum tension for anchoring springs
 	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public double stretchLimStick = 1.6;		// Maximum tension for sticking springs
 	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
-	public double stretchLimFil = 1.8;			// Maximum tension for sticking springs
+	public double stretchLimFil = 4.0;			// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
-	public double[] filLengthRod = {0.8, 1.5};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
+	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 	// Model biomass and growth properties
 	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
@@ -1031,9 +1033,10 @@ public class CModel implements Serializable {
 					fil.ResetRestLength();
 				}
 				// Make new filial link between mother and daughter
-				CSpring filSmall = new CSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
-				CSpring filBig = new CSpring(c1.ballArray[1], c0.ballArray[0], 5, new CSpring[]{filSmall});		// type==5 --> Big spring
+				CSpring filSmall = 	new CSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
+				CSpring filBig = 	new CSpring(c1.ballArray[1], c0.ballArray[0], 5);							// type==5 --> Big spring
 				filSmall.siblingArray.add(filBig);
+				filBig.siblingArray.add(filSmall);
 			}
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + c0.type);
