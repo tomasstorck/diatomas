@@ -165,7 +165,7 @@ public class CSpring implements Serializable {
 		switch (type) {
 		case 0: 														// Rod spring
 			// Can't Break()
-			break;
+			throw new RuntimeException("Cannot break rod springs");
 		case 1:															// Sticking spring
 			cell1 = ballArray[1].cell;
 			cell0.stickCellArray.remove(cell1);

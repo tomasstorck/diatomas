@@ -1042,15 +1042,19 @@ public class CModel implements Serializable {
 			throw new IndexOutOfBoundsException("Cell type: " + c0.type);
 		}
 		// Set sticking springs
-		for(CCell cell : c0.stickCellArray) {
-			if(c1.GetDistance(cell) < c0.GetDistance(cell)) {
-				// c1 is closer to cell than c0, so move relevant sticking springs to c1
-				for(CSpring spring : c0.stickSpringArray) {
-					for(int ii=0; ii<2; ii++) {
-						CBall ball = spring.ballArray[ii];
-						if(ball.cell == c0) 	spring.ballArray[ii] = c1.ballArray[ii];
+		for(CCell cell : c0.stickCellArray) {														// We want to check each other cell
+			for(CSpring stick : c0.stickSpringArray) {												// And find the correct spring, attached to c0 and cell
+				if(stick.ballArray[0].equals(c1) || stick.ballArray[1].equals(c1)) {				
+					if(c1.GetDistance(cell) < c0.GetDistance(cell)) {								// If c1 is closer, move sticking spring to c1
+						stick.Break();																// Break this spring and its siblings. OPTIMISE: We could restick it, but then we need to find the correct ball to Stick() to 
+						c1.Stick(cell);
+						break;
+					} else {																		// If c0 is closer, just reset rest length of this spring and its siblings
+						stick.ResetRestLength();
+						for(CSpring sibling : stick.siblingArray)		sibling.ResetRestLength();		
 					}
 				}
+				// Create new sticking spring
 			}
 		}
 		// Done, return daughter cell
