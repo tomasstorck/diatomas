@@ -14,4 +14,4 @@
 diatomas.jar
 .classpath
 .project
-
+*.class

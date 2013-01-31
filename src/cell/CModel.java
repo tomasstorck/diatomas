@@ -984,7 +984,7 @@ public class CModel implements Serializable {
 					this);														// Same filament boolean as cell and pointer to the model
 			// Displace old cell, 2nd ball (1st ball stays in place)
 			c0b1.pos = c0b0.pos.plus(ball1Vector);
-			c0b1.pos.z += 1e-8;													// Move in z direction by 0.01 micron. Required to prevent deadlock 
+			c0b1.pos.z += 1e-8;													// WORKAROUND: Move in z direction by 0.01 micron. Required to prevent deadlock 
 			c0.rodSpringArray.get(0).ResetRestLength();
 			// Contain cells to y dimension of domain
 			if(normalForce) {

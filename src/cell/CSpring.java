@@ -90,11 +90,11 @@ public class CSpring implements Serializable {
 		case 1:				// Stick
 			restLength = Math.max(
 					ballArray[1].pos.minus(ballArray[0].pos).norm(),		// The rest length we desire
-					1.1*(ballArray[0].radius + ballArray[1].radius));		// But we want the spring not to cause cell overlap in relaxed state
+					1.0*(ballArray[0].radius + ballArray[1].radius));		// But we want the spring not to cause cell overlap in relaxed state
 			break;
 		case 2:				// Anchoring spring
 			CBall ball = ballArray[0];
-			restLength = Math.max(ball.pos.y,ball.radius*1.01);				// Choose current position, but make sure it is not forcing the spring into the substratum
+			restLength = Math.max(ball.pos.y,ball.radius*1.01);				// WORKAROUND: Choose current position, but make sure it is not forcing the spring into the substratum
 			break;
 		case 3:				// Small fil spring
 			restLength = model.filLengthSphere*(ballArray[0].radius + ballArray[1].radius);
