@@ -74,11 +74,11 @@ public class CModel implements Serializable {
 	public double KfRod1 	= 2e-11;			// filament spring for rod-rod filial links, long sprong
 	public double Kan	= 1e-11;				// anchor
 	public double Ks 	= 1e-11;				// sticking
-	public double stretchLimAnchor = 1.6;		// Maximum tension for anchoring springs
-	public double formLimAnchor = 1.1;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-	public double stretchLimStick = 1.6;		// Maximum tension for sticking springs
-	public double formLimStick = 1.1; 			// Multiplication factor for rest length to form sticking springs. 
-	public double stretchLimFil = 4.0;			// Maximum tension for sticking springs
+	public double stretchLimAnchor = 0.5e-6;		// Maximum tension for anchoring springs
+	public double formLimAnchor = 0.1e-6;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
+	public double stretchLimStick = 0.5e-6;		// Maximum tension for sticking springs
+	public double formLimStick = 0.1e-6; 			// Multiplication factor for rest length to form sticking springs. 
+	public double stretchLimFil = 0.5e-6;			// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
 	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 	// Model biomass and growth properties
@@ -719,16 +719,16 @@ public class CModel implements Serializable {
 						// Break anchor?
 						Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 						double dn = diff.norm();
-						if(dn > anchor.restLength*stretchLimAnchor) {	// too much tension --> break the spring
+						if(dn > anchor.restLength+stretchLimAnchor) {	// too much tension --> break the spring
 							breakArray.add(anchor);
 						}
 					}
 					for(CSpring anchor : breakArray)		Assistant.NAnchorBreak += anchor.Break();
 				} else {									// Cell is not yet anchored
 					// Form anchor?
-					boolean formBall0 = (ball0.pos.y < ball0.radius*formLimAnchor) ? true : false;
+					boolean formBall0 = (ball0.pos.y < formLimAnchor+ball0.radius) ? true : false;
 					boolean formBall1 = false;
-					if(cell0.type > 1) 	formBall1 = (ball1.pos.y < ball1.radius*formLimAnchor) ? true : false;			// If ball1 != null
+					if(cell0.type > 1) 	formBall1 = (ball1.pos.y < formLimAnchor+ball1.radius) ? true : false;			// If ball1 != null
 					if(formBall0 || formBall1) {
 						Assistant.NAnchorForm += cell0.Anchor();					
 					}
@@ -759,7 +759,7 @@ public class CModel implements Serializable {
 					// Don't stick this. It shouldn't be stuck so don't check if we can break sticking springs. Instead, see if we can break the filial link 
 					double distance = filamentSpring.ballArray[0].pos.minus(filamentSpring.ballArray[1].pos).norm();
 					// Check if we can break this spring
-					if(distance>filamentSpring.restLength*stretchLimFil) {
+					if(distance>filamentSpring.restLength+stretchLimFil) {
 						Assistant.NFilBreak += filamentSpring.Break();	// Also breaks its siblings
 					}
 				} else if (sticking){						// Check if we want to do sticking, or break the sticking spring
@@ -768,7 +768,7 @@ public class CModel implements Serializable {
 					CBall c1b0 = cell1.ballArray[0];				
 					if(isStuck) {							// Stuck --> can we break this spring (and its siblings)?
 						double dist = (c1b0.pos.minus(c0b0.pos)).norm();
-						if(dist > stickingSpring.restLength*stretchLimStick) 		Assistant.NStickBreak += stickingSpring.Break();
+						if(dist > stickingSpring.restLength+stretchLimStick) 		Assistant.NStickBreak += stickingSpring.Break();
 					} else {								// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
@@ -778,7 +778,7 @@ public class CModel implements Serializable {
 								dist = (c1b0.pos.minus(c0b0.pos)).norm();
 							} else continue;
 						} else if(cell0.type<2) {			// 1st sphere, 2nd rod
-							double H2f =  1.5*(formLimStick*(lengthCellMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							double H2f =  1.5*(formLimStick+(lengthCellMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c1b1 = cell1.ballArray[1];
 								// do a sphere-rod collision detection
@@ -786,7 +786,7 @@ public class CModel implements Serializable {
 								dist = C.dist;
 							} else continue;
 						} else if(cell1.type<2) {			// 2nd sphere, 1st rod
-							double H2f = 1.5*(formLimStick*(lengthCellMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							double H2f = 1.5*(formLimStick+(lengthCellMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								// do a sphere-rod collision detection
@@ -794,7 +794,7 @@ public class CModel implements Serializable {
 								dist = C.dist;
 							} else continue;
 						} else if(cell0.type<6 && cell1.type<6) {  	// both rod
-							double H2f = 1.5*(formLimStick*(lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2));
+							double H2f = 1.5*(formLimStick+(lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2));
 							if(stickRodRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								CBall c1b1 = cell1.ballArray[1];
@@ -806,7 +806,7 @@ public class CModel implements Serializable {
 							throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
 						}
 						// Stick if distance is small enough
-						if(dist<R2*formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
+						if(dist<R2+formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
 					}
 				}
 			}

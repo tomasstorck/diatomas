@@ -1,0 +1,17 @@
+/bin
+/diatomas_lib
+/state
+/.settings
+/.externalToolBuilders
+/.git
+/13*
+/as*
+/AS*
+/default
+/dental*
+/ecoli*
+/storage
+diatomas.jar
+.classpath
+.project
+
