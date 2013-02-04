@@ -7,7 +7,7 @@ ambient = 0.5;
 diffuse = 0.7;
 phong = 0.0;
 phongSize = 25;
-keepPOV = true;
+keepPOV = false;
 % Colours
 filColour = [.1 .1 .1];			% Filament spring is black
 stickColour = [0.8 .8 0.8];		% Sticking spring is white

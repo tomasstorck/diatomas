@@ -87,9 +87,12 @@ public class CModel implements Serializable {
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
 	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
 	public int NInitCell = 6;					// Initial number of cells
-	public double[] radiusCellMax = {0.25e-6,	0.5e-6, 	0.25e-6*1.25, 	0.375e-6, 	0.25e-6*1.25, 	0.375e-6};
-	public double[] lengthCellMax = {0.0,		0.0,		2.0e-6,			2.0e-6,		2.5e-6,			2.5e-6};
+	public double[] radiusCellMax = new double[6];
+	public double[] radiusCellMin = new double[6];
+	public double[] lengthCellMax = new double[6];
+	public double[] lengthCellMin = new double[6];
 	public double[] nCellMax =	new double[6];
+	public double[] nCellMin =	new double[6];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 	public double muSpread = 0.25;				// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!    
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
@@ -166,12 +169,21 @@ public class CModel implements Serializable {
 	/////////////////////////////////////
 	public CModel() {}	// Default constructor, includes default values
 	
-	public void UpdateAmountCellMax() {	// Updates the nCellMax based on the supplied parameters 
+	public void UpdateAmountCellMax() {	// Updates the nCellMax based on supplied radiusCellMax and lengthCellMax 
 		for(int ii = 0; ii<2; ii++) {
-			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3))*rhoX/MWX; 
+			nCellMax[ii] 		= (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3))*rhoX/MWX; 
+			nCellMin[ii] 		= 0.5 * nCellMax[ii];
 		}
 		for(int ii = 2; ii<6; ii++) {
-			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3) + Math.PI*Math.pow(radiusCellMax[ii],2)*lengthCellMax[ii])*rhoX/MWX; 
+			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3) + Math.PI*Math.pow(radiusCellMax[ii],2)*lengthCellMax[ii])*rhoX/MWX;
+			nCellMin[ii] = 0.5 * nCellMax[ii];
+			if(ii<4) {
+				radiusCellMin[ii] = CBall.Radius(nCellMin[ii], ii, this);
+				lengthCellMin[ii] = radiusCellMin[ii] * lengthCellMax[ii]/radiusCellMax[ii];		// min radius times constant aspect ratio	
+			} else {
+				radiusCellMin[ii] = radiusCellMax[ii];
+				lengthCellMin[ii] = nCellMin[ii]*MWX/(Math.PI*rhoX*Math.pow(radiusCellMin[ii],2.0)) - 4.0/3.0*radiusCellMin[ii];	
+			}
 		}
 	}
 	

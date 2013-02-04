@@ -70,8 +70,11 @@ public class ser2mat {
 		mlModel.setField("NAcidDiss",                     new MLDouble(null, new double[] {model.NAcidDiss}, 1));                         	// Number of acid dissociation reactions
 		mlModel.setField("NInitCell",                     new MLDouble(null, new double[] {model.NInitCell}, 1));                         	// Initial number of cells
 		mlModel.setField("radiusCellMax",                 new MLDouble(null, model.radiusCellMax, model.radiusCellMax.length));           	
+		mlModel.setField("radiusCellMin",                 new MLDouble(null, model.radiusCellMin, model.radiusCellMin.length));           	
 		mlModel.setField("lengthCellMax",                 new MLDouble(null, model.lengthCellMax, model.lengthCellMax.length));           	
+		mlModel.setField("lengthCellMin",                 new MLDouble(null, model.lengthCellMin, model.lengthCellMin.length));           	
 		mlModel.setField("nCellMax",                      new MLDouble(null, model.nCellMax, model.nCellMax.length));                     	
+		mlModel.setField("nCellMin",                      new MLDouble(null, model.nCellMin, model.nCellMin.length));                     	
 		mlModel.setField("muAvgSimple",                   new MLDouble(null, model.muAvgSimple, model.muAvgSimple.length));               	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 		mlModel.setField("muSpread",                      new MLDouble(null, new double[] {model.muSpread}, 1));                          	// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!
 		mlModel.setField("attachmentRate",                new MLDouble(null, new double[] {model.attachmentRate}, 1));                    	// [h-1] Number of cells newly attached per hour
