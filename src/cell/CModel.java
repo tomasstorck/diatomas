@@ -94,7 +94,7 @@ public class CModel implements Serializable {
 	public double[] nCellMax =	new double[6];
 	public double[] nCellMin =	new double[6];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
-	public double muSpread = 0.25;				// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!    
+	public double[] muStDev = {0.25, 0.25, 0.25, 0.25, 0.25, 0.25};	// Standard deviation. Only used in GrowthSimple()!    
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public double syntrophyFactor = 1.0; 		// Accelerated growth if two cells of different types are stuck to each other
 	public int growthSkipMax = Integer.MAX_VALUE;	// The maximum number of growth iterations we are allowed to skip before we should do growth again
@@ -836,7 +836,7 @@ public class CModel implements Serializable {
 			double amount = mother.GetAmount();
 
 			// Random growth, with syntrophy if required
-			double mu = muAvgSimple[mother.type] * (1.0 + muSpread*2.0*(rand.Double()-0.5));	// Come up with a mu for this cell, this iteration
+			double mu = muAvgSimple[mother.type] + (muStDev[mother.type] * rand.Gaussian());	// Come up with a mu for this cell, this iteration
 			double growthAcceleration = 1.0;
 			for(CCell stickCell : mother.stickCellArray) {
 				if(mother.type != stickCell.type) {
@@ -1077,7 +1077,7 @@ public class CModel implements Serializable {
 		for(int iA=0; iA<NNew; iA++) {
 			// Define the cell we will attach
 			final int typeNew = 0; 
-			final double nNew = 0.5 * nCellMax[typeNew] * (1.0 + rand.Double());
+			final double nNew = nCellMin[typeNew] * (1.0 + rand.Double());
 			final boolean filNew = filament && filSphere;
 			final int NType = Common.Unique(typeInit).length;
 			final double[] colourNew = (colourByType) ? colour[NType] : colour[NInitCell];			// Choose a colour not already chosen  

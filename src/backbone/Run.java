@@ -38,8 +38,8 @@ public class Run {
 			/////////////
 			// E. COLI //
 			/////////////
-			model.radiusCellMax[4] = 0.25e-6;	// From ...
-			model.lengthCellMax[4] = 2.5e-6;	// From ...
+			model.radiusCellMax[4] = 0.375e-6;	// From Pierucci, 1978
+			model.lengthCellMax[4] = 2.75e-6;	// From Koch & Wang, 1982; Képès, 1986
 			model.NInitCell = 1;
 			model.colourByType = false;
 			model.normalForce = true;
@@ -49,7 +49,8 @@ public class Run {
 			model.Kan	= 1e-11;				// anchor
 			model.growthTimeStep = 120;
 			model.growthSkipMax = 10;
-			model.muAvgSimple[4] = 2.08;		// h-1, i.e. doubling time of 20 minutes
+			model.muAvgSimple[4] = 1.23;		// h-1
+			model.muStDev[4] = 0.225;			// h-1  
 			break;
 		case 1: case 2:
 			////////

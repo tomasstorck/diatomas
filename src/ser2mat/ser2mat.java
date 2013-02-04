@@ -76,7 +76,7 @@ public class ser2mat {
 		mlModel.setField("nCellMax",                      new MLDouble(null, model.nCellMax, model.nCellMax.length));                     	
 		mlModel.setField("nCellMin",                      new MLDouble(null, model.nCellMin, model.nCellMin.length));                     	
 		mlModel.setField("muAvgSimple",                   new MLDouble(null, model.muAvgSimple, model.muAvgSimple.length));               	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
-		mlModel.setField("muSpread",                      new MLDouble(null, new double[] {model.muSpread}, 1));                          	// By how much mu can vary based on muAvg. 1.0 means mu can be anywhere between 0.0 and 2.0*muAvg. Only used in GrowthSimple()!
+		mlModel.setField("muStDev",                       new MLDouble(null, model.muStDev, model.muStDev.length));                       	// Standard deviation. Only used in GrowthSimple()!
 		mlModel.setField("attachmentRate",                new MLDouble(null, new double[] {model.attachmentRate}, 1));                    	// [h-1] Number of cells newly attached per hour
 		mlModel.setField("syntrophyFactor",               new MLDouble(null, new double[] {model.syntrophyFactor}, 1));                   	// Accelerated growth if two cells of different types are stuck to each other
 		mlModel.setField("growthSkipMax",                 new MLDouble(null, new double[] {model.growthSkipMax}, 1));                     	// The maximum number of growth iterations we are allowed to skip before we should do growth again

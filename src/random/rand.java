@@ -20,6 +20,10 @@ public class rand {				// Nice idea, from http://www.cis.upenn.edu/~dsl/PLAN/doc
 		return Stream.nextDouble();					// Returns a double, between 0 and 1
 	}
 	
+	public static double Gaussian() {
+		return Stream.nextGaussian();
+	}
+	
 	public static void Seed(int seed) {
 		Stream.setSeed(seed);
 	}
