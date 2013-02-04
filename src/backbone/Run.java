@@ -49,8 +49,9 @@ public class Run {
 			model.Kan	= 1e-11;				// anchor
 			model.growthTimeStep = 120;
 			model.growthSkipMax = 10;
-			model.muAvgSimple[4] = 1.23;		// h-1
-			model.muStDev[4] = 0.225;			// h-1  
+			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes
+			model.muStDev[4] = 0.225;			// h-1
+			model.growthTimeStep = 0.25*3600;	// s, i.e. 15 minutes
 			break;
 		case 1: case 2:
 			////////
