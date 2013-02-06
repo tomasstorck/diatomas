@@ -3,6 +3,7 @@ L = [20,20,20];
 imageWidth = 1024;
 imageHeight = 768;
 camPosDifference = [0.0; 0.5*L(2); -L(3)];		% Where the camera will hover compared to camView
+% camPosDifference = [0.0; 0.5*L(2); 0.0];		% top down view
 ambient = 0.5;
 diffuse = 0.7;
 phong = 0.0;

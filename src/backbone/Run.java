@@ -30,7 +30,6 @@ public class Run {
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		// Set parameters. This overwrites both CModel and supplied arguments
 		rand.Seed(model.randomSeed);			// Set seed
 		switch(model.simulation) {
 		case 0:
@@ -39,19 +38,20 @@ public class Run {
 			// E. COLI //
 			/////////////
 			model.radiusCellMax[4] = 0.375e-6;	// From Pierucci, 1978
-			model.lengthCellMax[4] = 2.75e-6;	// From Koch & Wang, 1982; Képès, 1986
+			model.lengthCellMax[4] = 5.0e-6;	// From Pierucci, 1978. This is initial cell length, so including 1*D
 			model.NInitCell = 1;
 			model.colourByType = false;
 			model.normalForce = true;
 			model.sticking = model.filament = false;
-			model.Kd 	= 1e-13;				// drag force coefficient
+			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
 			model.Kr 	= 5e-11;				// internal cell spring
 			model.Kan	= 1e-11;				// anchor
-			model.growthTimeStep = 120;
+			model.KfRod0 = 2e-11;
+			model.KfRod1 = 2e-11;
+			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
+			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
+			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
 			model.growthSkipMax = 10;
-			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes
-			model.muStDev[4] = 0.225;			// h-1
-			model.growthTimeStep = 0.25*3600;	// s, i.e. 15 minutes
 			break;
 		case 1: case 2:
 			////////
@@ -64,7 +64,7 @@ public class Run {
 			model.muAvgSimple[0] = 0.33;
 			model.muAvgSimple[4] = 0.20;
 			model.growthSkipMax = 10;
-			model.syntrophyFactor = 1.5;
+//			model.syntrophyFactor = 1.5;		// Let's not touch substrate transfer just yet
 			model.attachmentRate = 1.0;
 			model.filament = model.sticking = true;
 			model.sticking = true;
@@ -258,9 +258,9 @@ public class Run {
 				model.growthTime += model.growthTimeStep;
 				if(dividedCellArray.size()>0) {
 					model.Write(dividedCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
-					//					String cellNumber = "" + dividedCellArray.get(0).Index();
-					//					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
-					//					model.Write("Cells grown: " + cellNumber,"iter");
+//					String cellNumber = "" + dividedCellArray.get(0).Index();
+//					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
+//					model.Write("Cells grown: " + cellNumber,"iter");
 				}
 				// Reset springs where needed
 				model.Write("Resetting springs","iter");

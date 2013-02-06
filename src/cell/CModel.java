@@ -74,11 +74,11 @@ public class CModel implements Serializable {
 	public double KfRod1 	= 2e-11;			// filament spring for rod-rod filial links, long sprong
 	public double Kan	= 1e-11;				// anchor
 	public double Ks 	= 1e-11;				// sticking
-	public double stretchLimAnchor = 0.5e-6;		// Maximum tension for anchoring springs
-	public double formLimAnchor = 0.1e-6;			// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
+	public double stretchLimAnchor = 0.5e-6;	// Maximum tension for anchoring springs
+	public double formLimAnchor = 0.1e-6;		// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	public double stretchLimStick = 0.5e-6;		// Maximum tension for sticking springs
-	public double formLimStick = 0.1e-6; 			// Multiplication factor for rest length to form sticking springs. 
-	public double stretchLimFil = 0.5e-6;			// Maximum tension for sticking springs
+	public double formLimStick = 0.1e-6; 		// Multiplication factor for rest length to form sticking springs. 
+	public double stretchLimFil = 0.5e-6;		// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
 	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 	// Model biomass and growth properties
