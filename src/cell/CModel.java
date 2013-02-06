@@ -29,10 +29,6 @@ public class CModel implements Serializable {
 	public String name = "default";
 	public int simulation = 0;					// The simulation type: see Run
 	public int randomSeed = 3;
-	public double[][] colour = new double[][]{
-			{1.0,0.0,0.0},
-			{0.0,0.0,0.4},
-			{0.7,1.0,0.7}};
 	public boolean colourByType = true;
 	public boolean comsol = false;
 	// --> Sticking
@@ -899,7 +895,6 @@ public class CModel implements Serializable {
 					posOld,					
 					new Vector3d(),
 					c0.filament,
-					c0.colour,
 					this);														// Same filament boolean as cell and pointer to the model
 			// Displace new and old cell. Rods won't need this while loop, because they'll just be cut in half 
 			int overlapIter = 0;
@@ -941,7 +936,6 @@ public class CModel implements Serializable {
 			// Set properties for new cell
 			c1.ballArray[0].vel = 	new Vector3d(c0.ballArray[0].vel);
 			c1.ballArray[0].force = new Vector3d(c0.ballArray[0].force);
-			c1.colour =				c0.colour;									// copy of reference
 			c1.mother = 			c0;
 			c1.q = 					c0.q;
 			// Set filament springs
@@ -992,7 +986,6 @@ public class CModel implements Serializable {
 					c0b1.pos.minus(ball1Vector),								// First ball. First ball and second ball were swapped in MATLAB and possibly C++					
 					c0b1.pos,
 					c0.filament,
-					c0.colour,
 					this);														// Same filament boolean as cell and pointer to the model
 			// Displace old cell, 2nd ball (1st ball stays in place)
 			c0b1.pos = c0b0.pos.plus(ball1Vector);
@@ -1010,7 +1003,6 @@ public class CModel implements Serializable {
 				c1.ballArray[iBall].vel = 	new Vector3d(c0.ballArray[iBall].vel);
 				c1.ballArray[iBall].force = new Vector3d(c0.ballArray[iBall].force);
 			}
-			c1.colour =	c0.colour;
 			c1.mother = c0;
 			c1.rodSpringArray.get(0).restLength = c0.rodSpringArray.get(0).restLength;
 
@@ -1079,8 +1071,6 @@ public class CModel implements Serializable {
 			final int typeNew = 0; 
 			final double nNew = nCellMin[typeNew] * (1.0 + rand.Double());
 			final boolean filNew = filament && filSphere;
-			final int NType = Common.Unique(typeInit).length;
-			final double[] colourNew = (colourByType) ? colour[NType] : colour[NInitCell];			// Choose a colour not already chosen  
 			final double rNew = CBall.Radius(nNew, typeNew, this); 
 			// Create array of balls in non-spherical cells 
 			ArrayList<CBall> ballArrayRod = new ArrayList<CBall>(ballArray.size());
@@ -1123,7 +1113,7 @@ public class CModel implements Serializable {
 				if(NAttempt>100)					throw new RuntimeException("Could not find a cell to attach to");
 			}
 			// Create and position the new cell to this champion ball. Position it in the direction of dirn
-			new CCell(typeNew, nNew, posNew, new Vector3d(), filNew, colourNew, this);
+			new CCell(typeNew, nNew, posNew, new Vector3d(), filNew, this);
 			// It will stick/anchor when needed during movement, so we're done
 		}
 	}

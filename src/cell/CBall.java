@@ -16,7 +16,6 @@ public class CBall implements Serializable {
 	public Vector3d[] velSave;
 //	public int index;
 	public CCell cell;
-	public int cellIndex;
 //	public int ballArrayIndex;
 	
 	///////////////////////////////////////////////////////////////////
@@ -45,7 +44,6 @@ public class CBall implements Serializable {
 //		this.ballArrayIndex = ballArrayIndex;
 		cell.ballArray[ballArrayIndex] = this;
 		model.ballArray.add(this);
-		this.cellIndex = cell.Index();
 		// Update the radius
 		this.radius = Radius();
 	}

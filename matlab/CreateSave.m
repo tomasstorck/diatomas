@@ -32,7 +32,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 	end
 	
 	% Operate on the line
-	% comment
+	% This is a... comment
 	ctrim = strtrim(c);
 	if length(ctrim)>2 && strcmp(ctrim(1:2),'//') && ~strcmp(ctrim(1:3),'///')
 		fprintf(fid2,['\t\t' ctrim '\n']);
@@ -40,25 +40,25 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 	end
 	% double
 	if hasstr(c,'double ')
-		[n comment] = splitline(c,'double');
+		[n, comment] = splitline(c,'double');
 		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLDouble(null, new double[] {model.' n '}, 1));'],comment);
 		continue
 	end
 	% double[]
 	if hasstr(c,'double[] ')
-		[n comment] = splitline(c,'double\[\]');
+		[n, comment] = splitline(c,'double\[\]');
 		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLDouble(null, model.' n ', model.' n '.length));'], comment);
 		continue
 	end
 	% int
 	if hasstr(c,'int ')
-		[n comment] = splitline(c,'int');
+		[n, comment] = splitline(c,'int');
 		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLDouble(null, new double[] {model.' n '}, 1));'],comment);
 		continue
 	end
 	% int[]					// Ugly one as we can't cast int[] --> double[]
 	if hasstr(c,'int[] ')
-		[n comment] = splitline(c,'int\[\]');
+		[n, comment] = splitline(c,'int\[\]');
 		fprintf(fid2,'\t\t//\n');
 		fprintf(fid2,'\t\tdouble[] D%s = new double[model.%s.length];',n,n);
 		fprintf(fid2,'\t\tfor(int ii=0; ii<model.%s.length; ii++)\t\tD%s[ii] = model.%s[ii];',n,n,n);
@@ -68,7 +68,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 	end
 	% Vector3d
 	if hasstr(c,'Vector3d ')
-		[n comment] = splitline(c,'Vector3d');
+		[n, comment] = splitline(c,'Vector3d');
 		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLDouble(null, new double[] {model.' n '.x, model.' n '.y, model.' n '.z}, 3));'], comment);
 		continue
 	end
@@ -79,25 +79,25 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 	end
 	% String
 	if hasstr(c,'String ')
-		[n comment] = splitline(c,'String');
+		[n, comment] = splitline(c,'String');
 		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLChar(null, new String[] {model.' n '}, model.' n '.length()));'], comment);
 		continue
 	end
 	% String[]
 	if hasstr(c,'String[] ')
-		[n comment] = splitline(c,'String\[\]');
+		[n, comment] = splitline(c,'String\[\]');
 		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLChar(null, model.' n '));'], comment);
 		continue
 	end
 	% boolean
 	if hasstr(c,'boolean ')
-		[n comment] = splitline(c,'boolean');
+		[n, comment] = splitline(c,'boolean');
 		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLDouble(null, new double[] {model.' n '?1:0}, 1));'], comment);
 		continue
 	end
 	% Matrix
 	if hasstr(c,'Matrix')
-		[n comment] = splitline(c,'Matrix');
+		[n, comment] = splitline(c,'Matrix');
 		if ~isempty(comment)
 			fprintf(fid2,['\t\t' comment '\n']);
 		end
@@ -106,7 +106,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 	end
 	% double[][]
 	if hasstr(c,'double[][] ')
-		[n comment] = splitline(c,'double\[\]\[\]');
+		[n, comment] = splitline(c,'double\[\]\[\]');
 		if ~isempty(comment)
 			fprintf(fid2,['\t\t' comment '\n']);
 		end
@@ -120,7 +120,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 		sraw2 = regexp(sraw{2},'>','split');
 		nClass = sraw2{1};
 		% Extract object name (like before)
-		[nObj comment] = splitline(c,'>');
+		[nObj, comment] = splitline(c,'>');
 
 		fprintf(fid2,['\n\t\t// ' nObj '\n']);
 		fprintf(fid2,['\t\tN = model.' nObj '.size();\n']);
@@ -142,7 +142,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 			end
 			
 			% Operate on the line
-			% comment2
+			% comment
 			c2trim = strtrim(c2);
 			if length(c2trim)>2 && strcmp(c2trim(1:2),'//') && ~strcmp(c2trim(1:3),'///')
 % 				fprintf(fid2,['\t\t\t' c2trim '\n']);
@@ -150,43 +150,43 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 			end
 			% double
 			if hasstr(c2,'double ')
-				[n comment] = splitline(c2,'double');
+				[n, comment] = splitline(c2,'double');
 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '}, 1), ii);'],comment);
 				continue
 			end
 			% double[]
 			if hasstr(c2,'double[]')
-				[n comment] = splitline(c2,'double\[\]');
+				[n, comment] = splitline(c2,'double\[\]');
 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, obj.' n ', obj.' n '.length), ii);'],comment);
 				continue
 			end
 			% int
 			if hasstr(c2,'int ')
-				[n comment] = splitline(c2,'int');
+				[n, comment] = splitline(c2,'int');
 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '}, 1), ii);'], comment);
 				continue
 			end
 			% String
 			if hasstr(c2,'String ')
-				[n comment] = splitline(c2,'String');
+				[n, comment] = splitline(c2,'String');
 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLChar(null, new String[] {obj.' n '}, obj.' n '.length()), ii);'], comment);
 				continue
 			end
 			% String[]
 			if hasstr(c2,'String[] ')
-				[n comment] = splitline(c,'String\[\]');
+				[n, comment] = splitline(c,'String\[\]');
 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLChar(null, obj.' n ');'], comment);
 				continue
 			end
 			% Vector3d
 			if hasstr(c2,'Vector3d ')
-				[n comment] = splitline(c2,'Vector3d');
+				[n, comment] = splitline(c2,'Vector3d');
 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.x, obj.' n '.y, obj.' n '.z}, 3), ii);'], comment);
 				continue
 			end
 			% Vector3d[]
 			if hasstr(c2,'Vector3d[] ')
-				[n comment] = splitline(c2,'Vector3d\[\]');
+				[n, comment] = splitline(c2,'Vector3d\[\]');
 				fprintf(fid2,['\t\t\t//' n '\n']);
 				if ~isempty(comment)
 					fprintf(fid2,['\t\t' comment '\n']);
@@ -205,18 +205,28 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 			end
 			% boolean
 			if hasstr(c2,'boolean ')
-				[n comment] = splitline(c2,'boolean');
+				[n, comment] = splitline(c2,'boolean');
 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '?1:0}, 1), ii);'], comment);
 				continue
-			end
+            end
+            % CCell. Requires null check
+            if hasstr(c2,'CCell ')
+                [n, comment] = splitline(c2,'CCell');
+                fprintf(fid2,['\t\t\t// Set ' n '\t' comment '\n']);
+                fprintf(fid2,['\t\t\tif(obj.' n '==null)\n']);
+                fprintf(fid2,'\t\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],'new MLDouble(null, new double[] {}, 0), ii);');
+                fprintf(fid2,'\t\t\telse\n');
+                fprintf(fid2,'\t\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.Index()}, 1), ii);']);
+                continue
+            end
 			% Arrays (this one is completely different from the one above!)
 			if hasstr(c2,'Array')
 				fprintf(fid2,'\t\t\t\n');
 				if hasstr(c2,'[]')		% If already array
 					% Extract class name
-					[nClass2 ~] = splitline(c2,'\[\]',1);
+					[nClass2, ~] = splitline(c2,'\[\]',1);
 					% Extract object name (like before)
-					[nObj2 comment2] = splitline(c2,'\[\]');
+					[nObj2, comment2] = splitline(c2,'\[\]');
 					fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.length];\n']);
 					fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.length; jj++)\t']);
 					fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '[jj].Index();\n']);
@@ -226,7 +236,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 					s2raw2 = regexp(s2raw{2},'>','split');
 					nClass2 = s2raw2{1};
 					% Extract object name (like before)
-					[nObj2 comment2] = splitline(c2,'>');
+					[nObj2, comment2] = splitline(c2,'>');
 					fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.size()];\n']);
 					fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.size(); jj++)\t']);
 					fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '.get(jj).Index();\n']);

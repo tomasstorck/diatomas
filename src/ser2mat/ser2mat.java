@@ -16,7 +16,6 @@ public class ser2mat {
 		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, model.name.length()));              	
 		mlModel.setField("simulation",                    new MLDouble(null, new double[] {model.simulation}, 1));                        	// The simulation type: see Run
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	
-		mlModel.setField("colour",                        new MLDouble(null, model.colour));                                              
 		mlModel.setField("colourByType",                  new MLDouble(null, new double[] {model.colourByType?1:0}, 1));                  	
 		mlModel.setField("comsol",                        new MLDouble(null, new double[] {model.comsol?1:0}, 1));                        	
 		// --> Sticking
@@ -98,7 +97,6 @@ public class ser2mat {
 			CCell obj = model.cellArray.get(ii);
 			mlcellArray.setField("type",                      new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
 			mlcellArray.setField("filament",                  new MLDouble(null, new double[] {obj.filament?1:0}, 1), ii);                    	
-			mlcellArray.setField("colour",                    new MLDouble(null, obj.colour, obj.colour.length), ii);                         	
 			
 			arrayIndex = new double[obj.ballArray.length];
 			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
@@ -123,6 +121,12 @@ public class ser2mat {
 			arrayIndex = new double[obj.filSpringArray.size()];
 			for(int jj=0; jj<obj.filSpringArray.size(); jj++)	arrayIndex[jj] = obj.filSpringArray.get(jj).Index();
 			mlcellArray.setField("filSpringArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
+			// Set mother	
+			if(obj.mother==null)
+				mlcellArray.setField("mother",                    new MLDouble(null, new double[] {}, 0), ii);                                    
+			else
+				mlcellArray.setField("mother",                    new MLDouble(null, new double[] {obj.mother.Index()}, 1), ii);                  
+			mlcellArray.setField("born",                      new MLDouble(null, new double[] {obj.born}, 1), ii);                            	// Growth iteration at which this cell was born
 			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.q}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
 		}
 		mlModel.setField("cellArray", mlcellArray);
@@ -155,7 +159,11 @@ public class ser2mat {
 				velSave[jj][2] = obj.velSave[jj].z;
 			}
 			mlballArray.setField("velSave",                   new MLDouble(null, velSave));}                                                  
-			mlballArray.setField("cellIndex",                 new MLDouble(null, new double[] {obj.cellIndex}, 1), ii);                       	
+			// Set cell	
+			if(obj.cell==null)
+				mlballArray.setField("cell",                      new MLDouble(null, new double[] {}, 0), ii);                                    
+			else
+				mlballArray.setField("cell",                      new MLDouble(null, new double[] {obj.cell.Index()}, 1), ii);                    
 		}
 		mlModel.setField("ballArray", mlballArray);
 

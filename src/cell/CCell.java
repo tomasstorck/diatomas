@@ -8,7 +8,6 @@ public class CCell implements Serializable {
 	//
 	public int type;
 	public boolean filament;
-	public double[] colour = 	new double[3];
 	public CBall[] ballArray = 	new CBall[1];								// Note that this ballArray has the same name as CModel's
 	public ArrayList<CSpring> rodSpringArray = new ArrayList<CSpring>(0);
 	public ArrayList<CCell> stickCellArray = new ArrayList<CCell>(0);
@@ -16,6 +15,7 @@ public class CCell implements Serializable {
 	public ArrayList<CSpring> anchorSpringArray = new ArrayList<CSpring>(0);
 	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(0);
 	public CCell mother;
+	public int born;														// Growth iteration at which this cell was born
 	// CFD stuff
 	public double q = 0.0;													// [mol reactions (CmolX * s)-1]
 	// Pointer stuff
@@ -23,11 +23,11 @@ public class CCell implements Serializable {
 	
 	////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public CCell(int type, double n, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, double[] colour, CModel model) {
+	public CCell(int type, double n, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, CModel model) {
 		this.model = model;
 		this.type = type;
 		this.filament = filament;
-		this.colour = colour;
+		this.born = model.growthIter;
 		
 		model.cellArray.add(this);				// Add it here so we can use cell.Index()
 		
@@ -43,8 +43,8 @@ public class CCell implements Serializable {
 		}
 	}
 	
-	public CCell(int type, double n, Vector3d base0, Vector3d base1, boolean filament, double[] colour, CModel model) {
-		this(type, n, base0.x, base0.y, base0.z, base1.x, base1.y, base1.z, filament, colour, model);
+	public CCell(int type, double n, Vector3d base0, Vector3d base1, boolean filament, CModel model) {
+		this(type, n, base0.x, base0.y, base0.z, base1.x, base1.y, base1.z, filament, model);
 	}
 	
 	/////////////////////////////////////////////////////////

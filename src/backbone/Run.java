@@ -2,11 +2,8 @@ package backbone;
 
 import java.util.ArrayList;
 
-import NR.Common;
-
 import comsol.Comsol;
 import comsol.Server;
-
 import random.rand;
 import ser2mat.ser2mat;
 import cell.CBall;
@@ -155,7 +152,6 @@ public class Run {
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 		if(model.growthIter == 0 && model.relaxationIter == 0) {
 			// Create initial cells
-			int[] types = Common.Unique(model.typeInit);
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				boolean filament = false;
 				if(model.filament) {
@@ -163,20 +159,12 @@ public class Run {
 					else if(model.typeInit[iCell]<6)	filament = model.filRod;
 					else throw new IndexOutOfBoundsException("Cell type: " + model.typeInit); 
 				}
-				// Use desired colour
-				double[] colour;
-				if(model.colourByType) {
-					int ci=0; for(int ii=0; ii<types.length; ii++)	if(model.typeInit[iCell]==types[ii])	ci = ii;		// Find index of this cell's type in types[]
-					colour = model.colour[ci];
-				}
-				else					colour = model.colour[iCell];
 				@SuppressWarnings("unused")
 				CCell cell = new CCell(model.typeInit[iCell], 				// Type of biomass
 						model.nInit[iCell],
 						model.position0Init[iCell],
 						model.position1Init[iCell],
 						filament,									// With capability to form filaments?
-						colour,
 						model);
 			}
 			model.Write(model.cellArray.size() + " initial cells created","iter");
