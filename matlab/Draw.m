@@ -27,8 +27,8 @@ for iCell = 0:length(model.cellArray)-1;
 	
 	if colourMode==0
 		% colour balls based on cellIndex
-		C0=zeros(n+1)+ball0.cellIndex;
-		C1=zeros(n+1)+ball1.cellIndex;
+		C0=zeros(n+1)+iCell;
+		C1=zeros(n+1)+iCell;
 	end
 	
 	if colourMode==1

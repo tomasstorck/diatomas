@@ -34,8 +34,8 @@ public class Run {
 			/////////////
 			// E. COLI //
 			/////////////
-			model.radiusCellMax[4] = 0.375e-6;	// From Pierucci, 1978
-			model.lengthCellMax[4] = 5.0e-6;	// From Pierucci, 1978. This is initial cell length, so including 1*D
+			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
+			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. This is initial cell length, so including 1*D
 			model.NInitCell = 1;
 			model.colourByType = false;
 			model.normalForce = true;
@@ -45,6 +45,7 @@ public class Run {
 			model.Kan	= 1e-11;				// anchor
 			model.KfRod0 = 2e-11;
 			model.KfRod1 = 2e-11;
+			model.filLengthRod = new double[]{0.5, 1.7};
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
@@ -54,12 +55,12 @@ public class Run {
 			////////
 			// AS //
 			////////				
-			model.radiusCellMax[0] = 0.25e-6 * 1.25;
-			model.radiusCellMax[4] = 0.25e-6;
-			model.lengthCellMax[4] = 2.5e-6;
+			model.radiusCellMax[0] = 0.80e-6;	// Methanosarcina semesiae
+			model.radiusCellMax[4] = 0.33e-6;	// m. S. fumaroxidans. From Plugge 2012. Diameter of 0.66 micron 
+			model.lengthCellMax[4] = 2.5e-6;	// m. S. fumaroxidans. From Plugge 2012. 2.5 micron long including caps
 			model.NInitCell = 6;
-			model.muAvgSimple[0] = 0.33;
-			model.muAvgSimple[4] = 0.20;
+			model.muAvgSimple[0] = 0.20;		// Methanosarcina semesiae
+			model.muAvgSimple[4] = 0.15;		// TODO S. fumaroxidans, chosen 
 			model.growthSkipMax = 10;
 //			model.syntrophyFactor = 1.5;		// Let's not touch substrate transfer just yet
 			model.attachmentRate = 1.0;

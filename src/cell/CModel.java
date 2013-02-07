@@ -349,7 +349,7 @@ public class CModel implements Serializable {
 		// Compute point on L2 closest to S1(s) using t = ((P1+D1*s) - P2).dot(D2) / D2.dot(D2) = (b*s + f) / e
 		double t = (b*s + f) / e;
 		
-		// If t is in [0,1] done. Else Clamp(t), recompute s for the new value of t using s = ((P2+D2*t) - P1).dot(D1) / D1.dot(D1) = (t*b - c) / a and clamp s to [0,1]
+		// If t is in [0,1] (i.e. on S2) we're done. Else Clamp(t), recompute s for the new value of t using s = ((P2+D2*t) - P1).dot(D1) / D1.dot(D1) = (t*b - c) / a and clamp s to [0,1]
 		if(t<0.0) {
 			t = 0.0;
 			s = Common.Clamp(-c/a, 0.0, 1.0);
@@ -357,6 +357,38 @@ public class CModel implements Serializable {
 			t = 1.0;
 			s = Common.Clamp((b-c)/a, 0.0, 1.0);
 		}
+		
+		Vector3d c1 = p1.plus(d1.times(s));	// Collision point on S1
+		Vector3d c2 = p2.plus(d2.times(t));	// Collision point on S2
+		
+		Vector3d dP = c1.minus(c2);  	// = S1(sc) - S2(tc)
+		
+		double dist2 = (c1.minus(c2)).dot(c1.minus(c2));
+		
+		return new EricsonObject(dP, Math.sqrt(dist2), s, t, c1, c2);
+	}
+	
+	public EricsonObject DetectLineSegLine(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {
+		// Based on DetectLineSegLineSeg from Ericson
+		// Computes closest points C1 and C2 of L1(s) = P1+s*(Q1-P1) and S2(t) = P2+t*(Q2-P2). s is unlimited, t is limited to [0, 1]
+		Vector3d d1 = q1.minus(p1);		// Direction of S1
+		Vector3d d2 = q2.minus(p2);		// Direction of S2
+		Vector3d r = p1.minus(p2);
+		double a = d1.dot(d1);			// Squared length of S1, >0
+		double e = d2.dot(d2);			// Squared length of S2, >0
+		double f = d2.dot(r);
+		double c = d1.dot(r);
+		double b = d1.dot(d2);
+		double denom = a*e-b*b;			// Always >0
+		
+		// If segments are not parallel, compute closest point on L1 to L2 and clamp to segment S1, otherwise pick arbitrary s (=0)
+		double s;
+		if(denom!=0.0) {
+			s = Common.Clamp((b*f-c*e) /  denom, 0.0, 1.0);
+		} else	s = 0.0;
+		// Compute point on L2 closest to S1(s) using t = ((P1+D1*s) - P2).dot(D2) / D2.dot(D2) = (b*s + f) / e
+		double t = (b*s + f) / e;
+		// t is unlimited, so no need to clamp --> we're done
 		
 		Vector3d c1 = p1.plus(d1.times(s));
 		Vector3d c2 = p2.plus(d2.times(t));
@@ -1076,44 +1108,71 @@ public class CModel implements Serializable {
 			ArrayList<CBall> ballArrayRod = new ArrayList<CBall>(ballArray.size());
 			for(CBall ball : ballArray) 	if(ball.cell.type>1) 	ballArrayRod.add(ball);
 			// Find a random rod's ball position dest(ination) and move the ball there from dirn ("along the path") until we find a particle
-			Vector3d posNew;
+			Vector3d firstPos;
 			int NAttempt = 0;
 			while(true) {
 				NAttempt++;
 				// Find dest(ination) based on random non-spherical ball for first point
-				CBall destBall = ballArrayRod.get(rand.Int(ballArrayRod.size()-1));
+				CBall destBall = ballArrayRod.get(rand.Int(ballArrayRod.size()));
 				Vector3d dest = destBall.pos;
 				// Find dirn, any direction away from dest (we take care of substratum blocking later)
 				Vector3d dirn = new Vector3d(rand.Double()-0.5, rand.Double()-0.5, rand.Double()-0.5).normalise();
 				// Check how far all (incl. spherical) balls are from dest and in the correct dirn. Also select our winner (any cell type)
 				CBall firstBall = destBall;
 				double firstDist = 0.0;
-				for(CBall ball : ballArray) {
-					// Find the distance between ball.pos and the path of the attaching particle
-					Vector3d other = ball.pos.minus(dest);
-					final Vector3d nul = new Vector3d(0.0, 0.0, 0.0);								// Since dirn is from the origin, we need a null vector as a base point 
-					EricsonObject E = DetectLinePoint(nul, dirn, other);							// Detect distance line-point, with line the path and point the ball.pos
-					// Check if ball.pos is close enough to path to touch the attaching particle by analysing the distance obtained from Ericsson
-					if( E.dist < rNew+ball.radius ) {
-						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with other 
-						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet 
-						if(E.sc > firstDist) {														// sc is the multiplier for the vector that denotes the line: since dirn.norm() == 1 we don't need to multiply
+				firstPos = firstBall.pos.plus(dirn.times(rNew + firstBall.radius));
+//				// Find if the new cell can attach to a ball
+//				for(CBall ball : ballArray) {
+//					Vector3d other = ball.pos.minus(dest); 
+//					EricsonObject E = DetectLinePoint(nul, dirn, other);							// Detect distance line-point, with line the path and point the ball.pos
+//					// Check if ball.pos is close enough to path to touch the attaching particle by analysing the distance obtained from Ericsson
+//					if( E.dist < rNew+ball.radius ) {
+//						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with other 
+//						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet 
+//						if(E.sc > firstDist) {														// sc is the multiplier for the vector that denotes the line to get the segment: since dirn.norm() == 1 we don't need to multiply with the length
+//							// Set this ball to be first to be encountered by the attaching particle
+//							firstDist = E.sc;
+//							firstBall = ball;
+//							firstPos = ball.pos.plus(dirn.times(rNew + firstBall.radius));			// Position where the new cell will attach after colliding
+//						}
+//					}
+//				}
+				// After checking all balls, check all springs in the rods
+				for(CSpring spring : rodSpringArray) {
+					// Find the distance between the path of the particle (a line) and the rod spring (a line segment)
+					CBall ball0 = spring.ballArray[0];
+					CBall ball1 = spring.ballArray[1];
+					EricsonObject E = DetectLineSegLine(ball0.pos, ball1.pos, dest, dest.plus(dirn));							// Detect distance line-point, with line the path and point the ball.pos
+					if( E.dist < rNew+ball0.radius ) {
+						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with the rod
+						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet
+						double distFromDest = dest.plus(dirn.times(E.tc)).norm();
+						if(distFromDest > firstDist) {
 							// Set this ball to be first to be encountered by the attaching particle
-							firstDist = E.sc;
-							firstBall = ball; 
+							firstDist = distFromDest;
+							firstBall = ball0;													// Could also be ball1, but doesn't matter here
+							Vector3d away;
+							if(E.sc!=0.0 && E.sc!=1.0) {
+								away = E.c2.minus(E.c1).normalise();							// Vector pointing away from the collision
+							} else {
+								away = dirn;
+							}
+							// The point on the path where the collision is closest, moving the ball away from there until it no longer overlapping
+//							firstPos = E.c2.plus(dest).plus(away.times(rNew + firstBall.radius - E.dist));
+							firstPos = E.c1.plus(away.times(rNew+ball0.radius));			// FIXME: Still not good, cells crashing into each other
+//							firstPos.z += 1e-8;
 						}
 					}
 				}
 				// Get new position. Check if it is valid in case we have a substratum
-				posNew = firstBall.pos.plus(dirn.times(rNew + firstBall.radius));
-				if(normalForce && posNew.y<rNew)	continue;	// the championBall went through the plane		
+				if(normalForce && firstPos.y<rNew)	continue;	// the new cell went through the plane to get to this point		
 				// If a non-sphere's ball wins, we're happy and conclude the search. If not, try again with new dest and dirn
 				if(firstBall.cell.type > 1)			break;
 				// If after 100 attempts we still didn't find a site to attach to, forfeit 
 				if(NAttempt>100)					throw new RuntimeException("Could not find a cell to attach to");
 			}
 			// Create and position the new cell to this champion ball. Position it in the direction of dirn
-			new CCell(typeNew, nNew, posNew, new Vector3d(), filNew, this);
+			new CCell(typeNew, nNew, firstPos, new Vector3d(), filNew, this);
 			// It will stick/anchor when needed during movement, so we're done
 		}
 	}
