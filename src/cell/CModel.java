@@ -458,6 +458,20 @@ public class CModel implements Serializable {
 		}
 		return breakArray;
 	} 
+	
+	public Vector3d[] GetBallSpread() {
+		Vector3d max = new Vector3d(-1.0, -1.0, -1.0); 
+		Vector3d min = new Vector3d(1.0, 1.0, 1.0);
+		for(CBall ball : ballArray) {
+			if(ball.pos.x>max.x)		max.x = ball.pos.x;
+			if(ball.pos.y>max.y)		max.y = ball.pos.y;
+			if(ball.pos.z>max.z)		max.z = ball.pos.z;
+			if(ball.pos.x<min.x)		min.x = ball.pos.x;
+			if(ball.pos.y<min.y)		min.y = ball.pos.y;
+			if(ball.pos.z<min.z)		min.z = ball.pos.z;
+		}
+		return new Vector3d[]{min, max};
+	}
 
 	//////////////////////
 	// Relaxation stuff //
@@ -1108,19 +1122,27 @@ public class CModel implements Serializable {
 			ArrayList<CBall> ballArrayRod = new ArrayList<CBall>(ballArray.size());
 			for(CBall ball : ballArray) 	if(ball.cell.type>1) 	ballArrayRod.add(ball);
 			// Find a random rod's ball position dest(ination) and move the ball there from dirn ("along the path") until we find a particle
-			Vector3d firstPos;
-			int NAttempt = 0;
-			while(true) {
-				NAttempt++;
-				// Find dest(ination) based on random non-spherical ball for first point
-				CBall destBall = ballArrayRod.get(rand.Int(ballArrayRod.size()));
-				Vector3d dest = destBall.pos;
+			Vector3d firstPos = new Vector3d(0.0, 0.0, 0.0);
+//			int NAttempt = 0;
+			// Create and position the new cell to this champion ball. Position it in the direction of dirn
+			CCell newCell = new CCell(typeNew, nNew, firstPos, new Vector3d(), filNew, this);
+			tryloop:while(true) {
+//				// If after 100 attempts we still didn't find a site to attach to, forfeit 
+//				if(NAttempt>1000)					throw new RuntimeException("Could not find a cell to attach to");
+//				NAttempt++;
+				// Find dest(ination) based on random position within range of the domain
+				Vector3d[] spread = GetBallSpread();
+				Vector3d dest = new Vector3d(
+						spread[0].x + rand.Double()*(spread[1].x-spread[0].x),
+						spread[0].y + rand.Double()*(spread[1].y-spread[0].y),
+						spread[0].z + rand.Double()*(spread[1].z-spread[0].z));
 				// Find dirn, any direction away from dest (we take care of substratum blocking later)
 				Vector3d dirn = new Vector3d(rand.Double()-0.5, rand.Double()-0.5, rand.Double()-0.5).normalise();
 				// Check how far all (incl. spherical) balls are from dest and in the correct dirn. Also select our winner (any cell type)
-				CBall firstBall = destBall;
+				CBall firstBall = ballArray.get(0);
 				double firstDist = 0.0;
-				firstPos = firstBall.pos.plus(dirn.times(rNew + firstBall.radius));
+				boolean success = false;
+				
 //				// Find if the new cell can attach to a ball
 //				for(CBall ball : ballArray) {
 //					Vector3d other = ball.pos.minus(dest); 
@@ -1148,31 +1170,40 @@ public class CModel implements Serializable {
 						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet
 						double distFromDest = dest.plus(dirn.times(E.tc)).norm();
 						if(distFromDest > firstDist) {
+							success = true;
 							// Set this ball to be first to be encountered by the attaching particle
 							firstDist = distFromDest;
 							firstBall = ball0;													// Could also be ball1, but doesn't matter here
 							Vector3d away;
-							if(E.sc!=0.0 && E.sc!=1.0) {
+							if(E.sc!=0.0 && E.sc!=1.0) {										// Otherwise, away will be null vector, so choose another direction
 								away = E.c2.minus(E.c1).normalise();							// Vector pointing away from the collision
 							} else {
 								away = dirn;
 							}
 							// The point on the path where the collision is closest, moving the ball away from there until it no longer overlapping
-//							firstPos = E.c2.plus(dest).plus(away.times(rNew + firstBall.radius - E.dist));
 							firstPos = E.c1.plus(away.times(rNew+ball0.radius));			// FIXME: Still not good, cells crashing into each other
-//							firstPos.z += 1e-8;
 						}
 					}
 				}
-				// Get new position. Check if it is valid in case we have a substratum
-				if(normalForce && firstPos.y<rNew)	continue;	// the new cell went through the plane to get to this point		
-				// If a non-sphere's ball wins, we're happy and conclude the search. If not, try again with new dest and dirn
-				if(firstBall.cell.type > 1)			break;
-				// If after 100 attempts we still didn't find a site to attach to, forfeit 
-				if(NAttempt>100)					throw new RuntimeException("Could not find a cell to attach to");
+				// Get new position. 
+				// Check if we actually had a collision
+				if(!success)						continue;
+				// Check if it is valid in case we have a substratum
+				if(normalForce && firstPos.y<rNew)	continue;	// the new cell went through the plane to get to this point
+				// If a non-sphere's ball wins, we're happy
+				if(firstBall.cell.type < 2)			continue;
+				// Reposition the cell
+				newCell.ballArray[0].pos = firstPos;
+				// Check if it is not overlapping with any other cells
+				for(int iCell=0; iCell<cellArray.size()-1; iCell++) {
+					CCell cell = cellArray.get(iCell);
+					if(DetectCellCollision_Proper(newCell, cell, 1.0))	continue tryloop;
+				}
+				// Congratulations!
+				Save();
+				break;
 			}
-			// Create and position the new cell to this champion ball. Position it in the direction of dirn
-			new CCell(typeNew, nNew, firstPos, new Vector3d(), filNew, this);
+
 			// It will stick/anchor when needed during movement, so we're done
 		}
 	}
