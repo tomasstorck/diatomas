@@ -116,13 +116,23 @@ for ii=0:NSave			% Can be replaced with parfor
         % Determine colour for this cell
 		ancestor = cell;
 		ancestorIndex = iCell-1;
+		if ~isfield(ancestor,'mother')		%TODO
+			continue;
+		end
 		while ancestorIndex+1>size(cellColours,1) && ~isempty(ancestor.mother)	% Find the oldest ancestor that we can colour
 			ancestorIndex = ancestor.mother;
 			ancestor = model.cellArray(ancestorIndex+1);
 		end
 		if length(unique(model.typeInit))==1 && model.attachmentRate == 0;		% Colour by generation
-			colour = cellColours(ancestorIndex+1,:);
+			if model.NInitCell>size(cellColours,1)
+				colour = cellColours(1,:);
+			else
+				colour = cellColours(ancestorIndex+1,:);
+			end
 		else														% Colour by type, because we don't have enough colours
+			if ~isfield(ancestor,'born')	%TODO
+				continue;
+			end
 			if ancestor.born ~= 0 && isempty(ancestor.mother)       % This is an attached cell
 				colour = cellColours(3,:);
 			else

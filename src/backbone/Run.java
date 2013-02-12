@@ -35,7 +35,7 @@ public class Run {
 			// E. COLI //
 			/////////////
 			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
-			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. This is initial cell length, so including 1*D
+			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
 			model.NInitCell = 1;
 			model.colourByType = false;
 			model.normalForce = true;
@@ -84,6 +84,32 @@ public class Run {
 				model.normalForce = false;
 			}
 			break;
+		case 3:
+			model.Write("Loading parameters for Cyanobacteria","");
+			///////////////////
+			// CYANOBACTERIA //
+			///////////////////
+			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
+			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
+			model.NInitCell = 10;
+			model.colourByType = false;
+			model.normalForce = true;
+			model.sticking = false;
+			model.filament = true;
+			model.stretchLimFil = 10;
+			model.L = new Vector3d(30e-6, model.radiusCellMax[4], 30e-6);
+			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
+			model.Kr 	= 5e-11;				// internal cell spring
+			model.Kan	= 1e-11;				// anchor
+			model.KfRod0 = 2e-11;
+			model.KfRod1 = 2e-11;
+			model.filLengthRod = new double[]{0.5, 1.7};
+			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
+			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
+			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
+			model.growthSkipMax = 10;
+			model.randomSeed = 4;
+			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 		}
@@ -95,6 +121,7 @@ public class Run {
 	
 	public void Start() throws Exception {
 		// Set initial cell parameters based on model
+		rand.Seed(model.randomSeed);
 		model.UpdateAmountCellMax();
 		switch(model.simulation) {
 		case 0:
