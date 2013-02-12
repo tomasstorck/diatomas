@@ -37,7 +37,6 @@ public class Run {
 			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
 			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
 			model.NInitCell = 1;
-			model.colourByType = false;
 			model.normalForce = true;
 			model.sticking = model.filament = false;
 			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
@@ -92,7 +91,6 @@ public class Run {
 			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
 			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
 			model.NInitCell = 10;
-			model.colourByType = false;
 			model.normalForce = true;
 			model.sticking = false;
 			model.filament = true;

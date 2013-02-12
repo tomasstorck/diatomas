@@ -29,7 +29,6 @@ public class CModel implements Serializable {
 	public String name = "default";
 	public int simulation = 0;					// The simulation type: see Run
 	public int randomSeed = 3;
-	public boolean colourByType = true;
 	public boolean comsol = false;
 	// --> Sticking
 	public boolean sticking = false;

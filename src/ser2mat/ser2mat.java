@@ -16,7 +16,6 @@ public class ser2mat {
 		mlModel.setField("name",                          new MLChar(null, new String[] {model.name}, model.name.length()));              	
 		mlModel.setField("simulation",                    new MLDouble(null, new double[] {model.simulation}, 1));                        	// The simulation type: see Run
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	
-		mlModel.setField("colourByType",                  new MLDouble(null, new double[] {model.colourByType?1:0}, 1));                  	
 		mlModel.setField("comsol",                        new MLDouble(null, new double[] {model.comsol?1:0}, 1));                        	
 		// --> Sticking
 		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	
