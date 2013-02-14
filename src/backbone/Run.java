@@ -44,6 +44,7 @@ public class Run {
 			model.Kan	= 1e-11;				// anchor
 			model.KfRod0 = 2e-11;
 			model.KfRod1 = 2e-11;
+			model.Ks = 2e-12;
 			model.filLengthRod = new double[]{0.5, 1.7};
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
@@ -54,16 +55,18 @@ public class Run {
 			////////
 			// AS //
 			////////				
-			model.radiusCellMax[0] = 0.80e-6;	// Methanosarcina semesiae
+			model.radiusCellMax[0] = 0.50e-6;	// Wild guess
 			model.radiusCellMax[4] = 0.33e-6;	// m. S. fumaroxidans. From Plugge 2012. Diameter of 0.66 micron 
 			model.lengthCellMax[4] = 2.5e-6;	// m. S. fumaroxidans. From Plugge 2012. 2.5 micron long including caps
 			model.NInitCell = 6;
-			model.muAvgSimple[0] = 0.20;		// Methanosarcina semesiae
-			model.muAvgSimple[4] = 0.15;		// TODO S. fumaroxidans, chosen 
+			model.muAvgSimple[0] = 0.33;		// Methanosarcina semesiae
+			model.muAvgSimple[4] = 0.20;		// TODO S. fumaroxidans, chosen 
 			model.growthSkipMax = 10;
+//			model.growthTimeStep = 1200; 
 //			model.syntrophyFactor = 1.5;		// Let's not touch substrate transfer just yet
 			model.attachmentRate = 1.0;
-			model.filament = model.sticking = true;
+			model.filament = true;
+			model.filLengthRod = new double[]{0.5, 1.7};
 			model.sticking = true;
 			model.stickRodRod = model.stickSphereSphere = false;
 			model.Kd 	= 1e-13;				// drag force coefficient
@@ -108,6 +111,27 @@ public class Run {
 			model.growthSkipMax = 10;
 			model.randomSeed = 4;
 			break;
+		case 4:
+			model.Write("Loading parameters for fat E. coli","");
+			/////////////////
+			// FAT E. COLI //
+			/////////////////
+			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
+			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
+			model.NInitCell = 1;
+			model.normalForce = true;
+			model.sticking = model.filament = false;
+			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
+			model.Kr 	= 5e-11;				// internal cell spring
+			model.Kan	= 1e-11;				// anchor
+			model.KfRod0 = 2e-11;
+			model.KfRod1 = 2e-11;
+			model.filLengthRod = new double[]{0.5, 1.7};
+			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
+			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
+			model.growthTimeStep = 450.0;		// s, i.e. 3 minutes
+			model.growthSkipMax = 10;
+			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 		}
@@ -122,7 +146,7 @@ public class Run {
 		rand.Seed(model.randomSeed);
 		model.UpdateAmountCellMax();
 		switch(model.simulation) {
-		case 0:
+		case 0: case 3: case 4:
 			model.typeInit = new int[model.NInitCell];
 			model.nInit = new double[model.NInitCell];
 			model.directionInit = new Vector3d[model.NInitCell];
