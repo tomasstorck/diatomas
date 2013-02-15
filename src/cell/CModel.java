@@ -479,13 +479,12 @@ public class CModel implements Serializable {
 		// Reset counter
 		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NFilBreak = Assistant.NStickBreak = Assistant.NStickForm = 0;
 		
-		int nvar = 6*ballArray.size();
 		int ntimes = (int) (relaxationTimeStep/relaxationTimeStepdt);
 		double atol = 1.0e-6, rtol = atol;
 		double h1 = 0.00001, hmin = 0;
 		double t1 = relaxationTime; 
 		double t2 = t1 + relaxationTimeStep;
-		Vector ystart = new Vector(nvar,0.0);
+		Vector ystart = new Vector(6*ballArray.size(),0.0);
 
 		int ii=0;											// Determine initial value vector
 		for(CBall ball : ballArray) { 
@@ -530,7 +529,7 @@ public class CModel implements Serializable {
 	
 	public Vector CalculateForces(Vector yode) {	
 		// Read data from y
-		{int ii=0; 				// Where we are in yode
+		int ii=0; 				// TODO: Completely redundant? Check via StepperBase
 		for(CBall ball : ballArray) {
 			ball.pos.x = 	yode.get(ii++);
 			ball.pos.y = 	yode.get(ii++);
@@ -541,7 +540,7 @@ public class CModel implements Serializable {
 			ball.force.x = 0;	// Clear forces for first use
 			ball.force.y = 0;
 			ball.force.z = 0;
-		}}
+		}
 		// Collision forces
 		for(int iCell=0; iCell<cellArray.size(); iCell++) {
 			CCell cell0 = cellArray.get(iCell);
@@ -580,9 +579,8 @@ public class CModel implements Serializable {
 								double f = Kc/dist*d;
 								Vector3d Fs = dP.times(f);
 								// Add these elastic forces to the cells
-								double sc1 = 1-sc;
 								// both balls in rod
-								c1b0.force = c1b0.force.plus(Fs.times(sc1));
+								c1b0.force = c1b0.force.plus(Fs.times(1.0-sc)); 
 								c1b1.force = c1b1.force.plus(Fs.times(sc));
 								// ball in sphere
 								c0b0.force = c0b0.force.minus(Fs);
@@ -629,7 +627,7 @@ public class CModel implements Serializable {
 						Vector3d c1b1pos = new Vector3d(c1b1.pos);
 						double H2 = 1.5*( lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2 );		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
-							// calculate the distance between the two diatoma segments
+							// calculate the distance between the segments
 							EricsonObject C = DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
 							Vector3d dP = C.dP;					// dP is vector from closest point 2 --> 1
 							double dist = C.dist;
@@ -745,15 +743,15 @@ public class CModel implements Serializable {
 		
 		// Return results
 		Vector dydx = new Vector(yode.size());
-		int ii=0;
+		int jj=0;
 		for(CBall ball : ballArray) {
-				double m = ball.n*MWX;
-				dydx.set(ii++,ball.vel.x);			// dpos/dt = v;
-				dydx.set(ii++,ball.vel.y);
-				dydx.set(ii++,ball.vel.z);
-				dydx.set(ii++,ball.force.x/m);		// dvel/dt = a = f/M
-				dydx.set(ii++,ball.force.y/m);
-				dydx.set(ii++,ball.force.z/m);
+			double m = ball.n*MWX;	
+			dydx.set(jj++,ball.vel.x);						// dpos/dt = v;
+			dydx.set(jj++,ball.vel.y);
+			dydx.set(jj++,ball.vel.z);
+			dydx.set(jj++,ball.force.x/m);					// dvel/dt = a = f/M
+			dydx.set(jj++,ball.force.y/m);
+			dydx.set(jj++,ball.force.z/m);
 		}
 		return dydx;
 	}
@@ -783,7 +781,7 @@ public class CModel implements Serializable {
 					boolean formBall1 = false;
 					if(cell0.type > 1) 	formBall1 = (ball1.pos.y < formLimAnchor+ball1.radius) ? true : false;			// If ball1 != null
 					if(formBall0 || formBall1) {
-						Assistant.NAnchorForm += cell0.Anchor();					
+						Assistant.NAnchorForm += cell0.Anchor();
 					}
 				}
 			}
