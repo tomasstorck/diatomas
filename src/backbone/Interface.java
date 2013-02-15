@@ -34,6 +34,7 @@ public class Interface{
 				System.out.println("Usage: java -jar diatomas.jar [option0] [value0] [option1] [value1] ...");
 				System.out.println("where [value] be a number (and 0 == false, 1 == true) or string");
 				System.out.println("");
+				System.out.println("args\t\t\t\t Shows all possible model input arguments");
 				System.out.println("load [path/filename.seg]\t Load the specified file instead of the default parameters. Automatically starts model after loading");
 				System.out.println("ser2mat [path] \t\t\t Converts all .ser files found in [path]/output/ to .mat files. Automatically inhibits model starting after loading");
 				return;
@@ -145,51 +146,69 @@ public class Interface{
 					try {
 						@SuppressWarnings("rawtypes")
 						Class fieldClass = CModel.class.getField(key).get(model).getClass();
-						if(fieldClass.equals(Boolean.class)) {
-							boolean bool = Integer.parseInt(value) == 1 ? true : false;
-							boolean modelBool = field.getBoolean(model);
-							if(modelBool != bool) {
-								field.setBoolean(model, bool);
-								model.Write(field.getName() + " set to " + (bool?"true":"false"), "");
+						if(fieldClass.isArray()) {
+							String[] splitValue = value.split(",");
+							for(int ii=0; ii<splitValue.length; ii++) {
+								splitValue[ii] = splitValue[ii].replace("{","");
+								splitValue[ii] = splitValue[ii].replace("}","");
 							}
-							continue args;
-						} else if(fieldClass.equals(Double.class)) {				// Does the field contain a double?
-							double number;
-							double modelNumber = field.getDouble(model);
-							double modelRefNumber = field.getDouble(modelRef);
-							// See if we have a relative (e.g. Kan *10) or absolute (e.g. Kan 1e-10) value
-							if(value.startsWith("*")) {						// Relative
-								double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-								if(modelNumber != modelRefNumber*multiplier) {					// If this were true, the operation would already have been done once
-									number = field.getDouble(model) * multiplier;				// Hasn't been multiplied before, so do it
-									field.setDouble(model, number);
-									model.Write(field.getName() + " set to " + number, "");
-								}											// Has been multipliplied before, don't change
-							} else {
-								number = Double.parseDouble(value);			// Absolute.
-								if(modelNumber != number) {
-									field.setDouble(model, number);
-									model.Write(field.getName() + " set to " + number, "");
-								}											
+							// double[]
+							if(fieldClass.getComponentType().getName().equals("double")) {
+								double[] newValue = new double[splitValue.length];
+								for(int ii=0; ii<splitValue.length; ii++) {
+									newValue[ii] = Double.parseDouble(splitValue[ii]); 
+								}
+								field.set(model, newValue);
 							}
-							continue args;									// Check next argument (i.e. continue outer loop)
-						} else if(fieldClass.equals(Integer.class)) {		// An int?
-							int number = Integer.parseInt(value);
-							int modelNumber = field.getInt(model);
-							if(modelNumber != number) {
-								field.setInt(model, number);
-								model.Write(field.getName() + " set to " + number, "");	
-							}
-							continue args;
-						} else if(fieldClass.equals(String.class)) {		// A String?
-							String modelString = (String) field.get(model);
-							if(!modelString.equals(value)) {
-								field.set(model, value);
-								model.Write(field.getName() + " set to " + value, "");
-							}												// Has been set before, don't change
+							// TODO: int[], boolean[], String[]
 							continue args;
 						} else {
-							throw new RuntimeException("Unknown class type");
+							if(fieldClass.equals(Boolean.class)) {
+								boolean bool = Integer.parseInt(value) == 1 ? true : false;
+								boolean modelBool = field.getBoolean(model);
+								if(modelBool != bool) {
+									field.setBoolean(model, bool);
+									model.Write(field.getName() + " set to " + (bool?"true":"false"), "");
+								}
+								continue args;
+							} else if(fieldClass.equals(Double.class)) {				// Does the field contain a double?
+								double number;
+								double modelNumber = field.getDouble(model);
+								double modelRefNumber = field.getDouble(modelRef);
+								// See if we have a relative (e.g. Kan *10) or absolute (e.g. Kan 1e-10) value
+								if(value.startsWith("*")) {						// Relative
+									double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
+									if(modelNumber != modelRefNumber*multiplier) {					// If this were true, the operation would already have been done once
+										number = field.getDouble(model) * multiplier;				// Hasn't been multiplied before, so do it
+										field.setDouble(model, number);
+										model.Write(field.getName() + " set to " + number, "");
+									}											// Has been multipliplied before, don't change
+								} else {
+									number = Double.parseDouble(value);			// Absolute.
+									if(modelNumber != number) {
+										field.setDouble(model, number);
+										model.Write(field.getName() + " set to " + number, "");
+									}											
+								}
+								continue args;									// Check next argument (i.e. continue outer loop)
+							} else if(fieldClass.equals(Integer.class)) {		// An int?
+								int number = Integer.parseInt(value);
+								int modelNumber = field.getInt(model);
+								if(modelNumber != number) {
+									field.setInt(model, number);
+									model.Write(field.getName() + " set to " + number, "");	
+								}
+								continue args;
+							} else if(fieldClass.equals(String.class)) {		// A String?
+								String modelString = (String) field.get(model);
+								if(!modelString.equals(value)) {
+									field.set(model, value);
+									model.Write(field.getName() + " set to " + value, "");
+								}												// Has been set before, don't change
+								continue args;
+							} else {
+								throw new RuntimeException("Unknown class type");
+							}
 						}
 					} catch (Exception ex) {
 						ex.printStackTrace();
