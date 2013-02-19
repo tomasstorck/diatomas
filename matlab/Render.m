@@ -1,6 +1,6 @@
 %%%%%%%%%
 
-sketch = false;
+sketch = true;
 
 %%%%%%%%%
 
@@ -25,13 +25,13 @@ for iFile=length(loadFileNameList):-1:1
         continue                % Already plotted, skip
     end
 	fprintf([loadFileName '\n']);
-	try
+% 	try
 		load([location filesep 'output' filesep loadFileName]);
 		if rem(model.relaxationIter,10)==0
 			clear right;
 		end
 		RenderFun;
-	catch ME
-		continue;
-	end
+% 	catch ME
+% 		continue;
+% 	end
 end

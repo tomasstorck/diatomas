@@ -54,21 +54,24 @@ public class Run {
 		case 1: case 2:
 			////////
 			// AS //
-			////////				
-			model.radiusCellMax[0] = 0.50e-6;	// Wild guess
-			model.radiusCellMax[4] = 0.33e-6;	// m. S. fumaroxidans. From Plugge 2012. Diameter of 0.66 micron 
-			model.lengthCellMax[4] = 2.5e-6;	// m. S. fumaroxidans. From Plugge 2012. 2.5 micron long including caps
+			////////			
+//			model.L = new Vector3d(30e-6, model.radiusCellMax[4], 30e-6);
+			model.radiusCellMax[4] = 0.45e-6;	//  
+			model.lengthCellMax[4] = 1.1e-6;	// 
+			model.radiusCellMax[5] = 0.5e-6;	//  
+			model.lengthCellMax[5] = 3e-6;	// 
 			model.NInitCell = 6;
-			model.muAvgSimple[0] = 0.33;		// Methanosarcina semesiae
-			model.muAvgSimple[4] = 0.20;		// TODO S. fumaroxidans, chosen 
+			model.muAvgSimple[4] = 0.38;		// Sphaerotitus
+			model.muAvgSimple[5] = 0.20;		// TODO 
 			model.growthSkipMax = 10;
-//			model.growthTimeStep = 1200; 
 //			model.syntrophyFactor = 1.5;		// Let's not touch substrate transfer just yet
-			model.attachmentRate = 1.0;
+//			model.attachmentRate = 1.0;
 			model.filament = true;
+			model.filamentType[5] = true;
 			model.filLengthRod = new double[]{0.5, 1.7};
+			model.filStretchLim = 1.0;
 			model.sticking = true;
-			model.stickRodRod = model.stickSphereSphere = false;
+			model.stickType[4][5] = model.stickType[5][4] = true;
 			model.Kd 	= 1e-13;				// drag force coefficient
 			model.Kc 	= 1e-9;					// cell-cell collision
 			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
@@ -97,7 +100,7 @@ public class Run {
 			model.normalForce = true;
 			model.sticking = false;
 			model.filament = true;
-			model.stretchLimFil = 10;
+			model.filStretchLim = 1.0;
 			model.L = new Vector3d(30e-6, model.radiusCellMax[4], 30e-6);
 			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
 			model.Kr 	= 5e-11;				// internal cell spring
@@ -160,8 +163,8 @@ public class Run {
 		case 1: case 2:
 			// Set type
 			model.typeInit = new int[model.NInitCell];
-			for(int ii=0; ii<model.NInitCell/2; ii++)						model.typeInit[ii] = 4;			// First half: rods
-			for(int ii=model.NInitCell/2+1; ii<model.NInitCell; ii++)		model.typeInit[ii] = 0;			// Second half: spheres
+			for(int ii=0; ii<model.NInitCell/2; ii++)						model.typeInit[ii] = 4;			// First half: 
+			for(int ii=model.NInitCell/2; ii<model.NInitCell; ii++)			model.typeInit[ii] = 5;			// Second half: 
 			// Various
 			restLength = model.lengthCellMax[4]*0.75;
 			model.nInit = new double[model.NInitCell];
@@ -199,12 +202,7 @@ public class Run {
 		if(model.growthIter == 0 && model.relaxationIter == 0) {
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				boolean filament = false;
-				if(model.filament) {
-					if(model.typeInit[iCell]<2) 		filament = model.filSphere; 
-					else if(model.typeInit[iCell]<6)	filament = model.filRod;
-					else throw new IndexOutOfBoundsException("Cell type: " + model.typeInit); 
-				}
+				boolean filament = model.filamentType[model.typeInit[iCell]];
 				@SuppressWarnings("unused")
 				CCell cell = new CCell(model.typeInit[iCell], 				// Type of biomass
 						model.nInit[iCell],
@@ -319,11 +317,28 @@ public class Run {
 			}
 
 			// Relaxation
-			model.Write("Starting relaxation calculations","iter");
-			int nstp = model.Relaxation();
-			model.relaxationIter++;
-			model.relaxationTime += model.relaxationTimeStepdt;
-			model.Write("Relaxation finished in " + nstp + " solver steps","iter");
+			boolean moving = true;
+			int nstp=0;
+			while(moving) {
+				model.Write("Starting relaxation calculations","iter");
+				nstp = model.Relaxation();
+				model.relaxationIter++;
+				model.relaxationTime += model.relaxationTimeStepdt;
+				model.Write("Relaxation finished in " + nstp + " solver steps","iter");
+				moving = false;
+//				for(CBall ball : model.ballArray) {
+//					final double thresholdForce = 1e-20;
+//					final double thresholdVel = 1e-9;
+//					if(ball.force.x + ball.force.y + ball.force.z > thresholdForce)
+//						moving = true;
+//					if(ball.vel.x + ball.vel.y + ball.vel.z > thresholdVel)
+//						moving = true;
+//				}
+				// And finally: save stuff
+				model.Write("Saving model as serialised file", "iter");
+				model.Save();
+				ser2mat.Convert(model);
+			}
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
 			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
@@ -334,11 +349,6 @@ public class Run {
 				model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
 				model.Write("Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
 			}
-
-			// And finally: save stuff
-			model.Write("Saving model as serialised file", "iter");
-			model.Save();
-			ser2mat.Convert(model);
 		}
 	}
 }

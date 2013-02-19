@@ -116,9 +116,6 @@ for ii=0:NSave			% Can be replaced with parfor
         % Determine colour for this cell
 		ancestor = cell;
 		ancestorIndex = iCell-1;
-		if ~isfield(ancestor,'mother')		%TODO
-			continue;
-		end
 		while ancestorIndex+1>size(cellColours,1) && ~isempty(ancestor.mother)	% Find the oldest ancestor that we can colour
 			ancestorIndex = ancestor.mother;
 			ancestor = model.cellArray(ancestorIndex+1);
@@ -130,17 +127,10 @@ for ii=0:NSave			% Can be replaced with parfor
 				colour = cellColours(ancestorIndex+1,:);
 			end
 		else														% Colour by type, because we don't have enough colours
-			if ~isfield(ancestor,'born')	%TODO
-				continue;
-			end
 			if ancestor.born ~= 0 && isempty(ancestor.mother)       % This is an attached cell
-				colour = cellColours(3,:);
+				colour = cellColours(end,:);
 			else
-				if ancestor.type <2                             % Sphere
-					colour = cellColours(2,:);
-				else
-					colour = cellColours(1,:);              % Rod
-				end
+				colour = cellColours(ancestor.type==unique(model.typeInit),:);
 			end
 		end
 		if cell.type<2

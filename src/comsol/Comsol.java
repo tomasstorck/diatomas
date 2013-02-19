@@ -43,7 +43,7 @@ public class Comsol {
 	    comsol.geom().create("geom1", 3);
 	    	    
 	    // Make list with parameters
-	    for(int ii=0; ii<java.NXComp; ii++) {		// Set Monod constants, K[]
+	    for(int ii=0; ii<java.NXType; ii++) {		// Set Monod constants, K[]
 	    	comsol.param().set("K" + Integer.toString(ii), Double.toString(java.K[ii]));
 	    }
 	    for(int ii=0; ii<java.NAcidDiss; ii++) {		// Set acid dissociation constants, Ka[]
@@ -56,7 +56,7 @@ public class Comsol {
 	    // Make list with variables (simple functions)			// UPDATE
 	    comsol.variable().create("var1");
 	    comsol.variable("var1").model("mod1");
-	    for(int ii=0; ii<java.NXComp; ii++) {
+	    for(int ii=0; ii<java.NXType; ii++) {
 	    	comsol.variable("var1").set("q" + Integer.toString(ii), java.rateEquation[ii]);
 	    }
 	    
