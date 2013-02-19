@@ -146,22 +146,49 @@ public class Interface{
 					try {
 						@SuppressWarnings("rawtypes")
 						Class fieldClass = CModel.class.getField(key).get(model).getClass();
-						if(fieldClass.isArray()) {
-							String[] splitValue = value.split(",");
-							for(int ii=0; ii<splitValue.length; ii++) {
+						// If the field is any kind of array
+						if(field.get(model).getClass().isArray()) {
+							String fieldClassName = fieldClass.getComponentType().getName(); 
+							String[] splitValue = value.split(",");			// Split at comma
+							for(int ii=0; ii<splitValue.length; ii++) {		// Replace all curly braces
 								splitValue[ii] = splitValue[ii].replace("{","");
 								splitValue[ii] = splitValue[ii].replace("}","");
 							}
 							// double[]
-							if(fieldClass.getComponentType().getName().equals("double")) {
+							if(fieldClassName.equals("double")) {
 								double[] newValue = new double[splitValue.length];
-								for(int ii=0; ii<splitValue.length; ii++) {
-									newValue[ii] = Double.parseDouble(splitValue[ii]); 
-								}
+								for(int ii=0; ii<splitValue.length; ii++)
+									newValue[ii] = Double.parseDouble(splitValue[ii]);
+								model.Write(field.getName() + " set to double[" + splitValue.length + "]","");
 								field.set(model, newValue);
+								continue args;
 							}
-							// TODO: int[], boolean[], String[]
-							continue args;
+							// int[]
+							if(fieldClassName.equals("int")) {
+								int[] newValue = new int[splitValue.length];
+								for(int ii=0; ii<splitValue.length; ii++) 
+									newValue[ii] = Integer.parseInt(splitValue[ii]);
+								model.Write(field.getName() + " set to int[" + splitValue.length + "]","");
+								field.set(model, newValue);
+								continue args;
+							}
+							// boolean[]
+							if(fieldClassName.equals("boolean")) {
+								boolean[] newValue = new boolean[splitValue.length];
+								for(int ii=0; ii<splitValue.length; ii++)
+									newValue[ii] = Integer.parseInt(value) == 1 ? true : false;
+								field.set(model, newValue);
+								continue args;
+							}
+							// String[]
+							if(fieldClassName.equals("String")) {
+								String[] newValue = new String[splitValue.length];
+								for(int ii=0; ii<splitValue.length; ii++)
+									newValue[ii] = splitValue[ii];
+								field.set(model, newValue);
+								continue args;
+							}
+						// The field is NOT an array
 						} else {
 							if(fieldClass.equals(Boolean.class)) {
 								boolean bool = Integer.parseInt(value) == 1 ? true : false;
@@ -182,7 +209,7 @@ public class Interface{
 										number = field.getDouble(model) * multiplier;				// Hasn't been multiplied before, so do it
 										field.setDouble(model, number);
 										model.Write(field.getName() + " set to " + number, "");
-									}											// Has been multipliplied before, don't change
+									}											// Otherwise has been multipliplied before, don't change
 								} else {
 									number = Double.parseDouble(value);			// Absolute.
 									if(modelNumber != number) {
