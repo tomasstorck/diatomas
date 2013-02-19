@@ -30,17 +30,16 @@ public class CModel implements Serializable {
 	public int simulation = 0;					// The simulation type: see Run
 	public int randomSeed = 3;
 	public boolean comsol = false;
+	public int NXType = 6;
 	// --> Sticking
 	public boolean sticking = false;
-	public boolean stickSphereSphere = true;
-	public boolean stickSphereRod = true;
-	public boolean stickRodRod = true;
+	public boolean[][] stickType = new boolean[NXType][NXType];
+	// --> Anchoring
 	public boolean anchoring = false;
 	// --> Filaments
 	public boolean filament = false;
+	public boolean[] filamentType = new boolean[NXType];
 	public boolean sphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci
-	public boolean filSphere = true;
-	public boolean filRod = true;
 	public boolean gravity = false;
 	public boolean gravityZ = false;
 	// --> Substratum
@@ -59,7 +58,7 @@ public class CModel implements Serializable {
 	public Vector3d[] position0Init = {new Vector3d(0.0, 0.0, 0.0)};
 	public Vector3d[] position1Init = {new Vector3d(2e-6, 0.0, 0.0)};
 		
-	// Spring constants and drag ceoefficient
+	// Spring constants and drag coefficient
 	public double Kd 	= 1e-13;				// drag force coefficient
 	public double Kc 	= 1e-9;					// cell-cell collision
 	public double Kw 	= 5e-10;				// wall(substratum)-cell spring
@@ -69,25 +68,24 @@ public class CModel implements Serializable {
 	public double KfRod1 	= 2e-11;			// filament spring for rod-rod filial links, long sprong
 	public double Kan	= 1e-11;				// anchor
 	public double Ks 	= 1e-11;				// sticking
-	public double stretchLimAnchor = 0.5e-6;	// Maximum tension for anchoring springs
-	public double formLimAnchor = 0.1e-6;		// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-	public double stretchLimStick = 0.5e-6;		// Maximum tension for sticking springs
-	public double formLimStick = 0.1e-6; 		// Multiplication factor for rest length to form sticking springs. 
-	public double stretchLimFil = 0.5e-6;		// Maximum tension for sticking springs
+	public double anchorStretchLim = 0.5e-6;	// Maximum tension for anchoring springs
+	public double anchorFormLim = 0.1e-6;		// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
+	public double stickStretchLim = 0.5e-6;		// Maximum tension for sticking springs
+	public double stickFormLim = 0.1e-6; 		// Multiplication factor for rest length to form sticking springs. 
+	public double filStretchLim = 0.5e-6;		// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
 	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 	// Model biomass and growth properties
-	public int NXComp = 6;						// Types of biomass
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
 	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
 	public int NInitCell = 6;					// Initial number of cells
-	public double[] radiusCellMax = new double[6];
-	public double[] radiusCellMin = new double[6];
-	public double[] lengthCellMax = new double[6];
-	public double[] lengthCellMin = new double[6];
-	public double[] nCellMax =	new double[6];
-	public double[] nCellMin =	new double[6];
+	public double[] radiusCellMax = new double[NXType];
+	public double[] radiusCellMin = new double[NXType];
+	public double[] lengthCellMax = new double[NXType];
+	public double[] lengthCellMin = new double[NXType];
+	public double[] nCellMax =	new double[NXType];
+	public double[] nCellMin =	new double[NXType];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 	public double[] muStDev = {0.25, 0.25, 0.25, 0.25, 0.25, 0.25};	// Standard deviation. Only used in GrowthSimple()!    
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
@@ -770,16 +768,16 @@ public class CModel implements Serializable {
 						// Break anchor?
 						Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 						double dn = diff.norm();
-						if(dn > anchor.restLength+stretchLimAnchor) {	// too much tension --> break the spring
+						if(dn > anchor.restLength+anchorStretchLim) {	// too much tension --> break the spring
 							breakArray.add(anchor);
 						}
 					}
 					for(CSpring anchor : breakArray)		Assistant.NAnchorBreak += anchor.Break();
 				} else {									// Cell is not yet anchored
 					// Form anchor?
-					boolean formBall0 = (ball0.pos.y < formLimAnchor+ball0.radius) ? true : false;
+					boolean formBall0 = (ball0.pos.y < anchorFormLim+ball0.radius) ? true : false;
 					boolean formBall1 = false;
-					if(cell0.type > 1) 	formBall1 = (ball1.pos.y < formLimAnchor+ball1.radius) ? true : false;			// If ball1 != null
+					if(cell0.type > 1) 	formBall1 = (ball1.pos.y < anchorFormLim+ball1.radius) ? true : false;			// If ball1 != null
 					if(formBall0 || formBall1) {
 						Assistant.NAnchorForm += cell0.Anchor();
 					}
@@ -810,7 +808,7 @@ public class CModel implements Serializable {
 					// Don't stick this. It shouldn't be stuck so don't check if we can break sticking springs. Instead, see if we can break the filial link 
 					double distance = filamentSpring.ballArray[0].pos.minus(filamentSpring.ballArray[1].pos).norm();
 					// Check if we can break this spring
-					if(distance>filamentSpring.restLength+stretchLimFil) {
+					if(distance>filamentSpring.restLength+filStretchLim) {
 						Assistant.NFilBreak += filamentSpring.Break();	// Also breaks its siblings
 					}
 				} else if (sticking){						// Check if we want to do sticking, or break the sticking spring
@@ -819,34 +817,34 @@ public class CModel implements Serializable {
 					CBall c1b0 = cell1.ballArray[0];				
 					if(isStuck) {							// Stuck --> can we break this spring (and its siblings)?
 						double dist = (c1b0.pos.minus(c0b0.pos)).norm();
-						if(dist > stickingSpring.restLength+stretchLimStick) 		Assistant.NStickBreak += stickingSpring.Break();
+						if(dist > stickingSpring.restLength+stickStretchLim) 		Assistant.NStickBreak += stickingSpring.Break();
 					} else {								// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
 						double dist;
 						if(cell0.type<2 && cell1.type<2) {	// both spheres
-							if(stickSphereSphere) { 
+							if(stickType[cell0.type][cell1.type]) { 
 								dist = (c1b0.pos.minus(c0b0.pos)).norm();
 							} else continue;
 						} else if(cell0.type<2) {			// 1st sphere, 2nd rod
-							double H2f =  1.5*(formLimStick+(lengthCellMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+							double H2f =  1.5*(stickFormLim+(lengthCellMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c1b1 = cell1.ballArray[1];
 								// do a sphere-rod collision detection
 								EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 								dist = C.dist;
 							} else continue;
 						} else if(cell1.type<2) {			// 2nd sphere, 1st rod
-							double H2f = 1.5*(formLimStick+(lengthCellMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-							if(stickSphereRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+							double H2f = 1.5*(stickFormLim+(lengthCellMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
+							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								// do a sphere-rod collision detection
 								EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
 								dist = C.dist;
 							} else continue;
 						} else if(cell0.type<6 && cell1.type<6) {  	// both rod
-							double H2f = 1.5*(formLimStick+(lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2));
-							if(stickRodRod && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+							double H2f = 1.5*(stickFormLim+(lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2));
+							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								CBall c1b1 = cell1.ballArray[1];
 								// calculate the distance between the two segments
@@ -857,7 +855,7 @@ public class CModel implements Serializable {
 							throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
 						}
 						// Stick if distance is small enough
-						if(dist<R2+formLimStick) 	Assistant.NStickForm += cell0.Stick(cell1);
+						if(dist<R2+stickFormLim) 	Assistant.NStickForm += cell0.Stick(cell1);
 					}
 				}
 			}
@@ -1113,7 +1111,7 @@ public class CModel implements Serializable {
 			// Define the cell we will attach
 			final int typeNew = 0; 
 			final double nNew = nCellMin[typeNew] * (1.0 + rand.Double());
-			final boolean filNew = filament && filSphere;
+			final boolean filNew = filament && filamentType[typeNew];
 			final double rNew = CBall.Radius(nNew, typeNew, this); 
 			// Create array of balls in non-spherical cells 
 			ArrayList<CBall> ballArrayRod = new ArrayList<CBall>(ballArray.size());

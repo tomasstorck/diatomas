@@ -17,17 +17,16 @@ public class ser2mat {
 		mlModel.setField("simulation",                    new MLDouble(null, new double[] {model.simulation}, 1));                        	// The simulation type: see Run
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	
 		mlModel.setField("comsol",                        new MLDouble(null, new double[] {model.comsol?1:0}, 1));                        	
+		mlModel.setField("NXType",                        new MLDouble(null, new double[] {model.NXType}, 1));                            	
 		// --> Sticking
 		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	
-		mlModel.setField("stickSphereSphere",             new MLDouble(null, new double[] {model.stickSphereSphere?1:0}, 1));             	
-		mlModel.setField("stickSphereRod",                new MLDouble(null, new double[] {model.stickSphereRod?1:0}, 1));                	
-		mlModel.setField("stickRodRod",                   new MLDouble(null, new double[] {model.stickRodRod?1:0}, 1));                   	
+		mlModel.setField("stickType",                     new MLDouble(null, boolean2double(model.stickType)));                           
+		// --> Anchoring
 		mlModel.setField("anchoring",                     new MLDouble(null, new double[] {model.anchoring?1:0}, 1));                     	
 		// --> Filaments
 		mlModel.setField("filament",                      new MLDouble(null, new double[] {model.filament?1:0}, 1));                      	
+		mlModel.setField("filamentType",                  new MLDouble(null, boolean2double(model.filamentType), model.filamentType.length));
 		mlModel.setField("sphereStraightFil",             new MLDouble(null, new double[] {model.sphereStraightFil?1:0}, 1));             	// Make streptococci-like structures if true, otherwise staphylococci
-		mlModel.setField("filSphere",                     new MLDouble(null, new double[] {model.filSphere?1:0}, 1));                     	
-		mlModel.setField("filRod",                        new MLDouble(null, new double[] {model.filRod?1:0}, 1));                        	
 		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
 		mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      	
 		// --> Substratum
@@ -44,7 +43,7 @@ public class ser2mat {
 		double[] DtypeInit = new double[model.typeInit.length];		for(int ii=0; ii<model.typeInit.length; ii++)		DtypeInit[ii] = model.typeInit[ii];		mlModel.setField("typeInit",                      new MLDouble(null, DtypeInit, model.typeInit.length));                          	
 		//
 		mlModel.setField("nInit",                         new MLDouble(null, model.nInit, model.nInit.length));                           	
-		// Spring constants and drag ceoefficient
+		// Spring constants and drag coefficient
 		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
 		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// cell-cell collision
 		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall(substratum)-cell spring
@@ -54,15 +53,14 @@ public class ser2mat {
 		mlModel.setField("KfRod1",                        new MLDouble(null, new double[] {model.KfRod1}, 1));                            	// filament spring for rod-rod filial links, long sprong
 		mlModel.setField("Kan",                           new MLDouble(null, new double[] {model.Kan}, 1));                               	// anchor
 		mlModel.setField("Ks",                            new MLDouble(null, new double[] {model.Ks}, 1));                                	// sticking
-		mlModel.setField("stretchLimAnchor",              new MLDouble(null, new double[] {model.stretchLimAnchor}, 1));                  	// Maximum tension for anchoring springs
-		mlModel.setField("formLimAnchor",                 new MLDouble(null, new double[] {model.formLimAnchor}, 1));                     	// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-		mlModel.setField("stretchLimStick",               new MLDouble(null, new double[] {model.stretchLimStick}, 1));                   	// Maximum tension for sticking springs
-		mlModel.setField("formLimStick",                  new MLDouble(null, new double[] {model.formLimStick}, 1));                      	// Multiplication factor for rest length to form sticking springs.
-		mlModel.setField("stretchLimFil",                 new MLDouble(null, new double[] {model.stretchLimFil}, 1));                     	// Maximum tension for sticking springs
+		mlModel.setField("anchorStretchLim",              new MLDouble(null, new double[] {model.anchorStretchLim}, 1));                  	// Maximum tension for anchoring springs
+		mlModel.setField("anchorFormLim",                 new MLDouble(null, new double[] {model.anchorFormLim}, 1));                     	// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
+		mlModel.setField("stickStretchLim",               new MLDouble(null, new double[] {model.stickStretchLim}, 1));                   	// Maximum tension for sticking springs
+		mlModel.setField("stickFormLim",                  new MLDouble(null, new double[] {model.stickFormLim}, 1));                      	// Multiplication factor for rest length to form sticking springs.
+		mlModel.setField("filStretchLim",                 new MLDouble(null, new double[] {model.filStretchLim}, 1));                     	// Maximum tension for sticking springs
 		mlModel.setField("filLengthSphere",               new MLDouble(null, new double[] {model.filLengthSphere}, 1));                   	// How many times R2 the sphere filament's rest length is
 		mlModel.setField("filLengthRod",                  new MLDouble(null, model.filLengthRod, model.filLengthRod.length));             	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 		// Model biomass and growth properties
-		mlModel.setField("NXComp",                        new MLDouble(null, new double[] {model.NXComp}, 1));                            	// Types of biomass
 		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {model.NdComp}, 1));                            	// d for dynamic compound (e.g. total Ac)
 		mlModel.setField("NcComp",                        new MLDouble(null, new double[] {model.NcComp}, 1));                            	// c for concentration (or virtual compound, e.g. Ac-)
 		mlModel.setField("NAcidDiss",                     new MLDouble(null, new double[] {model.NAcidDiss}, 1));                         	// Number of acid dissociation reactions
@@ -276,5 +274,20 @@ public class ser2mat {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	// Converts a boolean[] to a double[] with true == 1 and false == 0 (MATLAB style)
+	public static double[] boolean2double(boolean[] input) {
+		double[] output = new double[input.length]; 
+			for(int ii=0; ii<input.length; ii++)
+				output[ii] = input[ii] ? 1.0 : 0.0;
+		return output;
+	}
+	// Converts a boolean[][] to a double[][] with true == 1 and false == 0 (MATLAB style)
+	public static double[][] boolean2double(boolean[][] input) {
+		double[][] output = new double[input.length][input[0].length]; 
+			for(int ii=0; ii<input.length; ii++)
+				for(int jj=0; jj<input[0].length; jj++)
+					output[ii][jj] = input[ii][jj] ? 1.0 : 0.0;
+		return output;
 	}
 }

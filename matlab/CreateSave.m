@@ -113,6 +113,24 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 		fprintf(fid2,'\t\t%-50s%-80s\n',['mlModel.setField("' n '",'],['new MLDouble(null, model.' n '));']);
 		continue
 	end
+	% boolean[]
+	if hasstr(c,'boolean[] ')
+		[n, comment] = splitline(c,'boolean\[\]');
+		if ~isempty(comment)
+			fprintf(fid2,['\t\t' comment '\n']);
+		end
+		fprintf(fid2,'\t\t%-50s%-80s\n',['mlModel.setField("' n '",'],['new MLDouble(null, boolean2double(model.' n '), model.' n '.length));']);
+		continue
+	end
+	% boolean[][]
+	if hasstr(c,'boolean[][] ')
+		[n, comment] = splitline(c,'boolean\[\]\[\]');
+		if ~isempty(comment)
+			fprintf(fid2,['\t\t' comment '\n']);
+		end
+		fprintf(fid2,'\t\t%-50s%-80s\n',['mlModel.setField("' n '",'],['new MLDouble(null, boolean2double(model.' n ')));']);
+		continue
+	end
 	% Arrays
 	if hasstr(c,'ArrayList')
 		% Extract class name
@@ -272,6 +290,25 @@ fprintf(fid2,'\t\t} catch (IOException e) {\n');
 fprintf(fid2,'\t\t\te.printStackTrace();\n');
 fprintf(fid2,'\t\t}\n');
 fprintf(fid2,'\t}\n');
+
+% Add private functions
+fprintf(fid2,'\t// Converts a boolean[] to a double[] with true == 1 and false == 0 (MATLAB style)\n');
+fprintf(fid2,'\tpublic static double[] boolean2double(boolean[] input) {\n');
+fprintf(fid2,'\t\tdouble[] output = new double[input.length]; \n');
+fprintf(fid2,'\t\t\tfor(int ii=0; ii<input.length; ii++)\n');
+fprintf(fid2,'\t\t\t\toutput[ii] = input[ii] ? 1.0 : 0.0;\n');
+fprintf(fid2,'\t\treturn output;\n');
+fprintf(fid2,'\t}\n');
+
+fprintf(fid2,'\t// Converts a boolean[][] to a double[][] with true == 1 and false == 0 (MATLAB style)\n');
+fprintf(fid2,'\tpublic static double[][] boolean2double(boolean[][] input) {\n');
+fprintf(fid2,'\t\tdouble[][] output = new double[input.length][input[0].length]; \n');
+fprintf(fid2,'\t\t\tfor(int ii=0; ii<input.length; ii++)\n');
+fprintf(fid2,'\t\t\t\tfor(int jj=0; jj<input[0].length; jj++)\n');
+fprintf(fid2,'\t\t\t\t\toutput[ii][jj] = input[ii][jj] ? 1.0 : 0.0;\n');
+fprintf(fid2,'\t\treturn output;\n');
+fprintf(fid2,'\t}\n');
+
 fprintf(fid2,'}\n');
 
 fclose(fid2);
