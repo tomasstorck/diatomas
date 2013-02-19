@@ -88,11 +88,13 @@ public class CModel implements Serializable {
 	public double[] nCellMin =	new double[NXType];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 	public double[] muStDev = {0.25, 0.25, 0.25, 0.25, 0.25, 0.25};	// Standard deviation. Only used in GrowthSimple()!    
-	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public double syntrophyFactor = 1.0; 		// Accelerated growth if two cells of different types are stuck to each other
 	public int growthSkipMax = Integer.MAX_VALUE;	// The maximum number of growth iterations we are allowed to skip before we should do growth again
 	public int growthSkip = 0;					// How many growth iterations we have skipped
-
+	// Attachment
+	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
+	public int attachCellType = 0;				// What cell type the new cell is 
+	public int[] attachNotTo = new int[0];		// Which cell types newly attached cells can NOT attach to
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
@@ -1109,7 +1111,7 @@ public class CModel implements Serializable {
 	public void Attachment(int NNew) {
 		for(int iA=0; iA<NNew; iA++) {
 			// Define the cell we will attach
-			final int typeNew = 0; 
+			final int typeNew = attachCellType; 
 			final double nNew = nCellMin[typeNew] * (1.0 + rand.Double());
 			final boolean filNew = filament && filamentType[typeNew];
 			final double rNew = CBall.Radius(nNew, typeNew, this); 
@@ -1118,13 +1120,9 @@ public class CModel implements Serializable {
 			for(CBall ball : ballArray) 	if(ball.cell.type>1) 	ballArrayRod.add(ball);
 			// Find a random rod's ball position dest(ination) and move the ball there from dirn ("along the path") until we find a particle
 			Vector3d firstPos = new Vector3d(0.0, 0.0, 0.0);
-//			int NAttempt = 0;
 			// Create and position the new cell to this champion ball. Position it in the direction of dirn
 			CCell newCell = new CCell(typeNew, nNew, firstPos, new Vector3d(), filNew, this);
 			tryloop:while(true) {
-//				// If after 100 attempts we still didn't find a site to attach to, forfeit 
-//				if(NAttempt>1000)					throw new RuntimeException("Could not find a cell to attach to");
-//				NAttempt++;
 				// Find dest(ination) based on random position within range of the domain
 				Vector3d[] spread = GetBallSpread();
 				Vector3d dest = new Vector3d(
@@ -1138,22 +1136,21 @@ public class CModel implements Serializable {
 				double firstDist = 0.0;
 				boolean success = false;
 				
-//				// Find if the new cell can attach to a ball
-//				for(CBall ball : ballArray) {
-//					Vector3d other = ball.pos.minus(dest); 
-//					EricsonObject E = DetectLinePoint(nul, dirn, other);							// Detect distance line-point, with line the path and point the ball.pos
-//					// Check if ball.pos is close enough to path to touch the attaching particle by analysing the distance obtained from Ericsson
-//					if( E.dist < rNew+ball.radius ) {
-//						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with other 
-//						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet 
-//						if(E.sc > firstDist) {														// sc is the multiplier for the vector that denotes the line to get the segment: since dirn.norm() == 1 we don't need to multiply with the length
-//							// Set this ball to be first to be encountered by the attaching particle
-//							firstDist = E.sc;
-//							firstBall = ball;
-//							firstPos = ball.pos.plus(dirn.times(rNew + firstBall.radius));			// Position where the new cell will attach after colliding
-//						}
-//					}
-//				}
+				// Find if the new cell can attach to a spherical cell
+				for(CBall ball : ballArray) {
+					EricsonObject E = DetectLinePoint(dest, dest.plus(dirn), ball.pos);			// Detect distance line-point, with line the path and point the ball.pos
+					// Check if ball.pos is close enough to path to touch the attaching particle by analysing the distance obtained from Ericsson
+					if( E.dist < rNew+ball.radius ) {
+						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with other 
+						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet 
+						if(E.sc > firstDist) {													// sc is the multiplier for the vector that denotes the line to get the segment: since dirn.norm() == 1 we don't need to multiply with the length
+							// Set this ball to be first to be encountered by the attaching particle
+							firstDist = E.sc;
+							firstBall = ball;
+							firstPos = ball.pos.plus(dirn.times(rNew+ball.radius));		// Position where the new cell will attach after colliding
+						}
+					}
+				}
 				// After checking all balls, check all springs in the rods
 				for(CSpring spring : rodSpringArray) {
 					// Find the distance between the path of the particle (a line) and the rod spring (a line segment)
@@ -1176,7 +1173,7 @@ public class CModel implements Serializable {
 								away = dirn;
 							}
 							// The point on the path where the collision is closest, moving the ball away from there until it no longer overlapping
-							firstPos = E.c1.plus(away.times(rNew+ball0.radius));			// FIXME: Still not good, cells crashing into each other
+							firstPos = E.c1.plus(away.times(rNew+ball0.radius));
 						}
 					}
 				}
@@ -1185,20 +1182,24 @@ public class CModel implements Serializable {
 				if(!success)						continue;
 				// Check if it is valid in case we have a substratum
 				if(normalForce && firstPos.y<rNew)	continue;	// the new cell went through the plane to get to this point
-				// If a non-sphere's ball wins, we're happy
-				if(firstBall.cell.type < 2)			continue;
+				// If a cell of the correct type wins, we're happy
+				for(int ii=0; ii<attachNotTo.length; ii++)
+					if(firstBall.cell.type == attachNotTo[ii])
+						continue;
 				// Reposition the cell
 				newCell.ballArray[0].pos = firstPos;
+				if(typeNew>1 && typeNew<6) {
+					newCell.ballArray[1].pos = firstPos.plus( dirn.times(newCell.rodSpringArray.get(0).restLength) );
+				} else if (typeNew>6)
+					throw new IndexOutOfBoundsException("Cell type: " + typeNew);
 				// Check if it is not overlapping with any other cells
 				for(int iCell=0; iCell<cellArray.size()-1; iCell++) {
 					CCell cell = cellArray.get(iCell);
 					if(DetectCellCollision_Proper(newCell, cell, 1.0))	continue tryloop;
 				}
 				// Congratulations!
-				Save();
 				break;
 			}
-
 			// It will stick/anchor when needed during movement, so we're done
 		}
 	}

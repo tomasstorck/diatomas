@@ -65,7 +65,9 @@ public class Run {
 			model.muAvgSimple[5] = 0.20;		// TODO 
 			model.growthSkipMax = 10;
 //			model.syntrophyFactor = 1.5;		// Let's not touch substrate transfer just yet
-//			model.attachmentRate = 1.0;
+			model.attachmentRate = 1.0;
+			model.attachCellType = 4;
+			model.attachNotTo = new int[]{4};
 			model.filament = true;
 			model.filamentType[5] = true;
 			model.filLengthRod = new double[]{0.5, 1.7};

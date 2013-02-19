@@ -3,7 +3,7 @@
 /state
 /.settings
 /.externalToolBuilders
-/.git
+/.git*
 /13*
 /as*
 /AS*
