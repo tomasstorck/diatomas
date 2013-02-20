@@ -56,13 +56,13 @@ public class Run {
 			// AS //
 			////////			
 //			model.L = new Vector3d(30e-6, model.radiusCellMax[4], 30e-6);
-			model.radiusCellMax[4] = 0.45e-6;	//  
-			model.lengthCellMax[4] = 1.1e-6;	// 
-			model.radiusCellMax[5] = 0.5e-6;	//  
-			model.lengthCellMax[5] = 3e-6;	// 
+			model.radiusCellMax[4] = 0.45e-6;	// Pseudomonas sp. 138, Tanaka 1985
+			model.lengthCellMax[4] = 1.1e-6;	// Pseudomonas sp. 138 (max "measured" length 2 micron), Tanaka 1985
+			model.radiusCellMax[5] = 0.5e-6;	// Sphaerotilus sp. F6, Tanaka 1985
+			model.lengthCellMax[5] = 3e-6;		// Sphaerotilus sp. F6 (max "measured" length 4 micron), Tanaka 1985
 			model.NInitCell = 6;
-			model.muAvgSimple[4] = 0.38;		// Sphaerotitus
-			model.muAvgSimple[5] = 0.20;		// TODO 
+			model.muAvgSimple[4] = 0.13;		// Based on S. natans, weighed for QO2max in Tanaka 1985
+			model.muAvgSimple[5] = 0.38;		// Sphaerotilus natans, average of different strains, Pellegrin 1999 
 			model.growthSkipMax = 10;
 //			model.syntrophyFactor = 1.5;		// Let's not touch substrate transfer just yet
 			model.attachmentRate = 1.0;
@@ -73,7 +73,7 @@ public class Run {
 			model.filLengthRod = new double[]{0.5, 1.7};
 			model.filStretchLim = 1.0;
 			model.sticking = true;
-			model.stickType[4][5] = model.stickType[5][4] = true;
+			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;
 			model.Kd 	= 1e-13;				// drag force coefficient
 			model.Kc 	= 1e-9;					// cell-cell collision
 			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
@@ -115,27 +115,6 @@ public class Run {
 			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
 			model.growthSkipMax = 10;
 			model.randomSeed = 4;
-			break;
-		case 4:
-			model.Write("Loading parameters for fat E. coli","");
-			/////////////////
-			// FAT E. COLI //
-			/////////////////
-			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
-			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
-			model.NInitCell = 1;
-			model.normalForce = true;
-			model.sticking = model.filament = false;
-			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
-			model.Kr 	= 5e-11;				// internal cell spring
-			model.Kan	= 1e-11;				// anchor
-			model.KfRod0 = 2e-11;
-			model.KfRod1 = 2e-11;
-			model.filLengthRod = new double[]{0.5, 1.7};
-			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
-			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
-			model.growthTimeStep = 450.0;		// s
-			model.growthSkipMax = 10;
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
