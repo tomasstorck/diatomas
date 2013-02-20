@@ -210,7 +210,7 @@ public class Run {
 						model.nInit[iCell],
 						model.position0Init[iCell],
 						model.position1Init[iCell],
-						filament,									// With capability to form filaments?
+						filament,											// With capability to form filaments?
 						model);
 			}
 			model.Write(model.cellArray.size() + " initial cells created","iter");

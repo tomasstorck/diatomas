@@ -378,9 +378,7 @@ for ii=0:NSave			% Can be replaced with parfor
 % 	C = camView;
 % 	AC = norm(A-C);
 % 	BC = tan(deg2rad(0.5*camAngle))*AC;
-% 
 % 	LLine = 1/BC * imageWidth/2;
-% 
 % 	system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''1 um'' ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 % 	system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 

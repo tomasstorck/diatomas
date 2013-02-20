@@ -1167,10 +1167,10 @@ public class CModel implements Serializable {
 							firstDist = distFromDest;
 							firstBall = ball0;													// Could also be ball1, but doesn't matter here
 							Vector3d away;
-							if(E.sc!=0.0 && E.sc!=1.0) {										// Otherwise, away will be null vector, so choose another direction
-								away = E.c2.minus(E.c1).normalise();							// Vector pointing away from the collision
-							} else {
+							if(E.sc==0.0 || E.sc==1.0) {										// Otherwise, away will be null vector
 								away = dirn;
+							} else {
+								away = E.c2.minus(E.c1).normalise();							// Vector pointing away from the collision
 							}
 							// The point on the path where the collision is closest, moving the ball away from there until it no longer overlapping
 							firstPos = E.c1.plus(away.times(rNew+ball0.radius));
@@ -1185,7 +1185,7 @@ public class CModel implements Serializable {
 				// If a cell of the correct type wins, we're happy
 				for(int ii=0; ii<attachNotTo.length; ii++)
 					if(firstBall.cell.type == attachNotTo[ii])
-						continue;
+						continue tryloop;
 				// Reposition the cell
 				newCell.ballArray[0].pos = firstPos;
 				if(typeNew>1 && typeNew<6) {
