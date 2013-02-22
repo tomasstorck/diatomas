@@ -15,7 +15,7 @@ import cell.Vector3d;
 public class Run {
 	CModel model;
 	 
-	double restLength;
+	double[] restLength = new double[6];
 
 	public Run(CModel model) {
 		this.model = model;
@@ -49,13 +49,13 @@ public class Run {
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
-			model.growthSkipMax = 10;
+			model.relaxationIterSuccessiveMax = 10;
 			break;
 		case 1: case 2:
 			////////
 			// AS //
 			////////			
-//			model.L = new Vector3d(30e-6, model.radiusCellMax[4], 30e-6);
+			model.L = new Vector3d(10e-6, 0.0, 10e-6);
 			model.radiusCellMax[4] = 0.45e-6;	// Pseudomonas sp. 138, Tanaka 1985
 			model.lengthCellMax[4] = 1.1e-6;	// Pseudomonas sp. 138 (max "measured" length 2 micron), Tanaka 1985
 			model.radiusCellMax[5] = 0.5e-6;	// Sphaerotilus sp. F6, Tanaka 1985
@@ -63,7 +63,7 @@ public class Run {
 			model.NInitCell = 6;
 			model.muAvgSimple[4] = 0.13;		// Based on S. natans, weighed for QO2max in Tanaka 1985
 			model.muAvgSimple[5] = 0.38;		// Sphaerotilus natans, average of different strains, Pellegrin 1999 
-			model.growthSkipMax = 10;
+//			model.relaxationIterSuccessiveMax = 10;
 //			model.syntrophyFactor = 1.5;		// Let's not touch substrate transfer just yet
 			model.attachmentRate = 1.0;
 			model.attachCellType = 4;
@@ -73,7 +73,8 @@ public class Run {
 			model.filLengthRod = new double[]{0.5, 1.7};
 			model.filStretchLim = 1.0;
 			model.sticking = true;
-			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;
+//			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;
+			model.stickType[4][5] = model.stickType[5][4] = true;
 			model.Kd 	= 1e-13;				// drag force coefficient
 			model.Kc 	= 1e-9;					// cell-cell collision
 			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
@@ -113,7 +114,7 @@ public class Run {
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
-			model.growthSkipMax = 10;
+			model.relaxationIterSuccessiveMax = 10;
 			model.randomSeed = 4;
 			break;
 		default:
@@ -132,13 +133,13 @@ public class Run {
 			model.directionInit = new Vector3d[model.NInitCell];
 			model.position0Init = new Vector3d[model.NInitCell];
 			model.position1Init = new Vector3d[model.NInitCell];
-			restLength = model.lengthCellMax[4]*0.75;
+			restLength[4] = model.lengthCellMax[4]*0.75;
 			for(int ii=0; ii<model.NInitCell; ii++) {
 				model.typeInit[ii] = 4;
 				model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
 				model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			0.0*rand.Double(), 																		(rand.Double()-0.5))			.normalise();
 				model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
-				model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
+				model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength[model.typeInit[ii]]));
 			}
 			break;
 		case 1: case 2:
@@ -147,7 +148,8 @@ public class Run {
 			for(int ii=0; ii<model.NInitCell/2; ii++)						model.typeInit[ii] = 4;			// First half: 
 			for(int ii=model.NInitCell/2; ii<model.NInitCell; ii++)			model.typeInit[ii] = 5;			// Second half: 
 			// Various
-			restLength = model.lengthCellMax[4]*0.75;
+			restLength[4] = model.lengthCellMax[4]*0.75;
+			restLength[5] = model.lengthCellMax[5]*0.75;
 			model.nInit = new double[model.NInitCell];
 			model.directionInit = new Vector3d[model.NInitCell];
 			model.position0Init = new Vector3d[model.NInitCell];
@@ -158,18 +160,18 @@ public class Run {
 				// Biofilm-like
 				for(int ii=0; ii<model.NInitCell; ii++) {
 					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
-					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,															(rand.Double()-0.5))			.normalise();
-					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);
-					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
+					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,																				(rand.Double()-0.5))			.normalise();
+					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),							(rand.Double()-0.5)*model.L.z);
+					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength[model.typeInit[ii]]));
 				}
 			} else {
 				model.Write("Loading parameters for AS/flock","");
 				// Flock-like
 				for(int ii=0; ii<model.NInitCell; ii++) {
 					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
-					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 																(rand.Double()-0.5))			.normalise();
-					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y - (model.typeInit[ii]>1 ? 0.5*restLength:0),			(rand.Double()-0.5)*model.L.z);
-					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
+					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 																					(rand.Double()-0.5))			.normalise();
+					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	(rand.Double()-0.5)*model.L.y - (model.typeInit[ii]>1 ? restLength[model.typeInit[ii]]:0),				(rand.Double()-0.5)*model.L.z);
+					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength[model.typeInit[ii]]));
 				}
 			}
 			break;
@@ -180,7 +182,7 @@ public class Run {
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
-		if(model.growthIter == 0 && model.relaxationIter == 0) {
+		if(model.growthIter == 0 && model.relaxationIter == 0) {			// First time we run this simulation, didn't load it
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
 				boolean filament = model.filamentType[model.typeInit[iCell]];
@@ -212,109 +214,97 @@ public class Run {
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.relaxationIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
 
 			// Grow cells
-			ArrayList<CCell> overlapCellArray = new ArrayList<CCell>(0);
-			boolean grow = false;
-			// Find out if we want to grow
-			if(model.growthSkip < model.growthSkipMax) {
-				overlapCellArray = model.DetectCellCollision_Proper(1.0);
-				if(overlapCellArray.isEmpty())		grow = true;									// Grow if there are no overlapping cells
-			} else {
-				if(model.growthSkip!=0)				model.Write("Maximum number of growth iters skipped", "warning");	// Warn if we don't always continue with overlap
-				grow = true;																		// Grow if we have skipped the maximum number of iterations
+			// Compute concentration fields with COMSOL
+			if(model.comsol) {
+				// Do COMSOL things
+				model.Write("Calculating cell steady state concentrations (COMSOL)","iter");
+				// Make the model
+				Comsol comsol = new Comsol(model);
+				model.Write("\tInitialising geometry", "iter");
+				comsol.Initialise();
+				model.Write("\tCreating cells", "iter");
+				// Create cells in the COMSOL model
+				for(CCell cell : model.cellArray) {
+					if(cell.type<2) 		comsol.CreateSphere(cell);
+					else if(cell.type<6)	comsol.CreateRod(cell);
+					else 					throw new IndexOutOfBoundsException("Cell type: " + cell.type);
+				}
+				comsol.CreateBCBox();					// Create a large box where we set the "bulk" conditions
+				comsol.BuildGeometry();
+				// Set fluxes
+				for(CCell cell : model.cellArray) {
+					comsol.SetFlux(cell);
+				}
+				model.Write("\tSaving model", "iter");
+				comsol.Save();							// Save .mph file
+				// Calculate and extract the results
+				model.Write("\tRunning model", "iter");
+				comsol.Run();							// Run model to calculate concentrations
+				model.Write("\tCalculating cell surface concentrations", "iter");
+				for(CCell cell : model.cellArray) {
+					cell.q = comsol.GetParameter(cell, "q" + Integer.toString(cell.type));
+				}
+				// Clean up after ourselves 
+				model.Write("\tCleaning model from server", "iter");
+				comsol.RemoveModel();
 			}
-			if(grow) {
-				model.growthSkip = 0;
-				// Compute concentration fields with COMSOL
-				if(model.comsol) {
-					// Do COMSOL things
-					model.Write("Calculating cell steady state concentrations (COMSOL)","iter");
-					// Make the model
-					Comsol comsol = new Comsol(model);
-					model.Write("\tInitialising geometry", "iter");
-					comsol.Initialise();
-					model.Write("\tCreating cells", "iter");
-					// Create cells in the COMSOL model
-					for(CCell cell : model.cellArray) {
-						if(cell.type<2) 		comsol.CreateSphere(cell);
-						else if(cell.type<6)	comsol.CreateRod(cell);
-						else 					throw new IndexOutOfBoundsException("Cell type: " + cell.type);
-					}
-					comsol.CreateBCBox();					// Create a large box where we set the "bulk" conditions
-					comsol.BuildGeometry();
-					// Set fluxes
-					for(CCell cell : model.cellArray) {
-						comsol.SetFlux(cell);
-					}
-					model.Write("\tSaving model", "iter");
-					comsol.Save();							// Save .mph file
-					// Calculate and extract the results
-					model.Write("\tRunning model", "iter");
-					comsol.Run();							// Run model to calculate concentrations
-					model.Write("\tCalculating cell surface concentrations", "iter");
-					for(CCell cell : model.cellArray) {
-						cell.q = comsol.GetParameter(cell, "q" + Integer.toString(cell.type));
-					}
-					// Clean up after ourselves 
-					model.Write("\tCleaning model from server", "iter");
-					comsol.RemoveModel();
-				}
-				// Grow cells either with COMSOL or simple 
-				model.Write("Growing cells", "iter");
-				ArrayList<CCell> dividedCellArray;
-				if(model.comsol) {
-					dividedCellArray = model.GrowthFlux();
-				} else {
-					dividedCellArray = model.GrowthSimple();
-				}
-				// Advance growth
-				model.growthIter++;
-				model.growthTime += model.growthTimeStep;
-				if(dividedCellArray.size()>0) {
-					model.Write(dividedCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
-//					String cellNumber = "" + dividedCellArray.get(0).Index();
-//					for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
-//					model.Write("Cells grown: " + cellNumber,"iter");
-				}
-				// Reset springs where needed
-				model.Write("Resetting springs","iter");
-				for(CSpring rod : model.rodSpringArray) {
-					rod.ResetRestLength();
-				}
-				for(CSpring fil : model.filSpringArray) 	{
-					fil.ResetRestLength();
-				}
-				// Attach new cells
-				final double NNewPerStep = model.attachmentRate*(model.growthTimeStep/3600.0);
-				//			N guaranteed	+ 1 the integer of this iteration is not equal to the previous one (this will be wrong for growthIter==0)
-				int NNew = (int)NNewPerStep + (int)(model.growthIter*NNewPerStep)==(int)((model.growthIter-1)*NNewPerStep) ? 0:1;
-				model.Write("Attaching " + NNew + " new cells", "iter");
-				model.Attachment(NNew);
+			// Grow cells either with COMSOL or simple 
+			model.Write("Growing cells", "iter");
+			ArrayList<CCell> dividedCellArray;
+			if(model.comsol) {
+				dividedCellArray = model.GrowthFlux();
 			} else {
-				model.growthSkip++;
-				model.Write(overlapCellArray.size()/2 + " overlapping cell pairs detected, growth delayed","iter");
-				String cellNumber = "" + overlapCellArray.get(0).Index() + " & " + overlapCellArray.get(1).Index();
-				for(int ii=2; ii<overlapCellArray.size(); ii=ii+2) 	cellNumber += ", " + overlapCellArray.get(ii).Index() + " & " + overlapCellArray.get(ii+1).Index();
-				model.Write("Cells overlapping: " + cellNumber,"iter");
+				dividedCellArray = model.GrowthSimple();
 			}
+			// Advance growth
+			model.growthIter++;
+			model.growthTime += model.growthTimeStep;
+			if(dividedCellArray.size()>0) {
+				model.Write(dividedCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
+//				String cellNumber = "" + dividedCellArray.get(0).Index();
+//				for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
+//				model.Write("Cells grown: " + cellNumber,"iter");
+			}
+			// Reset springs where needed
+			model.Write("Resetting springs","iter");
+			for(CSpring rod : model.rodSpringArray) {
+				rod.ResetRestLength();
+			}
+			for(CSpring fil : model.filSpringArray) 	{
+				fil.ResetRestLength();
+			}
+			// Attach new cells
+			final double NNewPerStep = model.attachmentRate*(model.growthTimeStep/3600.0);
+			//			N guaranteed	+ 1 the integer of this iteration is not equal to the previous one (this will be wrong for growthIter==0)
+			int NNew = (int)NNewPerStep + (int)(model.growthIter*NNewPerStep)==(int)((model.growthIter-1)*NNewPerStep) ? 0:1;
+			model.Write("Attaching " + NNew + " new cells", "iter");
+			model.Attachment(NNew);
 
 			// Relaxation
-			boolean moving = true;
+			boolean keepMoving = true;
+			int relaxationIterInit=model.relaxationIter;
 			int nstp=0;
-			while(moving) {
+			while(keepMoving) {
 				model.Write("Starting relaxation calculations","iter");
+				int iter = model.relaxationIter-relaxationIterInit;
 				nstp = model.Relaxation();
 				model.relaxationIter++;
 				model.relaxationTime += model.relaxationTimeStepdt;
 				model.Write("Relaxation finished in " + nstp + " solver steps","iter");
-				moving = false;
-//				for(CBall ball : model.ballArray) {
-//					final double thresholdForce = 1e-20;
-//					final double thresholdVel = 1e-9;
-//					if(ball.force.x + ball.force.y + ball.force.z > thresholdForce)
-//						moving = true;
-//					if(ball.vel.x + ball.vel.y + ball.vel.z > thresholdVel)
-//						moving = true;
-//				}
+				keepMoving = false;
+				for(CBall ball : model.ballArray) {
+					final double thresholdForce = 1e-20;
+					final double thresholdVel = 1e-7;
+					if( ball.force.x + ball.force.y + ball.force.z > thresholdForce   ||   ball.vel.x + ball.vel.y + ball.vel.z > thresholdVel ) {
+						keepMoving = true;
+					}
+				}
+				// Stop relaxing if we have relaxted too much already
+				if(iter==model.relaxationIterSuccessiveMax) {
+					if(iter>0)
+						model.Write("Maximum successive relaxation steps done, continuing", "warning");
+					keepMoving = false;
+				}
 				// And finally: save stuff
 				model.Write("Saving model as serialised file", "iter");
 				model.Save();

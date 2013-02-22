@@ -73,10 +73,13 @@ public class ser2mat {
 		mlModel.setField("nCellMin",                      new MLDouble(null, model.nCellMin, model.nCellMin.length));                     	
 		mlModel.setField("muAvgSimple",                   new MLDouble(null, model.muAvgSimple, model.muAvgSimple.length));               	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 		mlModel.setField("muStDev",                       new MLDouble(null, model.muStDev, model.muStDev.length));                       	// Standard deviation. Only used in GrowthSimple()!
-		mlModel.setField("attachmentRate",                new MLDouble(null, new double[] {model.attachmentRate}, 1));                    	// [h-1] Number of cells newly attached per hour
 		mlModel.setField("syntrophyFactor",               new MLDouble(null, new double[] {model.syntrophyFactor}, 1));                   	// Accelerated growth if two cells of different types are stuck to each other
-		mlModel.setField("growthSkipMax",                 new MLDouble(null, new double[] {model.growthSkipMax}, 1));                     	// The maximum number of growth iterations we are allowed to skip before we should do growth again
-		mlModel.setField("growthSkip",                    new MLDouble(null, new double[] {model.growthSkip}, 1));                        	// How many growth iterations we have skipped
+		// Attachment
+		mlModel.setField("attachmentRate",                new MLDouble(null, new double[] {model.attachmentRate}, 1));                    	// [h-1] Number of cells newly attached per hour
+		mlModel.setField("attachCellType",                new MLDouble(null, new double[] {model.attachCellType}, 1));                    	// What cell type the new cell is
+		//
+		double[] DattachNotTo = new double[model.attachNotTo.length];		for(int ii=0; ii<model.attachNotTo.length; ii++)		DattachNotTo[ii] = model.attachNotTo[ii];		mlModel.setField("attachNotTo",                   new MLDouble(null, DattachNotTo, model.attachNotTo.length));                    	// Which cell types newly attached cells can NOT attach to
+		//
 		// Progress
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {model.growthTime}, 1));                        	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {model.growthTimeStep}, 1));                    	// [s] Time step for growth
@@ -85,6 +88,7 @@ public class ser2mat {
 		mlModel.setField("relaxationTimeStepdt",          new MLDouble(null, new double[] {model.relaxationTimeStepdt}, 1));              	// [s] output time step  for relaxation
 		mlModel.setField("relaxationTimeStep",            new MLDouble(null, new double[] {model.relaxationTimeStep}, 1));                	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
 		mlModel.setField("relaxationIter",                new MLDouble(null, new double[] {model.relaxationIter}, 1));                    	// [-] counter time iterations for relaxation
+		mlModel.setField("relaxationIterSuccessiveMax",   new MLDouble(null, new double[] {model.relaxationIterSuccessiveMax}, 1));       	// [-] how many successive iterations we limit relaxation to
 		// Arrays
 
 		// cellArray

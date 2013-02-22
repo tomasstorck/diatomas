@@ -89,8 +89,6 @@ public class CModel implements Serializable {
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 	public double[] muStDev = {0.25, 0.25, 0.25, 0.25, 0.25, 0.25};	// Standard deviation. Only used in GrowthSimple()!    
 	public double syntrophyFactor = 1.0; 		// Accelerated growth if two cells of different types are stuck to each other
-	public int growthSkipMax = Integer.MAX_VALUE;	// The maximum number of growth iterations we are allowed to skip before we should do growth again
-	public int growthSkip = 0;					// How many growth iterations we have skipped
 	// Attachment
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public int attachCellType = 0;				// What cell type the new cell is 
@@ -100,9 +98,10 @@ public class CModel implements Serializable {
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
 	public int growthIter = 0;					// [-] Counter time iterations for growth
 	public double relaxationTime = 0.0;			// [s] initial time for relaxation (for ODE solver)
-	public double relaxationTimeStepdt = 2e-2;		// [s] output time step  for relaxation
-	public double relaxationTimeStep = 10e-2;	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
+	public double relaxationTimeStepdt = 0.2;	// [s] output time step  for relaxation
+	public double relaxationTimeStep = 1.0;	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
 	public int relaxationIter = 0;				// [-] counter time iterations for relaxation
+	public int relaxationIterSuccessiveMax = 0;	// [-] how many successive iterations we limit relaxation to 
 	// Arrays
 	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
 	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
