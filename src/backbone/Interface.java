@@ -154,43 +154,71 @@ public class Interface{
 								splitValue[ii] = splitValue[ii].replace("{","");
 								splitValue[ii] = splitValue[ii].replace("}","");
 							}
+							// boolean[]
+							if(fieldClassName.equals("boolean")) {
+								boolean[] bool = new boolean[splitValue.length];
+								for(int ii=0; ii<splitValue.length; ii++) {
+									boolean modelBool = ((boolean[]) field.get(model))[ii];
+									bool[ii] = Integer.parseInt(value) == 1 ? true : false;
+									if(modelBool != bool[ii])
+										model.Write(field.getName() + "[" + ii + "] set to " + (bool[ii]?"true":"false"), "");
+								}
+								field.set(model, bool);
+								continue args;
+							}
 							// double[]
 							if(fieldClassName.equals("double")) {
-								double[] newValue = new double[splitValue.length];
-								for(int ii=0; ii<splitValue.length; ii++)
-									newValue[ii] = Double.parseDouble(splitValue[ii]);
-								model.Write(field.getName() + " set to double[" + splitValue.length + "]","");
-								field.set(model, newValue);
+								double[] number = new double[splitValue.length];
+								for(int ii=0; ii<splitValue.length; ii++) {
+									// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
+									if(splitValue[ii].startsWith("*")) {	// Relative
+										double modelNumber = ((double[]) field.get(model))[ii];
+										double modelRefNumber = ((double[]) field.get(modelRef))[ii];
+										double multiplier = Double.parseDouble(splitValue[ii].substring(1));		// Cut off *
+										if(modelNumber != modelRefNumber*multiplier) { 								// If this were true, the operation would already have been done once
+											number[ii] = modelNumber * multiplier;			// Hasn't been multiplied before, so do it								// Otherwise has been multipliplied before, don't change
+											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+										}
+										
+									} else {
+										double modelNumber = ((double[]) field.get(model))[ii];
+										number[ii] = Double.parseDouble(splitValue[ii]);
+										if(modelNumber != number[ii]) 
+											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+									}
+								}
+								field.set(model, number);
 								continue args;
 							}
 							// int[]
 							if(fieldClassName.equals("int")) {
-								int[] newValue = new int[splitValue.length];
-								for(int ii=0; ii<splitValue.length; ii++) 
-									newValue[ii] = Integer.parseInt(splitValue[ii]);
-								model.Write(field.getName() + " set to int[" + splitValue.length + "]","");
-								field.set(model, newValue);
-								continue args;
-							}
-							// boolean[]
-							if(fieldClassName.equals("boolean")) {
-								boolean[] newValue = new boolean[splitValue.length];
-								for(int ii=0; ii<splitValue.length; ii++)
-									newValue[ii] = Integer.parseInt(value) == 1 ? true : false;
-								field.set(model, newValue);
+								int[] number = new int[splitValue.length];
+								for(int ii=0; ii<splitValue.length; ii++) {
+									int modelNumber = ((int[]) field.get(model))[ii];
+									number[ii] = Integer.parseInt(splitValue[ii]);
+									if(modelNumber != number[ii]) 
+										model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+								}
+								field.set(model, number);
 								continue args;
 							}
 							// String[]
 							if(fieldClassName.equals("String")) {
-								String[] newValue = new String[splitValue.length];
-								for(int ii=0; ii<splitValue.length; ii++)
-									newValue[ii] = splitValue[ii];
-								field.set(model, newValue);
+								String[] string = new String[splitValue.length];
+								for(int ii=0; ii<splitValue.length; ii++) {
+									String modelString = (String) field.get(model);
+									string[ii] = splitValue[ii];
+									if(!modelString.equals(string[ii])) 
+										model.Write(field.getName() + " set to " + value, "");
+								}
+								field.set(model, string);
 								continue args;
 							}
 						// The field is NOT an array
 						} else {
-							if(fieldClass.equals(Boolean.class)) {
+							String fieldClassName = fieldClass.getSimpleName();
+							// boolean
+							if(fieldClassName.equals("Boolean")) {
 								boolean bool = Integer.parseInt(value) == 1 ? true : false;
 								boolean modelBool = field.getBoolean(model);
 								if(modelBool != bool) {
@@ -198,7 +226,8 @@ public class Interface{
 									model.Write(field.getName() + " set to " + (bool?"true":"false"), "");
 								}
 								continue args;
-							} else if(fieldClass.equals(Double.class)) {				// Does the field contain a double?
+							// double
+							} else if(fieldClassName.equals("Double")) {
 								double number;
 								double modelNumber = field.getDouble(model);
 								double modelRefNumber = field.getDouble(modelRef);
@@ -218,7 +247,8 @@ public class Interface{
 									}											
 								}
 								continue args;									// Check next argument (i.e. continue outer loop)
-							} else if(fieldClass.equals(Integer.class)) {		// An int?
+							// int
+							} else if(fieldClassName.equals("Integer")) {
 								int number = Integer.parseInt(value);
 								int modelNumber = field.getInt(model);
 								if(modelNumber != number) {
@@ -226,7 +256,8 @@ public class Interface{
 									model.Write(field.getName() + " set to " + number, "");	
 								}
 								continue args;
-							} else if(fieldClass.equals(String.class)) {		// A String?
+							// String
+							} else if(fieldClassName.equals("String")) {
 								String modelString = (String) field.get(model);
 								if(!modelString.equals(value)) {
 									field.set(model, value);

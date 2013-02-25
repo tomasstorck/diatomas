@@ -49,9 +49,10 @@ public class Run {
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
-			model.relaxationIterSuccessiveMax = 10;
+//			model.relaxationIterSuccessiveMax = 10;
 			break;
 		case 1: case 2:
+			model.Write("Loading parameters for AS","");
 			////////
 			// AS //
 			////////			
@@ -114,7 +115,7 @@ public class Run {
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
-			model.relaxationIterSuccessiveMax = 10;
+//			model.relaxationIterSuccessiveMax = 10;
 			model.randomSeed = 4;
 			break;
 		default:
