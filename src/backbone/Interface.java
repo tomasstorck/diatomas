@@ -138,8 +138,9 @@ public class Interface{
 	public static void SetArgument(CModel model, CModel modelRef, Hashtable<String, String> argument) {
 		Enumeration<String> argumentKeys = argument.keys();
 		args:while(argumentKeys.hasMoreElements()) {
-			String key = argumentKeys.nextElement();
-			String value = argument.get(key);
+			String keyRaw = argumentKeys.nextElement();
+			String key = keyRaw.contains("[") ? keyRaw.split("\\[")[0] : keyRaw;	// Double escape was necessary
+			String value = argument.get(keyRaw);					// Remove the part at and after "[" if present
 			for(Field field : CModel.class.getFields()) {
 				if(key.equalsIgnoreCase(field.getName())) {
 					key = field.getName();									// Update key to the correct Capitalisation
@@ -148,71 +149,134 @@ public class Interface{
 						Class fieldClass = CModel.class.getField(key).get(model).getClass();
 						// If the field is any kind of array
 						if(field.get(model).getClass().isArray()) {
-							String fieldClassName = fieldClass.getComponentType().getName(); 
-							String[] splitValue = value.split(",");			// Split at comma
-							for(int ii=0; ii<splitValue.length; ii++) {		// Replace all curly braces
-								splitValue[ii] = splitValue[ii].replace("{","");
-								splitValue[ii] = splitValue[ii].replace("}","");
-							}
-							// boolean[]
-							if(fieldClassName.equals("boolean")) {
-								boolean[] bool = new boolean[splitValue.length];
-								for(int ii=0; ii<splitValue.length; ii++) {
-									boolean modelBool = ((boolean[]) field.get(model))[ii];
+							String fieldClassName = fieldClass.getComponentType().getName();
+							// We change only a single index
+							if(keyRaw.contains("[")) {
+								String indexString = keyRaw.split("\\[")[1];
+								indexString = indexString.replace("[","");
+								indexString = indexString.replace("]","");
+								// boolean[]
+								if(fieldClassName.equals("boolean")) {
+									boolean[] modelBool = (boolean[]) field.get(model);
+									boolean[] bool = modelBool.clone();
+									int ii = Integer.parseInt(indexString);
 									bool[ii] = Integer.parseInt(value) == 1 ? true : false;
-									if(modelBool != bool[ii])
+									java.util.Arrays.equals(modelBool, bool);
+									if(modelBool[ii] != bool[ii])
 										model.Write(field.getName() + "[" + ii + "] set to " + (bool[ii]?"true":"false"), "");
+									field.set(model, bool);
+									continue args;
 								}
-								field.set(model, bool);
-								continue args;
-							}
-							// double[]
-							if(fieldClassName.equals("double")) {
-								double[] number = new double[splitValue.length];
-								for(int ii=0; ii<splitValue.length; ii++) {
+								// double[]
+								if(fieldClassName.equals("double")) {
+									double[] modelNumber = (double[]) field.get(model);
+									double[] modelRefNumber = (double[]) field.get(modelRef);
+									double[] number = modelNumber.clone();
+									int ii = Integer.parseInt(indexString);
 									// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
-									if(splitValue[ii].startsWith("*")) {	// Relative
-										double modelNumber = ((double[]) field.get(model))[ii];
-										double modelRefNumber = ((double[]) field.get(modelRef))[ii];
-										double multiplier = Double.parseDouble(splitValue[ii].substring(1));		// Cut off *
-										if(modelNumber != modelRefNumber*multiplier) { 								// If this were true, the operation would already have been done once
-											number[ii] = modelNumber * multiplier;			// Hasn't been multiplied before, so do it								// Otherwise has been multipliplied before, don't change
+									if(value.startsWith("*")) {	// Relative
+										double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
+										if(number[ii] != modelRefNumber[ii]*multiplier) { 				// If this were true, the operation would already have been done once
+											number[ii] *= multiplier;									// Hasn't been multiplied before, so do it
 											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
 										}
-										
 									} else {
-										double modelNumber = ((double[]) field.get(model))[ii];
-										number[ii] = Double.parseDouble(splitValue[ii]);
+										number[ii] = Double.parseDouble(value);
+										if(number[ii] != modelRefNumber[ii]) 
+											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+									}
+									field.set(model, number);
+									continue args;
+								}
+								// int[]
+								if(fieldClassName.equals("int")) {
+									int[] modelNumber = (int[]) field.get(model);
+									int[] number = modelNumber.clone();
+									int ii = Integer.parseInt(indexString);
+									number[ii] = Integer.parseInt(value);
+									if(modelNumber[ii] != number[ii])
+										model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+									field.set(model, number);
+									continue args;
+								}
+								// String[]
+								if(fieldClassName.equals("String")) {
+									String[] modelString = (String[]) field.get(model);
+									String[] string = modelString.clone();
+									int ii = Integer.parseInt(indexString);
+									string[ii] = value;
+									if(modelString.equals(string))
+										model.Write(field.getName() + "[" + ii + "] set to " + string[ii], "");
+									field.set(model, string);
+									continue args;
+								}
+							// We make an entirely new array
+							} else {
+								String[] splitValue = value.split(",");			// Split at comma
+								for(int ii=0; ii<splitValue.length; ii++) {		// Replace all curly braces
+									splitValue[ii] = splitValue[ii].replace("{","");
+									splitValue[ii] = splitValue[ii].replace("}","");
+								}
+								// boolean[]
+								if(fieldClassName.equals("boolean")) {
+									boolean[] bool = new boolean[splitValue.length];
+									for(int ii=0; ii<splitValue.length; ii++) {
+										boolean modelBool = ((boolean[]) field.get(model))[ii];
+										bool[ii] = Integer.parseInt(splitValue[ii]) == 1 ? true : false;
+										if(modelBool != bool[ii])
+											model.Write(field.getName() + "[" + ii + "] set to " + (bool[ii]?"true":"false"), "");
+									}
+									field.set(model, bool);
+									continue args;
+								}
+								// double[]
+								if(fieldClassName.equals("double")) {
+									double[] number = new double[splitValue.length];
+									for(int ii=0; ii<splitValue.length; ii++) {
+										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
+										if(splitValue[ii].startsWith("*")) {	// Relative
+											double modelNumber = ((double[]) field.get(model))[ii];
+											double modelRefNumber = ((double[]) field.get(modelRef))[ii];
+											double multiplier = Double.parseDouble(splitValue[ii].substring(1));		// Cut off *
+											if(modelNumber != modelRefNumber*multiplier) { 								// If this were true, the operation would already have been done once
+												number[ii] = modelNumber * multiplier;			// Hasn't been multiplied before, so do it								// Otherwise has been multipliplied before, don't change
+												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+											}
+
+										} else {
+											double modelNumber = ((double[]) field.get(model))[ii];
+											number[ii] = Double.parseDouble(splitValue[ii]);
+											if(modelNumber != number[ii]) 
+												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+										}
+									}
+									field.set(model, number);
+									continue args;
+								}
+								// int[]
+								if(fieldClassName.equals("int")) {
+									int[] number = new int[splitValue.length];
+									for(int ii=0; ii<splitValue.length; ii++) {
+										int modelNumber = ((int[]) field.get(model))[ii];
+										number[ii] = Integer.parseInt(splitValue[ii]);
 										if(modelNumber != number[ii]) 
 											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
 									}
+									field.set(model, number);
+									continue args;
 								}
-								field.set(model, number);
-								continue args;
-							}
-							// int[]
-							if(fieldClassName.equals("int")) {
-								int[] number = new int[splitValue.length];
-								for(int ii=0; ii<splitValue.length; ii++) {
-									int modelNumber = ((int[]) field.get(model))[ii];
-									number[ii] = Integer.parseInt(splitValue[ii]);
-									if(modelNumber != number[ii]) 
-										model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+								// String[]
+								if(fieldClassName.equals("String")) {
+									String[] string = new String[splitValue.length];
+									for(int ii=0; ii<splitValue.length; ii++) {
+										String modelString = (String) field.get(model);
+										string[ii] = splitValue[ii];
+										if(!modelString.equals(string[ii])) 
+											model.Write(field.getName() + " set to " + value, "");
+									}
+									field.set(model, string);
+									continue args;
 								}
-								field.set(model, number);
-								continue args;
-							}
-							// String[]
-							if(fieldClassName.equals("String")) {
-								String[] string = new String[splitValue.length];
-								for(int ii=0; ii<splitValue.length; ii++) {
-									String modelString = (String) field.get(model);
-									string[ii] = splitValue[ii];
-									if(!modelString.equals(string[ii])) 
-										model.Write(field.getName() + " set to " + value, "");
-								}
-								field.set(model, string);
-								continue args;
 							}
 						// The field is NOT an array
 						} else {
@@ -226,8 +290,9 @@ public class Interface{
 									model.Write(field.getName() + " set to " + (bool?"true":"false"), "");
 								}
 								continue args;
+							}
 							// double
-							} else if(fieldClassName.equals("Double")) {
+							if(fieldClassName.equals("Double")) {
 								double number;
 								double modelNumber = field.getDouble(model);
 								double modelRefNumber = field.getDouble(modelRef);
@@ -247,8 +312,9 @@ public class Interface{
 									}											
 								}
 								continue args;									// Check next argument (i.e. continue outer loop)
+							}
 							// int
-							} else if(fieldClassName.equals("Integer")) {
+							if(fieldClassName.equals("Integer")) {
 								int number = Integer.parseInt(value);
 								int modelNumber = field.getInt(model);
 								if(modelNumber != number) {
@@ -256,17 +322,18 @@ public class Interface{
 									model.Write(field.getName() + " set to " + number, "");	
 								}
 								continue args;
+							}
 							// String
-							} else if(fieldClassName.equals("String")) {
+							if(fieldClassName.equals("String")) {
 								String modelString = (String) field.get(model);
 								if(!modelString.equals(value)) {
 									field.set(model, value);
 									model.Write(field.getName() + " set to " + value, "");
 								}												// Has been set before, don't change
 								continue args;
-							} else {
-								throw new RuntimeException("Unknown class type");
 							}
+							// Throw an error
+							throw new RuntimeException("Unknown class type");
 						}
 					} catch (Exception ex) {
 						ex.printStackTrace();
