@@ -218,6 +218,11 @@ public abstract class CSpring implements Serializable {
 //		ballArray[1] = ball1;
 //	}
 	
+	public int Index() {
+		// Overwritten in subclass
+		return -1;
+	}
+	
 	public int Index(ArrayList<? extends CSpring> array) {
 //		CModel model = this.ballArray[0].cell.model;
 //		ArrayList<CSpring> array = new ArrayList<CSpring>();

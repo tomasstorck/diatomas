@@ -56,7 +56,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 		fprintf(fid2,'\t\t%-50s%-80s\t%s\n',['mlModel.setField("' n '",'],['new MLDouble(null, new double[] {model.' n '}, 1));'],comment);
 		continue
 	end
-	% int[]					// Ugly one as we can't cast int[] --> double[]
+	% int[], ugly one as we can't cast int[] --> double[]
 	if hasstr(c,'int[] ')
 		[n, comment] = splitline(c,'int\[\]');
 		fprintf(fid2,'\t\t//\n');
@@ -150,122 +150,7 @@ while isempty(strfind(c,'//////////////////////////////////'))	% while we don't 
 		c2 = '';
 		while isempty(strfind(c2,'//////////////////////////////////'))
 			c2=fgetl(fid3);
-			% Ignore section
-			if isempty(strtrim(c)) || ...
-					~isempty(strfind(c2,'package')) || ...
-					~isempty(strfind(c2,'import')) || ...
-					~isempty(strfind(c2,'public class')) || ...
-					~isempty(strfind(c2,'//////////////////////////////////'))
-				continue
-			end
-			
-			% Operate on the line
-			% comment
-			c2trim = strtrim(c2);
-			if length(c2trim)>2 && strcmp(c2trim(1:2),'//') && ~strcmp(c2trim(1:3),'///')
-% 				fprintf(fid2,['\t\t\t' c2trim '\n']);
-				continue
-			end
-			% double
-			if hasstr(c2,'double ')
-				[n, comment] = splitline(c2,'double');
-				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '}, 1), ii);'],comment);
-				continue
-			end
-			% double[]
-			if hasstr(c2,'double[]')
-				[n, comment] = splitline(c2,'double\[\]');
-				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, obj.' n ', obj.' n '.length), ii);'],comment);
-				continue
-			end
-			% int
-			if hasstr(c2,'int ')
-				[n, comment] = splitline(c2,'int');
-				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '}, 1), ii);'], comment);
-				continue
-			end
-			% String
-			if hasstr(c2,'String ')
-				[n, comment] = splitline(c2,'String');
-				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLChar(null, new String[] {obj.' n '}, obj.' n '.length()), ii);'], comment);
-				continue
-			end
-			% String[]
-			if hasstr(c2,'String[] ')
-				[n, comment] = splitline(c,'String\[\]');
-				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLChar(null, obj.' n ');'], comment);
-				continue
-			end
-			% Vector3d
-			if hasstr(c2,'Vector3d ')
-				[n, comment] = splitline(c2,'Vector3d');
-				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.x, obj.' n '.y, obj.' n '.z}, 3), ii);'], comment);
-				continue
-			end
-			% Vector3d[]
-			if hasstr(c2,'Vector3d[] ')
-				[n, comment] = splitline(c2,'Vector3d\[\]');
-				fprintf(fid2,['\t\t\t//' n '\n']);
-				if ~isempty(comment)
-					fprintf(fid2,['\t\t' comment '\n']);
-				end
-				fprintf(fid2,['\t\t\t{int N2 = (int) obj.' n '.length;\n']);
-				fprintf(fid2,['\t\t\tdouble[][] ' n ' = new double[N2][3];\n']);
-				fprintf(fid2,['\t\t\tfor(int jj=0; jj<N2; jj++) {\n']);
-				fprintf(fid2,['\t\t\t\t' n '[jj][0] = obj.' n '[jj].x;\n']);
-				fprintf(fid2,['\t\t\t\t' n '[jj][1] = obj.' n '[jj].y;\n']);
-				fprintf(fid2,['\t\t\t\t' n '[jj][2] = obj.' n '[jj].z;\n']);
-				fprintf(fid2,['\t\t\t}\n']);
-				fprintf(fid2,'\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, ' n '));}']);
-% 				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, obj.' n ', obj.' n '.length), ii);'],comment);
-% 				fprintf(fid2,'\t\t%-50s%-80s\n',['mlModel.setField("' n '",'],['new MLDouble(null, model.' n '));']);
-				continue
-			end
-			% boolean
-			if hasstr(c2,'boolean ')
-				[n, comment] = splitline(c2,'boolean');
-				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '?1:0}, 1), ii);'], comment);
-				continue
-            end
-            % CCell. Requires null check
-            if hasstr(c2,'CCell ')
-                [n, comment] = splitline(c2,'CCell');
-                fprintf(fid2,['\t\t\t// Set ' n '\t' comment '\n']);
-                fprintf(fid2,['\t\t\tif(obj.' n '==null)\n']);
-                fprintf(fid2,'\t\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],'new MLDouble(null, new double[] {}, 0), ii);');
-                fprintf(fid2,'\t\t\telse\n');
-                fprintf(fid2,'\t\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.Index()}, 1), ii);']);
-                continue
-            end
-			% Arrays (this one is completely different from the one above!)
-			if hasstr(c2,'Array')
-				fprintf(fid2,'\t\t\t\n');
-				if hasstr(c2,'[]')		% If already array
-					% Extract class name
-					[nClass2, ~] = splitline(c2,'\[\]',1);
-					% Extract object name (like before)
-					[nObj2, comment2] = splitline(c2,'\[\]');
-					fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.length];\n']);
-					fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.length; jj++)\t']);
-					fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '[jj].Index();\n']);
-				elseif hasstr(c2,'>')
-					% Extract class name
-					s2raw = regexp(c2,'ArrayList<','split');
-					s2raw2 = regexp(s2raw{2},'>','split');
-					nClass2 = s2raw2{1};
-					% Extract object name (like before)
-					[nObj2, comment2] = splitline(c2,'>');
-					fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.size()];\n']);
-					fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.size(); jj++)\t']);
-					fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '.get(jj).Index();\n']);
-				else
-					throw(['Cannot recognise type of array in: ' c2])
-				end
-				fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' nObj2 '",'],['new MLDouble(null, arrayIndex, 1), ii);'],comment2);
-				continue
-			end
-			
-			% And if no match was found, just ignore (could be reference to another array nested in CModel, etc)
+			readLevel2(nObj,c2,fid2);
 		end
 		fprintf(fid2,'\t\t}\n');
 		fprintf(fid2,['\t\tmlModel.setField("' nObj '", ml' nObj ');\n']);
@@ -312,14 +197,142 @@ fprintf(fid2,'\t}\n');
 fprintf(fid2,'}\n');
 
 fclose(fid2);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function readLevel2(nObj, c2, fid2)
+
+if strfind(strtrim(c2),' extends ')
+	% This is a subclass. Work through its superclass
+	nClass3 = cleanup(splitline(c2,' extends '));
+	fid4=fopen(['../src/cell/' nClass3 '.java']);
+	c3 = '';
+	while isempty(strfind(c3,'//////////////////////////////////'))
+		c3=fgetl(fid4);
+		readLevel2(nObj,c3,fid2);
+	end
+elseif isempty(strtrim(c2)) || ...
+		~isempty(strfind(c2,'package')) || ...
+		~isempty(strfind(c2,'import')) || ...
+		~isempty(strfind(c2,'public class')) || ...
+		~isempty(strfind(c2,'//////////////////////////////////'))
+	% Ignore section
+	return
+end
+
+% Operate on the line
+% comment
+c2trim = strtrim(c2);
+if length(c2trim)>2 && strcmp(c2trim(1:2),'//') && ~strcmp(c2trim(1:3),'///')
+	return
+end
+% double
+if hasstr(c2,' double ')
+	[n, comment] = splitline(c2,'double');
+	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '}, 1), ii);'],comment);
+	return
+end
+% double[]
+if hasstr(c2,' double[]')
+	[n, comment] = splitline(c2,'double\[\]');
+	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, obj.' n ', obj.' n '.length), ii);'],comment);
+	return
+end
+% int
+if hasstr(c2,' int ')
+	[n, comment] = splitline(c2,'int');
+	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '}, 1), ii);'], comment);
+	return
+end
+% String
+if hasstr(c2,' String ')
+	[n, comment] = splitline(c2,'String');
+	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLChar(null, new String[] {obj.' n '}, obj.' n '.length()), ii);'], comment);
+	return
+end
+% String[]
+if hasstr(c2,' String[] ')
+	[n, comment] = splitline(c,'String\[\]');
+	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLChar(null, obj.' n ');'], comment);
+	return
+end
+% Vector3d
+if hasstr(c2,' Vector3d ')
+	[n, comment] = splitline(c2,'Vector3d');
+	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.x, obj.' n '.y, obj.' n '.z}, 3), ii);'], comment);
+	return
+end
+% Vector3d[]
+if hasstr(c2,' Vector3d[] ')
+	[n, comment] = splitline(c2,'Vector3d\[\]');
+	fprintf(fid2,['\t\t\t//' n '\n']);
+	if ~isempty(comment)
+		fprintf(fid2,['\t\t' comment '\n']);
+	end
+	fprintf(fid2,['\t\t\t{int N2 = (int) obj.' n '.length;\n']);
+	fprintf(fid2,['\t\t\tdouble[][] ' n ' = new double[N2][3];\n']);
+	fprintf(fid2,['\t\t\tfor(int jj=0; jj<N2; jj++) {\n']);
+	fprintf(fid2,['\t\t\t\t' n '[jj][0] = obj.' n '[jj].x;\n']);
+	fprintf(fid2,['\t\t\t\t' n '[jj][1] = obj.' n '[jj].y;\n']);
+	fprintf(fid2,['\t\t\t\t' n '[jj][2] = obj.' n '[jj].z;\n']);
+	fprintf(fid2,['\t\t\t}\n']);
+	fprintf(fid2,'\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, ' n '));}']);
+	return
+end
+% boolean
+if hasstr(c2,' boolean ')
+	[n, comment] = splitline(c2,'boolean');
+	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '?1:0}, 1), ii);'], comment);
+	return
+end
+% CCell. Requires null check
+if hasstr(c2,' CCell ')
+	[n, comment] = splitline(c2,'CCell');
+	fprintf(fid2,['\t\t\t// Set ' n '\t' comment '\n']);
+	fprintf(fid2,['\t\t\tif(obj.' n '==null)\n']);
+	fprintf(fid2,'\t\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],'new MLDouble(null, new double[] {}, 0), ii);');
+	fprintf(fid2,'\t\t\telse\n');
+	fprintf(fid2,'\t\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.Index()}, 1), ii);']);
+	return
+end
+% Arrays (this one is completely different from the one above!)
+if hasstr(c2,' Array')
+	fprintf(fid2,'\t\t\t\n');
+	if hasstr(c2,'[]')		% If already array
+		% Extract class name
+		[nClass2, ~] = splitline(c2,'\[\]',1);
+		% Extract object name (like before)
+		[nObj2, comment2] = splitline(c2,'\[\]');
+		fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.length];\n']);
+		fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.length; jj++)\t']);
+		fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '[jj].Index();\n']);
+	elseif hasstr(c2,'>')
+		% Extract class name
+		s2raw = regexp(c2,'ArrayList<','split');
+		s2raw2 = regexp(s2raw{2},'>','split');
+		nClass2 = s2raw2{1};
+		% Extract object name (like before)
+		[nObj2, comment2] = splitline(c2,'>');
+		fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.size()];\n']);
+		fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.size(); jj++)\t']);
+		fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '.get(jj).Index();\n']);
+	else
+		throw(['Cannot recognise type of array in: ' c2])
+	end
+	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' nObj2 '",'],['new MLDouble(null, arrayIndex, 1), ii);'],comment2);
+	return
+end
+
+% And if no match was found, just ignore (could be reference to another array nested in CModel, etc)
+end
 
 function bool = hasstr(s,pat)
 if ~isempty(strfind(s,pat))
 	bool = true;
 else
 	bool = false;
+end
 end
 
 function s = cleanup(s)
@@ -334,12 +347,15 @@ s = sraw{1};
 s(strfind(s,'\['))=[];
 s(strfind(s,'\]'))=[];
 
+% Remove brackets {}
+s(strfind(s,'{'))=[];
+s(strfind(s,'}'))=[];
+
 % clean spaces
 s = strtrim(s);
-
+end
 
 function [name, comment] = splitline(varargin)
-
 s = varargin{1};
 pat = varargin{2};
 if length(varargin)==3
@@ -360,4 +376,5 @@ name = cleanup(sraw2{1});
 comment = '';
 if length(sraw2) > 1
 	comment = ['// ' strtrim(sraw2{2})];
+end
 end
