@@ -99,16 +99,16 @@ public class CModel implements Serializable {
 	public int growthIter = 0;					// [-] Counter time iterations for growth
 	public double relaxationTime = 0.0;			// [s] initial time for relaxation (for ODE solver)
 	public double relaxationTimeStepdt = 0.2;	// [s] output time step  for relaxation
-	public double relaxationTimeStep = 1.0;	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
+	public double relaxationTimeStep = 1.0;		// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
 	public int relaxationIter = 0;				// [-] counter time iterations for relaxation
 	public int relaxationIterSuccessiveMax = 0;	// [-] how many successive iterations we limit relaxation to 
 	// Arrays
 	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
 	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
-	public ArrayList<CSpring> rodSpringArray = new ArrayList<CSpring>(0);
-	public ArrayList<CSpring> stickSpringArray = new ArrayList<CSpring>(0);
-	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(0);
-	public ArrayList<CSpring> anchorSpringArray = new ArrayList<CSpring>(0);
+	public ArrayList<CRodSpring> rodSpringArray = new ArrayList<CRodSpring>(0);
+	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(0);
+	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(0);
+	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(0);
 	// === SOLVER STUFF ===
 	public double ODEbeta = 0.08;
 	public double ODEalpha = 1.0/8.0-ODEbeta*0.2;
@@ -430,10 +430,10 @@ public class CModel implements Serializable {
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
-	public ArrayList<CSpring> DetectAnchorBreak(double maxStretch) {
-		ArrayList<CSpring> breakArray = new ArrayList<CSpring>();
+	public ArrayList<CAnchorSpring> DetectAnchorBreak(double maxStretch) {
+		ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 		
-		for(CSpring anchor : anchorSpringArray) {
+		for(CAnchorSpring anchor : anchorSpringArray) {
 			double al = (anchor.ballArray[0].pos.minus(anchor.anchorPoint)).norm();		// al = Actual Length
 			if(al > maxStretch*anchor.restLength) {
 				breakArray.add(anchor);
@@ -679,7 +679,7 @@ public class CModel implements Serializable {
 		}
 		
 		// Elastic forces between springs within cells (CSpring in type>1)
-		for(CSpring rod : rodSpringArray) {
+		for(CRodSpring rod : rodSpringArray) {
 			CBall ball0 = rod.ballArray[0];
 			CBall ball1 = rod.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
@@ -695,7 +695,7 @@ public class CModel implements Serializable {
 		}
 		
 		// Apply forces due to anchor springs
-		for(CSpring anchor : anchorSpringArray) {
+		for(CAnchorSpring anchor : anchorSpringArray) {
 			Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 			double dn = diff.norm();
 			// Get force
@@ -708,7 +708,7 @@ public class CModel implements Serializable {
 		}
 		
 		// Apply forces on sticking springs
-		for(CSpring stick : stickSpringArray) {
+		for(CStickSpring stick : stickSpringArray) {
 			CBall ball0 = stick.ballArray[0];
 			CBall ball1 = stick.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
@@ -764,8 +764,8 @@ public class CModel implements Serializable {
 				CBall ball1 = (cell0.type>1) ? ball1 = cell0.ballArray[1] : null;
 
 				if(cell0.anchorSpringArray.size()>0) { 		// This cell is already anchored
-					ArrayList<CSpring> breakArray = new ArrayList<CSpring>();
-					for(CSpring anchor : cell0.anchorSpringArray) {
+					ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
+					for(CAnchorSpring anchor : cell0.anchorSpringArray) {
 						// Break anchor?
 						Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 						double dn = diff.norm();
@@ -773,7 +773,7 @@ public class CModel implements Serializable {
 							breakArray.add(anchor);
 						}
 					}
-					for(CSpring anchor : breakArray)		Assistant.NAnchorBreak += anchor.Break();
+					for(CAnchorSpring anchor : breakArray)		Assistant.NAnchorBreak += anchor.Break();
 				} else {									// Cell is not yet anchored
 					// Form anchor?
 					boolean formBall0 = (ball0.pos.y < anchorFormLim+ball0.radius) ? true : false;
@@ -985,8 +985,8 @@ public class CModel implements Serializable {
 				if(sphereStraightFil) {											// Reorganise if we want straight fils, otherwise just attach resulting in random structures
 					CBall motherBall0 = c0.ballArray[0];
 					CBall daughterBall0 = c1.ballArray[0];
-					ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
-					for(CSpring fil : c0.filSpringArray) {
+					ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
+					for(CFilSpring fil : c0.filSpringArray) {
 						boolean found=false;
 						if( fil.ballArray[0] == motherBall0) {					// Only replace half the balls for daughter's
 							fil.ballArray[0] = daughterBall0;
@@ -996,14 +996,14 @@ public class CModel implements Serializable {
 							donateFilArray.add(fil);
 						}
 					}
-					for(CSpring fil : donateFilArray) {
+					for(CFilSpring fil : donateFilArray) {
 						c1.filSpringArray.add(fil);
 						c0.filSpringArray.remove(fil);
 						// Reset rest lengths. Spring constant won't change because it depends on cell type
 						fil.ResetRestLength();
 					}
 				}
-				new CSpring(c0.ballArray[0], c1.ballArray[0], 3);
+				new CFilSpring(c0.ballArray[0], c1.ballArray[0], 3);
 			}
 		} else if (c0.type<6) {
 			///////
@@ -1052,8 +1052,8 @@ public class CModel implements Serializable {
 			if(c1.filament) {
 				CBall c1b0 = c1.ballArray[0];
 				CBall c1b1 = c1.ballArray[1];
-				ArrayList<CSpring> donateFilArray = new ArrayList<CSpring>();
-				for(CSpring fil : c0.filSpringArray) {
+				ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
+				for(CFilSpring fil : c0.filSpringArray) {
 					boolean found=false;
 					if( fil.type == 4 && fil.ballArray[0] == c0b1) {
 						fil.ballArray[0] = 	c1b1;
@@ -1072,15 +1072,15 @@ public class CModel implements Serializable {
 						donateFilArray.add(fil);
 					}
 				}
-				for(CSpring fil : donateFilArray) {
+				for(CFilSpring fil : donateFilArray) {
 					c1.filSpringArray.add(fil);
 					c0.filSpringArray.remove(fil);
 					// Reset rest lengths
 					fil.ResetRestLength();
 				}
 				// Make new filial link between mother and daughter
-				CSpring filSmall = 	new CSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
-				CSpring filBig = 	new CSpring(c1.ballArray[1], c0.ballArray[0], 5);							// type==5 --> Big spring
+				CFilSpring filSmall = 	new CFilSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
+				CFilSpring filBig = 	new CFilSpring(c1.ballArray[1], c0.ballArray[0], 5);							// type==5 --> Big spring
 				filSmall.siblingArray.add(filBig);
 				filBig.siblingArray.add(filSmall);
 			}
@@ -1089,7 +1089,7 @@ public class CModel implements Serializable {
 		}
 		// Set sticking springs
 		for(CCell cell : c0.stickCellArray) {														// We want to check each other cell
-			for(CSpring stick : c0.stickSpringArray) {												// And find the correct spring, attached to c0 and cell
+			for(CStickSpring stick : c0.stickSpringArray) {												// And find the correct spring, attached to c0 and cell
 				if(stick.ballArray[0].equals(c1) || stick.ballArray[1].equals(c1)) {				
 					if(c1.GetDistance(cell) < c0.GetDistance(cell)) {								// If c1 is closer, move sticking spring to c1
 						stick.Break();																// Break this spring and its siblings. OPTIMISE: We could restick it, but then we need to find the correct ball to Stick() to 
@@ -1151,7 +1151,7 @@ public class CModel implements Serializable {
 					}
 				}
 				// After checking all balls, check all springs in the rods
-				for(CSpring spring : rodSpringArray) {
+				for(CRodSpring spring : rodSpringArray) {
 					// Find the distance between the path of the particle (a line) and the rod spring (a line segment)
 					CBall ball0 = spring.ballArray[0];
 					CBall ball1 = spring.ballArray[1];
@@ -1205,8 +1205,8 @@ public class CModel implements Serializable {
 	////////////////////////////
 	// Anchor and Stick stuff //
 	////////////////////////////
-	public void BreakStick(ArrayList<CSpring> breakArray) {
-		for(CSpring spring : breakArray) {
+	public void BreakStick(ArrayList<CStickSpring> breakArray) {
+		for(CStickSpring spring : breakArray) {
 			CCell cell0 = spring.ballArray[0].cell;
 			CCell cell1 = spring.ballArray[1].cell;
 			// Remove cells from each others' stickCellArray 
@@ -1222,7 +1222,7 @@ public class CModel implements Serializable {
 	
 	public int BuildAnchor(ArrayList<CCell> collisionArray) {
 		// Make unique
-		for(CSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.ballArray[0].cell);
+		for(CAnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.ballArray[0].cell);
 		
 		// Anchor the non-stuck, collided cells to the ground
 		for(CCell cell : collisionArray) cell.Anchor();
@@ -1236,7 +1236,7 @@ public class CModel implements Serializable {
 			CCell cell0 = collisionArray.get(ii);
 			CCell cell1 = collisionArray.get(ii+1);
 			// Check if already stuck, don't stick if that is the case
-			for(CSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
+			for(CStickSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
 				if((pSpring.ballArray[0].cell.equals(cell0) && pSpring.ballArray[1].cell.equals(cell1)) || (pSpring.ballArray[0].cell.equals(cell1) && pSpring.ballArray[1].cell.equals(cell0))) {
 					setStick = false;
 				}

@@ -9,11 +9,11 @@ public class CCell implements Serializable {
 	public int type;
 	public boolean filament;
 	public CBall[] ballArray = 	new CBall[1];								// Note that this ballArray has the same name as CModel's
-	public ArrayList<CSpring> rodSpringArray = new ArrayList<CSpring>(0);
+	public ArrayList<CRodSpring> rodSpringArray = new ArrayList<CRodSpring>(0);
 	public ArrayList<CCell> stickCellArray = new ArrayList<CCell>(0);
-	public ArrayList<CSpring> stickSpringArray = new ArrayList<CSpring>(0);
-	public ArrayList<CSpring> anchorSpringArray = new ArrayList<CSpring>(0);
-	public ArrayList<CSpring> filSpringArray = new ArrayList<CSpring>(0);
+	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(0);
+	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(0);
+	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(0);
 	public CCell mother;
 	public int born;														// Growth iteration at which this cell was born
 	// CFD stuff
@@ -37,7 +37,7 @@ public class CCell implements Serializable {
 			ballArray = 	new CBall[2];		// Reinitialise ballArray to contain 2 balls
 			new CBall(base0x, base0y, base0z, n/2.0, 0, this);		// Constructor adds it to the array
 			new CBall(base1x, base1y, base1z, n/2.0, 1, this);		// Constructor adds it to the array
-			new CSpring(ballArray[0],ballArray[1], 0);				// Constructor adds it to the array
+			new CRodSpring(ballArray[0],ballArray[1]);				// Constructor adds it to the array
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
@@ -61,7 +61,7 @@ public class CCell implements Serializable {
 		for(CBall ball : ballArray) {
 			Vector3d substratumPos = new Vector3d(ball.pos);
 			substratumPos.y = 0.0;
-			new CSpring(ball, substratumPos, 2);
+			new CAnchorSpring(ball, substratumPos);
 		}
 
 		// Add sibling springs, assuming all anchors in this cell are siblings
@@ -108,9 +108,7 @@ public class CCell implements Serializable {
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
 			CBall ball0 = cell0.ballArray[iSpring/2];							// 0, 0, 1, 1, ...
 			CBall ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
-			CSpring spring 	= new CSpring(	ball0,
-											ball1,
-											1);									// Type is sticking spring
+			CStickSpring spring = new CStickSpring(	ball0, ball1);
 			stickArray[iSpring] = spring;
 		}
 		

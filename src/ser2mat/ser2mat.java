@@ -99,10 +99,6 @@ public class ser2mat {
 			mlcellArray.setField("type",                      new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
 			mlcellArray.setField("filament",                  new MLDouble(null, new double[] {obj.filament?1:0}, 1), ii);                    	
 			
-			arrayIndex = new double[obj.ballArray.length];
-			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
-			mlcellArray.setField("ballArray",                 new MLDouble(null, arrayIndex, 1), ii);                                         	// Note that this ballArray has the same name as CModel's
-			
 			arrayIndex = new double[obj.rodSpringArray.size()];
 			for(int jj=0; jj<obj.rodSpringArray.size(); jj++)	arrayIndex[jj] = obj.rodSpringArray.get(jj).Index();
 			mlcellArray.setField("rodSpringArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
@@ -138,7 +134,6 @@ public class ser2mat {
 		for(int ii=0; ii<N; ii++) {
 			CBall obj = model.ballArray.get(ii);
 			mlballArray.setField("n",                         new MLDouble(null, new double[] {obj.n}, 1), ii);                               	// [mol] Chemical amount
-			mlballArray.setField("radius",                    new MLDouble(null, new double[] {obj.radius}, 1), ii);                          	
 			mlballArray.setField("pos",                       new MLDouble(null, new double[] {obj.pos.x, obj.pos.y, obj.pos.z}, 3), ii);     	
 			mlballArray.setField("vel",                       new MLDouble(null, new double[] {obj.vel.x, obj.vel.y, obj.vel.z}, 3), ii);     	
 			mlballArray.setField("force",                     new MLDouble(null, new double[] {obj.force.x, obj.force.y, obj.force.z}, 3), ii);	
@@ -172,19 +167,7 @@ public class ser2mat {
 		N = model.rodSpringArray.size();
 		MLStructure mlrodSpringArray = new MLStructure(null, new int[] {model.rodSpringArray.size() ,1});
 		for(int ii=0; ii<N; ii++) {
-			CSpring obj = model.rodSpringArray.get(ii);
-			
-			arrayIndex = new double[obj.ballArray.length];
-			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
-			mlrodSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlrodSpringArray.setField("anchorPoint",          new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
-			mlrodSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
-			mlrodSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
-			mlrodSpringArray.setField("type",                 new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
-			
-			arrayIndex = new double[obj.siblingArray.size()];
-			for(int jj=0; jj<obj.siblingArray.size(); jj++)	arrayIndex[jj] = obj.siblingArray.get(jj).Index();
-			mlrodSpringArray.setField("siblingArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
+			CRodSpring obj = model.rodSpringArray.get(ii);
 		}
 		mlModel.setField("rodSpringArray", mlrodSpringArray);
 
@@ -192,19 +175,7 @@ public class ser2mat {
 		N = model.stickSpringArray.size();
 		MLStructure mlstickSpringArray = new MLStructure(null, new int[] {model.stickSpringArray.size() ,1});
 		for(int ii=0; ii<N; ii++) {
-			CSpring obj = model.stickSpringArray.get(ii);
-			
-			arrayIndex = new double[obj.ballArray.length];
-			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
-			mlstickSpringArray.setField("ballArray",          new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlstickSpringArray.setField("anchorPoint",        new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
-			mlstickSpringArray.setField("K",                  new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
-			mlstickSpringArray.setField("restLength",         new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
-			mlstickSpringArray.setField("type",               new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
-			
-			arrayIndex = new double[obj.siblingArray.size()];
-			for(int jj=0; jj<obj.siblingArray.size(); jj++)	arrayIndex[jj] = obj.siblingArray.get(jj).Index();
-			mlstickSpringArray.setField("siblingArray",       new MLDouble(null, arrayIndex, 1), ii);                                         	
+			CStickSpring obj = model.stickSpringArray.get(ii);
 		}
 		mlModel.setField("stickSpringArray", mlstickSpringArray);
 
@@ -212,19 +183,8 @@ public class ser2mat {
 		N = model.filSpringArray.size();
 		MLStructure mlfilSpringArray = new MLStructure(null, new int[] {model.filSpringArray.size() ,1});
 		for(int ii=0; ii<N; ii++) {
-			CSpring obj = model.filSpringArray.get(ii);
-			
-			arrayIndex = new double[obj.ballArray.length];
-			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
-			mlfilSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlfilSpringArray.setField("anchorPoint",          new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
-			mlfilSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
-			mlfilSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
+			CFilSpring obj = model.filSpringArray.get(ii);
 			mlfilSpringArray.setField("type",                 new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
-			
-			arrayIndex = new double[obj.siblingArray.size()];
-			for(int jj=0; jj<obj.siblingArray.size(); jj++)	arrayIndex[jj] = obj.siblingArray.get(jj).Index();
-			mlfilSpringArray.setField("siblingArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
 		}
 		mlModel.setField("filSpringArray", mlfilSpringArray);
 
@@ -232,19 +192,8 @@ public class ser2mat {
 		N = model.anchorSpringArray.size();
 		MLStructure mlanchorSpringArray = new MLStructure(null, new int[] {model.anchorSpringArray.size() ,1});
 		for(int ii=0; ii<N; ii++) {
-			CSpring obj = model.anchorSpringArray.get(ii);
-			
-			arrayIndex = new double[obj.ballArray.length];
-			for(int jj=0; jj<obj.ballArray.length; jj++)	arrayIndex[jj] = obj.ballArray[jj].Index();
-			mlanchorSpringArray.setField("ballArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
+			CAnchorSpring obj = model.anchorSpringArray.get(ii);
 			mlanchorSpringArray.setField("anchorPoint",       new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
-			mlanchorSpringArray.setField("K",                 new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
-			mlanchorSpringArray.setField("restLength",        new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
-			mlanchorSpringArray.setField("type",              new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
-			
-			arrayIndex = new double[obj.siblingArray.size()];
-			for(int jj=0; jj<obj.siblingArray.size(); jj++)	arrayIndex[jj] = obj.siblingArray.get(jj).Index();
-			mlanchorSpringArray.setField("siblingArray",      new MLDouble(null, arrayIndex, 1), ii);                                         	
 		}
 		mlModel.setField("anchorSpringArray", mlanchorSpringArray);
 		// === SOLVER STUFF ===
