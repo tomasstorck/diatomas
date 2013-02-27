@@ -296,34 +296,32 @@ if hasstr(c2,' CCell ')
 	fprintf(fid2,'\t\t\t\t%-50s%-80s\n',['ml' nObj '.setField("' n '",'],['new MLDouble(null, new double[] {obj.' n '.Index()}, 1), ii);']);
 	return
 end
-% Arrays (this one is completely different from the one above!)
-if hasstr(c2,' Array')
-	fprintf(fid2,'\t\t\t\n');
-	if hasstr(c2,'[]')		% If already array
-		% Extract class name
-		[nClass2, ~] = splitline(c2,'\[\]',1);
-		% Extract object name (like before)
-		[nObj2, comment2] = splitline(c2,'\[\]');
-		fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.length];\n']);
-		fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.length; jj++)\t']);
-		fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '[jj].Index();\n']);
-	elseif hasstr(c2,'>')
-		% Extract class name
-		s2raw = regexp(c2,'ArrayList<','split');
-		s2raw2 = regexp(s2raw{2},'>','split');
-		nClass2 = s2raw2{1};
-		% Extract object name (like before)
-		[nObj2, comment2] = splitline(c2,'>');
-		fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.size()];\n']);
-		fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.size(); jj++)\t']);
-		fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '.get(jj).Index();\n']);
-	else
-		throw(['Cannot recognise type of array in: ' c2])
-	end
+% ArrayList (this one is completely different from the one above!)
+if hasstr(c2,' ArrayList')
+	% Extract class name
+	s2raw = regexp(c2,'ArrayList<','split');
+	s2raw2 = regexp(s2raw{2},'>','split');
+	nClass2 = s2raw2{1};
+	% Extract object name (like before)
+	[nObj2, comment2] = splitline(c2,'>');
+	fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.size()];\n']);
+	fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.size(); jj++)\t']);
+	fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '.get(jj).Index();\n']);
 	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' nObj2 '",'],['new MLDouble(null, arrayIndex, 1), ii);'],comment2);
 	return
 end
-
+% Array
+if hasstr(c2,'[]')		% If already array
+	% Extract class name
+	[nClass2, ~] = splitline(c2,'\[\]',1);
+	% Extract object name (like before)
+	[nObj2, comment2] = splitline(c2,'\[\]');
+	fprintf(fid2,['\t\t\tarrayIndex = new double[obj.' nObj2 '.length];\n']);
+	fprintf(fid2,['\t\t\tfor(int jj=0; jj<obj.' nObj2 '.length; jj++)\t']);
+	fprintf(fid2,['arrayIndex[jj] = obj.' nObj2 '[jj].Index();\n']);
+	fprintf(fid2,'\t\t\t%-50s%-80s\t%s\n',['ml' nObj '.setField("' nObj2 '",'],['new MLDouble(null, arrayIndex, 1), ii);'],comment2);
+	return
+end
 % And if no match was found, just ignore (could be reference to another array nested in CModel, etc)
 end
 

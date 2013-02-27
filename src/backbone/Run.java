@@ -9,14 +9,13 @@ import ser2mat.ser2mat;
 import cell.CBall;
 import cell.CCell;
 import cell.CModel;
+import cell.CRodSpring;
 import cell.CSpring;
 import cell.Vector3d;
 
 public class Run {
 	CModel model;
 	 
-	double[] restLength = new double[6];
-
 	public Run(CModel model) {
 		this.model = model;
 	}
@@ -134,13 +133,13 @@ public class Run {
 			model.directionInit = new Vector3d[model.NInitCell];
 			model.position0Init = new Vector3d[model.NInitCell];
 			model.position1Init = new Vector3d[model.NInitCell];
-			restLength[4] = model.lengthCellMax[4]*0.75;
 			for(int ii=0; ii<model.NInitCell; ii++) {
 				model.typeInit[ii] = 4;
 				model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
-				model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			0.0*rand.Double(), 																		(rand.Double()-0.5))			.normalise();
-				model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
-				model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength[model.typeInit[ii]]));
+				model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 																		(rand.Double()-0.5))			.normalise();
+				model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 		CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);						// *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
+				final double restLength =  CRodSpring.RestLength(CBall.Radius(model.nInit[ii], model.typeInit[ii], model), model.nInit[ii], model.typeInit[ii], model);
+				model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
 			}
 			break;
 		case 1: case 2:
@@ -149,8 +148,6 @@ public class Run {
 			for(int ii=0; ii<model.NInitCell/2; ii++)						model.typeInit[ii] = 4;			// First half: 
 			for(int ii=model.NInitCell/2; ii<model.NInitCell; ii++)			model.typeInit[ii] = 5;			// Second half: 
 			// Various
-			restLength[4] = model.lengthCellMax[4]*0.75;
-			restLength[5] = model.lengthCellMax[5]*0.75;
 			model.nInit = new double[model.NInitCell];
 			model.directionInit = new Vector3d[model.NInitCell];
 			model.position0Init = new Vector3d[model.NInitCell];
@@ -161,18 +158,20 @@ public class Run {
 				// Biofilm-like
 				for(int ii=0; ii<model.NInitCell; ii++) {
 					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
-					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,																				(rand.Double()-0.5))			.normalise();
-					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),							(rand.Double()-0.5)*model.L.z);
-					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength[model.typeInit[ii]]));
+					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,																(rand.Double()-0.5))			.normalise();
+					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
+					final double restLength =  CRodSpring.RestLength(CBall.Radius(model.nInit[ii], model.typeInit[ii], model), model.nInit[ii], model.typeInit[ii], model);
+					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
 				}
 			} else {
 				model.Write("Loading parameters for AS/flock","");
 				// Flock-like
 				for(int ii=0; ii<model.NInitCell; ii++) {
 					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
-					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 																					(rand.Double()-0.5))			.normalise();
-					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	(rand.Double()-0.5)*model.L.y - (model.typeInit[ii]>1 ? restLength[model.typeInit[ii]]:0),				(rand.Double()-0.5)*model.L.z);
-					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength[model.typeInit[ii]]));
+					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 																	(rand.Double()-0.5))			.normalise();
+					final double restLength =  CRodSpring.RestLength(CBall.Radius(model.nInit[ii], model.typeInit[ii], model), model.nInit[ii], model.typeInit[ii], model);
+					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	(rand.Double()-0.5)*model.L.y,															(rand.Double()-0.5)*model.L.z);
+					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
 				}
 			}
 			break;
@@ -186,7 +185,7 @@ public class Run {
 		if(model.growthIter == 0 && model.relaxationIter == 0) {			// First time we run this simulation, didn't load it
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				boolean filament = model.filamentType[model.typeInit[iCell]];
+				boolean filament = model.filament && model.filamentType[model.typeInit[iCell]];
 				@SuppressWarnings("unused")
 				CCell cell = new CCell(model.typeInit[iCell], 				// Type of biomass
 						model.nInit[iCell],

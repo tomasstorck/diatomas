@@ -6,7 +6,11 @@ public class CStickSpring extends CSpring {
 	///////////////////////////////////////////////////////////////////
 	
 	public CStickSpring(CBall ball0, CBall ball1) {
-		super(ball0, ball1);
+		ballArray = new CBall[2];
+		ballArray[0] = ball0;
+		ballArray[1] = ball1;
+		ResetK();
+		ResetRestLength();
 		// Add to arrays
 		final CModel model = ball0.cell.model;
 		model.stickSpringArray.add(this);
@@ -16,10 +20,16 @@ public class CStickSpring extends CSpring {
 		ball1.cell.stickCellArray.add(ball0.cell);
 	}
 	
+	public static double RestLength(Vector3d pos0, Vector3d pos1, double radius0, double radius1) {
+		return Math.max(
+				pos1.minus(pos0).norm(),		// The rest length we desire
+				1.0*(radius0 + radius1));		// But we want the spring not to cause cell overlap in relaxed state
+	}
+	
 	public void ResetRestLength() {
-		restLength = Math.max(
-				ballArray[1].pos.minus(ballArray[0].pos).norm(),		// The rest length we desire
-				1.0*(ballArray[0].radius + ballArray[1].radius));		// But we want the spring not to cause cell overlap in relaxed state
+		CBall ball0 = ballArray[0];
+		CBall ball1 = ballArray[1];
+		restLength = RestLength(ball0.pos, ball1.pos, ball0.radius, ball1.radius);
 	}
 	
 	public void ResetK() {

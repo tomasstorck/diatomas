@@ -8,8 +8,12 @@ public class CFilSpring extends CSpring {
 	///////////////////////////////////////////////////////////////////
 
 	public CFilSpring(CBall ball0, CBall ball1, int filType) {
-		super(ball0, ball1);
+		ballArray = new CBall[2];
+		ballArray[0] = ball0;
+		ballArray[1] = ball1;
 		type = filType; 
+		ResetK();
+		ResetRestLength();
 		// Add to arrays
 		final CModel model = ball0.cell.model;
 		model.filSpringArray.add(this);
@@ -17,21 +21,27 @@ public class CFilSpring extends CSpring {
 		ball1.cell.filSpringArray.add(this);
 	}
 
-	public void ResetRestLength() {
-		final CModel model = ballArray[0].cell.model;
+	public static double RestLength(int type, double radius0, double radius1, double rodRestLength0, double rodRestLength1, CModel model) {
 		switch(type) {
 		case 3:				// Small fil spring
-			restLength = model.filLengthSphere*(ballArray[0].radius + ballArray[1].radius);
-			break;
+			return model.filLengthSphere*(radius0 + radius1);
 		case 4:				// Small fil spring
-			restLength = model.filLengthRod[0]*(ballArray[0].radius + ballArray[1].radius);
-			break;
+			return model.filLengthRod[0]*(radius0 + radius1);
 		case 5:				// Big fil spring
-			restLength = model.filLengthRod[1]*(ballArray[0].radius + ballArray[1].radius) + ballArray[0].cell.rodSpringArray.get(0).restLength + ballArray[1].cell.rodSpringArray.get(0).restLength;
-			break;
+			return model.filLengthRod[1]*(radius0 + radius1) + rodRestLength0 + rodRestLength1;
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);
 		}
+	}
+	
+	public void ResetRestLength() {
+		final CModel model = ballArray[0].cell.model;
+		CBall ball0 = ballArray[0];
+		CBall ball1 = ballArray[1];
+		double rodRestLength0 = ball0.cell.rodSpringArray.get(0).restLength;
+		double rodRestLength1 = ball1.cell.rodSpringArray.get(0).restLength;
+		restLength = RestLength(type, ball0.radius, ball1.radius, rodRestLength0, rodRestLength1, model);
+		
 	}
 
 	public void ResetK() {

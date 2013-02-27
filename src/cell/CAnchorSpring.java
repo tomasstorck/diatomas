@@ -7,7 +7,6 @@ public class CAnchorSpring extends CSpring {
 	///////////////////////////////////////////////////////////////////
 	
 	public CAnchorSpring(CBall ball0, Vector3d anchorPoint) {
-		super(ball0, anchorPoint);
 		// We don't use the super constructor here: CAnchorSpring is different
 		ballArray = new CBall[1];
 		ballArray[0] = ball0;
@@ -20,9 +19,13 @@ public class CAnchorSpring extends CSpring {
 		ball0.cell.anchorSpringArray.add(this);
 	}
 	
+	public static double RestLength(double height, double radius) {
+		return Math.max(height,radius*1.01);						// WORKAROUND: Choose current position, but make sure it is not forcing the spring into the substratum
+	}
+	
 	public void ResetRestLength() {
-		CBall ball = ballArray[0];
-		restLength = Math.max(ball.pos.y,ball.radius*1.01);				// WORKAROUND: Choose current position, but make sure it is not forcing the spring into the substratum
+		final CBall ball = ballArray[0];							// Final because anchoring springs are not recycled
+		restLength = RestLength(ball.pos.y, ball.radius);
 	}
 	
 	public void ResetK() {

@@ -8,7 +8,7 @@ public class CBall implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
 	public double n;		// [mol] Chemical amount 
-	public 	double radius;
+	public double radius;
 	public Vector3d pos;
 	public Vector3d vel;
 	public Vector3d force;

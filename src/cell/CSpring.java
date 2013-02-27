@@ -15,68 +15,6 @@ public abstract class CSpring implements Serializable {
 	public ArrayList<CSpring> siblingArray = new ArrayList<CSpring>(4);
 	
 	///////////////////////////////////////////////////////////////////
-
-	// Adds new spring to model's array, cell's array. Does NOT add to siblingArray
-	public CSpring(CBall ball0, CBall ball1){			// Note that siblingArray is by default not initialised
-//		CModel model = ball0.cell.model;
-		ballArray = new CBall[2];
-//		anchorPoint = new Vector3d();
-		ballArray[0] = ball0;
-		ballArray[1] = ball1;
-//		this.type = type;
-//		for(CSpring sibling : siblingArray) 	this.siblingArray.add(sibling);
-		ResetK();
-		ResetRestLength();
-		
-//		switch(type) {
-//		case 0:			// Rod spring
-//			model.rodSpringArray.add(this);
-//			ball0.cell.rodSpringArray.add(this);
-//			break;
-//		case 1:			// Sticking spring
-//			model.stickSpringArray.add(this);
-//			ball0.cell.stickSpringArray.add(this);
-//			ball1.cell.stickSpringArray.add(this);
-//			break;
-//		case 3:	case 4: case 5:
-//			model.filSpringArray.add(this);
-//			ball0.cell.filSpringArray.add(this);
-//			ball1.cell.filSpringArray.add(this);
-//			break;
-//		default:
-//			throw new IndexOutOfBoundsException("Spring type: " + type);
-//		}
-	}
-	
-	public CSpring(CBall ball0, Vector3d anchorPoint) {
-		// Overwritten in CAnchorSpring
-	}
-		
-//	public CSpring(CBall ball0, Vector3d anchorPoint, int type, CSpring[] siblingArray) {
-//		CModel model = ball0.cell.model;
-//		ballArray = new CBall[1];
-//		ballArray[0] = ball0;
-//		this.anchorPoint = anchorPoint;
-//		this.type = type;
-//		for(CSpring sibling : siblingArray) 	this.siblingArray.add(sibling);
-//		ResetK();
-//		ResetRestLength();
-//		
-//		switch(type) {
-//		case 2:
-//			model.anchorSpringArray.add(this);
-//			ball0.cell.anchorSpringArray.add(this);
-//			break;
-//		default:	
-//			throw new IndexOutOfBoundsException("Spring type: " + type);
-//		}
-//	}
-//
-//	public CSpring(CBall ball0, Vector3d anchorPoint, int type) {
-//		this(ball0, anchorPoint, type, new CSpring[0]);
-//	}
-	
-	////////////////////////////////////////////
 	
 	public void ResetRestLength() {
 //		CModel model = this.ballArray[0].cell.model;
