@@ -73,7 +73,7 @@ public class Run {
 			model.filType[5] = true;
 			model.filLengthRod = new double[]{0.5, 1.7};
 			model.filStretchLim = 1.0;
-			model.filBranchFrequency = 0.0;
+			model.filRodBranchFrequency = 0.0;
 			model.sticking = true;
 //			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;
 			model.stickType[4][5] = model.stickType[5][4] = true;
@@ -267,7 +267,7 @@ public class Run {
 			for(CCell mother : dividingCellArray) {
 				CCell daughter = model.DivideCell(mother);
 				if(mother.filament) {
-					if(rand.Double() < model.filBranchFrequency) {		// If we make a new branch
+					if(rand.Double() < model.filRodBranchFrequency) {		// If we make a new branch
 						model.CreateFilament(mother, daughter, true);
 					} else {
 						model.TransferFilament(mother, daughter);		// If we insert the cell in the straight filament 

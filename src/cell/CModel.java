@@ -40,7 +40,7 @@ public class CModel implements Serializable {
 	public boolean filament = false;
 	public boolean[] filType = new boolean[NXType];
 	public boolean filSphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci
-	public double filBranchFrequency = 0.0;// Which fraction of daughter cells form a branching filial link instead of a straight
+	public double filRodBranchFrequency = 0.0;// Which fraction of daughter cells form a branching filial link instead of a straight
 	// --> Gravity/buoyancy
 	public boolean gravity = false;
 	public boolean gravityZ = false;
@@ -1089,10 +1089,10 @@ public class CModel implements Serializable {
 				if( fil.type == 4 && fil.ballArray[1] == c0b1) {
 					fil.ballArray[1] = 	c1b1;
 					found = true;}
-				if( fil.type == 5 && fil.ballArray[0] == c0b0) {
+				if(( fil.type == 5 || fil.type==6 ) && fil.ballArray[0] == c0b0) {
 					fil.ballArray[0] = 	c1b0;
 					found = true;}
-				if( fil.type == 5 && fil.ballArray[1] == c0b0) {
+				if(( fil.type == 5 || fil.type==6 ) && fil.ballArray[1] == c0b0) {
 					fil.ballArray[1] = 	c1b0;
 					found = true;}
 				if(found) {
