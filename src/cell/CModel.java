@@ -887,12 +887,6 @@ public class CModel implements Serializable {
 
 			// Syntrophic growth for sticking cells
 			mother.SetAmount(amount);
-			
-			// Cell growth or division
-			if(mother.GetAmount()>nCellMax[mother.type]) {
-				DivideCell(mother);
-				dividedCell.add(mother);
-			}	
 		}
 		
 		return dividedCell;
@@ -908,11 +902,6 @@ public class CModel implements Serializable {
 			// Grow mother cell
 			double newAmount = mother.GetAmount()+molIn;
 			mother.SetAmount(newAmount);
-			// divide mother cell if ready 
-			if(newAmount>nCellMax[mother.type]) {
-				DivideCell(mother);
-				dividedCell.add(mother);
-			}
 		}
 		return dividedCell;
 	}
@@ -980,31 +969,6 @@ public class CModel implements Serializable {
 			c1.ballArray[0].force = new Vector3d(c0.ballArray[0].force);
 			c1.mother = 			c0;
 			c1.q = 					c0.q;
-			// Set filament springs
-			if(c0.filament) {
-				if(sphereStraightFil) {											// Reorganise if we want straight fils, otherwise just attach resulting in random structures
-					CBall motherBall0 = c0.ballArray[0];
-					CBall daughterBall0 = c1.ballArray[0];
-					ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
-					for(CFilSpring fil : c0.filSpringArray) {
-						boolean found=false;
-						if( fil.ballArray[0] == motherBall0) {					// Only replace half the balls for daughter's
-							fil.ballArray[0] = daughterBall0;
-							found = true;}
-						if(found) {
-							// Mark filament spring for donation from mother to daughter
-							donateFilArray.add(fil);
-						}
-					}
-					for(CFilSpring fil : donateFilArray) {
-						c1.filSpringArray.add(fil);
-						c0.filSpringArray.remove(fil);
-						// Reset rest lengths. Spring constant won't change because it depends on cell type
-						fil.ResetRestLength();
-					}
-				}
-				new CFilSpring(c0.ballArray[0], c1.ballArray[0], 3);
-			}
 		} else if (c0.type<6) {
 			///////
 			// Original cell:
@@ -1048,8 +1012,57 @@ public class CModel implements Serializable {
 			c1.mother = c0;
 			c1.rodSpringArray.get(0).restLength = c0.rodSpringArray.get(0).restLength;
 
-			// Set filament springs
-			if(c1.filament) {
+		} else {
+			throw new IndexOutOfBoundsException("Cell type: " + c0.type);
+		}
+		// Set sticking springs
+		for(CCell cell : c0.stickCellArray) {														// We want to check each other cell
+			for(CStickSpring stick : c0.stickSpringArray) {												// And find the correct spring, attached to c0 and cell
+				if(stick.ballArray[0].equals(c1) || stick.ballArray[1].equals(c1)) {				
+					if(c1.GetDistance(cell) < c0.GetDistance(cell)) {								// If c1 is closer, move sticking spring to c1
+						stick.Break();																// Break this spring and its siblings. OPTIMISE: We could restick it, but then we need to find the correct ball to Stick() to 
+						c1.Stick(cell);
+						break;
+					} else {																		// If c0 is closer, just reset rest length of this spring and its siblings
+						stick.ResetRestLength();
+						for(CSpring sibling : stick.siblingArray)		sibling.ResetRestLength();		
+					}
+				}
+				// Create new sticking spring
+			}
+		}
+		// Done, return daughter cell
+		return c1;
+	}
+	
+	public void TransferFilament(CCell c0, CCell c1) {
+		if(c0.filament) {
+			if(c0.type < 2 && c1.type < 2) {
+				if(sphereStraightFil) {											// Reorganise if we want straight fils, otherwise just attach resulting in random structures
+					CBall motherBall0 = c0.ballArray[0];
+					CBall daughterBall0 = c1.ballArray[0];
+					ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
+					for(CFilSpring fil : c0.filSpringArray) {
+						boolean found=false;
+						if( fil.ballArray[0] == motherBall0) {					// Only replace half the balls for daughter's
+							fil.ballArray[0] = daughterBall0;
+							found = true;}
+						if(found) {
+							// Mark filament spring for donation from mother to daughter
+							donateFilArray.add(fil);
+						}
+					}
+					for(CFilSpring fil : donateFilArray) {
+						c1.filSpringArray.add(fil);
+						c0.filSpringArray.remove(fil);
+						// Reset rest lengths. Spring constant won't change because it depends on cell type
+						fil.ResetRestLength();
+					}
+				}
+				new CFilSpring(c0.ballArray[0], c1.ballArray[0], 3);
+			} else if(c0.type < 6 && c1.type < 6) {
+				CBall c0b0 = c0.ballArray[0];
+				CBall c0b1 = c0.ballArray[1];
 				CBall c1b0 = c1.ballArray[0];
 				CBall c1b1 = c1.ballArray[1];
 				ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
@@ -1084,27 +1097,7 @@ public class CModel implements Serializable {
 				filSmall.siblingArray.add(filBig);
 				filBig.siblingArray.add(filSmall);
 			}
-		} else {
-			throw new IndexOutOfBoundsException("Cell type: " + c0.type);
 		}
-		// Set sticking springs
-		for(CCell cell : c0.stickCellArray) {														// We want to check each other cell
-			for(CStickSpring stick : c0.stickSpringArray) {												// And find the correct spring, attached to c0 and cell
-				if(stick.ballArray[0].equals(c1) || stick.ballArray[1].equals(c1)) {				
-					if(c1.GetDistance(cell) < c0.GetDistance(cell)) {								// If c1 is closer, move sticking spring to c1
-						stick.Break();																// Break this spring and its siblings. OPTIMISE: We could restick it, but then we need to find the correct ball to Stick() to 
-						c1.Stick(cell);
-						break;
-					} else {																		// If c0 is closer, just reset rest length of this spring and its siblings
-						stick.ResetRestLength();
-						for(CSpring sibling : stick.siblingArray)		sibling.ResetRestLength();		
-					}
-				}
-				// Create new sticking spring
-			}
-		}
-		// Done, return daughter cell
-		return c1;
 	}
 	
 	public void Attachment(int NNew) {

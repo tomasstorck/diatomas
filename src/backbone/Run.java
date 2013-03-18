@@ -55,6 +55,7 @@ public class Run {
 			////////
 			// AS //
 			////////			
+//			model.L = new Vector3d(20e-6, 0.0, 20e-6);
 			model.L = new Vector3d(10e-6, 0.0, 10e-6);
 			model.radiusCellMax[4] = 0.45e-6;	// Pseudomonas sp. 138, Tanaka 1985
 			model.lengthCellMax[4] = 1.1e-6;	// Pseudomonas sp. 138 (max "measured" length 2 micron), Tanaka 1985
@@ -250,29 +251,35 @@ public class Run {
 			}
 			// Grow cells either with COMSOL or simple 
 			model.Write("Growing cells", "iter");
-			ArrayList<CCell> dividedCellArray;
 			if(model.comsol) {
-				dividedCellArray = model.GrowthFlux();
+				model.GrowthFlux();
 			} else {
-				dividedCellArray = model.GrowthSimple();
+				model.GrowthSimple();
+			}
+			// Mark mother cell for division if ready
+			ArrayList<CCell> dividingCellArray = new ArrayList<CCell>(0);
+			for(CCell mother : model.cellArray) {
+				if(mother.GetAmount() > model.nCellMax[mother.type])
+					dividingCellArray.add(mother);
+			}
+			// Divide marked cells
+			for(CCell mother : dividingCellArray) {
+				CCell daughter = model.DivideCell(mother);
+				model.TransferFilament(mother, daughter);
 			}
 			// Advance growth
 			model.growthIter++;
 			model.growthTime += model.growthTimeStep;
-			if(dividedCellArray.size()>0) {
-				model.Write(dividedCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
+			if(dividingCellArray.size()>0) {
+				model.Write(dividingCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
 //				String cellNumber = "" + dividedCellArray.get(0).Index();
 //				for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
 //				model.Write("Cells grown: " + cellNumber,"iter");
 			}
 			// Reset springs where needed
 			model.Write("Resetting springs","iter");
-			for(CSpring rod : model.rodSpringArray) {
-				rod.ResetRestLength();
-			}
-			for(CSpring fil : model.filSpringArray) 	{
-				fil.ResetRestLength();
-			}
+			for(CSpring rod : model.rodSpringArray) 	rod.ResetRestLength();
+			for(CSpring fil : model.filSpringArray) 	fil.ResetRestLength();
 			// Attach new cells
 			final double NNewPerStep = model.attachmentRate*(model.growthTimeStep/3600.0);
 			//			N guaranteed	+ 1 the integer of this iteration is not equal to the previous one (this will be wrong for growthIter==0)
