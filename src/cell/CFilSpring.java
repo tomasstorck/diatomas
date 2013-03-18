@@ -29,6 +29,8 @@ public class CFilSpring extends CSpring {
 			return model.filLengthRod[0]*(radius0 + radius1);
 		case 5:				// Big fil spring
 			return model.filLengthRod[1]*(radius0 + radius1) + rodRestLength0 + rodRestLength1;
+		case 6:
+			return  Math.sqrt(rodRestLength0*rodRestLength0 + Math.pow(0.5*(radius0+radius1) + rodRestLength1, 2.0));
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);
 		}
@@ -41,7 +43,6 @@ public class CFilSpring extends CSpring {
 		double rodRestLength0 = ball0.cell.rodSpringArray.get(0).restLength;
 		double rodRestLength1 = ball1.cell.rodSpringArray.get(0).restLength;
 		restLength = RestLength(type, ball0.radius, ball1.radius, rodRestLength0, rodRestLength1, model);
-		
 	}
 
 	public void ResetK() {
@@ -50,22 +51,25 @@ public class CFilSpring extends CSpring {
 		CCell cell0 = ballArray[0].cell;
 		switch(type) {
 		case 3:														// Two different balls, same cell type
+			// Sphere filament
 			if(cell0.type<2)						springDiv = 1.0;
 			else if(cell0.type<6)					springDiv = 2.0;
 			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
 			K = model.KfSphere/springDiv;
 			break;
 		case 4:														// Two different balls, same cell type
+			// Rod filament, short spring
 			if(cell0.type<2)						springDiv = 1.0;
 			else if(cell0.type<6)					springDiv = 2.0;
 			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
 			K = model.KfRod0/springDiv;
 			break;
-		case 5:														// Two different balls, same cell type
+		case 5:	case 6:												// Two different balls, same cell type
+			// Rod filament, long spring
 			if(cell0.type<2)						springDiv = 1.0;
 			else if(cell0.type<6)					springDiv = 2.0;
 			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
-			K = model.KfRod0/springDiv;
+			K = model.KfRod0/springDiv;				// FIXME
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);

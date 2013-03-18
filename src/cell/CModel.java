@@ -38,8 +38,10 @@ public class CModel implements Serializable {
 	public boolean anchoring = false;
 	// --> Filaments
 	public boolean filament = false;
-	public boolean[] filamentType = new boolean[NXType];
-	public boolean sphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci
+	public boolean[] filType = new boolean[NXType];
+	public boolean filSphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci
+	public double filBranchFrequency = 0.0;// Which fraction of daughter cells form a branching filial link instead of a straight
+	// --> Gravity/buoyancy
 	public boolean gravity = false;
 	public boolean gravityZ = false;
 	// --> Substratum
@@ -1050,13 +1052,13 @@ public class CModel implements Serializable {
 		}
 	}
 	
-	public void TransferFilament(CCell c0, CCell c1) {
-		if(c0.type < 2 && c1.type < 2) {
-			if(sphereStraightFil) {											// Reorganise if we want straight fils, otherwise just attach resulting in random structures
-				CBall motherBall0 = c0.ballArray[0];
-				CBall daughterBall0 = c1.ballArray[0];
+	public void TransferFilament(CCell mother, CCell daughter) {
+		if(mother.type < 2 && daughter.type < 2) {
+			if(filSphereStraightFil) {											// Reorganise if we want straight fils, otherwise just attach resulting in random structures
+				CBall motherBall0 = mother.ballArray[0];
+				CBall daughterBall0 = daughter.ballArray[0];
 				ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
-				for(CFilSpring fil : c0.filSpringArray) {
+				for(CFilSpring fil : mother.filSpringArray) {
 					boolean found=false;
 					if( fil.ballArray[0] == motherBall0) {					// Only replace half the balls for daughter's
 						fil.ballArray[0] = daughterBall0;
@@ -1067,19 +1069,19 @@ public class CModel implements Serializable {
 					}
 				}
 				for(CFilSpring fil : donateFilArray) {
-					c1.filSpringArray.add(fil);
-					c0.filSpringArray.remove(fil);
+					daughter.filSpringArray.add(fil);
+					mother.filSpringArray.remove(fil);
 					// Reset rest lengths. Spring constant won't change because it depends on cell type
 					fil.ResetRestLength();
 				}
 			}
-		} else if(c0.type < 6 && c1.type < 6) {
-			CBall c0b0 = c0.ballArray[0];
-			CBall c0b1 = c0.ballArray[1];
-			CBall c1b0 = c1.ballArray[0];
-			CBall c1b1 = c1.ballArray[1];
+		} else if(mother.type < 6 && daughter.type < 6) {
+			CBall c0b0 = mother.ballArray[0];
+			CBall c0b1 = mother.ballArray[1];
+			CBall c1b0 = daughter.ballArray[0];
+			CBall c1b1 = daughter.ballArray[1];
 			ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
-			for(CFilSpring fil : c0.filSpringArray) {
+			for(CFilSpring fil : mother.filSpringArray) {
 				boolean found=false;
 				if( fil.type == 4 && fil.ballArray[0] == c0b1) {
 					fil.ballArray[0] = 	c1b1;
@@ -1094,14 +1096,14 @@ public class CModel implements Serializable {
 					fil.ballArray[1] = 	c1b0;
 					found = true;}
 				if(found) {
-					if(c0.filament) {		// Mark filament spring for donation from mother to daughter
+					if(mother.filament) {		// Mark filament spring for donation from mother to daughter
 						donateFilArray.add(fil);
 					}
 				}
 			}
 			for(CFilSpring fil : donateFilArray) {
-				c1.filSpringArray.add(fil);
-				c0.filSpringArray.remove(fil);
+				daughter.filSpringArray.add(fil);
+				mother.filSpringArray.remove(fil);
 				// Reset rest lengths
 				fil.ResetRestLength();
 			}
@@ -1113,7 +1115,7 @@ public class CModel implements Serializable {
 			// Define the cell we will attach
 			final int typeNew = attachCellType; 
 			final double nNew = nCellMin[typeNew] * (1.0 + rand.Double());
-			final boolean filNew = filament && filamentType[typeNew];
+			final boolean filNew = filament && filType[typeNew];
 			final double rNew = CBall.Radius(nNew, typeNew, this); 
 			// Create array of balls in non-spherical cells 
 			ArrayList<CBall> ballArrayRod = new ArrayList<CBall>(ballArray.size());

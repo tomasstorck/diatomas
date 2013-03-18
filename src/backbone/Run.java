@@ -70,9 +70,10 @@ public class Run {
 			model.attachCellType = 4;
 			model.attachNotTo = new int[]{4};
 			model.filament = true;
-			model.filamentType[5] = true;
+			model.filType[5] = true;
 			model.filLengthRod = new double[]{0.5, 1.7};
 			model.filStretchLim = 1.0;
+			model.filBranchFrequency = 0.0;
 			model.sticking = true;
 //			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;
 			model.stickType[4][5] = model.stickType[5][4] = true;
@@ -155,7 +156,7 @@ public class Run {
 			model.position1Init = new Vector3d[model.NInitCell];
 
 			if(model.simulation==1) {
-				model.Write("Loading parameters for AS/biofilm","");
+				model.Write("Defining cell parameters for AS/biofilm","");
 				// Biofilm-like
 				for(int ii=0; ii<model.NInitCell; ii++) {
 					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
@@ -165,7 +166,7 @@ public class Run {
 					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
 				}
 			} else {
-				model.Write("Loading parameters for AS/flock","");
+				model.Write("Defining cell parameters for AS/flock","");
 				// Flock-like
 				for(int ii=0; ii<model.NInitCell; ii++) {
 					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
@@ -186,7 +187,7 @@ public class Run {
 		if(model.growthIter == 0 && model.relaxationIter == 0) {			// First time we run this simulation, didn't load it
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				boolean filament = model.filament && model.filamentType[model.typeInit[iCell]];
+				boolean filament = model.filament && model.filType[model.typeInit[iCell]];
 				@SuppressWarnings("unused")
 				CCell cell = new CCell(model.typeInit[iCell], 				// Type of biomass
 						model.nInit[iCell],
@@ -266,8 +267,12 @@ public class Run {
 			for(CCell mother : dividingCellArray) {
 				CCell daughter = model.DivideCell(mother);
 				if(mother.filament) {
-					model.TransferFilament(mother, daughter);
-					model.CreateFilament(mother, daughter, false);
+					if(rand.Double() < model.filBranchFrequency) {		// If we make a new branch
+						model.CreateFilament(mother, daughter, true);
+					} else {
+						model.TransferFilament(mother, daughter);		// If we insert the cell in the straight filament 
+						model.CreateFilament(mother, daughter, false);
+					}
 				}
 			}
 			// Advance growth
