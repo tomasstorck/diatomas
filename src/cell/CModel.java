@@ -1035,50 +1035,31 @@ public class CModel implements Serializable {
 		return c1;
 	}
 	
+	public void CreateFilament(CCell c0, CCell c1, boolean branch) {
+		if(c0.type==c1.type && c0.type<2)
+			new CFilSpring(c0.ballArray[0], c1.ballArray[0], 3);
+		else if (c0.type==c1.type && c0.type<6) {
+			// Make new filial link between mother and daughter
+			int bigFilType = branch ? 6 : 5; 
+			CFilSpring filSmall = 	new CFilSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
+			CFilSpring filBig = 	new CFilSpring(c1.ballArray[1], c0.ballArray[0], bigFilType);					// type==? --> Big spring
+			filSmall.siblingArray.add(filBig);
+			filBig.siblingArray.add(filSmall);
+		} else {
+			throw new IndexOutOfBoundsException("Cell type: " + c0.type + "/" + c1.type);
+		}
+	}
+	
 	public void TransferFilament(CCell c0, CCell c1) {
-		if(c0.filament) {
-			if(c0.type < 2 && c1.type < 2) {
-				if(sphereStraightFil) {											// Reorganise if we want straight fils, otherwise just attach resulting in random structures
-					CBall motherBall0 = c0.ballArray[0];
-					CBall daughterBall0 = c1.ballArray[0];
-					ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
-					for(CFilSpring fil : c0.filSpringArray) {
-						boolean found=false;
-						if( fil.ballArray[0] == motherBall0) {					// Only replace half the balls for daughter's
-							fil.ballArray[0] = daughterBall0;
-							found = true;}
-						if(found) {
-							// Mark filament spring for donation from mother to daughter
-							donateFilArray.add(fil);
-						}
-					}
-					for(CFilSpring fil : donateFilArray) {
-						c1.filSpringArray.add(fil);
-						c0.filSpringArray.remove(fil);
-						// Reset rest lengths. Spring constant won't change because it depends on cell type
-						fil.ResetRestLength();
-					}
-				}
-				new CFilSpring(c0.ballArray[0], c1.ballArray[0], 3);
-			} else if(c0.type < 6 && c1.type < 6) {
-				CBall c0b0 = c0.ballArray[0];
-				CBall c0b1 = c0.ballArray[1];
-				CBall c1b0 = c1.ballArray[0];
-				CBall c1b1 = c1.ballArray[1];
+		if(c0.type < 2 && c1.type < 2) {
+			if(sphereStraightFil) {											// Reorganise if we want straight fils, otherwise just attach resulting in random structures
+				CBall motherBall0 = c0.ballArray[0];
+				CBall daughterBall0 = c1.ballArray[0];
 				ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
 				for(CFilSpring fil : c0.filSpringArray) {
 					boolean found=false;
-					if( fil.type == 4 && fil.ballArray[0] == c0b1) {
-						fil.ballArray[0] = 	c1b1;
-						found = true;}
-					if( fil.type == 4 && fil.ballArray[1] == c0b1) {
-						fil.ballArray[1] = 	c1b1;
-						found = true;}
-					if( fil.type == 5 && fil.ballArray[0] == c0b0) {
-						fil.ballArray[0] = 	c1b0;
-						found = true;}
-					if( fil.type == 5 && fil.ballArray[1] == c0b0) {
-						fil.ballArray[1] = 	c1b0;
+					if( fil.ballArray[0] == motherBall0) {					// Only replace half the balls for daughter's
+						fil.ballArray[0] = daughterBall0;
 						found = true;}
 					if(found) {
 						// Mark filament spring for donation from mother to daughter
@@ -1088,18 +1069,45 @@ public class CModel implements Serializable {
 				for(CFilSpring fil : donateFilArray) {
 					c1.filSpringArray.add(fil);
 					c0.filSpringArray.remove(fil);
-					// Reset rest lengths
+					// Reset rest lengths. Spring constant won't change because it depends on cell type
 					fil.ResetRestLength();
 				}
-				// Make new filial link between mother and daughter
-				CFilSpring filSmall = 	new CFilSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
-				CFilSpring filBig = 	new CFilSpring(c1.ballArray[1], c0.ballArray[0], 5);							// type==5 --> Big spring
-				filSmall.siblingArray.add(filBig);
-				filBig.siblingArray.add(filSmall);
+			}
+		} else if(c0.type < 6 && c1.type < 6) {
+			CBall c0b0 = c0.ballArray[0];
+			CBall c0b1 = c0.ballArray[1];
+			CBall c1b0 = c1.ballArray[0];
+			CBall c1b1 = c1.ballArray[1];
+			ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
+			for(CFilSpring fil : c0.filSpringArray) {
+				boolean found=false;
+				if( fil.type == 4 && fil.ballArray[0] == c0b1) {
+					fil.ballArray[0] = 	c1b1;
+					found = true;}
+				if( fil.type == 4 && fil.ballArray[1] == c0b1) {
+					fil.ballArray[1] = 	c1b1;
+					found = true;}
+				if( fil.type == 5 && fil.ballArray[0] == c0b0) {
+					fil.ballArray[0] = 	c1b0;
+					found = true;}
+				if( fil.type == 5 && fil.ballArray[1] == c0b0) {
+					fil.ballArray[1] = 	c1b0;
+					found = true;}
+				if(found) {
+					if(c0.filament) {		// Mark filament spring for donation from mother to daughter
+						donateFilArray.add(fil);
+					}
+				}
+			}
+			for(CFilSpring fil : donateFilArray) {
+				c1.filSpringArray.add(fil);
+				c0.filSpringArray.remove(fil);
+				// Reset rest lengths
+				fil.ResetRestLength();
 			}
 		}
 	}
-	
+
 	public void Attachment(int NNew) {
 		for(int iA=0; iA<NNew; iA++) {
 			// Define the cell we will attach

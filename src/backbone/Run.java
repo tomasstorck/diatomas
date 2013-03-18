@@ -265,7 +265,10 @@ public class Run {
 			// Divide marked cells
 			for(CCell mother : dividingCellArray) {
 				CCell daughter = model.DivideCell(mother);
-				model.TransferFilament(mother, daughter);
+				if(mother.filament) {
+					model.TransferFilament(mother, daughter);
+					model.CreateFilament(mother, daughter, false);
+				}
 			}
 			// Advance growth
 			model.growthIter++;
