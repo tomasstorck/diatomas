@@ -17,49 +17,46 @@ public class ser2mat {
 		mlModel.setField("simulation",                    new MLDouble(null, new double[] {model.simulation}, 1));                        	// The simulation type: see Run
 		mlModel.setField("randomSeed",                    new MLDouble(null, new double[] {model.randomSeed}, 1));                        	
 		mlModel.setField("comsol",                        new MLDouble(null, new double[] {model.comsol?1:0}, 1));                        	
-		mlModel.setField("NXType",                        new MLDouble(null, new double[] {model.NXType}, 1));                            	
-		// --> Sticking
-		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	
-		mlModel.setField("stickType",                     new MLDouble(null, boolean2double(model.stickType)));                           
-		// --> Anchoring
-		mlModel.setField("anchoring",                     new MLDouble(null, new double[] {model.anchoring?1:0}, 1));                     	
-		// --> Filaments
-		mlModel.setField("filament",                      new MLDouble(null, new double[] {model.filament?1:0}, 1));                      	
-		mlModel.setField("filamentType",                  new MLDouble(null, boolean2double(model.filType), model.filType.length));
-		mlModel.setField("sphereStraightFil",             new MLDouble(null, new double[] {model.filSphereStraightFil?1:0}, 1));             	// Make streptococci-like structures if true, otherwise staphylococci
-		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
-		mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      	
-		// --> Substratum
-		mlModel.setField("normalForce",                   new MLDouble(null, new double[] {model.normalForce?1:0}, 1));                   	// Use normal force to simulate cells colliding with substratum (at y=0)
-		mlModel.setField("initialAtSubstratum",           new MLDouble(null, new double[] {model.initialAtSubstratum?1:0}, 1));           	// All initial balls are positioned at y(t=0) = ball.radius
 		// Domain properties
 		mlModel.setField("L",                             new MLDouble(null, new double[] {model.L.x, model.L.y, model.L.z}, 3));         	
-		mlModel.setField("G",                             new MLDouble(null, new double[] {model.G}, 1));                                 	// [m/s2], acceleration due to gravity
 		mlModel.setField("rhoWater",                      new MLDouble(null, new double[] {model.rhoWater}, 1));                          	// [kg/m3], density of bulk liquid (water)
 		mlModel.setField("rhoX",                          new MLDouble(null, new double[] {model.rhoX}, 1));                              	// [kg/m3], diatoma density
 		mlModel.setField("MWX",                           new MLDouble(null, new double[] {model.MWX}, 1));                               	// [kg/mol], composition CH1.8O0.5N0.2
-		// Initial cell properties
-		//
-		double[] DtypeInit = new double[model.typeInit.length];		for(int ii=0; ii<model.typeInit.length; ii++)		DtypeInit[ii] = model.typeInit[ii];		mlModel.setField("typeInit",                      new MLDouble(null, DtypeInit, model.typeInit.length));                          	
-		//
-		mlModel.setField("nInit",                         new MLDouble(null, model.nInit, model.nInit.length));                           	
-		// Spring constants and drag coefficient
-		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
-		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// cell-cell collision
-		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall(substratum)-cell spring
+		mlModel.setField("NXType",                        new MLDouble(null, new double[] {model.NXType}, 1));                            	
+		// --> Intracellular (rod) springs
 		mlModel.setField("Kr",                            new MLDouble(null, new double[] {model.Kr}, 1));                                	// internal cell spring
-		mlModel.setField("KfSphere",                      new MLDouble(null, new double[] {model.KfSphere}, 1));                          	// filament spring for sphere-sphere filial links
-		mlModel.setField("KfRod0",                        new MLDouble(null, new double[] {model.KfRod0}, 1));                            	// filament spring for rod-rod filial links, short spring
-		mlModel.setField("KfRod1",                        new MLDouble(null, new double[] {model.KfRod1}, 1));                            	// filament spring for rod-rod filial links, long sprong
+		// --> Sticking
+		mlModel.setField("sticking",                      new MLDouble(null, new double[] {model.sticking?1:0}, 1));                      	
+		mlModel.setField("stickType",                     new MLDouble(null, boolean2double(model.stickType)));                           
+		mlModel.setField("Ks",                            new MLDouble(null, new double[] {model.Ks}, 1));                                	
+		mlModel.setField("stickStretchLim",               new MLDouble(null, new double[] {model.stickStretchLim}, 1));                   	// Maximum tension for sticking springs
+		mlModel.setField("stickFormLim",                  new MLDouble(null, new double[] {model.stickFormLim}, 1));                      	// Added to rest length to check if we should form sticking springs
+		// --> Anchoring
+		mlModel.setField("anchoring",                     new MLDouble(null, new double[] {model.anchoring?1:0}, 1));                     	
 		mlModel.setField("Kan",                           new MLDouble(null, new double[] {model.Kan}, 1));                               	// anchor
-		mlModel.setField("Ks",                            new MLDouble(null, new double[] {model.Ks}, 1));                                	// sticking
 		mlModel.setField("anchorStretchLim",              new MLDouble(null, new double[] {model.anchorStretchLim}, 1));                  	// Maximum tension for anchoring springs
 		mlModel.setField("anchorFormLim",                 new MLDouble(null, new double[] {model.anchorFormLim}, 1));                     	// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-		mlModel.setField("stickStretchLim",               new MLDouble(null, new double[] {model.stickStretchLim}, 1));                   	// Maximum tension for sticking springs
-		mlModel.setField("stickFormLim",                  new MLDouble(null, new double[] {model.stickFormLim}, 1));                      	// Multiplication factor for rest length to form sticking springs.
+		// --> Filaments
+		mlModel.setField("filament",                      new MLDouble(null, new double[] {model.filament?1:0}, 1));                      	
+		mlModel.setField("filType",                       new MLDouble(null, boolean2double(model.filType), model.filType.length));       
+		mlModel.setField("KfSphere",                      new MLDouble(null, new double[] {model.KfSphere}, 1));                          	// filament spring for sphere-sphere filial links
+		mlModel.setField("KfRod",                         new MLDouble(null, model.KfRod, model.KfRod.length));                           	// filament spring for rod-rod filial links {short spring, long spring}
+		mlModel.setField("filSphereStraightFil",          new MLDouble(null, new double[] {model.filSphereStraightFil?1:0}, 1));          	// Make streptococci-like structures if true, otherwise staphylococci
+		mlModel.setField("filRodBranchFrequency",         new MLDouble(null, new double[] {model.filRodBranchFrequency}, 1));             	// Which fraction of daughter cells form a branching filial link instead of a straight
 		mlModel.setField("filStretchLim",                 new MLDouble(null, new double[] {model.filStretchLim}, 1));                     	// Maximum tension for sticking springs
 		mlModel.setField("filLengthSphere",               new MLDouble(null, new double[] {model.filLengthSphere}, 1));                   	// How many times R2 the sphere filament's rest length is
 		mlModel.setField("filLengthRod",                  new MLDouble(null, model.filLengthRod, model.filLengthRod.length));             	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
+		// --> Gravity/buoyancy and drag
+		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
+		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
+		mlModel.setField("G",                             new MLDouble(null, new double[] {model.G}, 1));                                 	// [m/s2], acceleration due to gravity
+		mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      	
+		// --> Substratum and normal forces
+		mlModel.setField("normalForce",                   new MLDouble(null, new double[] {model.normalForce?1:0}, 1));                   	// Use normal force to simulate cells colliding with substratum (at y=0)
+		mlModel.setField("initialAtSubstratum",           new MLDouble(null, new double[] {model.initialAtSubstratum?1:0}, 1));           	// All initial balls are positioned at y(t=0) = ball.radius
+		// --> Collision forces
+		mlModel.setField("Kc",                            new MLDouble(null, new double[] {model.Kc}, 1));                                	// cell-cell collision
+		mlModel.setField("Kw",                            new MLDouble(null, new double[] {model.Kw}, 1));                                	// wall(substratum)-cell spring
 		// Model biomass and growth properties
 		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {model.NdComp}, 1));                            	// d for dynamic compound (e.g. total Ac)
 		mlModel.setField("NcComp",                        new MLDouble(null, new double[] {model.NcComp}, 1));                            	// c for concentration (or virtual compound, e.g. Ac-)

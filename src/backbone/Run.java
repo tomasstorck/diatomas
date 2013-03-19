@@ -41,8 +41,8 @@ public class Run {
 			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
 			model.Kr 	= 5e-11;				// internal cell spring
 			model.Kan	= 1e-11;				// anchor
-			model.KfRod0 = 2e-11;
-			model.KfRod1 = 2e-11;
+			model.KfRod[0] = 2e-11;
+			model.KfRod[1] = 2e-11;
 			model.Ks = 2e-12;
 			model.filLengthRod = new double[]{0.5, 1.7};
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
@@ -57,35 +57,35 @@ public class Run {
 			////////			
 //			model.L = new Vector3d(20e-6, 0.0, 20e-6);
 			model.L = new Vector3d(10e-6, 0.0, 10e-6);
-			model.radiusCellMax[4] = 0.45e-6;	// Pseudomonas sp. 138, Tanaka 1985
-			model.lengthCellMax[4] = 1.1e-6;	// Pseudomonas sp. 138 (max "measured" length 2 micron), Tanaka 1985
-			model.radiusCellMax[5] = 0.5e-6;	// Sphaerotilus sp. F6, Tanaka 1985
-			model.lengthCellMax[5] = 3e-6;		// Sphaerotilus sp. F6 (max "measured" length 4 micron), Tanaka 1985
+			model.radiusCellMax[0] = 0.75e-6;	// Sphaerotilus sp. F6, Tanaka 1985
+			model.radiusCellMax[4] = 0.5e-6;	// Based
+			model.lengthCellMax[4] = 3e-6;		// Sphaerotilus sp. F6 (max "measured" length 4 micron), Tanaka 1985
 			model.NInitCell = 6;
-			model.muAvgSimple[4] = 0.13;		// Based on S. natans, weighed for QO2max in Tanaka 1985
-			model.muAvgSimple[5] = 0.38;		// Sphaerotilus natans, average of different strains, Pellegrin 1999 
-//			model.relaxationIterSuccessiveMax = 10;
+			model.muAvgSimple[0] = 1.00;		// Based on S. natans, weighed for QO2max in Tanaka 1985
+			model.muAvgSimple[4] = 0.75;		// From Batstone 2002, based on propionate consumption mu_max = Y*km_pro: 13*160/112*0.04
+			model.muStDev[0] = 0.2;
+			model.muStDev[4] = 0.15; 
+			model.growthTimeStep = 240.0;
 //			model.syntrophyFactor = 1.5;		// Let's not touch substrate transfer just yet
-			model.attachmentRate = 1.0;
-			model.attachCellType = 4;
-			model.attachNotTo = new int[]{4};
+//			model.attachmentRate = 1.0;
+			model.attachCellType = 0;
+			model.attachNotTo = new int[]{0};
 			model.filament = true;
-			model.filType[5] = true;
+			model.filType[4] = true;
 			model.filLengthRod = new double[]{0.5, 1.7};
 			model.filStretchLim = 1.0;
 			model.filRodBranchFrequency = 0.0;
 			model.sticking = true;
-//			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;
-			model.stickType[4][5] = model.stickType[5][4] = true;
+			model.stickType[0][4] = model.stickType[4][0] = model.stickType[0][0] = model.stickType[4][4] = true;
 			model.Kd 	= 1e-13;				// drag force coefficient
 			model.Kc 	= 1e-9;					// cell-cell collision
 			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
 			model.Kr 	= 5e-11;				// internal cell spring
 			model.KfSphere 	= 2e-11;			// filament spring
-			model.KfRod0 = 2e-11;
-			model.KfRod1 = 2e-11;
-			model.Kan	= 1e-11;				// anchor
-			model.Ks 	= 1e-11;				// sticking
+			model.KfRod[0] = 2e-11;
+			model.KfRod[1] = 2e-11;
+			model.Kan	= 1e-12;				// anchor
+			model.Ks 	= 1e-12;				// sticking
 			if(model.simulation==1) {
 				model.anchoring = true;
 				model.normalForce = true;
@@ -94,105 +94,73 @@ public class Run {
 				model.normalForce = false;
 			}
 			break;
-		case 3:
-			model.Write("Loading parameters for Cyanobacteria","");
-			///////////////////
-			// CYANOBACTERIA //
-			///////////////////
-			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
-			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
-			model.NInitCell = 10;
-			model.normalForce = true;
-			model.sticking = false;
-			model.filament = true;
-			model.filStretchLim = 1.0;
-			model.L = new Vector3d(30e-6, model.radiusCellMax[4], 30e-6);
-			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
-			model.Kr 	= 5e-11;				// internal cell spring
-			model.Kan	= 1e-11;				// anchor
-			model.KfRod0 = 2e-11;
-			model.KfRod1 = 2e-11;
-			model.filLengthRod = new double[]{0.5, 1.7};
-			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
-			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
-			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
-//			model.relaxationIterSuccessiveMax = 10;
-			model.randomSeed = 4;
-			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 		}
 	}
 	
 	public void Start() throws Exception {
-		// Set initial cell parameters based on model
-		rand.Seed(model.randomSeed);
-		model.UpdateAmountCellMax();
-		switch(model.simulation) {
-		case 0: case 3: case 4:
-			model.typeInit = new int[model.NInitCell];
-			model.nInit = new double[model.NInitCell];
-			model.directionInit = new Vector3d[model.NInitCell];
-			model.position0Init = new Vector3d[model.NInitCell];
-			model.position1Init = new Vector3d[model.NInitCell];
-			for(int ii=0; ii<model.NInitCell; ii++) {
-				model.typeInit[ii] = 4;
-				model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
-				model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 																		(rand.Double()-0.5))			.normalise();
-				model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 		CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);						// *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
-				final double restLength =  CRodSpring.RestLength(CBall.Radius(model.nInit[ii], model.typeInit[ii], model), model.nInit[ii], model.typeInit[ii], model);
-				model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
-			}
-			break;
-		case 1: case 2:
-			// Set type
-			model.typeInit = new int[model.NInitCell];
-			for(int ii=0; ii<model.NInitCell/2; ii++)						model.typeInit[ii] = 4;			// First half: 
-			for(int ii=model.NInitCell/2; ii<model.NInitCell; ii++)			model.typeInit[ii] = 5;			// Second half: 
-			// Various
-			model.nInit = new double[model.NInitCell];
-			model.directionInit = new Vector3d[model.NInitCell];
-			model.position0Init = new Vector3d[model.NInitCell];
-			model.position1Init = new Vector3d[model.NInitCell];
-
-			if(model.simulation==1) {
-				model.Write("Defining cell parameters for AS/biofilm","");
-				// Biofilm-like
-				for(int ii=0; ii<model.NInitCell; ii++) {
-					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
-					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5)+5.0,																(rand.Double()-0.5))			.normalise();
-					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(model.nInit[ii]/2.0, model.typeInit[ii], model)+0.0*rand.Double(),			(rand.Double()-0.5)*model.L.z);
-					final double restLength =  CRodSpring.RestLength(CBall.Radius(model.nInit[ii], model.typeInit[ii], model), model.nInit[ii], model.typeInit[ii], model);
-					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
-				}
-			} else {
-				model.Write("Defining cell parameters for AS/flock","");
-				// Flock-like
-				for(int ii=0; ii<model.NInitCell; ii++) {
-					model.nInit[ii] = 0.5*model.nCellMax[model.typeInit[ii]] * (1.0 + rand.Double());
-					model.directionInit[ii] = new Vector3d((rand.Double()-0.5), 			(rand.Double()-0.5), 																	(rand.Double()-0.5))			.normalise();
-					final double restLength =  CRodSpring.RestLength(CBall.Radius(model.nInit[ii], model.typeInit[ii], model), model.nInit[ii], model.typeInit[ii], model);
-					model.position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	(rand.Double()-0.5)*model.L.y,															(rand.Double()-0.5)*model.L.z);
-					model.position1Init[ii] = model.position0Init[ii].plus(model.directionInit[ii].times(restLength));
-				}
-			}
-			break;
-		default:
-			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
-		}
-		
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 		if(model.growthIter == 0 && model.relaxationIter == 0) {			// First time we run this simulation, didn't load it
+			// Set initial cell parameters based on model
+			rand.Seed(model.randomSeed);
+			model.UpdateAmountCellMax();
+			int[] typeInit = new int[model.NInitCell];
+			double[] nInit = new double[model.NInitCell];
+			Vector3d[] directionInit = new Vector3d[model.NInitCell];
+			Vector3d[] position0Init = new Vector3d[model.NInitCell];
+			Vector3d[] position1Init = new Vector3d[model.NInitCell];
+			switch(model.simulation) {
+			case 0:
+				for(int ii=0; ii<model.NInitCell; ii++) {
+					typeInit[ii] = 4;
+					nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
+					directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 														(rand.Double()-0.5))			.normalise();
+					position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(nInit[ii]/2.0, typeInit[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);						// *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
+					final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
+					position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
+				}
+				break;
+			case 1: case 2:
+				// Set type
+				for(int ii=0; ii<model.NInitCell/2; ii++)						typeInit[ii] = 4;			// First half: 
+				for(int ii=model.NInitCell/2; ii<model.NInitCell; ii++)			typeInit[ii] = 0;			// Second half: 
+
+				if(model.simulation==1) {
+					model.Write("Defining cell parameters for AS/biofilm","");
+					// Biofilm-like
+					for(int ii=0; ii<model.NInitCell; ii++) {
+						nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
+						directionInit[ii] = new Vector3d((rand.Double()-0.5), (rand.Double()-0.5)+5.0, (rand.Double()-0.5)).normalise();
+						position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(nInit[ii]/2.0, typeInit[ii], model)+0.0*rand.Double(),	(rand.Double()-0.5)*model.L.z);
+						final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
+						position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
+					}
+				} else {
+					model.Write("Defining cell parameters for AS/flock","");
+					// Flock-like
+					for(int ii=0; ii<model.NInitCell; ii++) {
+						nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
+						directionInit[ii] = new Vector3d((rand.Double()-0.5), (rand.Double()-0.5), (rand.Double()-0.5)).normalise();
+						final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
+						position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y,															(rand.Double()-0.5)*model.L.z);
+						position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
+					}
+				}
+				break;
+			default:
+				throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
+			}
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NInitCell; iCell++){
-				boolean filament = model.filament && model.filType[model.typeInit[iCell]];
+				boolean filament = model.filament && model.filType[typeInit[iCell]];
 				@SuppressWarnings("unused")
-				CCell cell = new CCell(model.typeInit[iCell], 				// Type of biomass
-						model.nInit[iCell],
-						model.position0Init[iCell],
-						model.position1Init[iCell],
+				CCell cell = new CCell(typeInit[iCell], 				// Type of biomass
+						nInit[iCell],
+						position0Init[iCell],
+						position1Init[iCell],
 						filament,											// With capability to form filaments?
 						model);
 			}
@@ -267,11 +235,17 @@ public class Run {
 			for(CCell mother : dividingCellArray) {
 				CCell daughter = model.DivideCell(mother);
 				if(mother.filament) {
-					if(rand.Double() < model.filRodBranchFrequency) {		// If we make a new branch
-						model.CreateFilament(mother, daughter, true);
-					} else {
-						model.TransferFilament(mother, daughter);		// If we insert the cell in the straight filament 
+					if(mother.type<2) {
+						if(model.filSphereStraightFil)
+							model.TransferFilament(mother, daughter);
 						model.CreateFilament(mother, daughter, false);
+					} else if (mother.type<6) {
+						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency) {		// Determine if we branch. Only happens if mother is NOT at the end of a filament  
+							model.CreateFilament(mother, daughter, true);
+						} else {															// If we insert the cell in the straight filament
+							model.TransferFilament(mother, daughter);		 
+							model.CreateFilament(mother, daughter, false);
+						}	
 					}
 				}
 			}

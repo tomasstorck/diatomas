@@ -2,8 +2,8 @@
 L = [20,20,20];
 imageWidth = 1024;
 imageHeight = 768;
-camPosDifference = [0.0; 0.5*L(2); -L(3)];		% Where the camera will hover compared to camView
-% camPosDifference = [0.0; 0.5*L(2); 0.0];		% top down view
+camPosDifference = [0.0; 2*L(2); -4*L(3)];		% Where the camera will hover compared to camView
+% camPosDifference = [0.0; 2*L(2); 0.0];		% top down view
 ambient = 0.5;
 diffuse = 0.7;
 phong = 0.0;
@@ -37,14 +37,14 @@ if ~exist('right','var')	% Every 5th iteration or when none exists, find a prope
 	%
 	%%%%%%%%
 	aspect = imageWidth/imageHeight;
-	minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates
+	minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates. 2 is for dimension 2
 	maxPos = max([model.ballArray.pos],[],2)*1e6;
 	C = (maxPos+minPos)/2;	% Camera is at the plane, right in the middle, height == radius
 	camView = C;
-	camPos = C + camPosDifference;
+	camPos = C+camPosDifference;
 	A = camPos;
 	% Find vector perpendicular to x axis AND camera axis
-	vertAxis = cross(C-A, [1; 0; 0]);
+	vertAxis = cross(camView-camPos, [1; 0; 0]);
 	% Reset ranges
 	horRange = 0.0;
 	vertRange = 0.0;

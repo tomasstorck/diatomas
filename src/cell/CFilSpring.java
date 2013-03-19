@@ -62,14 +62,14 @@ public class CFilSpring extends CSpring {
 			if(cell0.type<2)						springDiv = 1.0;
 			else if(cell0.type<6)					springDiv = 2.0;
 			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
-			K = model.KfRod0/springDiv;
+			K = model.KfRod[0]/springDiv;
 			break;
 		case 5:	case 6:												// Two different balls, same cell type
 			// Rod filament, long spring
 			if(cell0.type<2)						springDiv = 1.0;
 			else if(cell0.type<6)					springDiv = 2.0;
 			else throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
-			K = model.KfRod0/springDiv;				// FIXME
+			K = model.KfRod[0]/springDiv;				// FIXME
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);

@@ -30,53 +30,46 @@ public class CModel implements Serializable {
 	public int simulation = 0;					// The simulation type: see Run
 	public int randomSeed = 3;
 	public boolean comsol = false;
-	public int NXType = 6;
-	// --> Sticking
-	public boolean sticking = false;
-	public boolean[][] stickType = new boolean[NXType][NXType];
-	// --> Anchoring
-	public boolean anchoring = false;
-	// --> Filaments
-	public boolean filament = false;
-	public boolean[] filType = new boolean[NXType];
-	public boolean filSphereStraightFil = false;	// Make streptococci-like structures if true, otherwise staphylococci
-	public double filRodBranchFrequency = 0.0;// Which fraction of daughter cells form a branching filial link instead of a straight
-	// --> Gravity/buoyancy
-	public boolean gravity = false;
-	public boolean gravityZ = false;
-	// --> Substratum
-	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
-	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
 	// Domain properties
 	public Vector3d L 	= new Vector3d(2e-6, 2e-6, 2e-6);
-	public double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
-	// Initial cell properties
-	public int[] typeInit = {4};
-	public double[] nInit = {1e-15};
-	public Vector3d[] directionInit = {new Vector3d(1.0, 0.0, 0.0)};
-	public Vector3d[] position0Init = {new Vector3d(0.0, 0.0, 0.0)};
-	public Vector3d[] position1Init = {new Vector3d(2e-6, 0.0, 0.0)};
-		
-	// Spring constants and drag coefficient
-	public double Kd 	= 1e-13;				// drag force coefficient
-	public double Kc 	= 1e-9;					// cell-cell collision
-	public double Kw 	= 5e-10;				// wall(substratum)-cell spring
+	public int NXType = 6;
+	// --> Intracellular (rod) springs
 	public double Kr 	= 5e-11;				// internal cell spring
-	public double KfSphere 	= 2e-11;			// filament spring for sphere-sphere filial links
-	public double KfRod0 	= 2e-11;			// filament spring for rod-rod filial links, short spring
-	public double KfRod1 	= 2e-11;			// filament spring for rod-rod filial links, long sprong
+	// --> Sticking
+	public boolean sticking = false;
+	public boolean[][] stickType = new boolean[NXType][NXType];
+	public double Ks 	= 1e-11;
+	public double stickStretchLim = 0.5e-6;		// Maximum tension for sticking springs
+	public double stickFormLim = 0.1e-6; 		// Added to rest length to check if we should form sticking springs
+	// --> Anchoring
+	public boolean anchoring = false;
 	public double Kan	= 1e-11;				// anchor
-	public double Ks 	= 1e-11;				// sticking
 	public double anchorStretchLim = 0.5e-6;	// Maximum tension for anchoring springs
 	public double anchorFormLim = 0.1e-6;		// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
-	public double stickStretchLim = 0.5e-6;		// Maximum tension for sticking springs
-	public double stickFormLim = 0.1e-6; 		// Multiplication factor for rest length to form sticking springs. 
+	// --> Filaments
+	public boolean filament = false;
+	public boolean[] filType = new boolean[NXType];
+	public double KfSphere 	= 2e-11;			// filament spring for sphere-sphere filial links
+	public double[] KfRod 	= {2e-11, 2e-11};	// filament spring for rod-rod filial links {short spring, long spring}
+	public boolean filSphereStraightFil = false;// Make streptococci-like structures if true, otherwise staphylococci
+	public double filRodBranchFrequency = 0.0;// Which fraction of daughter cells form a branching filial link instead of a straight
 	public double filStretchLim = 0.5e-6;		// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
 	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
+	// --> Gravity/buoyancy and drag
+	public double Kd 	= 1e-13;				// drag force coefficient
+	public boolean gravity = false;
+	public double G		= -9.8;					// [m/s2], acceleration due to gravity
+	public boolean gravityZ = false;
+	// --> Substratum and normal forces
+	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
+	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
+	// --> Collision forces
+	public double Kc 	= 1e-9;					// cell-cell collision
+	public double Kw 	= 5e-10;				// wall(substratum)-cell spring
 	// Model biomass and growth properties
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
