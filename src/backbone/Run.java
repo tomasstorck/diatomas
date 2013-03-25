@@ -35,7 +35,7 @@ public class Run {
 			/////////////
 			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
 			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
-			model.NInitCell = 1;
+			model.NCellInit = 1;
 			model.normalForce = true;
 			model.sticking = model.filament = false;
 			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
@@ -56,36 +56,38 @@ public class Run {
 			// AS //
 			////////			
 //			model.L = new Vector3d(20e-6, 0.0, 20e-6);
-			model.L = new Vector3d(10e-6, 0.0, 10e-6);
-			model.radiusCellMax[0] = 0.75e-6;	// Sphaerotilus sp. F6, Tanaka 1985
-			model.radiusCellMax[4] = 0.5e-6;	// Based
-			model.lengthCellMax[4] = 3e-6;		// Sphaerotilus sp. F6 (max "measured" length 4 micron), Tanaka 1985
-			model.NInitCell = 6;
-			model.muAvgSimple[0] = 1.00;		// Based on S. natans, weighed for QO2max in Tanaka 1985
-			model.muAvgSimple[4] = 0.75;		// From Batstone 2002, based on propionate consumption mu_max = Y*km_pro: 13*160/112*0.04
-			model.muStDev[0] = 0.2;
-			model.muStDev[4] = 0.15; 
-			model.growthTimeStep = 240.0;
-//			model.syntrophyFactor = 1.5;		// Let's not touch substrate transfer just yet
+			model.L = new Vector3d(5e-6, 0.0, 5e-6);
+			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
+			model.radiusCellMax[5] = 0.35e-6;	// [m] (Lau 1984)
+			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
+			model.lengthCellMax[5] = 1.1e-6;	// [m] (Lau 1984), compensated
+			model.muAvgSimple[4] = 0.271;		// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
+			model.muAvgSimple[5] = 0.383;		// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
+			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
+			model.muStDev[5] = 0.2*model.muAvgSimple[5];		//
+			model.NCellInit = 6;
+			model.NColoniesInit = 1;
+			model.growthTimeStep = 300.0;
 //			model.attachmentRate = 1.0;
-			model.attachCellType = 0;
-			model.attachNotTo = new int[]{0};
+			model.attachCellType = 5;
+			model.attachNotTo = new int[]{};
 			model.filament = true;
-			model.filType[4] = true;
+			model.filType[4] = true;			// Only filament former forms filaments
+			model.KfSphere 	= 2e-11;			// filament spring
+			model.KfRod[0] = 2e-11;
+			model.KfRod[1] = 2e-11;
 			model.filLengthRod = new double[]{0.5, 1.7};
-			model.filStretchLim = 1.0;
+			model.filStretchLim = 5e-6;
 			model.filRodBranchFrequency = 0.0;
 			model.sticking = true;
-			model.stickType[0][4] = model.stickType[4][0] = model.stickType[0][0] = model.stickType[4][4] = true;
+			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;	// Anything sticks
+			model.Ks 	= 1e-11;				// sticking
+			model.stickFormLim = 0.5e-6;
+			model.stickStretchLim = 2e-6;
 			model.Kd 	= 1e-13;				// drag force coefficient
 			model.Kc 	= 1e-9;					// cell-cell collision
 			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
 			model.Kr 	= 5e-11;				// internal cell spring
-			model.KfSphere 	= 2e-11;			// filament spring
-			model.KfRod[0] = 2e-11;
-			model.KfRod[1] = 2e-11;
-			model.Kan	= 1e-12;				// anchor
-			model.Ks 	= 1e-12;				// sticking
 			if(model.simulation==1) {
 				model.anchoring = true;
 				model.normalForce = true;
@@ -107,14 +109,14 @@ public class Run {
 			// Set initial cell parameters based on model
 			rand.Seed(model.randomSeed);
 			model.UpdateAmountCellMax();
-			int[] typeInit = new int[model.NInitCell];
-			double[] nInit = new double[model.NInitCell];
-			Vector3d[] directionInit = new Vector3d[model.NInitCell];
-			Vector3d[] position0Init = new Vector3d[model.NInitCell];
-			Vector3d[] position1Init = new Vector3d[model.NInitCell];
+			int[] typeInit = new int[model.NCellInit];
+			double[] nInit = new double[model.NCellInit];
+			Vector3d[] directionInit = new Vector3d[model.NCellInit];
+			Vector3d[] position0Init = new Vector3d[model.NCellInit];
+			Vector3d[] position1Init = new Vector3d[model.NCellInit];
 			switch(model.simulation) {
 			case 0:
-				for(int ii=0; ii<model.NInitCell; ii++) {
+				for(int ii=0; ii<model.NCellInit; ii++) {
 					typeInit[ii] = 4;
 					nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 					directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 														(rand.Double()-0.5))			.normalise();
@@ -125,13 +127,13 @@ public class Run {
 				break;
 			case 1: case 2:
 				// Set type
-				for(int ii=0; ii<model.NInitCell/2; ii++)						typeInit[ii] = 4;			// First half: 
-				for(int ii=model.NInitCell/2; ii<model.NInitCell; ii++)			typeInit[ii] = 0;			// Second half: 
+				for(int ii=0; ii<model.NCellInit; ii++)						
+					typeInit[ii] = ii%2==0 ? 4 : 5;  
 
 				if(model.simulation==1) {
 					model.Write("Defining cell parameters for AS/biofilm","");
 					// Biofilm-like
-					for(int ii=0; ii<model.NInitCell; ii++) {
+					for(int ii=0; ii<model.NCellInit; ii++) {
 						nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 						directionInit[ii] = new Vector3d((rand.Double()-0.5), (rand.Double()-0.5)+5.0, (rand.Double()-0.5)).normalise();
 						position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(nInit[ii]/2.0, typeInit[ii], model)+0.0*rand.Double(),	(rand.Double()-0.5)*model.L.z);
@@ -141,7 +143,7 @@ public class Run {
 				} else {
 					model.Write("Defining cell parameters for AS/flock","");
 					// Flock-like
-					for(int ii=0; ii<model.NInitCell; ii++) {
+					for(int ii=0; ii<model.NCellInit; ii++) {
 						nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 						directionInit[ii] = new Vector3d((rand.Double()-0.5), (rand.Double()-0.5), (rand.Double()-0.5)).normalise();
 						final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
@@ -153,8 +155,20 @@ public class Run {
 			default:
 				throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 			}
+			// Displace cells because of multiple colonies
+			for(int iCell = 0; iCell<model.NCellInit; iCell++) {
+				int iCol = iCell/(model.NCellInit/model.NColoniesInit);
+				final Vector3d[] dirColonies = new Vector3d[]{			 	// Displace colonies along the X vector, so we can easily see them in the renders
+						new Vector3d(0e-6, 0.0, 0.0),
+						new Vector3d(-35e-6, 0.0, -35e-6),
+						new Vector3d( 35e-6, 0.0, -35e-6),
+						new Vector3d( 35e-6, 0.0,  35e-6),
+						new Vector3d(-35e-6, 0.0,  35e-6)};			
+				position0Init[iCell] = position0Init[iCell].plus(dirColonies[iCol]);
+				position1Init[iCell] = position1Init[iCell].plus(dirColonies[iCol]);
+			}
 			// Create initial cells
-			for(int iCell = 0; iCell < model.NInitCell; iCell++){
+			for(int iCell = 0; iCell < model.NCellInit; iCell++){
 				boolean filament = model.filament && model.filType[typeInit[iCell]];
 				@SuppressWarnings("unused")
 				CCell cell = new CCell(typeInit[iCell], 				// Type of biomass

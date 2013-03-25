@@ -74,7 +74,8 @@ public class CModel implements Serializable {
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
 	public int NAcidDiss = 4; 					// Number of acid dissociation reactions
-	public int NInitCell = 6;					// Initial number of cells
+	public int NCellInit = 6;					// Initial number of cells
+	public int NColoniesInit = 1;				// Initial number of colonies, in total containing NCellInit cells
 	public double[] radiusCellMax = new double[NXType];
 	public double[] radiusCellMin = new double[NXType];
 	public double[] lengthCellMax = new double[NXType];
@@ -98,8 +99,8 @@ public class CModel implements Serializable {
 	public int relaxationIter = 0;				// [-] counter time iterations for relaxation
 	public int relaxationIterSuccessiveMax = 0;	// [-] how many successive iterations we limit relaxation to 
 	// Arrays
-	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NInitCell);
-	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NInitCell);
+	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NCellInit);
+	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NCellInit);
 	public ArrayList<CRodSpring> rodSpringArray = new ArrayList<CRodSpring>(0);
 	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(0);
 	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(0);
