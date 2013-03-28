@@ -12,7 +12,7 @@ if ~exist('location','var')
 end
 
 % Make output folder if it doesn't exist already
-if ~exist([location filesep 'image'],'dir')
+if ~exist([location filesep 'image'],'dir') && exist(location,'dir')        % Added second statement so we don't generate the base folder if it was removed
 	mkdir([location filesep 'image']);
 end
 
@@ -25,13 +25,13 @@ for iFile=length(loadFileNameList):-1:1
         continue                % Already plotted, skip
     end
 	fprintf([loadFileName '\n']);
-% 	try
+ 	try
 		load([location filesep 'output' filesep loadFileName]);
 		if rem(model.relaxationIter,10)==0
 			clear right;
 		end
 		RenderFun;
-% 	catch ME
-% 		continue;
-% 	end
+ 	catch ME
+ 		continue;
+ 	end
 end

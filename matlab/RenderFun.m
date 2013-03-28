@@ -85,7 +85,7 @@ for ii=0:NSave			% Can be replaced with parfor
 		continue
     end
 	
-    if(exist(povName{ii+1},'file'))
+    if exist(povName{ii+1},'file')
 		delete(povName{ii+1});
 	end
 	fid = fopen(povName{ii+1},'a');

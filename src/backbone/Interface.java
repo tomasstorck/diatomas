@@ -25,7 +25,6 @@ public class Interface{
 
 		// Initialise model, simulation and create an object for a copy
 		CModel model = new CModel();
-		CModel modelRef;										// modelRef is required for loading command line arguments
 		Run instance;
 		// Analyse command line arguments, immediately execute some, save rest to Hashtable
 		int NArg = args.length;
@@ -103,22 +102,18 @@ public class Interface{
 				loadPath = loadPath + "/output/" + files[files.length-1];
 			}
 			model = Load(loadPath);
-			modelRef = Load(loadPath); 
 			instance = new Run(model);
+			SetArgument(model, argument, true);
 			model.Write("Loaded " + loadPath, "");
 		} else {												// Start from zero
 			// Set name to prevent writing things to default folder
 			if(argument.containsKey("name"))		model.name = argument.get("name");
-			// Set all parameters from command line before we initialise
-			SetArgument(model, new CModel(), argument);
 			// Initialise parameters
 			instance = new Run(model);
+			SetArgument(model, argument, false);				// Don't want to do multiplications (e.g. Kan[0] *0.1) just yet to prevent from doubling it up
 			instance.Initialise();
-			modelRef = new CModel();
+			SetArgument(model, argument, true);
 		}
-		// Set all parameters from command line, perhaps again, to overwrite whatever was set in the initialiser or load method. SetArgument won't do arguments already set and not changed during intialisation again
-		SetArgument(model, modelRef, argument);
-		modelRef = null;										// We don't need modelRef anymore, mark it for garbage collection
 		// Done analysing input arguments. Start model
 		try {
 			model.Write("=====================================", "");
@@ -138,7 +133,7 @@ public class Interface{
 		}
 	}
 			
-	public static void SetArgument(CModel model, CModel modelRef, Map<String, String> argument) {
+	public static void SetArgument(CModel model, Map<String, String> argument, boolean doRelative) {
 		Iterator<Entry<String, String>> argumentKeys = argument.entrySet().iterator();
 		args:while(argumentKeys.hasNext()) {
 			Entry<String, String> iter = argumentKeys.next(); 
@@ -169,114 +164,107 @@ public class Interface{
 									int jj = Integer.parseInt(jjString);
 									// boolean[][]					// OPTIMISE: We could make this with generics, virtually the same code is used for all these types
 									if(fieldClassName.equals("boolean")) {
-										boolean[][] modelBool = (boolean[][]) field.get(model);
-										boolean[][] bool= new boolean[modelBool.length][modelBool[0].length];
-										for(int kk=0; kk<modelBool.length; kk++)	bool[kk] = modelBool[kk].clone();		// We need to create a deep copy
-										bool[ii][jj] = Integer.parseInt(value) == 1 ? true : false;
-										java.util.Arrays.equals(modelBool, bool);
-										if(modelBool[ii][jj] != bool[ii][jj])
+										boolean[][] bool = (boolean[][]) field.get(model);
+										if(bool[ii][jj] = (Integer.parseInt(value) == 1 ? true : false)) {
+											bool[ii][jj] = Integer.parseInt(value) == 1 ? true : false;
+											field.set(model, bool);
 											model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + (bool[ii][jj]?"true":"false"), "");
-										field.set(model, bool);
+										}
 										continue args;
 									}
 									// double[][]
 									if(fieldClassName.equals("double")) {
-										double[][] numberRef = (double[][]) field.get(modelRef);
-										double[][] number= new double[numberRef.length][numberRef[0].length];
-										for(int kk=0; kk<numberRef.length; kk++)	number[kk] = numberRef[kk].clone();		// We need to create a deep copy
+//										double[][] numberRef = (double[][]) field.get(modelRef);
+										double[][] number = (double[][]) field.get(model);
 										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
 										if(value.startsWith("*")) {	// Relative
 											double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-											if(number[ii][jj] != numberRef[ii][jj]*multiplier) { 				// If this were true, the operation would already have been done once
-												number[ii][jj] *= multiplier;									// Hasn't been multiplied before, so do it
+											if(multiplier != 1.0 && doRelative) {
+												number[ii][jj] *= multiplier;
+												field.set(model, number);
 												model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + number[ii][jj], "");
 											}
 										} else {
-											number[ii][jj] = Double.parseDouble(value);
-											if(number[ii][jj] != numberRef[ii][jj]) 
+											if(number[ii][jj] != Double.parseDouble(value)) {
+												number[ii][jj] = Double.parseDouble(value);
+												field.set(model, number);
 												model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + number[ii][jj], "");
+											}
 										}
-										field.set(model, number);
 										continue args;
 									}
 									// int[][]
 									if(fieldClassName.equals("int")) {
-										int[][] modelNumber = (int[][]) field.get(model);
-										int[][] number = new int[modelNumber.length][modelNumber[0].length];
-										for(int kk=0; kk<modelNumber.length; kk++)	number[kk] = modelNumber[kk].clone();		// We need to create a deep copy
-										number[ii][jj] = Integer.parseInt(value);
-										if(modelNumber[ii][jj] != number[ii][jj])
+										int[][] number = (int[][]) field.get(model);
+										if(number[ii][jj] != Integer.parseInt(value)) {
+											number[ii][jj] = Integer.parseInt(value);
+											field.set(model, number);
 											model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + number[ii][jj], "");
-										field.set(model, number);
+										}
 										continue args;
 									}
 									// String[][]
 									if(fieldClassName.equals("String")) {
-										String[][] modelString = (String[][]) field.get(model);
-										String[][] string = new String[modelString.length][modelString[0].length];
-										for(int kk=0; kk<modelString.length; kk++)	string[kk] = modelString[kk].clone();		// We need to create a deep copy
-										string[ii][jj] = value;
-										if(modelString[ii][jj].equals(string[ii][jj]))
+										String[][] string = (String[][]) field.get(model);
+										if(value.equals(string[ii][jj])) {
+											string[ii][jj] = value;
+											field.set(model, string);
 											model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + string[ii][jj], "");
-										field.set(model, string);
+										}
 										continue args;
 									}	
 								// Array (vector)									
 								} else {
 									String fieldClassName = fieldClass.getComponentType().getName();
+									int ii = Integer.parseInt(iiString);
 									// boolean[]
 									if(fieldClassName.equals("boolean")) {
-										boolean[] modelBool = (boolean[]) field.get(model);
-										boolean[] bool = modelBool.clone();
-										int ii = Integer.parseInt(iiString);
-										bool[ii] = Integer.parseInt(value) == 1 ? true : false;
-										java.util.Arrays.equals(modelBool, bool);
-										if(modelBool[ii] != bool[ii])
+										boolean[] bool = (boolean[]) field.get(model);
+										if(bool[ii] != (Integer.parseInt(value) == 1 ? true : false)) {
+											bool[ii] = (Integer.parseInt(value) == 1 ? true : false);
 											model.Write(field.getName() + "[" + ii + "] set to " + (bool[ii]?"true":"false"), "");
-										field.set(model, bool);
+											field.set(model, bool);
+										}
 										continue args;
 									}
 									// double[]
 									if(fieldClassName.equals("double")) {
-										double[] modelNumber = (double[]) field.get(model);
-										double[] modelRefNumber = (double[]) field.get(modelRef);
-										double[] number = modelNumber.clone();
-										int ii = Integer.parseInt(iiString);
+										double[] number = (double[]) field.get(model);
 										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
 										if(value.startsWith("*")) {	// Relative
 											double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-											if(number[ii] != modelRefNumber[ii]*multiplier) { 				// If this were true, the operation would already have been done once
-												number[ii] *= multiplier;									// Hasn't been multiplied before, so do it
+											if(multiplier != 1.0 && doRelative) {
+												number[ii] *= multiplier;
+												field.set(model, number);
 												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
 											}
 										} else {
-											number[ii] = Double.parseDouble(value);
-											if(number[ii] != modelRefNumber[ii]) 
+											if(number[ii] != Double.parseDouble(value)) {
+												number[ii] = Double.parseDouble(value);
+												field.set(model, number);
 												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+											}
 										}
-										field.set(model, number);
 										continue args;
 									}
 									// int[]
 									if(fieldClassName.equals("int")) {
-										int[] modelNumber = (int[]) field.get(model);
-										int[] number = modelNumber.clone();
-										int ii = Integer.parseInt(iiString);
-										number[ii] = Integer.parseInt(value);
-										if(modelNumber[ii] != number[ii])
+										int[] number = (int[]) field.get(model);
+										if(number[ii] != Integer.parseInt(value)) {
+											number[ii] = Integer.parseInt(value);
 											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-										field.set(model, number);
+											field.set(model, number);
+										}
 										continue args;
 									}
 									// String[]
 									if(fieldClassName.equals("String")) {
-										String[] modelString = (String[]) field.get(model);
-										String[] string = modelString.clone();
-										int ii = Integer.parseInt(iiString);
-										string[ii] = value;
-										if(modelString[ii].equals(string[ii]))
+										String[] string = (String[]) field.get(model);
+										if(string[ii] != value) {
+											string[ii] = value;
+											field.set(model, string);
 											model.Write(field.getName() + "[" + ii + "] set to " + string[ii], "");
-										field.set(model, string);
+										}
 										continue args;
 									}	
 								}
@@ -292,60 +280,61 @@ public class Interface{
 								if(fieldClassName.equals("boolean")) {
 									boolean[] bool = new boolean[splitValue.length];
 									for(int ii=0; ii<splitValue.length; ii++) {
-										boolean modelBool = ((boolean[]) field.get(model))[ii];
-										bool[ii] = Integer.parseInt(splitValue[ii]) == 1 ? true : false;
-										if(modelBool != bool[ii])
+										if(bool[ii] != (Integer.parseInt(splitValue[ii]) == 1 ? true : false)) {
+											bool[ii] = Integer.parseInt(splitValue[ii]) == 1 ? true : false;
 											model.Write(field.getName() + "[" + ii + "] set to " + (bool[ii]?"true":"false"), "");
+											field.set(model, bool);
+										}
 									}
-									field.set(model, bool);
 									continue args;
 								}
 								// double[]
 								if(fieldClassName.equals("double")) {
 									double[] number = new double[splitValue.length];
+									double[] numberOld = (double[]) field.get(model);
 									for(int ii=0; ii<splitValue.length; ii++) {
 										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
-										if(splitValue[ii].startsWith("*")) {	// Relative
-											double modelNumber = ((double[]) field.get(model))[ii];
-											double modelRefNumber = ((double[]) field.get(modelRef))[ii];
+										if(splitValue[ii].startsWith("*")) {											// Relative
 											double multiplier = Double.parseDouble(splitValue[ii].substring(1));		// Cut off *
-											if(modelNumber != modelRefNumber*multiplier) { 								// If this were true, the operation would already have been done once
-												number[ii] = modelNumber * multiplier;			// Hasn't been multiplied before, so do it								// Otherwise has been multipliplied before, don't change
+											if(multiplier != 1.0 && doRelative) {
+												number[ii] = numberOld[ii] * multiplier;
+												field.set(model, number);
 												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
 											}
-
+											
 										} else {
-											double modelNumber = ((double[]) field.get(model))[ii];
-											number[ii] = Double.parseDouble(splitValue[ii]);
-											if(modelNumber != number[ii]) 
+											if(number[ii] != numberOld[ii]) {											// Here we already have numberOld, so we can use this
+												number[ii] = Double.parseDouble(splitValue[ii]);
+												field.set(model, number);
 												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+											}
 										}
+										
 									}
-									field.set(model, number);
 									continue args;
 								}
 								// int[]
 								if(fieldClassName.equals("int")) {
 									int[] number = new int[splitValue.length];
 									for(int ii=0; ii<splitValue.length; ii++) {
-										int modelNumber = ((int[]) field.get(model))[ii];
-										number[ii] = Integer.parseInt(splitValue[ii]);
-										if(modelNumber != number[ii]) 
+										if(number[ii] != Integer.parseInt(splitValue[ii])) {
+											number[ii] = Integer.parseInt(splitValue[ii]);
+											field.set(model, number);
 											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
+										}
 									}
-									field.set(model, number);
 									continue args;
 								}
 								// String[]
 								if(fieldClassName.equals("String")) {
 									String[] string = new String[splitValue.length];
 									for(int ii=0; ii<splitValue.length; ii++) {
-										String modelString = (String) field.get(model);
-										string[ii] = splitValue[ii];
-										if(!modelString.equals(string[ii])) 
-											model.Write(field.getName() + " set to " + value, "");
+										if(splitValue[ii].equals(string[ii])) {
+											string[ii] = splitValue[ii];
+											field.set(model, string);
+											model.Write(field.getName() + "[" + ii + "] set to " + string[ii], "");
+										}
 									}
-									field.set(model, string);
 									continue args;
 								}
 							}
@@ -355,8 +344,7 @@ public class Interface{
 							// boolean
 							if(fieldClassName.equals("Boolean")) {
 								boolean bool = Integer.parseInt(value) == 1 ? true : false;
-								boolean modelBool = field.getBoolean(model);
-								if(modelBool != bool) {
+								if(field.getBoolean(model) != bool) {
 									field.setBoolean(model, bool);
 									model.Write(field.getName() + " set to " + (bool?"true":"false"), "");
 								}
@@ -364,43 +352,39 @@ public class Interface{
 							}
 							// double
 							if(fieldClassName.equals("Double")) {
-								double number;
-								double modelNumber = field.getDouble(model);
-								double modelRefNumber = field.getDouble(modelRef);
+								double number = field.getDouble(model);
 								// See if we have a relative (e.g. Kan *10) or absolute (e.g. Kan 1e-10) value
 								if(value.startsWith("*")) {						// Relative
 									double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-									if(modelNumber != modelRefNumber*multiplier) {					// If this were true, the operation would already have been done once
+									if(multiplier != 1.0 && doRelative) {
 										number = field.getDouble(model) * multiplier;				// Hasn't been multiplied before, so do it
 										field.setDouble(model, number);
 										model.Write(field.getName() + " set to " + number, "");
-									}											// Otherwise has been multipliplied before, don't change
+									}
 								} else {
-									number = Double.parseDouble(value);			// Absolute.
-									if(modelNumber != number) {
+									number = Double.parseDouble(value);			// Absolute
+									if(field.getDouble(model) != number) {
 										field.setDouble(model, number);
 										model.Write(field.getName() + " set to " + number, "");
-									}											
+									}
 								}
 								continue args;									// Check next argument (i.e. continue outer loop)
 							}
 							// int
 							if(fieldClassName.equals("Integer")) {
 								int number = Integer.parseInt(value);
-								int modelNumber = field.getInt(model);
-								if(modelNumber != number) {
+								if(field.getInt(model) != number) {
 									field.setInt(model, number);
-									model.Write(field.getName() + " set to " + number, "");	
+									model.Write(field.getName() + " set to " + number, "");
 								}
 								continue args;
 							}
 							// String
 							if(fieldClassName.equals("String")) {
-								String modelString = (String) field.get(model);
-								if(!modelString.equals(value)) {
+								if(!value.equalsIgnoreCase((String) field.get(model))) {
 									field.set(model, value);
 									model.Write(field.getName() + " set to " + value, "");
-								}												// Has been set before, don't change
+								}
 								continue args;
 							}
 							// Throw an error

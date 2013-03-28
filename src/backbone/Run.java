@@ -21,11 +21,6 @@ public class Run {
 	}
 	
 	public void Initialise() throws Exception{				
-
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 		rand.Seed(model.randomSeed);			// Set seed
 		switch(model.simulation) {
 		case 0:
@@ -56,7 +51,7 @@ public class Run {
 			// AS //
 			////////			
 //			model.L = new Vector3d(20e-6, 0.0, 20e-6);
-			model.L = new Vector3d(5e-6, 0.0, 5e-6);
+			model.L = new Vector3d(7e-6, 7e-6, 7e-6);
 			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
 			model.radiusCellMax[5] = 0.35e-6;	// [m] (Lau 1984)
 			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
@@ -65,7 +60,7 @@ public class Run {
 			model.muAvgSimple[5] = 0.383;		// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
 			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
 			model.muStDev[5] = 0.2*model.muAvgSimple[5];		//
-			model.NCellInit = 6;
+			model.NCellInit = 18;
 			model.NColoniesInit = 1;
 			model.growthTimeStep = 300.0;
 //			model.attachmentRate = 1.0;
@@ -77,13 +72,13 @@ public class Run {
 			model.KfRod[0] = 2e-11;
 			model.KfRod[1] = 2e-11;
 			model.filLengthRod = new double[]{0.5, 1.7};
-			model.filStretchLim = 5e-6;
+			model.filStretchLim = 2e-6;
 			model.filRodBranchFrequency = 0.0;
 			model.sticking = true;
 			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;	// Anything sticks
 			model.Ks 	= 1e-11;				// sticking
 			model.stickFormLim = 0.5e-6;
-			model.stickStretchLim = 2e-6;
+			model.stickStretchLim = 1e-6;
 			model.Kd 	= 1e-13;				// drag force coefficient
 			model.Kc 	= 1e-9;					// cell-cell collision
 			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
@@ -102,9 +97,6 @@ public class Run {
 	}
 	
 	public void Start() throws Exception {
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////
 		if(model.growthIter == 0 && model.relaxationIter == 0) {			// First time we run this simulation, didn't load it
 			// Set initial cell parameters based on model
 			rand.Seed(model.randomSeed);
@@ -128,7 +120,7 @@ public class Run {
 			case 1: case 2:
 				// Set type
 				for(int ii=0; ii<model.NCellInit; ii++)						
-					typeInit[ii] = ii%2==0 ? 4 : 5;  
+					typeInit[ii] = ii%6==0 ? 4 : 5;  
 
 				if(model.simulation==1) {
 					model.Write("Defining cell parameters for AS/biofilm","");
