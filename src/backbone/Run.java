@@ -64,7 +64,7 @@ public class Run {
 			model.NColoniesInit = 1;
 			model.growthTimeStep = 300.0;
 //			model.attachmentRate = 1.0;
-			model.attachCellType = 5;
+			model.attachCellType = 4;
 			model.attachNotTo = new int[]{};
 			model.filament = true;
 			model.filType[4] = true;			// Only filament former forms filaments
@@ -119,8 +119,15 @@ public class Run {
 				break;
 			case 1: case 2:
 				// Set type
-				for(int ii=0; ii<model.NCellInit; ii++)						
-					typeInit[ii] = ii%6==0 ? 4 : 5;  
+				for(int ii=0; ii<model.NCellInit; ii++)			 {
+					if(model.nCellMax[4]>model.nCellMax[5]) {
+						final int div = (int) (model.nCellMax[4] / model.nCellMax[5]) + 1;	// e.g. 4 is 3x heavier --> div is 1/4, so there will be 3x more 5 than 4
+						typeInit[ii] = ii%div==0 ? 4 : 5;
+					} else {
+						final int div = (int) (model.nCellMax[5] / model.nCellMax[4]) + 1;
+						typeInit[ii] = ii%div==0 ? 5 : 4;
+					}
+				}
 
 				if(model.simulation==1) {
 					model.Write("Defining cell parameters for AS/biofilm","");
