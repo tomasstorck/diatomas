@@ -1,8 +1,11 @@
 package cell;
 
+import java.util.ArrayList;
+
 public class CAnchorSpring extends CSpring {
 	private static final long serialVersionUID = 1L;
 	public Vector3d anchorPoint = new Vector3d();
+	public ArrayList<CAnchorSpring> siblingArray = new ArrayList<CAnchorSpring>(2);
 
 	///////////////////////////////////////////////////////////////////
 	

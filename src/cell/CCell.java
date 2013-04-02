@@ -67,8 +67,8 @@ public class CCell implements Serializable {
 		// Add sibling springs, assuming all anchors in this cell are siblings
 		for(int ii=0; ii<anchorSpringArray.size(); ii++) {
 			for(int jj=ii+1; jj<anchorSpringArray.size(); jj++) {
-				CSpring anchor0 = anchorSpringArray.get(ii);
-				CSpring anchor1 = anchorSpringArray.get(jj);
+				CAnchorSpring anchor0 = anchorSpringArray.get(ii);
+				CAnchorSpring anchor1 = anchorSpringArray.get(jj);
 				anchor0.siblingArray.add(anchor1);
 				anchor1.siblingArray.add(anchor0);
 			}
@@ -104,7 +104,7 @@ public class CCell implements Serializable {
 			cell1 = cell;
 		}
 		
-		CSpring[] stickArray = new CSpring[NSpring];
+		CStickSpring[] stickArray = new CStickSpring[NSpring];
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
 			CBall ball0 = cell0.ballArray[iSpring/2];							// 0, 0, 1, 1, ...
 			CBall ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
@@ -114,7 +114,7 @@ public class CCell implements Serializable {
 		
 		// Define siblings, link them OPTIMISE
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and sibling spring			
-			CSpring spring = stickArray[iSpring];			
+			CStickSpring spring = stickArray[iSpring];			
 			for(int iSpring2 = 0; iSpring2 < NSpring; iSpring2++) {			
 				if(iSpring != iSpring2) {									// For all its siblings
 					spring.siblingArray.add(stickArray[iSpring2]);

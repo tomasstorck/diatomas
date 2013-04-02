@@ -1,8 +1,10 @@
 package cell;
 
+import java.util.ArrayList;
+
 public class CStickSpring extends CSpring {
 	private static final long serialVersionUID = 1L;
-
+	public ArrayList<CStickSpring> siblingArray = new ArrayList<CStickSpring>(4);;
 	///////////////////////////////////////////////////////////////////
 	
 	public CStickSpring(CBall ball0, CBall ball1) {

@@ -12,7 +12,6 @@ public abstract class CSpring implements Serializable {
 	public double K;
 	public double restLength;
 //	public int type;
-	public ArrayList<CSpring> siblingArray = new ArrayList<CSpring>(4);
 	
 	///////////////////////////////////////////////////////////////////
 	

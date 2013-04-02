@@ -67,7 +67,14 @@ for iFil=1:length(model.filSpringArray)
     fil = model.filSpringArray(iFil);
     ball0 = model.ballArray(fil.ballArray(1)+1);
     ball1 = model.ballArray(fil.ballArray(2)+1);
-    plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],'b');
+	if fil.type == 5
+		colour = 'b';
+	elseif fil.type == 6
+		colour = 'm';
+	else
+		colour = 'c';
+	end
+    plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],colour);
 end
 	
 for iStick=1:length(model.stickSpringArray)

@@ -8,6 +8,7 @@ import random.rand;
 import ser2mat.ser2mat;
 import cell.CBall;
 import cell.CCell;
+import cell.CFilSpring;
 import cell.CModel;
 import cell.CRodSpring;
 import cell.CSpring;
@@ -64,7 +65,7 @@ public class Run {
 			model.NColoniesInit = 1;
 			model.growthTimeStep = 300.0;
 //			model.attachmentRate = 1.0;
-			model.attachCellType = 4;
+			model.attachCellType = 5;
 			model.attachNotTo = new int[]{};
 			model.filament = true;
 			model.filType[4] = true;			// Only filament former forms filaments
@@ -120,12 +121,12 @@ public class Run {
 			case 1: case 2:
 				// Set type
 				for(int ii=0; ii<model.NCellInit; ii++)			 {
-					if(model.nCellMax[4]>model.nCellMax[5]) {
-						final int div = (int) (model.nCellMax[4] / model.nCellMax[5]) + 1;	// e.g. 4 is 3x heavier --> div is 1/4, so there will be 3x more 5 than 4
-						typeInit[ii] = ii%div==0 ? 4 : 5;
-					} else {
-						final int div = (int) (model.nCellMax[5] / model.nCellMax[4]) + 1;
+					if(model.nCellMax[5]>model.nCellMax[4]) {
+						final int div = (int) (model.nCellMax[5] / model.nCellMax[4]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
 						typeInit[ii] = ii%div==0 ? 5 : 4;
+					} else {
+						final int div = (int) (model.nCellMax[4] / model.nCellMax[5]) + 1;
+						typeInit[ii] = ii%div==0 ? 4 : 5;
 					}
 				}
 
@@ -251,14 +252,38 @@ public class Run {
 					if(mother.type<2) {
 						if(model.filSphereStraightFil)
 							model.TransferFilament(mother, daughter);
-						model.CreateFilament(mother, daughter, false);
+						model.CreateFilament(mother, daughter);
 					} else if (mother.type<6) {
-						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency) {		// Determine if we branch. Only happens if mother is NOT at the end of a filament  
-							model.CreateFilament(mother, daughter, true);
+						boolean atEndFil = true;
+						for(CFilSpring fil : mother.filSpringArray) {
+							if((fil.ballArray[0] == mother.ballArray[1] || fil.ballArray[1] == mother.ballArray[1]) && fil.type==5)	{ 	// Check fil for ball 1 of mother 
+								atEndFil = false;
+								break;
+							}
+						}
+						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency && !atEndFil) {		// Determine if we branch. Only happens if mother is NOT at the end of a filament
+							// Find neighbour on side of daughter: short spring connected to mother.ballArray[1]
+							CCell neighbourDaughter = null;
+							for(CFilSpring fil : mother.filSpringArray) {
+								if(fil.type==4) {											// Get the other cell in the straight filament
+									if(fil.ballArray[0] == mother.ballArray[1]) {
+										neighbourDaughter = fil.ballArray[1].cell;
+										break;
+									} else if(fil.ballArray[1] == mother.ballArray[1]) {
+										neighbourDaughter = fil.ballArray[0].cell; 
+										break;
+									}
+								}
+							}
+							if(neighbourDaughter == null)
+								throw new RuntimeException("Could not find neighbour of daughter");
+							model.CreateFilament(daughter, mother, neighbourDaughter);
 						} else {															// If we insert the cell in the straight filament
 							model.TransferFilament(mother, daughter);		 
-							model.CreateFilament(mother, daughter, false);
+							model.CreateFilament(mother, daughter);
 						}	
+					} else {
+						throw new IndexOutOfBoundsException("Unknown mother cell type: " + mother.type);
 					}
 				}
 			}

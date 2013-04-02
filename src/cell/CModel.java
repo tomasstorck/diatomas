@@ -28,7 +28,7 @@ public class CModel implements Serializable {
 	// Model miscellaneous settings
 	public String name = "default";
 	public int simulation = 0;					// The simulation type: see Run
-	public int randomSeed = 3;
+	public int randomSeed = 1;
 	public boolean comsol = false;
 	// Domain properties
 	public Vector3d L 	= new Vector3d(2e-6, 2e-6, 2e-6);
@@ -438,12 +438,12 @@ public class CModel implements Serializable {
 		return breakArray;
 	}
 	
-	public ArrayList<CSpring> DetectStickBreak(double maxStretch) {
-		ArrayList<CSpring> breakArray = new ArrayList<CSpring>();
+	public ArrayList<CStickSpring> DetectStickBreak(double maxStretch) {
+		ArrayList<CStickSpring> breakArray = new ArrayList<CStickSpring>();
 		
 		int iSpring = 0;
 		while(iSpring < stickSpringArray.size()) {
-			CSpring spring = stickSpringArray.get(iSpring);
+			CStickSpring spring = stickSpringArray.get(iSpring);
 			double al = (spring.ballArray[1].pos.minus(  spring.ballArray[0].pos)  ).norm();		// al = Actual Length
 			if(al > maxStretch*spring.restLength) {
 				breakArray.add(spring);
@@ -1024,25 +1024,41 @@ public class CModel implements Serializable {
 						for(CSpring sibling : stick.siblingArray)		sibling.ResetRestLength();		
 					}
 				}
-				// Create new sticking spring
 			}
 		}
 		// Done, return daughter cell
 		return c1;
 	}
 	
-	public void CreateFilament(CCell c0, CCell c1, boolean branch) {
+	public void CreateFilament(CCell c0, CCell c1) {
 		if(c0.type==c1.type && c0.type<2)
 			new CFilSpring(c0.ballArray[0], c1.ballArray[0], 3);
 		else if (c0.type==c1.type && c0.type<6) {
 			// Make new filial link between mother and daughter
-			int bigFilType = branch ? 6 : 5; 
 			CFilSpring filSmall = 	new CFilSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
-			CFilSpring filBig = 	new CFilSpring(c1.ballArray[1], c0.ballArray[0], bigFilType);					// type==? --> Big spring
+			CFilSpring filBig = 	new CFilSpring(c1.ballArray[1], c0.ballArray[0], 5);							// type==? --> Big spring
 			filSmall.siblingArray.add(filBig);
 			filBig.siblingArray.add(filSmall);
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + c0.type + "/" + c1.type);
+		}
+	}
+	
+	public void CreateFilament(CCell daughter, CCell mother, CCell neighbour) {
+		if(mother.type==daughter.type && mother.type<2)
+			new CFilSpring(mother.ballArray[0], daughter.ballArray[0], 3);
+		else if (mother.type==daughter.type && mother.type<6) {
+			// Make new filial link between mother and daughter
+			CFilSpring filSmallDM = 	new CFilSpring(daughter.ballArray[0], mother.ballArray[1], 6);
+			CFilSpring filBigDM = 		new CFilSpring(daughter.ballArray[1], mother.ballArray[0], 7);
+			CFilSpring filSmallDN = 	new CFilSpring(daughter.ballArray[0], neighbour.ballArray[0], 6);
+			CFilSpring filBigDN = 		new CFilSpring(daughter.ballArray[1], neighbour.ballArray[1], 7);
+			filSmallDM.siblingArray.add(filBigDM);
+			filBigDM.siblingArray.add(filSmallDM);
+			filSmallDN.siblingArray.add(filBigDN);
+			filBigDN.siblingArray.add(filSmallDN);
+		} else {
+			throw new IndexOutOfBoundsException("Cell type: " + daughter.type + "/" + mother.type + "/" + neighbour.type);
 		}
 	}
 	
@@ -1053,7 +1069,7 @@ public class CModel implements Serializable {
 			ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
 			for(CFilSpring fil : mother.filSpringArray) {
 				boolean found=false;
-				if( fil.ballArray[0] == motherBall0) {					// Only replace half the balls for daughter's
+				if( fil.ballArray[0] == motherBall0 ) {					// Only replace half the balls for daughter's
 					fil.ballArray[0] = daughterBall0;
 					found = true;}
 				if(found) {
@@ -1073,26 +1089,42 @@ public class CModel implements Serializable {
 			CBall c1b0 = daughter.ballArray[0];
 			CBall c1b1 = daughter.ballArray[1];
 			ArrayList<CFilSpring> donateFilArray = new ArrayList<CFilSpring>();
-			for(CFilSpring fil : mother.filSpringArray) {
+			for(CFilSpring fil : mother.filSpringArray) {	// OPTIMISE
 				boolean found=false;
-				if(fil.type == 4) {
-					if(fil.ballArray[0] == c0b1) { 
-						fil.ballArray[0] = 	c1b1;
-						found = true;
+				if(fil.type == 4) {							// Short spring
+					if(fil.ballArray[0] == c0b1) {
+						for(CFilSpring sibling : fil.siblingArray) {
+							if(sibling.type == 5) {
+								fil.ballArray[0] = 	c1b1;
+								found = true;
+							}
+						}
 					} else if(fil.ballArray[1] == c0b1) {
-						fil.ballArray[1] = 	c1b1;
-						found = true;
+						for(CFilSpring sibling : fil.siblingArray) {
+							if(sibling.type == 5) {
+								fil.ballArray[1] = 	c1b1;
+								found = true;
+							}
+						}
 					}					
-				} else if(fil.type == 5 || fil.type == 6) {
+				} else if(fil.type == 5) {	// Long spring (straight fil and branched fil resp.)
 					if(fil.ballArray[0] == c0b0) {
-						fil.ballArray[0] = 	c1b0;
-						found = true; 
+						for(CFilSpring sibling : fil.siblingArray) {
+							if(sibling.type == 4) {
+								fil.ballArray[0] = 	c1b0;
+								found = true;
+							}
+						}
 					} else if(fil.ballArray[1] == c0b0) {
-						fil.ballArray[1] = 	c1b0;
-						found = true;
+						for(CFilSpring sibling : fil.siblingArray) {
+							if(sibling.type == 4) {
+								fil.ballArray[1] = 	c1b0;
+								found = true;
+							}
+						}
 					}
-				} else
-					throw new IndexOutOfBoundsException("Cell type: " + mother.type + '/' + daughter.type);
+				}
+				// We don't want to transfer fil.type==6
 				if(found)
 					donateFilArray.add(fil);
 			}
@@ -1102,7 +1134,8 @@ public class CModel implements Serializable {
 				// Reset rest lengths
 				fil.ResetRestLength();
 			}
-		}
+		} else
+			throw new IndexOutOfBoundsException("Cell type: " + mother.type + '/' + daughter.type);
 	}
 
 	public void Attachment(int NNew) {

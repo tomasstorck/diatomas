@@ -61,7 +61,8 @@ public class ser2mat {
 		mlModel.setField("NdComp",                        new MLDouble(null, new double[] {model.NdComp}, 1));                            	// d for dynamic compound (e.g. total Ac)
 		mlModel.setField("NcComp",                        new MLDouble(null, new double[] {model.NcComp}, 1));                            	// c for concentration (or virtual compound, e.g. Ac-)
 		mlModel.setField("NAcidDiss",                     new MLDouble(null, new double[] {model.NAcidDiss}, 1));                         	// Number of acid dissociation reactions
-		mlModel.setField("NInitCell",                     new MLDouble(null, new double[] {model.NCellInit}, 1));                         	// Initial number of cells
+		mlModel.setField("NCellInit",                     new MLDouble(null, new double[] {model.NCellInit}, 1));                         	// Initial number of cells
+		mlModel.setField("NColoniesInit",                 new MLDouble(null, new double[] {model.NColoniesInit}, 1));                     	// Initial number of colonies, in total containing NCellInit cells
 		mlModel.setField("radiusCellMax",                 new MLDouble(null, model.radiusCellMax, model.radiusCellMax.length));           	
 		mlModel.setField("radiusCellMin",                 new MLDouble(null, model.radiusCellMin, model.radiusCellMin.length));           	
 		mlModel.setField("lengthCellMax",                 new MLDouble(null, model.lengthCellMax, model.lengthCellMax.length));           	
@@ -169,9 +170,6 @@ public class ser2mat {
 			mlrodSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlrodSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlrodSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
-			arrayIndex = new double[obj.siblingArray.size()];
-			for(int jj=0; jj<obj.siblingArray.size(); jj++)	arrayIndex[jj] = obj.siblingArray.get(jj).Index();
-			mlrodSpringArray.setField("siblingArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
 		}
 		mlModel.setField("rodSpringArray", mlrodSpringArray);
 
@@ -201,10 +199,10 @@ public class ser2mat {
 			mlfilSpringArray.setField("ballArray",            new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlfilSpringArray.setField("K",                    new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlfilSpringArray.setField("restLength",           new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
+			mlfilSpringArray.setField("type",                 new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
 			arrayIndex = new double[obj.siblingArray.size()];
 			for(int jj=0; jj<obj.siblingArray.size(); jj++)	arrayIndex[jj] = obj.siblingArray.get(jj).Index();
 			mlfilSpringArray.setField("siblingArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlfilSpringArray.setField("type",                 new MLDouble(null, new double[] {obj.type}, 1), ii);                            	
 		}
 		mlModel.setField("filSpringArray", mlfilSpringArray);
 
@@ -218,10 +216,10 @@ public class ser2mat {
 			mlanchorSpringArray.setField("ballArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlanchorSpringArray.setField("K",                 new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlanchorSpringArray.setField("restLength",        new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
+			mlanchorSpringArray.setField("anchorPoint",       new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
 			arrayIndex = new double[obj.siblingArray.size()];
 			for(int jj=0; jj<obj.siblingArray.size(); jj++)	arrayIndex[jj] = obj.siblingArray.get(jj).Index();
 			mlanchorSpringArray.setField("siblingArray",      new MLDouble(null, arrayIndex, 1), ii);                                         	
-			mlanchorSpringArray.setField("anchorPoint",       new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
 		}
 		mlModel.setField("anchorSpringArray", mlanchorSpringArray);
 		// === SOLVER STUFF ===
