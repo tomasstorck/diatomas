@@ -81,8 +81,8 @@ public class Run {
 			model.stickFormLim = 0.5e-6;
 			model.stickStretchLim = 1e-6;
 			model.Kd 	= 1e-13;				// drag force coefficient
-			model.Kc 	= 1e-9;					// cell-cell collision
-			model.Kw 	= 5e-10;				// wall(substratum)-cell spring
+			model.Kc 	= 1e-10;				// cell-cell collision
+			model.Kw 	= 1e-10;				// wall(substratum)-cell spring
 			model.Kr 	= 5e-11;				// internal cell spring
 			if(model.simulation==1) {
 				model.anchoring = true;
