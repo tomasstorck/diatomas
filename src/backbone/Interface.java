@@ -103,8 +103,9 @@ public class Interface{
 			}
 			model = Load(loadPath);
 			instance = new Run(model);
-			SetArgument(model, argument, true);
 			model.Write("Loaded " + loadPath, "");
+			SetArgument(model, argument, true);
+			
 		} else {												// Start from zero
 			// Set name to prevent writing things to default folder
 			if(argument.containsKey("name"))		model.name = argument.get("name");

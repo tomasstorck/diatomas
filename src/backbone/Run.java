@@ -16,7 +16,7 @@ import cell.Vector3d;
 
 public class Run {
 	CModel model;
-	 
+	
 	public Run(CModel model) {
 		this.model = model;
 	}
@@ -69,9 +69,6 @@ public class Run {
 			model.attachNotTo = new int[]{};
 			model.filament = true;
 			model.filType[4] = true;			// Only filament former forms filaments
-			model.KfSphere 	= 2e-11;			// filament spring
-			model.KfRod[0] = 2e-11;
-			model.KfRod[1] = 2e-11;
 			model.filLengthRod = new double[]{0.5, 1.7};
 			model.filStretchLim = 2e-6;
 			model.filRodBranchFrequency = 0.0;
@@ -193,7 +190,7 @@ public class Run {
 			}
 		}
 
-		while(true) {
+		while(model.growthIter<model.growthIterMax && model.relaxationIter<model.relaxationIterMax) {
 			// Reset the random seed
 			rand.Seed((model.randomSeed+1)*(model.growthIter+1)*(model.relaxationIter+1));			// + something because if growthIter == 0, randomSeed doesn't matter.
 

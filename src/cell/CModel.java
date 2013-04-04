@@ -93,11 +93,13 @@ public class CModel implements Serializable {
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
 	public int growthIter = 0;					// [-] Counter time iterations for growth
+	public int growthIterMax = Integer.MAX_VALUE;	// [-] Run infinitely long
 	public double relaxationTime = 0.0;			// [s] initial time for relaxation (for ODE solver)
 	public double relaxationTimeStepdt = 0.2;	// [s] output time step  for relaxation
 	public double relaxationTimeStep = 1.0;		// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
 	public int relaxationIter = 0;				// [-] counter time iterations for relaxation
-	public int relaxationIterSuccessiveMax = 0;	// [-] how many successive iterations we limit relaxation to 
+	public int relaxationIterSuccessiveMax = 0;	// [-] how many successive iterations we limit relaxation to
+	public int relaxationIterMax = Integer.MAX_VALUE;	// [-] Run infinitely long
 	// Arrays
 	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NCellInit);
 	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NCellInit);
