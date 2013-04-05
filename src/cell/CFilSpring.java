@@ -24,7 +24,7 @@ public class CFilSpring extends CSpring {
 		ball1.cell.filSpringArray.add(this);
 	}
 
-	public static double RestLength(int type, double radius0, double radius1, double rl0, double rl2, CModel model) {
+	public static double RestLength(int type, double radius0, double radius1, double rl0, double rl1, CModel model) {
 		final double avgFilLengthRod = 0.5*(model.filLengthRod[0]+model.filLengthRod[1]);
 		switch(type) {
 		case 3:				// Small fil spring
@@ -32,12 +32,12 @@ public class CFilSpring extends CSpring {
 		case 4:				// Small fil spring
 			return model.filLengthRod[0]*(radius0 + radius1);
 		case 5:				// Big fil spring
-			return model.filLengthRod[1]*(radius0 + radius1) + rl0 + rl2;
+			return model.filLengthRod[1]*(radius0 + radius1) + rl0 + rl1;
 		case 6:
 			return avgFilLengthRod*(radius0 + radius1);
 		case 7:
-			double rls = model.filLengthRod[0]*(radius0 + radius1);		// Rest length short spring
-			return avgFilLengthRod*Math.sqrt((rl0+0.5*rls)*(rl0+0.5*rls) + (rl2+Math.sqrt(0.75)*rls)*(rl2+Math.sqrt(0.75)*rls));	
+			double rls = avgFilLengthRod*(radius0 + radius1);		// Rest length short spring
+			return avgFilLengthRod*Math.sqrt((rl0+0.5*rls)*(rl0+0.5*rls) + (rl1+Math.sqrt(0.75)*rls)*(rl1+Math.sqrt(0.75)*rls));	
 		default:
 			throw new IndexOutOfBoundsException("Spring type: " + type);
 		}
