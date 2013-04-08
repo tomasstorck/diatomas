@@ -56,7 +56,7 @@ public class CModel implements Serializable {
 	public double[] KfRod 	= {2e-11, 2e-11};	// filament spring for rod-rod filial links {short spring, long spring}
 	public boolean filSphereStraightFil = false;// Make streptococci-like structures if true, otherwise staphylococci
 	public double filRodBranchFrequency = 0.0;// Which fraction of daughter cells form a branching filial link instead of a straight
-	public double filStretchLim = 0.5e-6;		// Maximum tension for sticking springs
+	public double filStretchLim = 2e-6;		// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
 	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 	// --> Gravity/buoyancy and drag
@@ -68,8 +68,8 @@ public class CModel implements Serializable {
 	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
 	// --> Collision forces
-	public double Kc 	= 1e-9;					// cell-cell collision
-	public double Kw 	= 5e-10;				// wall(substratum)-cell spring
+	public double Kc 	= 1e-10;					// cell-cell collision
+	public double Kw 	= 1e-10;				// wall(substratum)-cell spring
 	// Model biomass and growth properties
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)

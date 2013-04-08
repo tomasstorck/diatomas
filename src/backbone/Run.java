@@ -34,13 +34,14 @@ public class Run {
 			model.NCellInit = 1;
 			model.normalForce = true;
 			model.sticking = model.filament = false;
-			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
-			model.Kr 	= 5e-11;				// internal cell spring
-			model.Kan	= 1e-11;				// anchor
-			model.KfRod[0] = 2e-11;
-			model.KfRod[1] = 2e-11;
-			model.Ks = 2e-12;
-			model.filLengthRod = new double[]{0.5, 1.7};
+			model.filType[4] = true;			// rods form filaments, only if filament = true
+//			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
+//			model.Kr 	= 5e-11;				// internal cell spring
+//			model.Kan	= 1e-11;				// anchor
+//			model.KfRod[0] = 2e-11;
+//			model.KfRod[1] = 2e-11;
+//			model.Ks = 2e-12;
+//			model.filLengthRod = new double[]{0.5, 1.7};
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
@@ -62,25 +63,25 @@ public class Run {
 			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
 			model.muStDev[5] = 0.2*model.muAvgSimple[5];		//
 			model.NCellInit = 18;
-			model.NColoniesInit = 1;
+//			model.NColoniesInit = 1;
 			model.growthTimeStep = 300.0;
 //			model.attachmentRate = 1.0;
 			model.attachCellType = 5;
 			model.attachNotTo = new int[]{};
 			model.filament = true;
 			model.filType[4] = true;			// Only filament former forms filaments
-			model.filLengthRod = new double[]{0.5, 1.7};
-			model.filStretchLim = 2e-6;
-			model.filRodBranchFrequency = 0.0;
+//			model.filLengthRod = new double[]{0.5, 1.7};
+//			model.filStretchLim = 2e-6;
+//			model.filRodBranchFrequency = 0.0;
 			model.sticking = true;
 			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;	// Anything sticks
-			model.Ks 	= 1e-11;				// sticking
-			model.stickFormLim = 0.5e-6;
-			model.stickStretchLim = 1e-6;
-			model.Kd 	= 1e-13;				// drag force coefficient
-			model.Kc 	= 1e-10;				// cell-cell collision
-			model.Kw 	= 1e-10;				// wall(substratum)-cell spring
-			model.Kr 	= 5e-11;				// internal cell spring
+//			model.Ks 	= 1e-11;				// sticking
+//			model.stickFormLim = 0.5e-6;
+//			model.stickStretchLim = 1e-6;
+//			model.Kd 	= 1e-13;				// drag force coefficient
+//			model.Kc 	= 1e-10;				// cell-cell collision
+//			model.Kw 	= 1e-10;				// wall(substratum)-cell spring
+//			model.Kr 	= 5e-11;				// internal cell spring
 			if(model.simulation==1) {
 				model.anchoring = true;
 				model.normalForce = true;

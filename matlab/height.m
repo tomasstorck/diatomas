@@ -1,23 +1,31 @@
-if ~exist('location','var')
-	location = uigetdir;
-	if isempty(location)
-		return
-	end
-end
+function [tt, ht] = height
+
+location = uigetdir;
 
 pad = [location '/output/'];
 
-files=dir([pad '*.mat']);
+ht= [];
+tt = [];
+t = -1;
 
-maxHeight=0;
-maxHeight_time = [];
-for iFile = 1:length(files)
-	load([pad files(iFile).name]);
+while true			% Keep going till we run out of files
+	maxHeight=0;
+	t=t+1;
+	files=dir([pad sprintf('g%04.0f*.mat',t(end))]);
+	if isempty(files)
+		% That was he last one, exit
+		return
+	end
+	file = files(1).name;
+	load([pad file]);
 
 	for iBall = 1:length(model.ballArray)
 		ball = model.ballArray(iBall);
 		maxHeight = max(maxHeight, ball.pos(2));
 	end
 	
-	maxHeight_time(end+1) = maxHeight;
+	ht(end+1) = maxHeight;
+	tt(end+1) = t;
 end
+
+% legend('without anchoring links','with anchoring links'); xlabel('growth time (h)'), ylabel('biofilm thickness (micron)'); set(gcf,'color','white')

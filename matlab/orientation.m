@@ -1,9 +1,6 @@
-if ~exist('location','var')
-	location = uigetdir;
-	if isempty(location)
-		return
-	end
-end
+function [tt, Ct] = orientation
+
+location = uigetdir;
 
 pad = [location '/output/'];
 
@@ -33,9 +30,9 @@ while true			% Keep going till we run out of files
 	end
 
 	theta = [];
-	for ii = 1:length(v)
+	for ii = 1:size(v,1)
 		vi = v(ii,:);
-		for jj = ii+1:length(v)
+		for jj = ii+1:size(v,1)
 			vj = v(jj,:);
 
 			theta = [theta acosd(dot(vi,vj)/(norm(vi)*norm(vj)))];
@@ -50,3 +47,5 @@ while true			% Keep going till we run out of files
 	Ct(end+1) = C/length(theta);
 	tt(end+1)  =	t;
 end
+
+% legend('normal','anchoring links','filial links'); xlabel('growth time (h)'), ylabel('Cell count (-)'); set(gcf,'color','white')
