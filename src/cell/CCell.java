@@ -191,4 +191,17 @@ public class CCell implements Serializable {
 			throw new IndexOutOfBoundsException("Cell type: " + this.type);
 		}
 	}
+	
+	public CCell GetNeighbour() {										// Returns neighbour of cell in straight filament. Not of branched
+		for(CFilSpring fil : filSpringArray) {
+			if(fil.type==4) {											// Get the other cell in the straight filament, via short spring
+				if(fil.ballArray[0] == ballArray[1])		return fil.ballArray[1].cell;		// We only look at ball1, so we're already excluding mother (that is connected at ball0)
+				if(fil.ballArray[1] == ballArray[1])		return fil.ballArray[0].cell; 
+			}
+		}
+		// Nothing found
+		return null;
+	}
 }
+
+

@@ -35,24 +35,15 @@ public class Run {
 			model.normalForce = true;
 			model.sticking = model.filament = false;
 			model.filType[4] = true;			// rods form filaments, only if filament = true
-//			model.Kd 	= 2e-13;				// drag force coefficient doubled for ~doubled mass
-//			model.Kr 	= 5e-11;				// internal cell spring
-//			model.Kan	= 1e-11;				// anchor
-//			model.KfRod[0] = 2e-11;
-//			model.KfRod[1] = 2e-11;
-//			model.Ks = 2e-12;
-//			model.filLengthRod = new double[]{0.5, 1.7};
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
-//			model.relaxationIterSuccessiveMax = 10;
 			break;
 		case 1: case 2:
 			model.Write("Loading parameters for AS","");
 			////////
 			// AS //
 			////////			
-//			model.L = new Vector3d(20e-6, 0.0, 20e-6);
 			model.L = new Vector3d(7e-6, 7e-6, 7e-6);
 			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
 			model.radiusCellMax[5] = 0.35e-6;	// [m] (Lau 1984)
@@ -63,25 +54,13 @@ public class Run {
 			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
 			model.muStDev[5] = 0.2*model.muAvgSimple[5];		//
 			model.NCellInit = 18;
-//			model.NColoniesInit = 1;
 			model.growthTimeStep = 300.0;
-//			model.attachmentRate = 1.0;
 			model.attachCellType = 5;
 			model.attachNotTo = new int[]{};
 			model.filament = true;
 			model.filType[4] = true;			// Only filament former forms filaments
-//			model.filLengthRod = new double[]{0.5, 1.7};
-//			model.filStretchLim = 2e-6;
-//			model.filRodBranchFrequency = 0.0;
 			model.sticking = true;
 			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;	// Anything sticks
-//			model.Ks 	= 1e-11;				// sticking
-//			model.stickFormLim = 0.5e-6;
-//			model.stickStretchLim = 1e-6;
-//			model.Kd 	= 1e-13;				// drag force coefficient
-//			model.Kc 	= 1e-10;				// cell-cell collision
-//			model.Kw 	= 1e-10;				// wall(substratum)-cell spring
-//			model.Kr 	= 5e-11;				// internal cell spring
 			if(model.simulation==1) {
 				model.anchoring = true;
 				model.normalForce = true;
@@ -252,33 +231,16 @@ public class Run {
 							model.TransferFilament(mother, daughter);
 						model.CreateFilament(mother, daughter);
 					} else if (mother.type<6) {
-						boolean atEndFil = true;
-						for(CFilSpring fil : mother.filSpringArray) {
-							if((fil.ballArray[0] == mother.ballArray[1] || fil.ballArray[1] == mother.ballArray[1]) && fil.type==5)	{ 	// Check fil for ball 1 of mother 
-								atEndFil = false;
-								break;
+						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency) {		// Determine if we branch. Only happens if mother is NOT at the end of a filament (checked later, in mother.GetNeighbour())
+							// Find neighbour on side of daughter: short spring currently connected to mother.ballArray[1]
+							CCell neighbourDaughter = mother.GetNeighbour();
+							if(neighbourDaughter == null) {
+								// Could not find neighbour of daughter
+								model.CreateFilament(daughter, mother, neighbourDaughter);	// 3 arguments --> branched
 							}
-						}
-						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency && !atEndFil) {		// Determine if we branch. Only happens if mother is NOT at the end of a filament
-							// Find neighbour on side of daughter: short spring connected to mother.ballArray[1]
-							CCell neighbourDaughter = null;
-							for(CFilSpring fil : mother.filSpringArray) {
-								if(fil.type==4) {											// Get the other cell in the straight filament
-									if(fil.ballArray[0] == mother.ballArray[1]) {
-										neighbourDaughter = fil.ballArray[1].cell;
-										break;
-									} else if(fil.ballArray[1] == mother.ballArray[1]) {
-										neighbourDaughter = fil.ballArray[0].cell; 
-										break;
-									}
-								}
-							}
-							if(neighbourDaughter == null)
-								throw new RuntimeException("Could not find neighbour of daughter");
-							model.CreateFilament(daughter, mother, neighbourDaughter);
 						} else {															// If we insert the cell in the straight filament
 							model.TransferFilament(mother, daughter);		 
-							model.CreateFilament(mother, daughter);
+							model.CreateFilament(mother, daughter);							// 2 arguments --> unbranched
 						}	
 					} else {
 						throw new IndexOutOfBoundsException("Unknown mother cell type: " + mother.type);
