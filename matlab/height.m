@@ -28,4 +28,5 @@ while true			% Keep going till we run out of files
 	tt(end+1) = t;
 end
 
-% legend('without anchoring links','with anchoring links'); xlabel('growth time (h)'), ylabel('biofilm thickness (micron)'); set(gcf,'color','white')
+% hold on; plot(ttN, htN, 'LineWidth',2,'Color',[0 0 0]+0.7); plot(ttY, htY, 'LineWidth',2,'Color',[0 0 0]);
+% legend('no anchoring','anchoring'); xlabel('growth time (h)'), ylabel('biofilm thickness (micron)'); set(gcf,'color','white')

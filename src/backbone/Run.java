@@ -33,11 +33,15 @@ public class Run {
 			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
 			model.NCellInit = 1;
 			model.normalForce = true;
+			model.filStretchLim = 0.75e-6;
+			model.filType[4] = true;
+			model.stickType[4][4] = true;
+			model.stickStretchLim = 0.2e-6;
+			model.anchorStretchLim = 0.2e-6;
 			model.sticking = model.filament = false;
-			model.filType[4] = true;			// rods form filaments, only if filament = true
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
-			model.growthTimeStep = 180.0;		// s, i.e. 3 minutes
+			model.growthTimeStep = 240.0;		// s, i.e. 4 minutes
 			break;
 		case 1: case 2:
 			model.Write("Loading parameters for AS","");
@@ -136,11 +140,11 @@ public class Run {
 			for(int iCell = 0; iCell<model.NCellInit; iCell++) {
 				int iCol = iCell/(model.NCellInit/model.NColoniesInit);
 				final Vector3d[] dirColonies = new Vector3d[]{			 	// Displace colonies along the X vector, so we can easily see them in the renders
-						new Vector3d(0e-6, 0.0, 0.0),
-						new Vector3d(-35e-6, 0.0, -35e-6),
-						new Vector3d( 35e-6, 0.0, -35e-6),
-						new Vector3d( 35e-6, 0.0,  35e-6),
-						new Vector3d(-35e-6, 0.0,  35e-6)};			
+						new Vector3d(0.0, 0.0, 0.0),
+						new Vector3d(-18e-6, 0.0, -18e-6),
+						new Vector3d( 18e-6, 0.0, -18e-6),
+						new Vector3d( 18e-6, 0.0,  18e-6),
+						new Vector3d(-18e-6, 0.0,  18e-6)};			
 				position0Init[iCell] = position0Init[iCell].plus(dirColonies[iCol]);
 				position1Init[iCell] = position1Init[iCell].plus(dirColonies[iCol]);
 			}
@@ -223,6 +227,7 @@ public class Run {
 					dividingCellArray.add(mother);
 			}
 			// Divide marked cells
+			int NFil = 0; int NBranch = 0;													// Keep track of how many filament springs and how many new branches we make
 			for(CCell mother : dividingCellArray) {
 				CCell daughter = model.DivideCell(mother);
 				if(mother.filament) {
@@ -230,21 +235,20 @@ public class Run {
 						if(model.filSphereStraightFil)
 							model.TransferFilament(mother, daughter);
 						model.CreateFilament(mother, daughter);
+						NFil += 1;
 					} else if (mother.type<6) {
-						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency) {		// Determine if we branch. Only happens if mother is NOT at the end of a filament (checked later, in mother.GetNeighbour())
-							// Find neighbour on side of daughter: short spring currently connected to mother.ballArray[1]
-							CCell neighbourDaughter = mother.GetNeighbour();
-							if(neighbourDaughter == null) {
-								// Could not find neighbour of daughter
-								model.CreateFilament(daughter, mother, neighbourDaughter);	// 3 arguments --> branched
-							}
+						CCell neighbourDaughter = mother.GetNeighbour();
+						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency && neighbourDaughter != null) {
+							model.CreateFilament(daughter, mother, neighbourDaughter);		// 3 arguments --> branched, 2 springs daughter to mother and 2 daughter to neighbour 
+							NFil += 4; NBranch++;
 						} else {															// If we insert the cell in the straight filament
 							model.TransferFilament(mother, daughter);		 
-							model.CreateFilament(mother, daughter);							// 2 arguments --> unbranched
-						}	
-					} else {
+							model.CreateFilament(mother, daughter);							// 2 arguments --> unbranched, 2 springs daughter to mother
+							NFil += 2;
+						}
+					} else
 						throw new IndexOutOfBoundsException("Unknown mother cell type: " + mother.type);
-					}
+					
 				}
 			}
 			// Advance growth
@@ -252,6 +256,7 @@ public class Run {
 			model.growthTime += model.growthTimeStep;
 			if(dividingCellArray.size()>0) {
 				model.Write(dividingCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
+				model.Write(NFil + " filament springs formed, " + NBranch + " new branches", "iter");
 //				String cellNumber = "" + dividedCellArray.get(0).Index();
 //				for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
 //				model.Write("Cells grown: " + cellNumber,"iter");

@@ -48,4 +48,5 @@ while true			% Keep going till we run out of files
 	tt(end+1)  =	t;
 end
 
-% legend('normal','anchoring links','filial links'); xlabel('growth time (h)'), ylabel('Cell count (-)'); set(gcf,'color','white')
+% hold on; plot(ttN, CtN, 'LineWidth',2,'Color',[0 0 0]+0.7); plot(ttY, CtY, 'LineWidth',2,'Color',[0 0 0]);
+% legend('no anchoring','anchoring'); xlabel('growth time (h)'), ylabel('Orientation correlation (-)'); set(gcf,'color','white')

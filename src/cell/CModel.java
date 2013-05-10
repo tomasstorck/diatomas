@@ -42,13 +42,13 @@ public class CModel implements Serializable {
 	public boolean sticking = false;
 	public boolean[][] stickType = new boolean[NXType][NXType];
 	public double Ks 	= 1e-11;
-	public double stickStretchLim = 0.5e-6;		// Maximum tension for sticking springs
-	public double stickFormLim = 0.1e-6; 		// Added to rest length to check if we should form sticking springs
+	public double stickStretchLim = 1e-6;		// Maximum tension for sticking springs
+	public double stickFormLim = 0.5e-6; 		// Added to rest length to check if we should form sticking springs
 	// --> Anchoring
 	public boolean anchoring = false;
 	public double Kan	= 1e-11;				// anchor
-	public double anchorStretchLim = 0.5e-6;	// Maximum tension for anchoring springs
-	public double anchorFormLim = 0.1e-6;		// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
+	public double anchorStretchLim = 1e-6;	// Maximum tension for anchoring springs
+	public double anchorFormLim = 0.5e-6;		// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	// --> Filaments
 	public boolean filament = false;
 	public boolean[] filType = new boolean[NXType];
