@@ -155,30 +155,23 @@ public class Comsol {
 	
 	public void CreateRod(CCell cell) throws FlException {
 		// Create points for constructing WP
-		String pointName = "pt" + Integer.toString(3*cell.Index());
 		double cellHT = ( (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).norm() + 2.0*cell.ballArray[0].radius )*dimensionFactor;		// HT = Head-Tail
 		Vector3d pos0 = cell.ballArray[0].pos.plus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
 		Vector3d pos1 = cell.ballArray[1].pos.minus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
 		
-	    comsol.geom("geom1").feature().create(pointName, "Point");
-	    comsol.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(pos0.x)},{Double.toString(pos0.y)},{Double.toString(pos0.z)}});
-	    pointName = "pt" + Integer.toString(3*cell.Index()+1);
-	    comsol.geom("geom1").feature().create(pointName, "Point");
-	    comsol.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(pos1.x)},{Double.toString(pos1.y)},{Double.toString(pos1.z)}});
-	    pointName = "pt" + Integer.toString(3*cell.Index()+2);
-	    comsol.geom("geom1").feature().create(pointName, "Point");
-	    comsol.geom("geom1").feature(pointName).set("p", new String[][]{{Double.toString(pos1.x)},{Double.toString(pos1.y)},{Double.toString(pos1.z+cell.ballArray[0].radius*dimensionFactor)}});
-	    
 	    // Create WP
 	    String wpName = "wp" + Integer.toString(cell.Index());
 	    comsol.geom("geom1").feature().create(wpName, "WorkPlane");
-	    comsol.geom("geom1").feature(wpName).set("planetype", "vertices");
-	    comsol.geom("geom1").feature(wpName).selection("vertex1")
-	         .set("pt" + Integer.toString(3*cell.Index()) + "(1)", new int[]{1});
-	    comsol.geom("geom1").feature(wpName).selection("vertex2")
-	         .set("pt" + Integer.toString(3*cell.Index()+1) + "(1)", new int[]{1});
-	    comsol.geom("geom1").feature(wpName).selection("vertex3")
-	         .set("pt" + Integer.toString(3*cell.Index()+2) + "(1)", new int[]{1});
+	    comsol.geom("geom1").feature(wpName).set("planetype", "general");
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", Double.toString(pos0.x), 0, 0);		// First vertex, x coordinate
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", Double.toString(pos0.y), 0, 1);		// y coordinate
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", Double.toString(pos0.z), 0, 2);		// z coordinate
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", Double.toString(pos1.x), 1, 0);		// Second vertex, x coordinate
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", Double.toString(pos1.y), 1, 1);
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", Double.toString(pos1.z), 1, 2);
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", Double.toString(pos1.x), 2, 0);
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", Double.toString(pos1.y), 2, 1);
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", Double.toString(pos1.z+cell.ballArray[0].radius*dimensionFactor), 2, 2);
 	    
 	    // Create rectangle in WP
 	    String rectName = "rect" + Integer.toString(cell.Index());
@@ -216,7 +209,7 @@ public class Comsol {
 	}
 	
 	public void CreateBCBox() throws FlException {
-		double BCMultiplier = 3.0;
+		double BCMultiplier = 2.0;
 		
 	    comsol.geom("geom1").feature().create("blk1", "Block");
 
@@ -261,15 +254,14 @@ public class Comsol {
 	    	comsol.physics("chds").feature("conc1").set("c0", ii+1, Double.toString(java.BCConc[ii]));
 	    }
 	    
-	    // Subtract cells from this block
-	    String[] cellArray = Arrays.copyOf(cellList.toArray(), cellList.size(), String[].class);	// Convert cellList from ArrayList<String> to String[]. Typecast doesn't work for some reason
-	    comsol.geom("geom1").feature().create("dif1", "Difference");		// Subtract the cells from the block:
-	    comsol.geom("geom1").feature("dif1").selection("input")			// Add this block
-	         .set(new String[]{"blk1"});
-	    comsol.geom("geom1").feature("dif1").selection("input2")			// Subtract all cells from cellList
-	    	 .set(cellArray);	         //.set(new String[]{"sph0","sph2","sph6"});
-	    comsol.geom("geom1").feature("dif1").set("createselection", "on");
-//	    model.geom("geom1").run("dif1");
+//	    // Subtract cells from this block
+//	    String[] cellArray = Arrays.copyOf(cellList.toArray(), cellList.size(), String[].class);	// Convert cellList from ArrayList<String> to String[]. Typecast doesn't work for some reason
+//	    comsol.geom("geom1").feature().create("dif1", "Difference");		// Subtract the cells from the block:
+//	    comsol.geom("geom1").feature("dif1").selection("input")			// Add this block
+//	         .set(new String[]{"blk1"});
+//	    comsol.geom("geom1").feature("dif1").selection("input2")			// Subtract all cells from cellList
+//	    	 .set(cellArray);	         //.set(new String[]{"sph0","sph2","sph6"});
+//	    comsol.geom("geom1").feature("dif1").set("createselection", "on");
 	}
 	
 	public void BuildGeometry() throws FlException {

@@ -41,8 +41,7 @@ while true
 		loadFileRange = length(loadFileNameList):-1:1;
 		for iFile=loadFileRange
 			loadFileName = loadFileNameList{iFile};
-			if exist([imageLoc filesep 'pov_' loadFileName(1:end-4) '_00.png'],'file') ||
-				exist([location filesep 'image-movie' filesep 'pov_' loadFileName(1:end-4) '_00.png'],'file')
+			if exist([imageLoc filesep 'pov_' loadFileName(1:end-4) '_00.png'],'file') || exist([location filesep 'image-movie' filesep 'pov_' loadFileName(1:end-4) '_00.png'],'file')
 				continue                % Already plotted, skip
 			end
 			fprintf([loadFileName '\n']);
@@ -60,9 +59,9 @@ while true
 				for ii=0:2:NSave
 					fid = fopen(povName{ii+1},'a');
 					if rem(iFile,5)==0 || ~exist('right','var')
-						right = RenderCalcRight(model, imageWidth, imageHeight, plane, camPosDifference);
+						right = RenderCalcRight(model, imageWidth, imageHeight, camPosDifference);
 					end
-					RenderFun(fid, model, ii, right, aspect, camPosDifference);
+					RenderFun(fid, model, ii, right, aspect, plane, camPosDifference);
 					% Finalise the file
 					fclose(fid);
 					systemInput = ['povray ' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' imageLoc filesep imageName{ii+1} ' +A +Q4'];		% +A +Q4 instead of +A -J
