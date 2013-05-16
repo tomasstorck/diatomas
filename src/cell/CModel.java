@@ -896,7 +896,7 @@ public class CModel implements Serializable {
 		for(int iCell=0; iCell<NCell; iCell++){
 			CCell mother = cellArray.get(iCell);
 			// Obtain mol increase based on flux
-			double molIn = mother.q * mother.GetAmount() * growthTimeStep * SMX[mother.type];
+			double molIn = mother.Rx * mother.GetAmount() * growthTimeStep * SMX[mother.type];
 			// Grow mother cell
 			double newAmount = mother.GetAmount()+molIn;
 			mother.SetAmount(newAmount);
@@ -966,7 +966,7 @@ public class CModel implements Serializable {
 			c1.ballArray[0].vel = 	new Vector3d(c0.ballArray[0].vel);
 			c1.ballArray[0].force = new Vector3d(c0.ballArray[0].force);
 			c1.mother = 			c0;
-			c1.q = 					c0.q;
+			c1.Rx = 					c0.Rx;
 		} else if (c0.type<6) {
 			///////
 			// Original cell:

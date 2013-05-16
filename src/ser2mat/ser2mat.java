@@ -120,7 +120,7 @@ public class ser2mat {
 			else
 				mlcellArray.setField("mother",                    new MLDouble(null, new double[] {obj.mother.Index()}, 1), ii);                  
 			mlcellArray.setField("born",                      new MLDouble(null, new double[] {obj.born}, 1), ii);                            	// Growth iteration at which this cell was born
-			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.q}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
+			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.Rx}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
 		}
 		mlModel.setField("cellArray", mlcellArray);
 

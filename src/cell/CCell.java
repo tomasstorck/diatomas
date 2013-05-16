@@ -17,7 +17,7 @@ public class CCell implements Serializable {
 	public CCell mother;
 	public int born;														// Growth iteration at which this cell was born
 	// CFD stuff
-	public double q = 0.0;													// [mol reactions (CmolX * s)-1]
+	public double Rx = 0.0;													// Reaction rate for this cell, normalised to substrate [mol/s]
 	// Pointer stuff
 	public CModel model;
 	
@@ -162,6 +162,16 @@ public class CCell implements Serializable {
 			double height = ballArray[1].pos.minus(ballArray[0].pos).norm();	// height == distance between balls
 			double Acyl = 	2.0*Math.PI * ballArray[0].radius * height;			// area of wall of cylinder. NOTE: Matt subtracted 2*radius, I don't see why
 			return Aballs + Acyl;
+		} else {
+			throw new IndexOutOfBoundsException("Cell type: " + type);
+		}
+	}
+	
+	public double Volume() {
+		if(type<2) {
+			return 4.0/3.0*Math.PI*Math.pow(ballArray[0].radius, 3); 
+		} else if(type<6) {
+			return 4.0/3.0*Math.PI*Math.pow(ballArray[0].radius, 3)  +  Math.PI*Math.pow(ballArray[0].radius, 2)*rodSpringArray.get(0).restLength;
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}

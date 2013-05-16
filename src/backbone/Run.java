@@ -8,7 +8,6 @@ import random.rand;
 import ser2mat.ser2mat;
 import cell.CBall;
 import cell.CCell;
-import cell.CFilSpring;
 import cell.CModel;
 import cell.CRodSpring;
 import cell.CSpring;
@@ -164,14 +163,14 @@ public class Run {
 			// Save and convert the file
 			model.Save();
 			ser2mat.Convert(model);	
-	
-			// Start server and connect if we're using COMSOL
-			if(model.comsol) {
-				model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
-				//				Server.Stop(false);
-				Server.Start(Assistant.port);
-				Server.Connect(Assistant.port);
-			}
+		}
+		
+		// Start server and connect if we're using COMSOL
+		if(model.comsol) {
+			model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
+//			Server.Stop(false);
+			Server.Start(Assistant.port);
+			Server.Connect(Assistant.port);
 		}
 
 		while(model.growthIter<model.growthIterMax && model.relaxationIter<model.relaxationIterMax) {
@@ -185,7 +184,7 @@ public class Run {
 				model.Write("Calculating cell steady state concentrations (COMSOL)","iter");
 				// Make the model
 				Comsol comsol = new Comsol(model);
-				model.Write("\tInitialising geometry", "iter");
+				model.Write("\tInitialising geometry, physics, mesh, study and solver", "iter");
 				comsol.Initialise();
 				model.Write("\tCreating cells", "iter");
 				// Create cells in the COMSOL model
@@ -194,12 +193,35 @@ public class Run {
 					else if(cell.type<6)	comsol.CreateRod(cell);
 					else 					throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 				}
-				comsol.CreateBCBox();					// Create a large box where we set the "bulk" conditions
-				comsol.BuildGeometry();
-				// Set fluxes
+				// Compile array with oxidating, reducing MO
+				ArrayList<CCell> oxCellArray = new ArrayList<CCell>();
+				ArrayList<CCell> redCellArray = new ArrayList<CCell>();
+				final int oxType = 4;
+				final int redType = 5;
 				for(CCell cell : model.cellArray) {
-					comsol.SetFlux(cell);
+					if(cell.type==oxType)					// FIXME Correct cell type?
+						oxCellArray.add(cell);
+					else if(cell.type==redType)
+						redCellArray.add(cell);
+					else
+						throw new IndexOutOfBoundsException("Cell type: " + cell.type);
+					// Create average over this domain
+					comsol.CreateAverageOp(cell);
 				}
+				model.Write("\tCreating boundary box and acid dissociation reactions", "iter");
+				comsol.CreateBCBox();					// Create a large box where we also set the "bulk" conditions
+				comsol.BuildGeometry();
+				comsol.CreateAcidDissociation();
+				model.Write("\tSetting cell electric potentials and currents", "iter");
+				String iet = "diet";
+				for(CCell cell : model.cellArray) {
+					String type = cell.type==oxType?"ox":"red";
+					comsol.CreateCurrentDiscontinuity(cell, type);
+					comsol.CreateBiomassReaction(cell, type);
+					if(cell.type==redType)
+						comsol.CreateElectricPotential(cell);
+				}
+				comsol.CreateRatioDiet(oxCellArray, redCellArray);
 				model.Write("\tSaving model", "iter");
 				comsol.Save();							// Save .mph file
 				// Calculate and extract the results
@@ -207,7 +229,8 @@ public class Run {
 				comsol.Run();							// Run model to calculate concentrations
 				model.Write("\tCalculating cell surface concentrations", "iter");
 				for(CCell cell : model.cellArray) {
-					cell.q = comsol.GetParameter(cell, "q" + Integer.toString(cell.type));
+					String type = cell.type==oxType?"ox":"red";
+					cell.Rx = comsol.GetRx(cell, type, iet);
 				}
 				// Clean up after ourselves 
 				model.Write("\tCleaning model from server", "iter");
