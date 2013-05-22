@@ -16,7 +16,7 @@ public class Comsol {
 	Model comsol;				// The COMSOL model
 	CModel java;
 	
-	final double dimensionFactor = 0.75;
+	final double dimensionFactor = 1.00;	// FIXME, was 0.75
 	
 	ArrayList<String> cellList = new ArrayList<String>();   
 	ArrayList<String> sphList = new ArrayList<String>();
@@ -348,7 +348,7 @@ public class Comsol {
 //		int[] test = comsol.geom("geom1").feature("rod0").selection().entities(2);
 		String potName = "pot" + cell.Index();
 		comsol.physics("chnp").feature().create(potName, "ElectricPotential", 2);
-		comsol.physics("chnp").feature("pot1").selection().named("geom1_" + GetCellName(cell) + "_bnd");
+		comsol.physics("chnp").feature(potName).selection().named("geom1_" + GetCellName(cell) + "_bnd");
 
 	}
 	
@@ -399,6 +399,13 @@ public class Comsol {
 			 stringRed = stringRed + "+Rx_red" + cell.Index() + "_diet";
 		}
 		comsol.variable("var1").set("ratio_diet", "(6*(" + stringOx + "))/(8*(" + stringRed + "))");
+	}
+	
+	public void CreateRepair(ArrayList<CCell> cellArray) {				// Most likely requires CAD toolbox/license
+	    comsol.geom("geom1").feature().create("rep1", "Repair");		// Default is 1e-5, yet is different from setting value in Geometry node to this 
+	    for(CCell cell : cellArray) {
+	    	comsol.geom("geom1").feature("rep1").selection("input").add(new String[]{GetCellName(cell)});
+	    }
 	}
 	
 	//////////////////////////////////

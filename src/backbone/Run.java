@@ -72,9 +72,46 @@ public class Run {
 				model.normalForce = false;
 			}
 			break;
+		case 3:
+			model.Write("Loading parameters for AS","");
+			////////
+			// AS //
+			////////
+			model.L = new Vector3d(7e-6, 7e-6, 7e-6);
+			model.radiusCellMax[0] = 0.4e-6;
+			model.radiusCellMax[1] = 0.5e-6;
+//			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
+//			model.radiusCellMax[5] = 0.35e-6;	// [m] (Lau 1984)
+//			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
+//			model.lengthCellMax[5] = 1.1e-6;	// [m] (Lau 1984), compensated
+			model.muAvgSimple[0] = 0.33; 
+			model.muAvgSimple[1] = 0.20;		
+			model.muAvgSimple[4] = 0.271;		// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
+			model.muAvgSimple[5] = 0.383;		// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
+			model.muStDev[0] = 0.2*model.muAvgSimple[0];
+			model.muStDev[1] = 0.2*model.muAvgSimple[1];
+			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
+			model.muStDev[5] = 0.2*model.muAvgSimple[5];		//
+			model.NCellInit = 18;
+			model.growthTimeStep = 300.0;
+			model.attachCellType = 5;
+			model.attachNotTo = new int[]{};
+			model.filament = true;
+			model.filType[4] = true;			// Only filament former forms filaments
+			model.sticking = true;
+			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;	// Anything sticks
+			if(model.simulation==1) {
+				model.anchoring = true;
+				model.normalForce = true;
+			} else {
+				model.anchoring = false;
+				model.normalForce = false;
+			}
+			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 		}
+		//		Add things here to hardcode/overwrite
 	}
 	
 	public void Start() throws Exception {
@@ -130,6 +167,25 @@ public class Run {
 						position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y,															(rand.Double()-0.5)*model.L.z);
 						position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 					}
+				}
+				break;
+			case 3:
+				for(int ii=0; ii<model.NCellInit; ii++)			 {
+					if(model.nCellMax[1]>model.nCellMax[0]) {
+						final int div = (int) (model.nCellMax[1] / model.nCellMax[0]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
+						typeInit[ii] = ii%div==0 ? 1 : 0;
+					} else {
+						final int div = (int) (model.nCellMax[0] / model.nCellMax[1]) + 1;
+						typeInit[ii] = ii%div==0 ? 0 : 1;
+					}
+				}
+
+				for(int ii=0; ii<model.NCellInit; ii++) {
+					nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
+					directionInit[ii] = new Vector3d((rand.Double()-0.5), (rand.Double()-0.5), (rand.Double()-0.5)).normalise();
+					final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
+					position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y,															(rand.Double()-0.5)*model.L.z);
+					position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 				}
 				break;
 			default:
@@ -208,6 +264,8 @@ public class Run {
 					// Create average over this domain
 					comsol.CreateAverageOp(cell);
 				}
+//				model.Write("\tCreate geometry repair methods", "iter");
+//				comsol.CreateRepair(model.cellArray);
 				model.Write("\tCreating boundary box and acid dissociation reactions", "iter");
 				comsol.CreateBCBox();					// Create a large box where we also set the "bulk" conditions
 				comsol.BuildGeometry();
