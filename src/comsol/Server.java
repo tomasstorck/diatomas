@@ -8,11 +8,17 @@ import com.comsol.model.util.ModelUtil;
 
 
 public class Server {
-//	public static boolean started;
-	
 	public static void Start(int port) throws Exception {
-		String architecture = (Assistant.bit64) ? "-64 " : "-32 "; 
-		Interactor.executeCommand("comsol " + architecture + " -3drend sw server -np 1 -user tomas -port " + port, false, false);		// Can't waitForFinish, process remains open
+		String architecture = (Assistant.bit64) ? "-64 " : "-32 ";
+		int NProcAvailable = Runtime.getRuntime().availableProcessors();
+		String NProcessor;
+		if(NProcAvailable<2)
+			NProcessor = "-np 1";
+		else if(NProcAvailable<8)
+			NProcessor = "-np 2";
+		else
+			NProcessor = "-np 8";
+		Interactor.executeCommand("comsol " + architecture + " server " + NProcessor + " -user tomas -port " + port, false, false);		// Can't waitForFinish, process remains open
 	}
 	
 	public static void Stop(boolean waitForFinish) throws Exception{											// Note that this is a scary function
