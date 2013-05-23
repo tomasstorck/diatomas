@@ -1,15 +1,13 @@
 package comsol;
 
 import interactor.Interactor;
-
-import backbone.Assistant;
-
+import cell.CModel;
 import com.comsol.model.util.ModelUtil;
 
 
 public class Server {
 	public static void Start(int port) throws Exception {
-		String architecture = (Assistant.bit64) ? "-64 " : "-32 ";
+		String architecture = (CModel.bit64) ? "-64 " : "-32 ";
 		int NProcAvailable = Runtime.getRuntime().availableProcessors();
 		String NProcessor;
 		if(NProcAvailable<2)

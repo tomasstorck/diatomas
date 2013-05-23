@@ -82,11 +82,13 @@ public class ser2mat {
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {model.growthTime}, 1));                        	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {model.growthTimeStep}, 1));                    	// [s] Time step for growth
 		mlModel.setField("growthIter",                    new MLDouble(null, new double[] {model.growthIter}, 1));                        	// [-] Counter time iterations for growth
+		mlModel.setField("growthIterMax",                 new MLDouble(null, new double[] {model.growthIterMax}, 1));                     	// [-] Run infinitely long
 		mlModel.setField("relaxationTime",                new MLDouble(null, new double[] {model.relaxationTime}, 1));                    	// [s] initial time for relaxation (for ODE solver)
 		mlModel.setField("relaxationTimeStepdt",          new MLDouble(null, new double[] {model.relaxationTimeStepdt}, 1));              	// [s] output time step  for relaxation
 		mlModel.setField("relaxationTimeStep",            new MLDouble(null, new double[] {model.relaxationTimeStep}, 1));                	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
 		mlModel.setField("relaxationIter",                new MLDouble(null, new double[] {model.relaxationIter}, 1));                    	// [-] counter time iterations for relaxation
 		mlModel.setField("relaxationIterSuccessiveMax",   new MLDouble(null, new double[] {model.relaxationIterSuccessiveMax}, 1));       	// [-] how many successive iterations we limit relaxation to
+		mlModel.setField("relaxationIterMax",             new MLDouble(null, new double[] {model.relaxationIterMax}, 1));                 	// [-] Run infinitely long
 		// Arrays
 
 		// cellArray
@@ -120,7 +122,7 @@ public class ser2mat {
 			else
 				mlcellArray.setField("mother",                    new MLDouble(null, new double[] {obj.mother.Index()}, 1), ii);                  
 			mlcellArray.setField("born",                      new MLDouble(null, new double[] {obj.born}, 1), ii);                            	// Growth iteration at which this cell was born
-			mlcellArray.setField("q",                         new MLDouble(null, new double[] {obj.Rx}, 1), ii);                               	// [mol reactions (CmolX * s)-1]
+			mlcellArray.setField("Rx",                        new MLDouble(null, new double[] {obj.Rx}, 1), ii);                              	// Reaction rate for this cell, normalised to substrate [mol/s]
 		}
 		mlModel.setField("cellArray", mlcellArray);
 
@@ -226,24 +228,8 @@ public class ser2mat {
 		mlModel.setField("ODEbeta",                       new MLDouble(null, new double[] {model.ODEbeta}, 1));                           	
 		mlModel.setField("ODEalpha",                      new MLDouble(null, new double[] {model.ODEalpha}, 1));                          	
 		// === COMSOL STUFF ===
-		// Biomass, assuming Cmol and composition CH1.8O0.5N0.2 (i.e. MW = 24.6 g/mol)
-		//							type 0					type 1					type 2					type 3					type 4					type 5
-		// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
-		mlModel.setField("SMX",                           new MLDouble(null, model.SMX, model.SMX.length));                               	// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
-		mlModel.setField("K",                             new MLDouble(null, model.K, model.K.length));                                   	// 
-		mlModel.setField("qMax",                          new MLDouble(null, model.qMax, model.qMax.length));                             	// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
-		mlModel.setField("rateEquation",                  new MLChar(null, model.rateEquation));                                          	
-		// 	 pH calculations
-		//							HPro		CO2			HCO3-		HAc
-		//							0,			1,			2,			3
-		mlModel.setField("Ka",                            new MLDouble(null, model.Ka, model.Ka.length));                                 	// From Wikipedia 120811. CO2 and H2CO3 --> HCO3- + H+;
-		mlModel.setField("pHEquation",                    new MLChar(null, model.pHEquation));                                            	// pH calculations
-		// Diffusion
-		// 							ProT, 		CO2T,				AcT,				H2, 				CH4
-		//							0,    		1,   				2, 					3,   				4
-		mlModel.setField("BCConc",                        new MLDouble(null, model.BCConc, model.BCConc.length));                         	
-		mlModel.setField("D",                             new MLDouble(null, model.D, model.D.length));                                   	
-		mlModel.setField("SMdiffusion",                   new MLDouble(null, model.SMdiffusion));                                         
+		mlModel.setField("port",                          new MLDouble(null, new double[] {model.port}, 1));                              	
+		mlModel.setField("bit64",                         new MLDouble(null, new double[] {model.bit64?1:0}, 1));                         	
 
 		// Create a list and add mlModel
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);

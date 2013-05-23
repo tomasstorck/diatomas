@@ -268,11 +268,11 @@ public class Comsol {
 	    
 	    // Rotate the unified object around the y axis
 	    comsol.geom("geom1").feature(roty).set("axis", new String[]{"0", "1", "0"});
-	    comsol.geom("geom1").feature(roty).set("rot", Double.toString(-1.0*Math.toDegrees(Math.atan(( pos1.z-pos0.z)/(pos1.x-pos0.x)))));		// COMSOL seems to swap the angles compared to my logic. See journal 130522
+	    comsol.geom("geom1").feature(roty).set("rot", Double.toString(Math.toDegrees(Math.atan((pos1.z-pos0.z)/(pos1.x-pos0.x)))+90));		// COMSOL seems to swap the angles compared to my logic. See journal 130522
 	    comsol.geom("geom1").feature(roty).selection("input").set(new String[]{uni});
 	    // Rotate the rotated object around the z axis (no point in x axis, it is symmetrical around x)
 	    comsol.geom("geom1").feature(rotz).set("axis", new String[]{"0", "0", "1"});
-	    comsol.geom("geom1").feature(rotz).set("rot", Double.toString(-1.0*Math.toDegrees(Math.atan((-pos1.y+pos0.y)/(pos1.x-pos0.x)))));	
+	    comsol.geom("geom1").feature(rotz).set("rot", Double.toString(Math.toDegrees(Math.atan((pos1.y-pos0.y)/(pos1.x-pos0.x)))));	
 	    comsol.geom("geom1").feature(rotz).selection("input").set(new String[]{roty});
    
 	    // Move the rotated cell into position
@@ -287,6 +287,52 @@ public class Comsol {
 	    // Update model information
 	    cellList.add(mov);
 	    rodList.add(mov);
+	}
+	
+	public void CreateRodRevolve(CCell cell) throws FlException {
+		double cellHT = ( (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).norm() + 2.0*cell.ballArray[0].radius )*dimensionFactor;		// HT = Head-Tail
+		Vector3d pos0 = cell.ballArray[0].pos.plus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
+		Vector3d pos1 = cell.ballArray[1].pos.minus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
+		
+	    // Create WP
+	    String wpName = "wp" + Integer.toString(cell.Index());
+	    comsol.geom("geom1").feature().create(wpName, "WorkPlane");
+	    comsol.geom("geom1").feature(wpName).set("planetype", "general");
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos0.x), 0, 0);		// First vertex, x coordinate
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos0.y), 0, 1);		// y coordinate
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos0.z), 0, 2);		// z coordinate
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.x), 1, 0);		// Second vertex, x coordinate
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.y), 1, 1);
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.z), 1, 2);
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.x), 2, 0);
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.y), 2, 1);
+	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.z+cell.ballArray[0].radius*dimensionFactor), 2, 2);
+	    
+	    // Create rectangle in WP
+	    String rectName = "rect" + Integer.toString(cell.Index());
+	    comsol.geom("geom1").feature(wpName).geom().feature().create(rectName, "Rectangle");
+	    comsol.geom("geom1").feature(wpName).geom().feature(rectName).setIndex("size", String.format("%.4g", cellHT), 0);
+	    comsol.geom("geom1").feature(wpName).geom().feature(rectName).setIndex("size", String.format("%.4g", cell.ballArray[0].radius*dimensionFactor), 1);			// We're revolving --> half the actual height
+	    comsol.geom("geom1").feature(wpName).geom().feature(rectName).setIndex("pos", String.format("%.4g", -cell.ballArray[0].radius*dimensionFactor), 0);			// Move the cell on the x axis, so that the centre of the ball is aligned with the origin 
+
+	    // Fillet the rectangle
+	    String filName = "fil" + Integer.toString(cell.Index());
+	    comsol.geom("geom1").feature(wpName).geom().feature().create(filName, "Fillet");
+	    comsol.geom("geom1").feature(wpName).geom().feature(filName).selection("point").set(rectName + "(1)", new int[]{3, 4});
+	    comsol.geom("geom1").feature(wpName).geom().feature(filName).set("radius", String.format("%.4g", cell.ballArray[0].radius*dimensionFactor));
+
+	    // Revolve WP around X axis
+	    String name = GetCellName(cell);
+	    comsol.geom("geom1").feature().create(name, "Revolve");
+	    comsol.geom("geom1").feature(name).set("angtype", "full");
+	    comsol.geom("geom1").feature(name).setIndex("axis", "1", 0); 	// Revolve around axis x==1
+	    comsol.geom("geom1").feature(name).setIndex("axis", "0", 1);		// ... and y==0
+	    comsol.geom("geom1").feature(name).selection("input").set(new String[]{wpName});
+	    comsol.geom("geom1").feature(name).set("createselection", "on");	// Make sure we can select this object later on
+	
+	    // Update model information
+	    cellList.add(name);
+	    rodList.add(name);
 	}
 	
 	public void CreateBCBox() throws FlException {

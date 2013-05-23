@@ -111,49 +111,9 @@ public class CModel implements Serializable {
 	public double ODEbeta = 0.08;
 	public double ODEalpha = 1.0/8.0-ODEbeta*0.2;
 	// === COMSOL STUFF ===
-	// Biomass, assuming Cmol and composition CH1.8O0.5N0.2 (i.e. MW = 24.6 g/mol)
-	//							type 0					type 1					type 2					type 3					type 4					type 5
-	// 							m. hungatei				m. hungatei				s. fumaroxidans			s. fumaroxidans			s. fumaroxidans			s. fumaroxidans
-	public double[] SMX = {		7.6e-3/MWX,				7.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX,				2.6e-3/MWX};				// [Cmol X/mol reacted] Biomass yields per flux reaction. All types from Scholten 2000, grown in coculture on propionate
-	public double[] K = {		1e-21, 					1e-21, 					1e-5, 					1e-5, 					1e-5, 					1e-5};						//
-	public double[] qMax = {	0.05/(SMX[0]*86400), 	0.05/(SMX[0]*86400), 	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400,	0.204*MWX*1e3/86400};		// [mol (Cmol*s)-1] M.h. from Robinson 1984, assuming yield, growth on NaAc in coculture. S.f. from Scholten 2000;
-	public String[] rateEquation = {
-			Double.toString(qMax[0]) + "*(c3*d3^4)/(K0+c3*d3^4)",		// type==0
-			Double.toString(qMax[1]) + "*(c3*d3^4)/(K1+c3*d3^4)",		// type==1
-			Double.toString(qMax[2]) + "*c2/(K2+c2)",					// type==2
-			Double.toString(qMax[3]) + "*c2/(K3+c2)",					// type==3
-			Double.toString(qMax[4]) + "*c2/(K4+c2)",					// type==4
-			Double.toString(qMax[5]) + "*c2/(K5+c2)"};					// type==5
-			
-	// 	 pH calculations
-	//							HPro		CO2			HCO3-		HAc
-	//							0,			1,			2,			3
-	public double[] Ka = {		1.34e-5,	4.6e-7,		4.69e-11, 	1.61e-5};								// From Wikipedia 120811. CO2 and H2CO3 --> HCO3- + H+;
-	public String[] pHEquation = {																			// pH calculations
-			"c2+c4+2*c5+c7-c0",											// Has -2 charge 
-			"c2*c0/Ka0-c1", 
-			"d0-c1-c2", 
-			"c4*c0/Ka1-c3", 
-			"c5*c0/Ka2-c4", 
-			"d1-c3-c4-c5", 
-			"c7*c0/Ka3-c6", 
-			"d2-c6-c7"}; 	
-
-	// Diffusion
-	// 							ProT, 		CO2T,				AcT,				H2, 				CH4
-	//							0,    		1,   				2, 					3,   				4
- 	public double[] BCConc = new double[]{
- 								1.0,		0.0, 				0.0,				0.0,				0.0	};			// [mol m-3]. equivalent to 1 [kg HPro m-3], neglecting Pro concentration
-	public double[] D = new double[]{	
-								1.060e-9,	1.92e-9,			1.21e-9,			4.500e-9,			1.88e-9};		// [m2 s-1]. Diffusion mass transfer Cussler 2nd edition. Methane through Witherspoon 1965
-	public double[][] SMdiffusion = {
-							{	0.0,		-1.0,				0.0,				-4.0,				1.0				},		// XComp == 0 (small sphere)
-							{	0.0,		-1.0,				0.0,				-4.0,				1.0				},		// XComp == 1 (big sphere)
-							{	-1.0,		1.0,				1.0,				3.0,				0.0				},		// XComp == 2 (small rod, variable W)
-							{	-1.0,		1.0,				1.0,				3.0,				0.0				},		// XComp == 3 (big rod, variable W)
-							{	-1.0,		1.0,				1.0,				3.0,				0.0				},		// XComp == 4 (small rod, fixed W)
-							{	-1.0,		1.0,				1.0,				3.0,				0.0				}};		// XComp == 5 (big rod, fixed W);
-
+	public static int port = 2036;
+	public static boolean bit64 = false;
+	public double[] yieldXS = new double[]{2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};		// [Cmol X/mol reaction] yield of biomass. Reactions are normalised to mol substrate 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
 	/////////////////////////////////////
@@ -895,10 +855,9 @@ public class CModel implements Serializable {
 		ArrayList<CCell> dividedCell = new ArrayList<CCell>();
 		for(int iCell=0; iCell<NCell; iCell++){
 			CCell mother = cellArray.get(iCell);
-			// Obtain mol increase based on flux
-			double molIn = mother.Rx * mother.GetAmount() * growthTimeStep * SMX[mother.type];
+			// Obtain mol increase based on flux FIXME
 			// Grow mother cell
-			double newAmount = mother.GetAmount()+molIn;
+			double newAmount = mother.GetAmount() + mother.Rx * growthTimeStep * yieldXS[mother.type];
 			mother.SetAmount(newAmount);
 		}
 		return dividedCell;

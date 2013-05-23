@@ -223,10 +223,10 @@ public class Run {
 		
 		// Start server and connect if we're using COMSOL
 		if(model.comsol) {
-			model.Write("Starting server and connecting model to localhost:" + Assistant.port, "iter");
+			model.Write("Starting server and connecting model to localhost:" + CModel.port, "iter");
 //			Server.Stop(false);
-			Server.Start(Assistant.port);
-			Server.Connect(Assistant.port);
+			Server.Start(CModel.port);
+			Server.Connect(CModel.port);
 		}
 
 		while(model.growthIter<model.growthIterMax && model.relaxationIter<model.relaxationIterMax) {
