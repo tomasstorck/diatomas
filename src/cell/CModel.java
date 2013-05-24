@@ -99,7 +99,9 @@ public class CModel implements Serializable {
 	public double relaxationTimeStep = 1.0;		// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
 	public int relaxationIter = 0;				// [-] counter time iterations for relaxation
 	public int relaxationIterSuccessiveMax = 0;	// [-] how many successive iterations we limit relaxation to
-	public int relaxationIterMax = Integer.MAX_VALUE;	// [-] Run infinitely long
+	public boolean allowMovement = true;				// Whether we allow cells to continue moving or we keep relaxing them until relaxationIterSuccessiveMax is reached
+	public boolean allowOverlap = true;			// Whether we allow cells to overlap or we keep relaxing them until relaxationIterSuccessiveMax is reached 
+	public int relaxationIterMax = Integer.MAX_VALUE;	// [-] Number of iterations before model is finished
 	// Arrays
 	public ArrayList<CCell> cellArray = new ArrayList<CCell>(NCellInit);
 	public ArrayList<CBall> ballArray = new ArrayList<CBall>(2*NCellInit);

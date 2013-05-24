@@ -73,40 +73,24 @@ public class Run {
 			}
 			break;
 		case 3:
-			model.Write("Loading parameters for AS","");
-			////////
-			// AS //
-			////////
+			model.Write("Loading parameters for COMSOL","");
+			////////////
+			// COMSOL //
+			////////////
+			model.comsol = true;
+			model.allowOverlap = true;
+			model.relaxationIterSuccessiveMax = Integer.MAX_VALUE;
 			model.L = new Vector3d(7e-6, 7e-6, 7e-6);
 			model.radiusCellMax[0] = 0.4e-6;
-			model.radiusCellMax[1] = 0.5e-6;
-//			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
+//			model.radiusCellMax[1] = 0.5e-6;
+			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
 //			model.radiusCellMax[5] = 0.35e-6;	// [m] (Lau 1984)
-//			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
+			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
 //			model.lengthCellMax[5] = 1.1e-6;	// [m] (Lau 1984), compensated
-			model.muAvgSimple[0] = 0.33; 
-			model.muAvgSimple[1] = 0.20;		
-			model.muAvgSimple[4] = 0.271;		// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
-			model.muAvgSimple[5] = 0.383;		// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
-			model.muStDev[0] = 0.2*model.muAvgSimple[0];
-			model.muStDev[1] = 0.2*model.muAvgSimple[1];
-			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
-			model.muStDev[5] = 0.2*model.muAvgSimple[5];		//
 			model.NCellInit = 18;
 			model.growthTimeStep = 300.0;
-			model.attachCellType = 5;
-			model.attachNotTo = new int[]{};
-			model.filament = true;
-			model.filType[4] = true;			// Only filament former forms filaments
 			model.sticking = true;
-			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;	// Anything sticks
-			if(model.simulation==1) {
-				model.anchoring = true;
-				model.normalForce = true;
-			} else {
-				model.anchoring = false;
-				model.normalForce = false;
-			}
+			model.stickType[0][4] = model.stickType[4][0] = model.stickType[0][0] = model.stickType[4][4] = true;	// Anything sticks
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
@@ -170,13 +154,15 @@ public class Run {
 				}
 				break;
 			case 3:
+				final int type0 = 0;
+				final int type1 = 4;
 				for(int ii=0; ii<model.NCellInit; ii++)			 {
-					if(model.nCellMax[1]>model.nCellMax[0]) {
-						final int div = (int) (model.nCellMax[1] / model.nCellMax[0]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
-						typeInit[ii] = ii%div==0 ? 1 : 0;
+					if(model.nCellMax[type1]>model.nCellMax[type0]) {
+						final int div = (int) (model.nCellMax[type1] / model.nCellMax[type0]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
+						typeInit[ii] = ii%div==0 ? type1 : type0;
 					} else {
-						final int div = (int) (model.nCellMax[0] / model.nCellMax[1]) + 1;
-						typeInit[ii] = ii%div==0 ? 0 : 1;
+						final int div = (int) (model.nCellMax[type0] / model.nCellMax[type1]) + 1;
+						typeInit[ii] = ii%div==0 ? type0 : type1;
 					}
 				}
 
@@ -253,7 +239,7 @@ public class Run {
 				ArrayList<CCell> oxCellArray = new ArrayList<CCell>();
 				ArrayList<CCell> redCellArray = new ArrayList<CCell>();
 				final int oxType = 4;
-				final int redType = 5;
+				final int redType = 0;
 				for(CCell cell : model.cellArray) {
 					if(cell.type==oxType)					// FIXME Correct cell type?
 						oxCellArray.add(cell);
@@ -364,14 +350,20 @@ public class Run {
 				model.relaxationIter++;
 				model.relaxationTime += model.relaxationTimeStepdt;
 				model.Write("Relaxation finished in " + nstp + " solver steps","iter");
+				// Check if we need to keep relaxing
 				keepMoving = false;
-				for(CBall ball : model.ballArray) {
-					final double thresholdForce = 1e-20;
-					final double thresholdVel = 1e-7;
-					if( ball.force.x + ball.force.y + ball.force.z > thresholdForce   ||   ball.vel.x + ball.vel.y + ball.vel.z > thresholdVel ) {
-						keepMoving = true;
+				// Keep moving if velocities or forces exceed limits
+				if(!model.allowMovement) {
+					for(CBall ball : model.ballArray) {
+						final double thresholdForce = 1e-20;
+						final double thresholdVel = 1e-7;
+						if( ball.force.x + ball.force.y + ball.force.z > thresholdForce   ||   ball.vel.x + ball.vel.y + ball.vel.z > thresholdVel )
+							keepMoving = true;
 					}
 				}
+				// Keep moving if cells are overlapping
+				if(!model.allowOverlap && !model.DetectCellCollision_Proper(1.01).isEmpty())
+					keepMoving = true;
 				// Stop relaxing if we have relaxted too much already
 				if(iter==model.relaxationIterSuccessiveMax) {
 					if(iter>0)

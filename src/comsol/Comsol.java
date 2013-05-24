@@ -240,15 +240,13 @@ public class Comsol {
 		String sph1 = "sph" + cell.Index() + "_" + "1";
 		String cyl = "cyl" + cell.Index();
 		String uni = "uni" + cell.Index();
-		String roty = "rot" + cell.Index() + "y";
-		String rotz = "rot" + cell.Index() + "z";
+		String rot = "rot" + cell.Index() + "y";
 		String mov = GetCellName(cell);
 	    comsol.geom("geom1").feature().create(sph0, "Sphere");
 	    comsol.geom("geom1").feature().create(sph1, "Sphere");
 	    comsol.geom("geom1").feature().create(cyl, "Cylinder");
 	    comsol.geom("geom1").feature().create(uni, "Union");
-	    comsol.geom("geom1").feature().create(roty, "Rotate");
-	    comsol.geom("geom1").feature().create(rotz, "Rotate");
+	    comsol.geom("geom1").feature().create(rot, "Rotate");
 	    comsol.geom("geom1").feature().create(mov, "Move");
 
 	    // Define spheres at arbitrary locations
@@ -266,20 +264,20 @@ public class Comsol {
 	    comsol.geom("geom1").feature(uni).set("intbnd", false);		// Don't keep internal boundaries
 	    comsol.geom("geom1").feature(uni).selection("input").set(new String[]{cyl, sph0, sph1});
 	    
-	    // Rotate the unified object around the y axis
-	    comsol.geom("geom1").feature(roty).set("axis", new String[]{"0", "1", "0"});
-	    comsol.geom("geom1").feature(roty).set("rot", Double.toString(Math.toDegrees(Math.atan((pos1.z-pos0.z)/(pos1.x-pos0.x)))+90));		// COMSOL seems to swap the angles compared to my logic. See journal 130522
-	    comsol.geom("geom1").feature(roty).selection("input").set(new String[]{uni});
-	    // Rotate the rotated object around the z axis (no point in x axis, it is symmetrical around x)
-	    comsol.geom("geom1").feature(rotz).set("axis", new String[]{"0", "0", "1"});
-	    comsol.geom("geom1").feature(rotz).set("rot", Double.toString(Math.toDegrees(Math.atan((pos1.y-pos0.y)/(pos1.x-pos0.x)))));	
-	    comsol.geom("geom1").feature(rotz).selection("input").set(new String[]{roty});
-   
+	    // Rotate the unified object around the axis perpendicular to both the unified object AND the desired cell orientation (pos of ball 1 minus ball 0)
+	    Vector3d orientation = cell.ballArray[1].pos.minus(cell.ballArray[0].pos).normalise();		// Normalised vector pointing from ball 0 to ball 1
+	    Vector3d xAxis = new Vector3d(1, 0, 0);														// The x axis is always used for the unified object
+	    Vector3d axis = orientation.cross(xAxis);													// Cross product so perpendicular to both
+	    double angle = Math.toDegrees(Math.acos(orientation.dot(xAxis)));							// The angle between the two axi can be determined with dot product
+	    comsol.geom("geom1").feature(rot).set("axis", new String[]{Double.toString(axis.x), Double.toString(axis.y), Double.toString(axis.z)});
+	    comsol.geom("geom1").feature(rot).set("rot", Double.toString(-1.0*angle));					// COMSOL seems to swap the direction of the angle compared to my logic. See journal 130523
+	    comsol.geom("geom1").feature(rot).selection("input").set(new String[]{uni});
+	
 	    // Move the rotated cell into position
 	    comsol.geom("geom1").feature(mov).set("displx", Double.toString(0.5*(pos0.x+pos1.x)));
 	    comsol.geom("geom1").feature(mov).set("disply", Double.toString(0.5*(pos0.y+pos1.y)));
 	    comsol.geom("geom1").feature(mov).set("displz", Double.toString(0.5*(pos0.z+pos1.z)));
-	    comsol.geom("geom1").feature(mov).selection("input").set(new String[]{rotz});
+	    comsol.geom("geom1").feature(mov).selection("input").set(new String[]{rot});
 	    
 	    // Make the final cell selectable
 	    comsol.geom("geom1").feature(mov).set("createselection", "on");
