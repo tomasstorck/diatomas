@@ -65,8 +65,8 @@ public class CModel implements Serializable {
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
 	public boolean gravityZ = false;
 	// --> Substratum and normal forces
-	public boolean normalForce = true;			// Use normal force to simulate cells colliding with substratum (at y=0)
-	public boolean initialAtSubstratum = true;	// All initial balls are positioned at y(t=0) = ball.radius
+	public boolean normalForce = false;			// Use normal force to simulate cells colliding with substratum (at y=0)
+	public boolean initialAtSubstratum = false;	// All initial balls are positioned at y(t=0) = ball.radius
 	// --> Collision forces
 	public double Kc 	= 1e-10;					// cell-cell collision
 	public double Kw 	= 1e-10;				// wall(substratum)-cell spring
@@ -89,6 +89,7 @@ public class CModel implements Serializable {
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public int attachCellType = 0;				// What cell type the new cell is 
 	public int[] attachNotTo = new int[0];		// Which cell types newly attached cells can NOT attach to
+	public double attachCounter = 0.0;			// How many cells we will attach in this iteration
 	// Progress
 	public double growthTime = 0.0;				// [s] Current time for the growth
 	public double growthTimeStep = 600.0;		// [s] Time step for growth
@@ -114,7 +115,7 @@ public class CModel implements Serializable {
 	public double ODEalpha = 1.0/8.0-ODEbeta*0.2;
 	// === COMSOL STUFF ===
 	public static int port = 2036;
-	public static boolean bit64 = false;
+	public static boolean bit64 = true;
 	public double[] yieldXS = new double[]{2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};		// [Cmol X/mol reaction] yield of biomass. Reactions are normalised to mol substrate 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -1137,6 +1138,7 @@ public class CModel implements Serializable {
 						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with other 
 						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet 
 						if(E.sc > firstDist) {													// sc is the multiplier for the vector that denotes the line to get the segment: since dirn.norm() == 1 we don't need to multiply with the length
+							success = true;
 							// Set this ball to be first to be encountered by the attaching particle
 							firstDist = E.sc;
 							firstBall = ball;
@@ -1171,9 +1173,11 @@ public class CModel implements Serializable {
 				}
 				// Get new position. 
 				// Check if we actually had a collision
-				if(!success)						continue;
+				if(!success)						
+					continue tryloop;
 				// Check if it is valid in case we have a substratum
-				if(normalForce && firstPos.y<rNew)	continue;	// the new cell went through the plane to get to this point
+				if(normalForce && firstPos.y<rNew)	
+					continue tryloop;	// the new cell went through the plane to get to this point
 				// If a cell of the correct type wins, we're happy
 				for(int ii=0; ii<attachNotTo.length; ii++)
 					if(firstBall.cell.type == attachNotTo[ii])
@@ -1187,8 +1191,14 @@ public class CModel implements Serializable {
 				// Check if it is not overlapping with any other cells
 				for(int iCell=0; iCell<cellArray.size()-1; iCell++) {
 					CCell cell = cellArray.get(iCell);
-					if(DetectCellCollision_Proper(newCell, cell, 1.0))	continue tryloop;
+					if(DetectCellCollision_Proper(newCell, cell, 1.0))	
+						continue tryloop;
 				}
+//				// See if within range of origin
+//				Vector3d nul = new Vector3d(0,0,0);
+//				double range = 4e-6;
+//				if(firstPos.minus(nul).norm()>range)
+//					continue tryloop;
 				// Congratulations!
 				break;
 			}

@@ -83,14 +83,19 @@ public class Run {
 			model.L = new Vector3d(7e-6, 7e-6, 7e-6);
 			model.radiusCellMax[0] = 0.4e-6;
 //			model.radiusCellMax[1] = 0.5e-6;
-			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
+			model.radiusCellMax[4] = 0.25e-6;	// [m] (Lau 1984)
 //			model.radiusCellMax[5] = 0.35e-6;	// [m] (Lau 1984)
-			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
+			model.lengthCellMax[4] = 1.5e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
 //			model.lengthCellMax[5] = 1.1e-6;	// [m] (Lau 1984), compensated
-			model.NCellInit = 18;
+			model.NCellInit = 1;
 			model.growthTimeStep = 300.0;
 			model.sticking = true;
 			model.stickType[0][4] = model.stickType[4][0] = model.stickType[0][0] = model.stickType[4][4] = true;	// Anything sticks
+			// Granule building
+//			model.attachCellType = 0;
+			model.attachCellType = 4;
+			model.attachNotTo = new int[]{};
+			model.attachmentRate = 3600.0/model.growthTimeStep*2.0;
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
@@ -99,10 +104,20 @@ public class Run {
 	}
 	
 	public void Start() throws Exception {
+		// Update model parameters
+		model.UpdateAmountCellMax();
+		
+		// Start server and connect if we're using COMSOL
+		if(model.comsol) {
+			model.Write("Starting server and connecting model to localhost:" + CModel.port, "iter");
+			Server.Start(CModel.port);
+			Server.Connect(CModel.port);
+		}
+		
+		// Initialise model if we are starting a new simulation
 		if(model.growthIter == 0 && model.relaxationIter == 0) {			// First time we run this simulation, didn't load it
 			// Set initial cell parameters based on model
 			rand.Seed(model.randomSeed);
-			model.UpdateAmountCellMax();
 			int[] typeInit = new int[model.NCellInit];
 			double[] nInit = new double[model.NCellInit];
 			Vector3d[] directionInit = new Vector3d[model.NCellInit];
@@ -205,14 +220,6 @@ public class Run {
 			// Save and convert the file
 			model.Save();
 			ser2mat.Convert(model);	
-		}
-		
-		// Start server and connect if we're using COMSOL
-		if(model.comsol) {
-			model.Write("Starting server and connecting model to localhost:" + CModel.port, "iter");
-//			Server.Stop(false);
-			Server.Start(CModel.port);
-			Server.Connect(CModel.port);
 		}
 
 		while(model.growthIter<model.growthIterMax && model.relaxationIter<model.relaxationIterMax) {
@@ -333,11 +340,12 @@ public class Run {
 			for(CSpring rod : model.rodSpringArray) 	rod.ResetRestLength();
 			for(CSpring fil : model.filSpringArray) 	fil.ResetRestLength();
 			// Attach new cells
-			final double NNewPerStep = model.attachmentRate*(model.growthTimeStep/3600.0);
+			final double NNew = model.attachmentRate*(model.growthTimeStep/3600.0);
 			//			N guaranteed	+ 1 the integer of this iteration is not equal to the previous one (this will be wrong for growthIter==0)
-			int NNew = (int)NNewPerStep + (int)(model.growthIter*NNewPerStep)==(int)((model.growthIter-1)*NNewPerStep) ? 0:1;
-			model.Write("Attaching " + NNew + " new cells", "iter");
-			model.Attachment(NNew);
+			model.attachCounter += NNew;
+			model.Write("Attaching " + (int)model.attachCounter + " new cells", "iter");
+			model.Attachment((int)model.attachCounter);
+			model.attachCounter -= (int)model.attachCounter;	// Subtract how many cells we've added this turn
 
 			// Relaxation
 			boolean keepMoving = true;
