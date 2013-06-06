@@ -27,11 +27,23 @@ while true
     
     % Analyse these folders
     for ii=1:length(folderList)
+        % Clear camera zoom
 		clear right;
+        % Get folder name, mark as being rendered and start rendering
         folderName = folderList{ii};
         disp([datestr(now) '  ' folderName]);
         location = ['../' folderName];
 		imageLoc = [location filesep 'image-sketch'];
+        % See if this is already being rendered
+		if exist([location filesep 'rendering'],'file')
+			disp([datestr(now) '  ' '  already being rendered, skipping']);
+			continue
+        elseif exist(location,'dir')
+			frendering = fopen([location filesep 'rendering'],'w');
+			fclose(frendering);
+        else 
+            continue
+		end
 		% Make output folder if it doesn't exist already
 		if ~exist(imageLoc ,'dir') && exist(location,'dir')        % Added second statement so we don't generate the base folder if it was removed
 			mkdir(imageLoc );
@@ -83,9 +95,16 @@ while true
 					[~,~] = system(['cd ' location ' ; ' remove ' ; cd ..']);
 				end
 			catch ME
+                if exist([location filesep 'rendering'],'file')
+                    % Done with this folder, delete "mark as rendered"
+					delete([location filesep 'rendering']);
+					continue
+				end
 				continue;
 			end
-		end
+        end
+        % Done with this folder, delete "mark as rendered"
+		delete([location filesep 'rendering']);
     end
     disp([datestr(now) '  waiting...']);
     pause(10);

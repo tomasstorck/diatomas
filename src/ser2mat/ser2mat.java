@@ -78,6 +78,7 @@ public class ser2mat {
 		//
 		double[] DattachNotTo = new double[model.attachNotTo.length];		for(int ii=0; ii<model.attachNotTo.length; ii++)		DattachNotTo[ii] = model.attachNotTo[ii];		mlModel.setField("attachNotTo",                   new MLDouble(null, DattachNotTo, model.attachNotTo.length));                    	// Which cell types newly attached cells can NOT attach to
 		//
+		mlModel.setField("attachCounter",                 new MLDouble(null, new double[] {model.attachCounter}, 1));                     	// How many cells we will attach in this iteration
 		// Progress
 		mlModel.setField("growthTime",                    new MLDouble(null, new double[] {model.growthTime}, 1));                        	// [s] Current time for the growth
 		mlModel.setField("growthTimeStep",                new MLDouble(null, new double[] {model.growthTimeStep}, 1));                    	// [s] Time step for growth
@@ -88,7 +89,9 @@ public class ser2mat {
 		mlModel.setField("relaxationTimeStep",            new MLDouble(null, new double[] {model.relaxationTimeStep}, 1));                	// [s] time interval for relaxation (for ODE solver), 5*relaxationTimeStep by default
 		mlModel.setField("relaxationIter",                new MLDouble(null, new double[] {model.relaxationIter}, 1));                    	// [-] counter time iterations for relaxation
 		mlModel.setField("relaxationIterSuccessiveMax",   new MLDouble(null, new double[] {model.relaxationIterSuccessiveMax}, 1));       	// [-] how many successive iterations we limit relaxation to
-		mlModel.setField("relaxationIterMax",             new MLDouble(null, new double[] {model.relaxationIterMax}, 1));                 	// [-] Run infinitely long
+		mlModel.setField("allowMovement",                 new MLDouble(null, new double[] {model.allowMovement?1:0}, 1));                 	// Whether we allow cells to continue moving or we keep relaxing them until relaxationIterSuccessiveMax is reached
+		mlModel.setField("allowOverlap",                  new MLDouble(null, new double[] {model.allowOverlap?1:0}, 1));                  	// Whether we allow cells to overlap or we keep relaxing them until relaxationIterSuccessiveMax is reached
+		mlModel.setField("relaxationIterMax",             new MLDouble(null, new double[] {model.relaxationIterMax}, 1));                 	// [-] Number of iterations before model is finished
 		// Arrays
 
 		// cellArray
@@ -230,6 +233,7 @@ public class ser2mat {
 		// === COMSOL STUFF ===
 		mlModel.setField("port",                          new MLDouble(null, new double[] {model.port}, 1));                              	
 		mlModel.setField("bit64",                         new MLDouble(null, new double[] {model.bit64?1:0}, 1));                         	
+		mlModel.setField("yieldXS",                       new MLDouble(null, model.yieldXS, model.yieldXS.length));                       	
 
 		// Create a list and add mlModel
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);

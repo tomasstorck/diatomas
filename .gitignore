@@ -7,7 +7,7 @@
 /13*
 /as*
 /AS*
-/default
+/default*
 /dental*
 /ecoli*
 /storage
@@ -15,3 +15,15 @@ diatomas.jar
 .classpath
 .project
 *.class
+/granule*
+/comsol_*
+/bridge_22
+/bridge_26
+/bridge_28
+/bridge_5
+/bridge_dt02
+/bridge_v3_22
+/bridge_v3_31
+/bridge_v3_4
+/bridge_v3_8
+/bridge_v3_9

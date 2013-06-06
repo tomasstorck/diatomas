@@ -16,9 +16,9 @@ public class Comsol {
 	Model comsol;				// The COMSOL model
 	CModel java;
 	
-	final double dimensionFactor = 1.00;	// FIXME, was 0.75
+	final double dimensionFactor = 1.00;	// FIXME, was 0.75, should be 1.0
 	
-	ArrayList<String> cellList = new ArrayList<String>();   
+	ArrayList<String> cellList = new ArrayList<String>();
 	ArrayList<String> sphList = new ArrayList<String>();
 	ArrayList<String> rodList = new ArrayList<String>();
 	
@@ -43,6 +43,14 @@ public class Comsol {
 	    comsol.geom("geom1").geomRep("comsol");						// Use COMSOL geometry, prevents license issues
 
 	    // Parameter list. These are all hardcoded.
+	    comsol.param().set("L_ox", "x_ox1-x_ox0");
+	    comsol.param().set("L_red", "x_red1-x_red0");
+	    comsol.param().set("x_start", "0[um]");
+	    comsol.param().set("x_ox0", "x_start+5[um]");
+	    comsol.param().set("x_ox1", "x_ox0+1[um]");
+	    comsol.param().set("x_red0", "x_ox1+x_spacing");
+	    comsol.param().set("x_red1", "x_red0+1[um]");
+	    comsol.param().set("x_end", "x_red1+5[um]");
 	    comsol.param().set("D_hac", "1.21e-9[m^2/s]*D_factor", "[Cussler 1997], 25 C");
 	    comsol.param().set("D_ac", "1.089e-9[m^2/s]*D_factor", "[Vanysek 2012], 25 C. Said to increase by 2-3% per degree C");
 	    comsol.param().set("D_hpro", "1.06e-9[m^2/s]*D_factor", "[Cussler 1997], 25 C");
@@ -56,20 +64,20 @@ public class Comsol {
 	    comsol.param().set("D_oh", "5.273e-9[m^2/s]*D_factor", "[Vanysek 2012], 25 C");
 	    comsol.param().set("D_k", "1.957e-9[m^2/s]*D_factor", "[Vanysek 2012], 25 C");
 	    comsol.param().set("D_cl", "2.032e-9[m^2/s]*D_factor", "[Vanysek 2012], 25 C");
-	    comsol.param().set("D_factor", "1");
+	    comsol.param().set("D_factor", "0.5");
 	    comsol.param().set("R", "8.314[J/mol/K]");
 	    comsol.param().set("T", "(273+20)[K]");
-	    comsol.param().set("c0_h", "1e-4[mol/m^3]", "Fixed concentration BC. This is pH = 7");
-	    comsol.param().set("c0_ac_tot", "0.049[mol/m^3]", "From ADM1_single_0_5.xls");
-	    comsol.param().set("c0_ox_tot", "0.018[mol/m^3]", "From ADM1_single_0_5.xls");
-	    comsol.param().set("c0_co2_tot", "0.075[mol/m^3]", "From ADM1_single_0_5.xls");
-	    comsol.param().set("c0_h2", "0[mol/m^3]", "0 or 2.6e-7[mol/m^3] (ADM1)");
-	    comsol.param().set("c0_ch4", "0.054[mol/m^3]", "From ADM1_single_0_5.xls");
+	    comsol.param().set("c0_h", "1e-7[mol/L]", "Fixed pH BC. This is pH = 7");
+	    comsol.param().set("c0_ac_tot", "(100/64000)[kmol/m^3]", "[Batstone et al 2005, Batstone et al 2006]");
+	    comsol.param().set("c0_pro_tot", "(100/112000)[kmol/m^3]", "[Batstone et al 2005, Batstone et al 2006]");
+	    comsol.param().set("c0_co2_tot", "1e-3[kmol/m^3]", "[Batstone et al 2006] says 0.1 M as HCO3-");
+	    comsol.param().set("c0_h2", "1e-5/16[mol/m^3]", "[Batstone et al 2006]");
+	    comsol.param().set("c0_ch4", "1e-5/64[mol/m^3]", "[Batstone et al 2006]");
 	    comsol.param().set("c0_cl", "40[mol/m^3]");
 	    comsol.param().set("c0_ac", "c0_ac_tot*Ka_hac/(c0_h+Ka_hac)");
 	    comsol.param().set("c0_hac", "c0_ac_tot*c0_h/(c0_h+Ka_hac)");
-	    comsol.param().set("c0_pro", "c0_ox_tot*Ka_hpro/(c0_h+Ka_hpro)");
-	    comsol.param().set("c0_hpro", "c0_ox_tot*c0_h/(c0_h+Ka_hpro)");
+	    comsol.param().set("c0_pro", "c0_pro_tot*Ka_hpro/(c0_h+Ka_hpro)");
+	    comsol.param().set("c0_hpro", "c0_pro_tot*c0_h/(c0_h+Ka_hpro)");
 	    comsol.param().set("c0_co2", "c0_co2_tot/(1+Ka_co2/c0_h*(1+Ka_hco3/c0_h))");
 	    comsol.param().set("c0_hco3", "c0_co2_tot/(c0_h/Ka_co2+1+Ka_hco3/c0_h)");
 	    comsol.param().set("c0_co3", "c0_co2_tot/((c0_h/Ka_co2+1)*c0_h/Ka_hco3+1)");
@@ -81,57 +89,57 @@ public class Comsol {
 	    comsol.param().set("Ka_co2", "10^(-6.35)[mol/L]", "[Vanysek 2012], 25 C, assuming this is apparent acid dissociation constant!");
 	    comsol.param().set("Ka_hco3", "10^(-10.33)[mol/L]", "[Vanysek 2012], 25 C");
 	    comsol.param().set("Ka_hoh", "10^(-13.995)[mol^2/L^2]", "[Vanysek 2012], 25 C");
-	    comsol.param().set("ka_co2", "1e6[m^3/mol]", "Accelerator for forward rate. 1 = rate constant 1/s. Reverse reaction automatically calculated though Ka.  Arbitrary for fast reactions");
-	    comsol.param().set("ka_hpro", "1e6[m^3/mol]");
-	    comsol.param().set("ka_hac", "1e6[m^3/mol]");
-	    comsol.param().set("ka_hco3", "1e6[m^3/mol]");
-	    comsol.param().set("ka_hoh", "1e6");
-	    comsol.param().set("q_max_pro", "1e3*13[mol/mol/day]", "[Batstone 2002, table 6.2]. !!! Note factor !!!");
-	    comsol.param().set("q_max_hyd", "1e3*35[mol/mol/day]", "[Batstone 2002, table 6.2]. !!! Note factor !!!");
-	    comsol.param().set("K_xpro_pro", "2.68[mol/m^3]", "[Batstone 2002, table 6.2]");
-	    comsol.param().set("Ki_xpro_h2", "2.19e-4[mol/m^3]", "[Batstone 2002, table 6.2]");
-	    comsol.param().set("K_xhyd_h2", "1.56e-3[mol/m^3]", "[Batstone 2002, table 6.2]");
-	    comsol.param().set("Ki_xpro_h", "2e-3[mol/m^3]");
-	    comsol.param().set("K_xhyd_h", "5e-4[mol/m^3]");
+	    comsol.param().set("ka_co2", "1e6[1/s]", "Accelerator for forward rate. 1 = rate constant 1/s. Reverse reaction automatically calculated though Ka.  Arbitrary for fast reactions");
+	    comsol.param().set("ka_hpro", "1e6[1/s]");
+	    comsol.param().set("ka_hac", "1e6[1/s]");
+	    comsol.param().set("ka_hco3", "1e6[1/s]");
+	    comsol.param().set("ka_hoh", "1e6[mol/m^3/s]");
+	    comsol.param().set("q_max_ox", "(65[g/g/d])*(35[g/mol])/(112[g/mol])", "[Batstone 2002, table 6.2] !!! x5 !!!");
+	    comsol.param().set("q_max_red", "(175[g/g/d])*(35[g/mol])/(16[g/mol])", "[Batstone 2002, table 6.2] !!! x5 !!!");
+	    comsol.param().set("K_ox_pro", "c0_pro_tot", "(300/112000)[kmol/m^3] [Batstone 2002, table 6.2] (changed from boundary concentration version CP))");
+	    comsol.param().set("Ki_ox_h2", "(3.5e-3/16000)[kmol/m^3]", "[Batstone et al 2005, Batstone 2002, table 6.2] (times 2 from version CP)");
+	    comsol.param().set("K_red_h2", "(2.5e-2/16000)[kmol/m^3]", "[Batstone et al 2005, Batstone 2002, table 6.2] (times 2 from version CP)");
+	    comsol.param().set("K_red_h", "1e-8[kmol/m^3]", "Assuming inhibition is significant at pH = 8");
 	    comsol.param().set("MW_x", "24.6[g/mol]");
-	    comsol.param().set("n_x", "200[g/L]/MW_x");
+	    comsol.param().set("n_x", "1010[kg/m^3]/MW_x");
 	    comsol.param().set("F", "96485.3415[C/mol]");
-	    comsol.param().set("pHul_xpro", "5.5", "[Batstone 2002, Excel sheet] from bac");
-	    comsol.param().set("pHll_xpro", "4", "[Batstone 2002, Excel sheet] from bac");
-	    comsol.param().set("pHul_xhyd", "6", "[Batstone 2002, table 6.2]");
-	    comsol.param().set("pHll_xhyd", "5", "[Batstone 2002, table 6.2]");
+	    comsol.param().set("pHul_ox", "8", "5.5 [Batstone 2002, Excel sheet] from bac");
+	    comsol.param().set("pHll_ox", "4", "4 [Batstone 2002, Excel sheet] from bac");
+	    comsol.param().set("pHul_red", "8", "6 [Batstone 2002, table 6.2]");
+	    comsol.param().set("pHll_red", "5", "5 [Batstone 2002, table 6.2]");
+	    comsol.param().set("x_spacing", "5[um]");
 	    
 	    // Variables list. This will be appended later on.
 	    comsol.variable().create("var1");
 	    comsol.variable("var1").model("mod1");
-	    comsol.variable("var1").set("rx_ox_iiet", "q_max_pro*cx_pro*S_ox_xpro*I_pH_xpro_form1*I_h2_xpro", "IIET");
-	    comsol.variable("var1").set("rx_red_iiet", "q_max_hyd*cx_hyd*S_h2_xhyd*I_pH_xhyd_form1", "IIET");
-	    comsol.variable("var1").set("rx_ox_diet", "q_max_pro*cx_pro*S_ox_xpro*I_pH_xpro_form1", "DIET. Unlimited (see _lim)");
-	    comsol.variable("var1").set("rx_red_diet", "q_max_hyd*cx_hyd*I_pH_xhyd_form1", "DIET. Unlimited (see _lim)");
-	    comsol.variable("var1").set("ra_hoh", "ka_hoh*(1[mol/(m^3*s)]-c_oh*c_h[mol/(m^3*s)]/Ka_hoh)");
-	    comsol.variable("var1").set("ra_hac", "ka_hac*(1[mol/(m^3*s)]*c_hac-c_ac*c_h[mol/(m^3*s)]/Ka_hac)");
-	    comsol.variable("var1").set("ra_hpro", "ka_hpro*(1[mol/(m^3*s)]*c_hpro-c_pro*c_h[mol/(m^3*s)]/Ka_hpro)");
-	    comsol.variable("var1").set("ra_co2", "ka_co2*(1[mol/(m^3*s)]*c_co2-c_hco3*c_h[mol/(m^3*s)]/Ka_co2)");
-	    comsol.variable("var1").set("ra_hco3", "ka_hco3*(1[mol/(m^3*s)]*c_hco3-c_co3*c_h[mol/(m^3*s)]/Ka_hco3)");
-	    comsol.variable("var1").set("cx_pro", "n_x");
-	    comsol.variable("var1").set("cx_hyd", "n_x");
+	    comsol.variable("var1").set("rx_ox_iiet", "q_max_ox*cx_ox*S_pro_ox*I_pH_ox_form1*I_h2_ox", "IIET");
+	    comsol.variable("var1").set("rx_red_iiet", "q_max_red*cx_red*S_h2_red*I_pH_red_form1", "IIET");
+	    comsol.variable("var1").set("rx_ox_diet", "q_max_ox*cx_ox*S_pro_ox*I_pH_ox_form1", "DIET. Unlimited (see _lim)");
+	    comsol.variable("var1").set("rx_red_diet", "q_max_red*cx_red*I_pH_red_form1", "DIET. Unlimited (see _lim)");
+	    comsol.variable("var1").set("ra_hoh", "ka_hoh*(1-c_oh*c_h/Ka_hoh)");
+	    comsol.variable("var1").set("ra_hac", "ka_hac*(c_hac-c_ac*c_h/Ka_hac)");
+	    comsol.variable("var1").set("ra_hpro", "ka_hpro*(c_hpro-c_pro*c_h/Ka_hpro)");
+	    comsol.variable("var1").set("ra_co2", "ka_co2*(c_co2-c_hco3*c_h/Ka_co2)");
+	    comsol.variable("var1").set("ra_hco3", "ka_hco3*(c_hco3-c_co3*c_h/Ka_hco3)");
+	    comsol.variable("var1").set("cx_ox", "n_x");
+	    comsol.variable("var1").set("cx_red", "n_x");
 	    comsol.variable("var1").set("phie_lim", "min(phie_oxT_diet,phie_redT_diet)");
 	    comsol.variable("var1").set("c_co2_tot", "c_co2+c_hco3+c_co3");
 	    comsol.variable("var1").set("c_hpro_tot", "c_hpro+c_pro");
 	    comsol.variable("var1").set("c_hac_tot", "c_hac+c_ac");
-	    comsol.variable("var1").set("I_h2_xpro", "Ki_xpro_h2/(Ki_xpro_h2+c_h2)");
-	    comsol.variable("var1").set("I_pH_xpro_form2", "if(pH<pHul_xpro,exp(-3*((pH-pHul_xpro)/(pHul_xpro-pHll_xpro))^2),1)", "[Batstone 2002, table 3.5] Empirical lower only pH inhibition");
-	    comsol.variable("var1").set("I_pH_xhyd_form2", "if(pH<pHul_xhyd,exp(-3*((pH-pHul_xhyd)/(pHul_xhyd-pHll_xhyd))^2),1)", "[Batstone 2002, table 3.5] Empirical lower only pH inhibition");
+	    comsol.variable("var1").set("I_h2_ox", "Ki_ox_h2/(Ki_ox_h2+c_h2)");
+	    comsol.variable("var1").set("I_pH_ox_form2", "if(pH<pHul_ox,exp(-3*((pH-pHul_ox)/(pHul_ox-pHll_ox))^2),1)", "[Batstone 2002, table 3.5] Empirical lower only pH inhibition");
+	    comsol.variable("var1").set("I_pH_red_form2", "if(pH<pHul_red,exp(-3*((pH-pHul_red)/(pHul_red-pHll_red))^2),1)", "[Batstone 2002, table 3.5] Empirical lower only pH inhibition");
 	    comsol.variable("var1").set("pH", "-log10(c_h*1e-3[m^3/mol])", "*1e-3 is to go to mol/L. Units needed due to warnings");
-	    comsol.variable("var1").set("I_pH_xpro_form1", "(1+2*10^(0.5*(pHll_xpro-pHul_xpro)))/(1+10^(pH-pHul_xpro)+10^(pHll_xpro-pH))", "[Batstone 2002, table 3.5] Empirical lower and upper pH inhibition");
-	    comsol.variable("var1").set("I_pH_xhyd_form1", "(1+2*10^(0.5*(pHll_xhyd-pHul_xhyd)))/(1+10^(pH-pHul_xhyd)+10^(pHll_xhyd-pH))", "[Batstone 2002, table 3.5] Empirical lower and upper pH inhibition");
-	    comsol.variable("var1").set("S_ox_xpro", "c_hpro_tot/(K_xpro_pro+c_hpro_tot)");
-	    comsol.variable("var1").set("S_h2_xhyd", "c_h2/(c_h2+K_xhyd_h2)");
+	    comsol.variable("var1").set("I_pH_ox_form1", "(1+2*10^(0.5*(pHll_ox-pHul_ox)))/(1+10^(pH-pHul_ox)+10^(pHll_ox-pH))", "[Batstone 2002, table 3.5] Empirical lower and upper pH inhibition");
+	    comsol.variable("var1").set("I_pH_red_form1", "(1+2*10^(0.5*(pHll_red-pHul_red)))/(1+10^(pH-pHul_red)+10^(pHll_red-pH))", "[Batstone 2002, table 3.5] Empirical lower and upper pH inhibition");
+	    comsol.variable("var1").set("S_pro_ox", "c_hpro_tot/(K_ox_pro+c_hpro_tot)");
+	    comsol.variable("var1").set("S_h2_red", "c_h2/(c_h2+K_red_h2)");
 	    comsol.variable("var1").set("rx_lim_ox_diet", "f_rx_ox*rx_ox_diet");
 	    comsol.variable("var1").set("rx_lim_red_diet", "f_rx_red*rx_red_diet");
 	    comsol.variable("var1").set("f_rx_ox", "min(1/ratio_diet,1)");
 	    comsol.variable("var1").set("f_rx_red", "min(ratio_diet,1)");
-
+	    
 	    // Create mesh
 	    comsol.mesh().create("mesh1", "geom1");
 	    comsol.mesh("mesh1").automatic(true);
@@ -287,52 +295,6 @@ public class Comsol {
 	    rodList.add(mov);
 	}
 	
-	public void CreateRodRevolve(CCell cell) throws FlException {
-		double cellHT = ( (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).norm() + 2.0*cell.ballArray[0].radius )*dimensionFactor;		// HT = Head-Tail
-		Vector3d pos0 = cell.ballArray[0].pos.plus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
-		Vector3d pos1 = cell.ballArray[1].pos.minus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
-		
-	    // Create WP
-	    String wpName = "wp" + Integer.toString(cell.Index());
-	    comsol.geom("geom1").feature().create(wpName, "WorkPlane");
-	    comsol.geom("geom1").feature(wpName).set("planetype", "general");
-	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos0.x), 0, 0);		// First vertex, x coordinate
-	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos0.y), 0, 1);		// y coordinate
-	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos0.z), 0, 2);		// z coordinate
-	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.x), 1, 0);		// Second vertex, x coordinate
-	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.y), 1, 1);
-	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.z), 1, 2);
-	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.x), 2, 0);
-	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.y), 2, 1);
-	    comsol.geom("geom1").feature(wpName).setIndex("genpoints", String.format("%.4g", pos1.z+cell.ballArray[0].radius*dimensionFactor), 2, 2);
-	    
-	    // Create rectangle in WP
-	    String rectName = "rect" + Integer.toString(cell.Index());
-	    comsol.geom("geom1").feature(wpName).geom().feature().create(rectName, "Rectangle");
-	    comsol.geom("geom1").feature(wpName).geom().feature(rectName).setIndex("size", String.format("%.4g", cellHT), 0);
-	    comsol.geom("geom1").feature(wpName).geom().feature(rectName).setIndex("size", String.format("%.4g", cell.ballArray[0].radius*dimensionFactor), 1);			// We're revolving --> half the actual height
-	    comsol.geom("geom1").feature(wpName).geom().feature(rectName).setIndex("pos", String.format("%.4g", -cell.ballArray[0].radius*dimensionFactor), 0);			// Move the cell on the x axis, so that the centre of the ball is aligned with the origin 
-
-	    // Fillet the rectangle
-	    String filName = "fil" + Integer.toString(cell.Index());
-	    comsol.geom("geom1").feature(wpName).geom().feature().create(filName, "Fillet");
-	    comsol.geom("geom1").feature(wpName).geom().feature(filName).selection("point").set(rectName + "(1)", new int[]{3, 4});
-	    comsol.geom("geom1").feature(wpName).geom().feature(filName).set("radius", String.format("%.4g", cell.ballArray[0].radius*dimensionFactor));
-
-	    // Revolve WP around X axis
-	    String name = GetCellName(cell);
-	    comsol.geom("geom1").feature().create(name, "Revolve");
-	    comsol.geom("geom1").feature(name).set("angtype", "full");
-	    comsol.geom("geom1").feature(name).setIndex("axis", "1", 0); 	// Revolve around axis x==1
-	    comsol.geom("geom1").feature(name).setIndex("axis", "0", 1);		// ... and y==0
-	    comsol.geom("geom1").feature(name).selection("input").set(new String[]{wpName});
-	    comsol.geom("geom1").feature(name).set("createselection", "on");	// Make sure we can select this object later on
-	
-	    // Update model information
-	    cellList.add(name);
-	    rodList.add(name);
-	}
-	
 	public void CreateBCBox() throws FlException {
 		double BCMultiplier = 2.0;
 		
@@ -377,15 +339,6 @@ public class Comsol {
 	    comsol.physics("chnp").feature("conc1").selection().named("geom1_blk1_bnd");
 	    comsol.physics("chnp").feature("conc1").set("c0", new String[][]{{"c0_hpro"}, {"c0_pro"}, {"c0_hac"}, {"c0_ac"}, {"c0_co2"}, {"c0_hco3"}, {"c0_co3"}, {"c0_h2"}, {"c0_ch4"}, {"c0_h"}, {"c0_oh"}, {"0"}, {"c0_cl"}});
 	    comsol.physics("chnp").feature("conc1").set("species", new String[][]{{"1"}, {"1"}, {"1"}, {"1"}, {"1"}, {"1"}, {"1"}, {"1"}, {"1"}, {"1"}, {"1"}, {"0"}, {"1"}});			// Note that species 12 (K+) is disabled as this is the balancing species
-	    
-//	    // Subtract cells from this block
-//	    String[] cellArray = Arrays.copyOf(cellList.toArray(), cellList.size(), String[].class);	// Convert cellList from ArrayList<String> to String[]. Typecast doesn't work for some reason
-//	    comsol.geom("geom1").feature().create("dif1", "Difference");		// Subtract the cells from the block:
-//	    comsol.geom("geom1").feature("dif1").selection("input")			// Add this block
-//	         .set(new String[]{"blk1"});
-//	    comsol.geom("geom1").feature("dif1").selection("input2")			// Subtract all cells from cellList
-//	    	 .set(cellArray);	         //.set(new String[]{"sph0","sph2","sph6"});
-//	    comsol.geom("geom1").feature("dif1").set("createselection", "on");
 	}
 	
 	public void BuildGeometry() throws FlException {
@@ -415,15 +368,20 @@ public class Comsol {
 		String cellName = GetCellName(cell);
 	    comsol.physics("chnp").feature().create(reacName, "Reactions", 3);
 	    comsol.physics("chnp").feature(reacName).selection().named("geom1_" + cellName + "_dom");
+	    double scale = cell.Volume()/cell.Volume(dimensionFactor); 												// Due to dimensionFactor
 	    if(type.equalsIgnoreCase("ox")) {
-	    	comsol.physics("chnp").feature(reacName).set("R", new String[][]{{"0"}, {"-rx_lim_ox_diet"}, {"0"}, {"rx_lim_ox_diet"}, {"rx_lim_ox_diet"}, {"0"}, {"0"}, {"0"}, {"0"}, {"6*rx_lim_ox_diet"}, {"0"}, {"0"}, {"0"}});
+	    	comsol.physics("chnp").feature(reacName).set("R", new String[][]{{"0"}, {"-rx_lim_ox_diet*" + scale}, {"0"}, {"rx_lim_ox_diet*" + scale}, {"rx_lim_ox_diet*" + scale}, {"0"}, {"0"}, {"0"}, {"0"}, {"6*rx_lim_ox_diet*" + scale}, {"0"}, {"0"}, {"0"}});			// Compensated for volume change due to dimensionFactor
 	    } else if(type.equalsIgnoreCase("red")) {
-	        comsol.physics("chnp").feature(reacName).set("R", new String[][]{{"0"}, {"0"}, {"0"}, {"0"}, {"-rx_lim_red_diet"}, {"0"}, {"0"}, {"0"}, {"rx_lim_red_diet"}, {"-8*rx_lim_red_diet"}, {"0"}, {"0"}, {"0"}});
+	        comsol.physics("chnp").feature(reacName).set("R", new String[][]{{"0"}, {"0"}, {"0"}, {"0"}, {"-rx_lim_red_diet*" + scale}, {"0"}, {"0"}, {"0"}, {"rx_lim_red_diet*" + scale}, {"-8*rx_lim_red_diet*" + scale}, {"0"}, {"0"}, {"0"}});								// Compensated for volume change due to dimensionFactor
 	    } else {
 	    	throw new IndexOutOfBoundsException("Unknown biomass conversion reaction type: " + type);
 	    }
-	    // Determine total rate for this cell (mol/s)
-	    comsol.variable("var1").set("Rx_" + type + cell.Index() + "_diet", "X_CELL" + cell.Index() + "(rx_" + type + "_diet)*" + cell.Volume() + "[m^3]");
+	    // Determine total maximum rate for this cell (mol/s)
+	    String Xname = "X_" + GetCellName(cell).toUpperCase();
+	    String RxMaxName = "Rx_max_" + type + cell.Index() + "_diet";
+	    String RxName = "Rx_" + type + cell.Index() + "_diet";
+	    comsol.variable("var1").set(RxMaxName, Xname + "(rx_" + type + "_diet)*" + cell.Volume() + "[m^3]");		// Volume() is "true" volume, i.e. without dimensionFactor --> This is the true Rx 
+	    comsol.variable("var1").set(RxName, "f_rx_" + type + "*" + RxMaxName);
 	}
 	
 	public void CreateCurrentDiscontinuity(CCell cell, String type) {
@@ -432,9 +390,9 @@ public class Comsol {
 		comsol.physics("chnp").feature().create(cdName, "CurrentDiscontinuity", 2);
 		comsol.physics("chnp").feature(cdName).selection().named("geom1_" + cellName + "_bnd");
 	    if(type.equalsIgnoreCase("ox")) {
-	    	comsol.physics("chnp").feature(cdName).set("i0",  "6*F*Rx_ox" + cell.Index() + "_diet/(" + cell.SurfaceArea() + ")[m^2]");	
+	    	comsol.physics("chnp").feature(cdName).set("i0",  "6*F*Rx_ox" + cell.Index() + "_diet/(" + cell.SurfaceArea(dimensionFactor) + ")[m^2]");		// SurfaceArea() is "true" surface area --> We need to compensate for smaller COMSOL surface area due to dimensionFactor 	
 	    } else if(type.equalsIgnoreCase("red")) {
-	    	comsol.physics("chnp").feature(cdName).set("i0", "-8*F*Rx_red" +cell.Index() + "_diet/(" + cell.SurfaceArea() + ")[m^2]");
+	    	comsol.physics("chnp").feature(cdName).set("i0", "-8*F*Rx_red" +cell.Index() + "_diet/(" + cell.SurfaceArea(dimensionFactor) + ")[m^2]");		// SurfaceArea() is "true" surface area --> We need to compensate for smaller COMSOL surface area due to dimensionFactor
 	    } else {
 	    	throw new IndexOutOfBoundsException("Unknown current discontinuity type: " + type);
 	    }
@@ -442,19 +400,20 @@ public class Comsol {
 	
 	public void CreateAverageOp(CCell cell) {	    // Create domain average function
 		String avName = "aveop" + cell.Index();
+		String Xname = "X_" + GetCellName(cell).toUpperCase();
 	    comsol.cpl().create(avName, "Average", "geom1");
-	    comsol.cpl(avName).set("opname", "X_CELL" + cell.Index());
+	    comsol.cpl(avName).set("opname", Xname);
 	    comsol.cpl(avName).selection().named("geom1_" + GetCellName(cell) + "_bnd");
 	}
 	
 	public void CreateRatioDiet(ArrayList<CCell> oxCellArray, ArrayList<CCell> redCellArray) {
 		String stringOx = "";
 		for(CCell cell : oxCellArray) {
-			 stringOx = stringOx + "+Rx_ox" + cell.Index() + "_diet";
+			 stringOx = stringOx + "+Rx_max_ox" + cell.Index() + "_diet";
 		}
 		String stringRed = "";
 		for(CCell cell : redCellArray) {
-			 stringRed = stringRed + "+Rx_red" + cell.Index() + "_diet";
+			 stringRed = stringRed + "+Rx_max_red" + cell.Index() + "_diet";
 		}
 		comsol.variable("var1").set("ratio_diet", "(6*(" + stringOx + "))/(8*(" + stringRed + "))");
 	}
@@ -478,7 +437,7 @@ public class Comsol {
 	}
 	
 	public double GetRx(CCell cell, String type, String iet) throws FlException {
-		String gevName = "gev" + cell.Index();
+		String gevName = "gev" + cell.Index();		// gev for Global EValuation
 	    comsol.result().numerical().create(gevName, "EvalGlobal");
 		comsol.result().numerical(gevName).set("expr", "Rx_" + type + cell.Index() + "_" + iet);
 		return comsol.result().numerical(gevName).getReal()[0][0];								// Return the value's [0][0] (getReal returns a double[][])

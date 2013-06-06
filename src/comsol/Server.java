@@ -12,8 +12,8 @@ public class Server {
 		String NProcessor;
 		if(NProcAvailable<2)
 			NProcessor = "-np 1";
-		else if(NProcAvailable<8)
-			NProcessor = "-np 2";
+		else if(NProcAvailable<16)
+			NProcessor = "-np " + NProcAvailable/4;
 		else
 			NProcessor = "-np 8";
 		Interactor.executeCommand("comsol " + architecture + " server " + NProcessor + " -user tomas -port " + port, false, false);		// Can't waitForFinish, process remains open

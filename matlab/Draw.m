@@ -1,4 +1,4 @@
-opengl NeverSelect		% in case you don't have opengl. Disable if you do.
+% opengl AutoSelect		% in case you don't have opengl. Disable if you do.
 
 n = 10;		% resolution of the sphere (lower = faster)
 

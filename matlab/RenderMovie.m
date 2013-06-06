@@ -90,6 +90,7 @@ while true
 				end
 			catch ME
 				if exist([location filesep 'rendering'],'file')
+                    % Done with this folder, delete "mark as rendered"
 					delete([location filesep 'rendering']);
 					continue
 				end

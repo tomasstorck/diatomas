@@ -155,12 +155,16 @@ public class CCell implements Serializable {
 	/////////////////
 	
 	public double SurfaceArea() {
+		return SurfaceArea(1.0);
+	}
+	
+	public double SurfaceArea(double scale) {
 		if(type<2) {
-			return 4*Math.PI * Math.pow(ballArray[0].radius, 2);
+			return 4*Math.PI * Math.pow(ballArray[0].radius*scale, 2);
 		} else if(type<6) {	// Assuming radii are equal
-			double Aballs = 4.0*Math.PI * Math.pow(ballArray[0].radius, 2); 	// Two half balls
-			double height = ballArray[1].pos.minus(ballArray[0].pos).norm();	// height == distance between balls
-			double Acyl = 	2.0*Math.PI * ballArray[0].radius * height;			// area of wall of cylinder. NOTE: Matt subtracted 2*radius, I don't see why
+			double Aballs = 4.0*Math.PI * Math.pow(ballArray[0].radius*scale, 2); 	// Two half balls
+			double height = rodSpringArray.get(0).restLength*scale;					// height == distance between balls
+			double Acyl = 	2.0*Math.PI * ballArray[0].radius*scale * height;		// area of wall of cylinder
 			return Aballs + Acyl;
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
@@ -168,10 +172,14 @@ public class CCell implements Serializable {
 	}
 	
 	public double Volume() {
+		return Volume(1.0);
+	}
+	
+	public double Volume(double scale) {
 		if(type<2) {
-			return 4.0/3.0*Math.PI*Math.pow(ballArray[0].radius, 3); 
+			return 4.0/3.0*Math.PI*Math.pow(ballArray[0].radius*scale, 3); 
 		} else if(type<6) {
-			return 4.0/3.0*Math.PI*Math.pow(ballArray[0].radius, 3)  +  Math.PI*Math.pow(ballArray[0].radius, 2)*rodSpringArray.get(0).restLength;
+			return 4.0/3.0*Math.PI*Math.pow(ballArray[0].radius*scale, 3)  +  Math.PI*Math.pow(ballArray[0].radius*scale, 2)*rodSpringArray.get(0).restLength*scale;
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}

@@ -81,21 +81,94 @@ public class Run {
 			model.allowOverlap = true;
 			model.relaxationIterSuccessiveMax = Integer.MAX_VALUE;
 			model.L = new Vector3d(7e-6, 7e-6, 7e-6);
-			model.radiusCellMax[0] = 0.4e-6;
+			model.radiusCellMax[0] = 0.6e-6;
 //			model.radiusCellMax[1] = 0.5e-6;
-			model.radiusCellMax[4] = 0.25e-6;	// [m] (Lau 1984)
+			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
 //			model.radiusCellMax[5] = 0.35e-6;	// [m] (Lau 1984)
-			model.lengthCellMax[4] = 1.5e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
+			model.lengthCellMax[4] = 4e-6;	// [m] (Lau 1984), compensated for model length = actual length - 2*r
 //			model.lengthCellMax[5] = 1.1e-6;	// [m] (Lau 1984), compensated
-			model.NCellInit = 1;
-			model.growthTimeStep = 300.0;
+			model.NCellInit = 18;
 			model.sticking = true;
 			model.stickType[0][4] = model.stickType[4][0] = model.stickType[0][0] = model.stickType[4][4] = true;	// Anything sticks
 			// Granule building
 //			model.attachCellType = 0;
-			model.attachCellType = 4;
+//			model.attachCellType = 4;
+//			model.attachNotTo = new int[]{};
+//			model.attachmentRate = 3600.0/model.growthTimeStep*2.0;
+//			// non-COMSOL
+//			model.muAvgSimple[4] = 0.271;		// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
+//			model.muAvgSimple[0] = 0.383;		// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
+//			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
+//			model.muStDev[0] = 0.2*model.muAvgSimple[0];		//
+//			model.growthTimeStep = 300.0;
+			// COMSOL
+			model.comsol = true;
+			model.growthTimeStep = 3600.0;
+			model.allowOverlap = false;
+			model.relaxationIterSuccessiveMax = 10;
+			break;
+		case 4:
+			model.Write("Loading parameters for Heterogeneous Floc","");
+			////////////////////////
+			// Heterogeneous Floc //
+			////////////////////////
+			model.L = new Vector3d(5e-6, 5e-6, 5e-6);
+			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
+			model.radiusCellMax[0] = 0.8e-6;	// [m] (Lau 1984)
+			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
+			// No syn
+			model.muAvgSimple[4] = 0.33;			// [h-1]  
+			model.muAvgSimple[0] = 0.33;			// [h-1]
+//			// Syn
+//			model.syntrophyFactor = 1.5;
+//			model.muAvgSimple[4] = 0.33/1.5;			// [h-1]  
+//			model.muAvgSimple[0] = 0.33/1.5;			// [h-1]
+			//
+			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
+			model.muStDev[0] = 0.2*model.muAvgSimple[5];		//
+			model.NCellInit = 18;
+//			model.sticking = true;
+			model.stickType[4][0] = model.stickType[0][4] = model.stickType[4][4] = model.stickType[0][0] = true;	// Anything sticks
+//			// No comsol stuff
+//			model.growthTimeStep = 300.0;
+			// Comsol stuff
+			model.growthTimeStep = 3600;
+			model.comsol = true;
+			model.allowOverlap = false;
+			model.relaxationIterSuccessiveMax = 10;
+			break;
+		case 5:
+			model.Write("Loading parameters for Bridging Floc","");
+			////////////////////////
+			// Bridging      Floc //
+			////////////////////////
+			model.L = new Vector3d(10e-6, 10e-6, 10e-6);
+//			model.radiusCellMax[0] = 0.8e-6;	// [m]
+			model.radiusCellMax[0] = 0.52e-6;	// [m], default for cocci in IBM paper
+//			model.radiusCellMax[4] = 0.35e-6;	// [m] (Lau 1984)
+//			model.lengthCellMax[4] = 1.1e-6;	// [m] (Lau 1984), compensated
+			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
+			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated
+			model.muAvgSimple[4] = 0.271;		// [h-1] 
+			model.muAvgSimple[0] = 0.383;		// [h-1]
+			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
+			model.muStDev[0] = 0.2*model.muAvgSimple[5];		//
+			model.NCellInit = 18;
+			model.growthTimeStep = 300.0;
+			model.sticking = true;
+			model.stickType[4][0] = model.stickType[0][4] = model.stickType[4][4] = model.stickType[0][0] = true;	// Anything sticks
+			model.filament = true;
+			model.filType[4] = true;
+			// Attachment
+			model.attachCellType = 0;
 			model.attachNotTo = new int[]{};
-			model.attachmentRate = 3600.0/model.growthTimeStep*2.0;
+			model.attachmentRate = 1;
+			// Low conc growth
+			model.muAvgSimple[4] *= 0.8;
+			model.muAvgSimple[0] *= 0.4;
+			model.muStDev[4] *= 0.8; 
+			model.muStDev[0] *= 0.4;
+			model.growthTimeStep = 540;
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
@@ -168,7 +241,7 @@ public class Run {
 					}
 				}
 				break;
-			case 3:
+			case 3: case 4: case 5:
 				final int type0 = 0;
 				final int type1 = 4;
 				for(int ii=0; ii<model.NCellInit; ii++)			 {
@@ -259,11 +332,11 @@ public class Run {
 				}
 //				model.Write("\tCreate geometry repair methods", "iter");
 //				comsol.CreateRepair(model.cellArray);
-				model.Write("\tCreating boundary box and acid dissociation reactions", "iter");
+				model.Write("\tCreating boundary box and building geometry", "iter");
 				comsol.CreateBCBox();					// Create a large box where we also set the "bulk" conditions
 				comsol.BuildGeometry();
+				model.Write("\tAdding acid dissociation reactions, setting cell electric potentials and currents", "iter");
 				comsol.CreateAcidDissociation();
-				model.Write("\tSetting cell electric potentials and currents", "iter");
 				String iet = "diet";
 				for(CCell cell : model.cellArray) {
 					String type = cell.type==oxType?"ox":"red";
