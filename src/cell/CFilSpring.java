@@ -47,8 +47,20 @@ public class CFilSpring extends CSpring {
 		final CModel model = ballArray[0].cell.model;
 		CBall ball0 = ballArray[0];
 		CBall ball1 = ballArray[1];
-		double rodRestLength0 = ball0.cell.rodSpringArray.get(0).restLength;
-		double rodRestLength1 = ball1.cell.rodSpringArray.get(0).restLength;
+		double rodRestLength0;
+		double rodRestLength1;
+		switch(type) {
+		case 3:
+			rodRestLength0 = 0;
+			rodRestLength1 = 0;
+			break;
+		case 4: case 5: case 6: case 7:
+			rodRestLength0 = ball0.cell.rodSpringArray.get(0).restLength;
+			rodRestLength1 = ball1.cell.rodSpringArray.get(0).restLength;
+			break;
+		default:
+			throw new IndexOutOfBoundsException("Spring type: " + type);
+		}
 		restLength = RestLength(type, ball0.radius, ball1.radius, rodRestLength0, rodRestLength1, model);
 	}
 

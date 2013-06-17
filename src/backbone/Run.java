@@ -48,12 +48,15 @@ public class Run {
 			// AS //
 			////////			
 			model.L = new Vector3d(7e-6, 7e-6, 7e-6);
+			model.radiusCellMax[0] = 0.52e-6;
 			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
 			model.radiusCellMax[5] = 0.35e-6;	// [m] (Lau 1984)
 			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
 			model.lengthCellMax[5] = 1.1e-6;	// [m] (Lau 1984), compensated
+			model.muAvgSimple[0] = 0.383;		// [h-1]
 			model.muAvgSimple[4] = 0.271;		// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
 			model.muAvgSimple[5] = 0.383;		// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
+			model.muStDev[0] = 0.2*model.muAvgSimple[0];
 			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
 			model.muStDev[5] = 0.2*model.muAvgSimple[5];		//
 			model.NCellInit = 18;
@@ -64,6 +67,7 @@ public class Run {
 			model.filType[4] = true;			// Only filament former forms filaments
 			model.sticking = true;
 			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;	// Anything sticks
+			model.stickType[4][0] = model.stickType[0][4] = model.stickType[4][4] = model.stickType[0][0] = true;	// Anything sticks
 			if(model.simulation==1) {
 				model.anchoring = true;
 				model.normalForce = true;
@@ -116,26 +120,27 @@ public class Run {
 			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
 			model.radiusCellMax[0] = 0.8e-6;	// [m] (Lau 1984)
 			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
-			// No syn
-			model.muAvgSimple[4] = 0.33;			// [h-1]  
-			model.muAvgSimple[0] = 0.33;			// [h-1]
-//			// Syn
-//			model.syntrophyFactor = 1.5;
-//			model.muAvgSimple[4] = 0.33/1.5;			// [h-1]  
-//			model.muAvgSimple[0] = 0.33/1.5;			// [h-1]
+//			// No syn
+//			model.muAvgSimple[4] = 0.33;			// [h-1]  
+//			model.muAvgSimple[0] = 0.33;			// [h-1]
+			// Syn
+			model.syntrophyFactor = 1.5;
+			model.muAvgSimple[4] = 0.33/1.5;			// [h-1]  
+			model.muAvgSimple[0] = 0.33/1.5;			// [h-1]
 			//
 			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
 			model.muStDev[0] = 0.2*model.muAvgSimple[5];		//
 			model.NCellInit = 18;
-//			model.sticking = true;
+			model.sticking = true;
 			model.stickType[4][0] = model.stickType[0][4] = model.stickType[4][4] = model.stickType[0][0] = true;	// Anything sticks
-//			// No comsol stuff
-//			model.growthTimeStep = 300.0;
-			// Comsol stuff
-			model.growthTimeStep = 3600;
-			model.comsol = true;
-			model.allowOverlap = false;
-			model.relaxationIterSuccessiveMax = 10;
+			// No comsol stuff
+			model.growthTimeStep = 300.0;
+//			// Comsol stuff
+//			model.growthTimeStep = 3600;
+//			model.comsol = true;
+//			model.allowOverlap = false;
+//			model.relaxationIterSuccessiveMax = 10;
+			//
 			break;
 		case 5:
 			model.Write("Loading parameters for Bridging Floc","");
@@ -209,13 +214,15 @@ public class Run {
 				break;
 			case 1: case 2:
 				// Set type
+				final int filF = 4;
+				final int flocF = 0;
 				for(int ii=0; ii<model.NCellInit; ii++)			 {
-					if(model.nCellMax[5]>model.nCellMax[4]) {
-						final int div = (int) (model.nCellMax[5] / model.nCellMax[4]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
-						typeInit[ii] = ii%div==0 ? 5 : 4;
+					if(model.nCellMax[flocF]>model.nCellMax[filF]) {
+						final int div = (int) (model.nCellMax[flocF] / model.nCellMax[filF]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
+						typeInit[ii] = ii%div==0 ? flocF : filF;
 					} else {
-						final int div = (int) (model.nCellMax[4] / model.nCellMax[5]) + 1;
-						typeInit[ii] = ii%div==0 ? 4 : 5;
+						final int div = (int) (model.nCellMax[filF] / model.nCellMax[flocF]) + 1;
+						typeInit[ii] = ii%div==0 ? filF : flocF;
 					}
 				}
 
@@ -319,7 +326,7 @@ public class Run {
 				ArrayList<CCell> oxCellArray = new ArrayList<CCell>();
 				ArrayList<CCell> redCellArray = new ArrayList<CCell>();
 				final int oxType = 4;
-				final int redType = 0;
+				final int redType = 5;
 				for(CCell cell : model.cellArray) {
 					if(cell.type==oxType)					// FIXME Correct cell type?
 						oxCellArray.add(cell);

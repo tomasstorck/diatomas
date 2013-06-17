@@ -5,8 +5,8 @@ imageWidth = 1024;
 imageHeight = 768;
 aspect = imageWidth/imageHeight;
 %%%%%%%%%%%%%%%%%%
-camPosDifference = [0.0; 40; 0];
-% camPosDifference = [0.0; 40; -80];
+% camPosDifference = [0.0; 40; 0];            % Top down
+camPosDifference = [0.0; 40; -80];        % Perspective
 %%%%%%%%%%%%%%%%%%
 
 while true
@@ -44,7 +44,7 @@ while true
 % 		loadFileRange = length(loadFileNameList):-1:1;
 		% OR use selected numbers
 		loadFileRange = [131 96 80 60 48 47 0];
-		loadFileRange = loadFileRange(loadFileRange<length(loadFileNameList))+1;		% Kick out ones we don't have, adjust index
+		loadFileRange = [length(loadFileNameList) loadFileRange(loadFileRange<length(loadFileNameList))+1];		% Kick out ones we don't have and keep the very last image, adjust index
 		%%%%%%%%%%%%%%%%%%%%%
 		for iFile=loadFileRange
 			loadFileName = loadFileNameList{iFile};
@@ -69,9 +69,9 @@ while true
 					fid = fopen(povName{ii+1},'a');
 					%%%%%%%%%%%%%%%%%%
 % 					right = RenderCalcRight(model, imageWidth, imageHeight, camPosDifference);
-% 					right = 80;		% AS
+					right = 80;		% AS
 % 					right = 45;		% E coli, persp
-					right = 56.5;	% E coli, top down
+% 					right = 56.5;	% E coli, top down
 					%%%%%%%%%%%%%%%%%%
 					RenderFun(fid, model, ii, right, aspect, plane, camPosDifference);
 					% Finalise the file
