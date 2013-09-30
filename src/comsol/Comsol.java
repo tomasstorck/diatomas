@@ -16,7 +16,7 @@ public class Comsol {
 	Model comsol;				// The COMSOL model
 	CModel java;
 	
-	final double dimensionFactor = 1.00;	// FIXME, was 0.75, should be 1.0
+	final double dimensionFactor = 0.75;	// FIXME, was 0.75, should be 1.0
 	
 	ArrayList<String> cellList = new ArrayList<String>();
 	ArrayList<String> sphList = new ArrayList<String>();
@@ -64,15 +64,13 @@ public class Comsol {
 	    comsol.param().set("D_oh", "5.273e-9[m^2/s]*D_factor", "[Vanysek 2012], 25 C");
 	    comsol.param().set("D_k", "1.957e-9[m^2/s]*D_factor", "[Vanysek 2012], 25 C");
 	    comsol.param().set("D_cl", "2.032e-9[m^2/s]*D_factor", "[Vanysek 2012], 25 C");
-	    comsol.param().set("D_factor", "0.5");
-	    comsol.param().set("R", "8.314[J/mol/K]");
-	    comsol.param().set("T", "(273+20)[K]");
+	    comsol.param().set("D_factor", "1", "--> either 0.5 (still conservative, Stewart 2003) or 1.0");
 	    comsol.param().set("c0_h", "1e-7[mol/L]", "Fixed pH BC. This is pH = 7");
-	    comsol.param().set("c0_ac_tot", "(100/64000)[kmol/m^3]", "[Batstone et al 2005, Batstone et al 2006]");
-	    comsol.param().set("c0_pro_tot", "(100/112000)[kmol/m^3]", "[Batstone et al 2005, Batstone et al 2006]");
-	    comsol.param().set("c0_co2_tot", "1e-3[kmol/m^3]", "[Batstone et al 2006] says 0.1 M as HCO3-");
-	    comsol.param().set("c0_h2", "1e-5/16[mol/m^3]", "[Batstone et al 2006]");
-	    comsol.param().set("c0_ch4", "1e-5/64[mol/m^3]", "[Batstone et al 2006]");
+	    comsol.param().set("c0_ac_tot", "1e-3[mol/L]", "[Batstone et al 2005, Batstone et al 2006]");
+	    comsol.param().set("c0_pro_tot", "1e-3[mol/L]", "[Batstone et al 2005, Batstone et al 2006]");
+	    comsol.param().set("c0_co2_tot", "1e-1[mol/L]", "--> [Batstone et al 2006] says 0.1 M as HCO3-. Damien and Cristian suggest 1 mM as lower limit");
+	    comsol.param().set("c0_h2", "1e-5/16*1[mol/m^3]", "[Batstone et al 2006]");
+	    comsol.param().set("c0_ch4", "0.7[bar]/H_ch4", "[Batstone et al 2006] suggests 0.7 bar");
 	    comsol.param().set("c0_cl", "40[mol/m^3]");
 	    comsol.param().set("c0_ac", "c0_ac_tot*Ka_hac/(c0_h+Ka_hac)");
 	    comsol.param().set("c0_hac", "c0_ac_tot*c0_h/(c0_h+Ka_hac)");
@@ -94,28 +92,65 @@ public class Comsol {
 	    comsol.param().set("ka_hac", "1e6[1/s]");
 	    comsol.param().set("ka_hco3", "1e6[1/s]");
 	    comsol.param().set("ka_hoh", "1e6[mol/m^3/s]");
-	    comsol.param().set("q_max_ox", "(65[g/g/d])*(35[g/mol])/(112[g/mol])", "[Batstone 2002, table 6.2] !!! x5 !!!");
-	    comsol.param().set("q_max_red", "(175[g/g/d])*(35[g/mol])/(16[g/mol])", "[Batstone 2002, table 6.2] !!! x5 !!!");
-	    comsol.param().set("K_ox_pro", "c0_pro_tot", "(300/112000)[kmol/m^3] [Batstone 2002, table 6.2] (changed from boundary concentration version CP))");
-	    comsol.param().set("Ki_ox_h2", "(3.5e-3/16000)[kmol/m^3]", "[Batstone et al 2005, Batstone 2002, table 6.2] (times 2 from version CP)");
-	    comsol.param().set("K_red_h2", "(2.5e-2/16000)[kmol/m^3]", "[Batstone et al 2005, Batstone 2002, table 6.2] (times 2 from version CP)");
-	    comsol.param().set("K_red_h", "1e-8[kmol/m^3]", "Assuming inhibition is significant at pH = 8");
+	    comsol.param().set("q_max_ox", "(15[g/g/d])*(35[g/mol])/(112[g/mol])", "--> [Batstone 2002, table 6.2] Upper limit is 15[g/g/d] x5 = 65");
+	    comsol.param().set("q_max_red", "(35[g/g/d])*(35[g/mol])/(16[g/mol])", "--> [Batstone 2002, table 6.2] Upper limit is 35 [g/g/d] x5 = 175");
 	    comsol.param().set("MW_x", "24.6[g/mol]");
-	    comsol.param().set("n_x", "1010[kg/m^3]/MW_x");
+	    comsol.param().set("n_x", "200[kg/m^3]/MW_x");
 	    comsol.param().set("F", "96485.3415[C/mol]");
-	    comsol.param().set("pHul_ox", "8", "5.5 [Batstone 2002, Excel sheet] from bac");
-	    comsol.param().set("pHll_ox", "4", "4 [Batstone 2002, Excel sheet] from bac");
-	    comsol.param().set("pHul_red", "8", "6 [Batstone 2002, table 6.2]");
-	    comsol.param().set("pHll_red", "5", "5 [Batstone 2002, table 6.2]");
+	    comsol.param().set("pHul_ox", "7.7", "[Drake 2004] M. thermoacetica. Lower range corresponds well, so this should be a safe choice");
+	    comsol.param().set("pHll_ox", "5.7", "[Drake 2004] (matches pH_ul form 1 = 5.5 [Batstone 2002])");
+	    comsol.param().set("pHul_red", "8", "[Visser 1992] mentions it is inhibited at pH 8. This is for thermophillic");
+	    comsol.param().set("pHll_red", "6", "[Batstone 2002, table 6.2] pH_ul form 1");
 	    comsol.param().set("x_spacing", "5[um]");
+	    comsol.param().set("R", "8.3145[J/mol/K]", "Ideal gas constant");
+	    comsol.param().set("T", "298[K]");
+	    comsol.param().set("H_h2", "1282[L*atm/mol]", "Wikipedia, shh!");
+	    comsol.param().set("H_ch4", "67.4[kPa*m^3/mol]", "[HBCP]");
+	    comsol.param().set("dE0_diet", "0.04353[V]", "[Excel file, from Damien's Gibbs parameters]");
+	    comsol.param().set("dG0_ox_iiet", "76.5[kJ/mol]");
+	    comsol.param().set("dG0_red_iiet", "-101.7[kJ/mol]");
+	    comsol.param().set("dG0_ox_diet", "-162.48[kJ/mol]");
+	    comsol.param().set("dG0_red_diet", "137.28[kJ/mol]");
+	    comsol.param().set("K_ox_iiet", "exp(-dG0_ox_iiet/(R*T))");
+	    comsol.param().set("K_ox_iiet_check", "K_ox_h2_iiet*K_ox_h_iiet*K_ox_h2o_iiet*K_ox_hco3_iiet*K_ox_ac_iiet*K_ox_pro_iiet");
+	    comsol.param().set("K_red_iiet", "exp(-dG0_red_iiet/(R*T))");
+	    comsol.param().set("K_red_iiet_check", "K_red_h2_iiet*K_red_h_iiet*K_red_h2o_iiet*K_red_hco3_iiet*K_red_ch4_iiet");
+	    comsol.param().set("K_ox_diet", "exp(-dG0_ox_diet/(R*T))");
+	    comsol.param().set("K_ox_diet_check", "K_ox_h_diet*K_ox_h2o_diet*K_ox_hco3_diet*K_ox_ac_diet*K_ox_pro_diet");
+	    comsol.param().set("K_red_diet", "exp(-dG0_red_diet/(R*T))");
+	    comsol.param().set("K_red_diet_check", "K_red_h_diet*K_red_h2o_diet*K_red_hco3_diet*K_red_ch4_diet");
+	    comsol.param().set("K_diet", "exp((-dG0_ox_diet+-dG0_red_diet)/(R*T))");
+	    comsol.param().set("K_diet_check", "K_ox_h_diet*K_ox_h2o_diet*K_ox_hco3_diet*K_ox_ac_diet*K_ox_pro_diet*K_red_h_diet*K_red_h2o_diet*K_red_hco3_diet*K_red_ch4_diet");
+	    comsol.param().set("K_ox_h2_iiet", "exp(0[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_h_iiet", "exp(39.83[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_h2o_iiet", "exp(-711.51[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_hco3_iiet", "exp(586.85[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_ac_iiet", "exp(369.41[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_pro_iiet", "exp(-361.08[kJ/mol]/(R*T))");
+	    comsol.param().set("K_red_h2_iiet", "exp(0[kJ/mol]/(R*T))");
+	    comsol.param().set("K_red_h_iiet", "exp(-29.87[kJ/mol]/(R*T))");
+	    comsol.param().set("K_red_h2o_iiet", "exp(533.63[kJ/mol]/(R*T))");
+	    comsol.param().set("K_red_hco3_iiet", "exp(-440.14[kJ/mol]/(R*T))");
+	    comsol.param().set("K_red_ch4_iiet", "exp(38.08[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_h_diet", "exp(278.81[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_h2o_diet", "exp(-711.51[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_hco3_diet", "exp(586.85[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_ac_diet", "exp(369.41[kJ/mol]/(R*T))");
+	    comsol.param().set("K_ox_pro_diet", "exp(-361.08[kJ/mol]/(R*T))");
+	    comsol.param().set("K_red_h_diet", "exp(-268.85[kJ/mol]/(R*T))");
+	    comsol.param().set("K_red_h2o_diet", "exp(533.63[kJ/mol]/(R*T))");
+	    comsol.param().set("K_red_hco3_diet", "exp(-440.14[kJ/mol]/(R*T))");
+	    comsol.param().set("K_red_ch4_diet", "exp(38.08[kJ/mol]/(R*T))");
 	    
 	    // Variables list. This will be appended later on.
 	    comsol.variable().create("var1");
 	    comsol.variable("var1").model("mod1");
-	    comsol.variable("var1").set("rx_ox_iiet", "q_max_ox*cx_ox*S_pro_ox*I_pH_ox_form1*I_h2_ox", "IIET");
-	    comsol.variable("var1").set("rx_red_iiet", "q_max_red*cx_red*S_h2_red*I_pH_red_form1", "IIET");
-	    comsol.variable("var1").set("rx_ox_diet", "q_max_ox*cx_ox*S_pro_ox*I_pH_ox_form1", "DIET. Unlimited (see _lim)");
-	    comsol.variable("var1").set("rx_red_diet", "q_max_red*cx_red*I_pH_red_form1", "DIET. Unlimited (see _lim)");
+	    comsol.variable("var1").set("rx_ox_iiet", "q_max_ox*cx_ox*I_pH_ox_form1*I_thermo_ox_iiet");
+	    comsol.variable("var1").set("rx_red_iiet", "q_max_red*cx_red*I_pH_red_form1*I_thermo_red_iiet");
+	    comsol.variable("var1").set("rx_ox_diet", "q_max_ox*cx_ox*I_pH_ox_form1*I_thermo_diet", "DIET. Unlimited (see _lim)");
+	    comsol.variable("var1").set("rx_red_diet", "q_max_red*cx_red*I_pH_red_form1*I_thermo_diet", "DIET. Unlimited (see _lim)");
+	    comsol.variable("var1").set("rx_lim_ox_diet", "rx_ox_diet*F_ox_diet");
+	    comsol.variable("var1").set("rx_lim_red_diet", "rx_red_diet*F_red_diet");
 	    comsol.variable("var1").set("ra_hoh", "ka_hoh*(1-c_oh*c_h/Ka_hoh)");
 	    comsol.variable("var1").set("ra_hac", "ka_hac*(c_hac-c_ac*c_h/Ka_hac)");
 	    comsol.variable("var1").set("ra_hpro", "ka_hpro*(c_hpro-c_pro*c_h/Ka_hpro)");
@@ -123,23 +158,78 @@ public class Comsol {
 	    comsol.variable("var1").set("ra_hco3", "ka_hco3*(c_hco3-c_co3*c_h/Ka_hco3)");
 	    comsol.variable("var1").set("cx_ox", "n_x");
 	    comsol.variable("var1").set("cx_red", "n_x");
-	    comsol.variable("var1").set("phie_lim", "min(phie_oxT_diet,phie_redT_diet)");
 	    comsol.variable("var1").set("c_co2_tot", "c_co2+c_hco3+c_co3");
 	    comsol.variable("var1").set("c_hpro_tot", "c_hpro+c_pro");
 	    comsol.variable("var1").set("c_hac_tot", "c_hac+c_ac");
-	    comsol.variable("var1").set("I_h2_ox", "Ki_ox_h2/(Ki_ox_h2+c_h2)");
-	    comsol.variable("var1").set("I_pH_ox_form2", "if(pH<pHul_ox,exp(-3*((pH-pHul_ox)/(pHul_ox-pHll_ox))^2),1)", "[Batstone 2002, table 3.5] Empirical lower only pH inhibition");
-	    comsol.variable("var1").set("I_pH_red_form2", "if(pH<pHul_red,exp(-3*((pH-pHul_red)/(pHul_red-pHll_red))^2),1)", "[Batstone 2002, table 3.5] Empirical lower only pH inhibition");
 	    comsol.variable("var1").set("pH", "-log10(c_h*1e-3[m^3/mol])", "*1e-3 is to go to mol/L. Units needed due to warnings");
 	    comsol.variable("var1").set("I_pH_ox_form1", "(1+2*10^(0.5*(pHll_ox-pHul_ox)))/(1+10^(pH-pHul_ox)+10^(pHll_ox-pH))", "[Batstone 2002, table 3.5] Empirical lower and upper pH inhibition");
 	    comsol.variable("var1").set("I_pH_red_form1", "(1+2*10^(0.5*(pHll_red-pHul_red)))/(1+10^(pH-pHul_red)+10^(pHll_red-pH))", "[Batstone 2002, table 3.5] Empirical lower and upper pH inhibition");
-	    comsol.variable("var1").set("S_pro_ox", "c_hpro_tot/(K_ox_pro+c_hpro_tot)");
-	    comsol.variable("var1").set("S_h2_red", "c_h2/(c_h2+K_red_h2)");
-	    comsol.variable("var1").set("rx_lim_ox_diet", "f_rx_ox*rx_ox_diet");
-	    comsol.variable("var1").set("rx_lim_red_diet", "f_rx_red*rx_red_diet");
-	    comsol.variable("var1").set("f_rx_ox", "min(1/ratio_diet,1)");
-	    comsol.variable("var1").set("f_rx_red", "min(ratio_diet,1)");
-	    
+	    comsol.variable("var1").set("p_h2", "c_h2*H_h2");
+	    comsol.variable("var1").set("p_ch4", "c_ch4*H_ch4");
+	    comsol.variable("var1").set("Kprime_ox_iiet", "(p_h2/1[bar])^3*(c_hco3/1e3[mol/m^3])*(c_ac/1e3[mol/m^3])*(c_pro/1e3[mol/m^3])^-1*(c_h/1e3[mol/m^3]/1e-7)", "hco3? but then what about proton?");
+	    comsol.variable("var1").set("Kprime_ox_iiet_check", "Kprime_ox_h2_iiet*Kprime_ox_h_iiet*Kprime_ox_h2o_iiet*Kprime_ox_hco3_iiet*Kprime_ox_ac_iiet*Kprime_ox_pro_iiet");
+	    comsol.variable("var1").set("Kprime_red_iiet", "(p_h2/1[bar])^-3*(c_hco3/1e3[mol/m^3])^-0.75*(c_ch4/1e3[mol/m^3])^0.75*(c_h/1e3[mol/m^3]/1e-7)^-.75");
+	    comsol.variable("var1").set("Kprime_red_iiet_check", "Kprime_red_h2_iiet*Kprime_red_h_iiet*Kprime_red_h2o_iiet*Kprime_red_hco3_iiet*Kprime_red_ch4_iiet");
+	    comsol.variable("var1").set("Kprime_ox_diet", "(c_hco3/1e3[mol/m^3])*(c_ac/1e3[mol/m^3])*(c_pro/1e3[mol/m^3])^-1*(c_h/1e3[mol/m^3]/1e-7)^7", "No H+ included, is that correct?");
+	    comsol.variable("var1").set("Kprime_ox_diet_check", "Kprime_ox_h_diet*Kprime_ox_h2o_diet*Kprime_ox_hco3_diet*Kprime_ox_ac_diet*Kprime_ox_pro_diet");
+	    comsol.variable("var1").set("Kprime_red_diet", "(c_hco3/1e3[mol/m^3])^-.75*(c_ch4/1e3[mol/m^3])^.75*(c_h/1e3[mol/m^3]/1e-7)^-6.75");
+	    comsol.variable("var1").set("Kprime_red_diet_check", "Kprime_red_h_diet*Kprime_red_h2o_diet*Kprime_red_hco3_diet*Kprime_red_ch4_diet");
+	    comsol.variable("var1").set("Kprime_diet", "Kprime_ox_diet*Kprime_red_diet");
+	    comsol.variable("var1").set("I_thermo_ox_iiet", "max(0,1-Kprime_ox_iiet/K_ox_iiet)", "Batstone 2006");
+	    comsol.variable("var1").set("I_thermo_red_iiet", "max(0,1-Kprime_red_iiet/K_red_iiet)");
+	    comsol.variable("var1").set("I_thermo_ox_diet", "max(0,1-Kprime_ox_diet/K_ox_diet)");
+	    comsol.variable("var1").set("I_thermo_red_diet", "max(0,1-Kprime_red_diet/K_red_diet)");
+	    comsol.variable("var1").set("I_thermo_diet", "max(0,1-Kprime_diet/K_diet)");
+//	    comsol.variable("var1").set("dEprime_diet", "dE0_diet - R*T/(6*F)*log(X_OX(Kprime_ox_diet) * X_RED(Kprime_red_diet))", "What we actually have available as potential difference based on the reaction");
+//	    comsol.variable("var1").set("dEcell", "X_RED(V)-X_OX(V)", "What we lose via Nernst-Planck (should be changed to something more direct)");
+//	    comsol.variable("var1").set("I_pot", "if(dEprime_diet<-dEcell,0,if(dEprime_diet>3*-dEcell,1,(1-0)/((3-1)*dEcell)*(dEprime_diet-dEcell)))");
+//	    comsol.variable("var1").set("F_ox_diet", "min(1,X_RED(rx_red_diet*8*L_red)/X_OX(rx_ox_diet*6*L_ox))");
+//	    comsol.variable("var1").set("F_red_diet", "min(1,X_OX(rx_ox_diet*6*L_ox)/X_RED(rx_red_diet*8*L_red))");
+	    comsol.variable("var1").set("Kprime_ox_h2_iiet", "(p_h2/1[bar])^3");
+	    comsol.variable("var1").set("Kprime_ox_h_iiet", "(c_h/1e3[mol/m^3]/1e-7)");
+	    comsol.variable("var1").set("Kprime_ox_h2o_iiet", "1^-3");
+	    comsol.variable("var1").set("Kprime_ox_hco3_iiet", "(c_hco3/1e3[mol/m^3])");
+	    comsol.variable("var1").set("Kprime_ox_ac_iiet", "(c_ac/1e3[mol/m^3])");
+	    comsol.variable("var1").set("Kprime_ox_pro_iiet", "(c_pro/1e3[mol/m^3])^-1");
+	    comsol.variable("var1").set("Kprime_red_h2_iiet", "(p_h2/1[bar])^-3");
+	    comsol.variable("var1").set("Kprime_red_h_iiet", "(c_h/1e3[mol/m^3]/1e-7)^-0.75");
+	    comsol.variable("var1").set("Kprime_red_h2o_iiet", "1^2.25");
+	    comsol.variable("var1").set("Kprime_red_hco3_iiet", "(c_hco3/1e3[mol/m^3])^-0.75");
+	    comsol.variable("var1").set("Kprime_red_ch4_iiet", "(c_ch4/1e3[mol/m^3])^0.75");
+	    comsol.variable("var1").set("I_thermo_ox_h2_iiet", "Kprime_ox_h2_iiet/K_ox_h2_iiet", "Note that I is actually 1-product all of these");
+	    comsol.variable("var1").set("I_thermo_ox_h_iiet", "Kprime_ox_h_iiet/K_ox_h_iiet");
+	    comsol.variable("var1").set("I_thermo_ox_h2o_iiet", "Kprime_ox_h2o_iiet/K_ox_h2o_iiet");
+	    comsol.variable("var1").set("I_thermo_ox_hco3_iiet", "Kprime_ox_hco3_iiet/K_ox_hco3_iiet");
+	    comsol.variable("var1").set("I_thermo_ox_ac_iiet", "Kprime_ox_ac_iiet/K_ox_ac_iiet");
+	    comsol.variable("var1").set("I_thermo_ox_pro_iiet", "Kprime_ox_pro_iiet/K_ox_pro_iiet");
+	    comsol.variable("var1").set("I_thermo_ox_iiet_check", "max(0,1-I_thermo_ox_h2_iiet*I_thermo_ox_h_iiet*I_thermo_ox_h2o_iiet*I_thermo_ox_hco3_iiet*I_thermo_ox_ac_iiet*I_thermo_ox_pro_iiet)");
+	    comsol.variable("var1").set("I_thermo_red_h2_iiet", "Kprime_red_h2_iiet/K_red_h2_iiet");
+	    comsol.variable("var1").set("I_thermo_red_h_iiet", "Kprime_red_h_iiet/K_red_h_iiet");
+	    comsol.variable("var1").set("I_thermo_red_h2o_iiet", "Kprime_red_h2o_iiet/K_red_h2o_iiet");
+	    comsol.variable("var1").set("I_thermo_red_hco3_iiet", "Kprime_red_hco3_iiet/K_red_hco3_iiet");
+	    comsol.variable("var1").set("I_thermo_red_ch4_iiet", "Kprime_red_ch4_iiet/K_red_ch4_iiet");
+	    comsol.variable("var1").set("I_thermo_red_iiet_check", "max(0,1-I_thermo_red_h2_iiet*I_thermo_red_h_iiet*I_thermo_red_h2o_iiet*I_thermo_red_hco3_iiet*I_thermo_red_ch4_iiet)");
+	    comsol.variable("var1").set("Kprime_ox_h_diet", "(c_h/1e3[mol/m^3]/1e-7)^7");
+	    comsol.variable("var1").set("Kprime_ox_h2o_diet", "1^-3");
+	    comsol.variable("var1").set("Kprime_ox_hco3_diet", "(c_hco3/1e3[mol/m^3])");
+	    comsol.variable("var1").set("Kprime_ox_ac_diet", "(c_ac/1e3[mol/m^3])");
+	    comsol.variable("var1").set("Kprime_ox_pro_diet", "(c_pro/1e3[mol/m^3])^-1");
+	    comsol.variable("var1").set("Kprime_red_h_diet", "(c_h/1e3[mol/m^3]/1e-7)^-6.75");
+	    comsol.variable("var1").set("Kprime_red_h2o_diet", "1^2.25");
+	    comsol.variable("var1").set("Kprime_red_hco3_diet", "(c_hco3/1e3[mol/m^3])^-0.75");
+	    comsol.variable("var1").set("Kprime_red_ch4_diet", "(c_ch4/1e3[mol/m^3])^0.75");
+	    comsol.variable("var1").set("I_thermo_ox_h_diet", "Kprime_ox_h_diet/K_ox_h_diet");
+	    comsol.variable("var1").set("I_thermo_ox_h2o_diet", "Kprime_ox_h2o_diet/K_ox_h2o_diet");
+	    comsol.variable("var1").set("I_thermo_ox_hco3_diet", "Kprime_ox_hco3_diet/K_ox_hco3_diet");
+	    comsol.variable("var1").set("I_thermo_ox_ac_diet", "Kprime_ox_ac_diet/K_ox_ac_diet");
+	    comsol.variable("var1").set("I_thermo_ox_pro_diet", "Kprime_ox_pro_diet/K_ox_pro_diet");
+	    comsol.variable("var1").set("I_thermo_ox_diet_check", "max(0,1-I_thermo_ox_h_diet*I_thermo_ox_h2o_diet*I_thermo_ox_hco3_diet*I_thermo_ox_ac_diet*I_thermo_ox_pro_diet)");
+	    comsol.variable("var1").set("I_thermo_red_h_diet", "Kprime_red_h_diet/K_red_h_diet");
+	    comsol.variable("var1").set("I_thermo_red_h2o_diet", "Kprime_red_h2o_diet/K_red_h2o_diet");
+	    comsol.variable("var1").set("I_thermo_red_hco3_diet", "Kprime_red_hco3_diet/K_red_hco3_diet");
+	    comsol.variable("var1").set("I_thermo_red_ch4_diet", "Kprime_red_ch4_diet/K_red_ch4_diet");
+	    comsol.variable("var1").set("I_thermo_red_diet_check", "max(0,1-I_thermo_red_h_diet*I_thermo_red_h2o_diet*I_thermo_red_hco3_diet*I_thermo_red_ch4_diet)");
+
 	    // Create mesh
 	    comsol.mesh().create("mesh1", "geom1");
 	    comsol.mesh("mesh1").automatic(true);
@@ -381,7 +471,7 @@ public class Comsol {
 	    String RxMaxName = "Rx_max_" + type + cell.Index() + "_diet";
 	    String RxName = "Rx_" + type + cell.Index() + "_diet";
 	    comsol.variable("var1").set(RxMaxName, Xname + "(rx_" + type + "_diet)*" + cell.Volume() + "[m^3]");		// Volume() is "true" volume, i.e. without dimensionFactor --> This is the true Rx 
-	    comsol.variable("var1").set(RxName, "f_rx_" + type + "*" + RxMaxName);
+	    comsol.variable("var1").set(RxName, "F_" + type + "_diet*" + RxMaxName);
 	}
 	
 	public void CreateCurrentDiscontinuity(CCell cell, String type) {
@@ -416,6 +506,9 @@ public class Comsol {
 			 stringRed = stringRed + "+Rx_max_red" + cell.Index() + "_diet";
 		}
 		comsol.variable("var1").set("ratio_diet", "(6*(" + stringOx + "))/(8*(" + stringRed + "))");
+	    comsol.variable("var1").set("F_ox_diet", "min(1/ratio_diet,1)");
+	    comsol.variable("var1").set("F_red_diet", "min(ratio_diet,1)");
+
 	}
 	
 	public void CreateRepair(ArrayList<CCell> cellArray) {				// Most likely requires CAD toolbox/license
