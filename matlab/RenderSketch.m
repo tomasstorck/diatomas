@@ -1,23 +1,43 @@
 function RenderSketch
 
-% Settings
-imageWidth = 1024/2;
-imageHeight = 768/2;
+% Settings for what to plot
+imageFolderName = 'image-persp-fixed';
+folderFilter = 'as_low*';
+renderIter = 10;		% Which results to render, as in 1:renderIter:end
+loadFileMax = 5;		% Maximum number of files to load per folder before moving on to the next
+
+% Resolution
+resolutionFactor = 1;
+imageWidth = 1024*resolutionFactor;
+imageHeight = 768*resolutionFactor;
 aspect = imageWidth/imageHeight;
+
+% Various
 plane = true;
-camPosDifference = [0.0; 40; -80];		% Where the camera will hover compared to camView
+removePOV = false;
+appendText = false;
+
+% Zooming
+rightIter = 5;			% How often to realign the zoom factor ("right")
+fixRight = true;		% Set our own right value
+right =	148.923;		% Be sure to comment this out when fixRight = false
+
+% Where the camera will hover compared to camView
+% camPosDifference = [0.0; 40; -80];  	% Perspective
+% camPosDifference = [0.0; 40; 0];		% Top
+camPosDifference = [0.0; 0; -80];		% Side
 
 while true
     % Make list of folders with an output subfolder
-    folderList = dir('../');
+    folderList = dir(['../' folderFilter]);
     folderList = {folderList.name};
     for ii=length(folderList):-1:1
         remove = false;
-        folderName = folderList{ii};
-        if folderName(1)=='.';
+        simulationFolderName = folderList{ii};
+        if simulationFolderName(1)=='.';
             remove = true;
         end
-        if ~exist(['../' folderName '/output'],'dir')
+        if ~exist(['../' simulationFolderName '/output'],'dir')
             remove = true;
         end
         if remove
@@ -28,12 +48,14 @@ while true
     % Analyse these folders
     for ii=1:length(folderList)
         % Clear camera zoom
-		clear right;
+		if ~fixRight
+			clear right;
+		end
         % Get folder name, mark as being rendered and start rendering
-        folderName = folderList{ii};
-        disp([datestr(now) '  ' folderName]);
-        location = ['../' folderName];
-		imageLoc = [location filesep 'image-sketch'];
+        simulationFolderName = folderList{ii};
+        disp([datestr(now) '  ' simulationFolderName]);
+        location = ['../' simulationFolderName];
+		imageLoc = [location filesep imageFolderName];
         % See if this is already being rendered
 		if exist([location filesep 'rendering'],'file')
 			disp([datestr(now) '  ' '  already being rendered, skipping']);
@@ -50,8 +72,32 @@ while true
 		end
 		loadFileNameList = dir([location filesep 'output' filesep '*.mat']);
 		loadFileNameList = {loadFileNameList.name};
+		% Remove all that are already plotted from loadFileNameList
+		removeFromFileNameList = [];
+		pngNameList = dir([imageLoc filesep 'pov_*.png']);
+		for iMat = 1:length(loadFileNameList)
+			matName = loadFileNameList{iMat};
+			for iPng = 1:length(pngNameList)
+				pngRange = strfind(pngNameList(iPng).name,'_');
+				if length(pngRange)~=2
+					error(['Don''t know how to deal with file name ' pngNameExt.name]);
+				end
+				pngName = pngNameList(iPng).name(pngRange(1)+1:pngRange(2)-1);
+				if strcmp(...
+					matName(1:strfind(matName,'.')-1),...
+					pngName)
+					removeFromFileNameList(end+1) = iMat; %#ok<AGROW>
+				end
+			end
+		end
+		loadFileNameList(removeFromFileNameList) = [];
 		loadFileRange = length(loadFileNameList):-1:1;
 		for iFile=loadFileRange
+			% See if we want to break the for loop, so we can start rendering the other folders
+			if find(loadFileRange==iFile) > loadFileMax
+				break;
+			end
+			% Continue rendering
 			loadFileName = loadFileNameList{iFile};
 			if exist([imageLoc filesep 'pov_' loadFileName(1:end-4) '_00.png'],'file') || exist([location filesep 'image-movie' filesep 'pov_' loadFileName(1:end-4) '_00.png'],'file')
 				continue                % Already plotted, skip
@@ -63,24 +109,31 @@ while true
 				if model.relaxationIter==0 && model.growthIter==0
 					NSave = 0;
 				end
-				for ii=0:2:NSave
+				for ii=0:renderIter:NSave
 					imageName{ii+1} = sprintf('pov_g%04dr%04d_%02d', model.growthIter, model.relaxationIter, ii);
 					imagePath{ii+1} = [imageLoc filesep imageName{ii+1} '.png'];
-					povName{ii+1} = [location sprintf('/output/pov_g%04dr%04d_%02d.pov', model.growthIter, model.relaxationIter, ii)];
+					povName{ii+1} = [location sprintf([filesep imageFolderName filesep 'pov_g%04dr%04d_%02d.pov'], model.growthIter, model.relaxationIter, ii)];
 				end
-				for ii=0:2:NSave
+				for ii=0:renderIter:NSave
+					if exist(povName{ii+1},'file')
+						delete(povName{ii+1}) % remove old .pov file
+					end
 					fid = fopen(povName{ii+1},'a');
-					if rem(iFile,5)==0 || ~exist('right','var')
+					if (rem(iFile,rightIter)==0 || ~exist('right','var')) && ~fixRight
 						right = RenderCalcRight(model, imageWidth, imageHeight, camPosDifference);
 					end
 					RenderFun(fid, model, ii, right, aspect, plane, camPosDifference);
 					% Finalise the file
 					fclose(fid);
 					systemInput = ['povray ' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' imageLoc filesep imageName{ii+1} ' +A +Q4'];		% +A +Q4 instead of +A -J
-					remove = ['rm ' povName{ii+1}];
 					[~,message] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
+					if any(strfind(message,'Render failed'))
+						error(['Render failed: ...' message(end-300:end)]);
+					end
 					% Append text for relaxation and growth
-					system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStep+ii*model.relaxationTimeStepdt)  imagePath{ii+1} ' ' imagePath{ii+1}]);
+					if appendText
+						system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStep+ii*model.relaxationTimeStepdt)  imagePath{ii+1} ' ' imagePath{ii+1}]);
+					end
 					
 					% 	% Append scale bar
 					% 	A = camPos;
@@ -92,7 +145,10 @@ while true
 					% 	system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
 					
 					% Remove POV file if desired
-					[~,~] = system(['cd ' location ' ; ' remove ' ; cd ..']);
+					if removePOV
+						remove = ['rm ' povName{ii+1}];
+						[~,~] = system(['cd ' location ' ; ' remove ' ; cd ..']);
+					end
 				end
 			catch ME
                 if exist([location filesep 'rendering'],'file')

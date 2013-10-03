@@ -146,25 +146,24 @@ public class Interface{
 					key = field.getName();						// Update key to the correct Capitalisation
 					try {
 						@SuppressWarnings("rawtypes")
-						Class fieldClass = CModel.class.getField(key).get(model).getClass();
+						Class fieldClass = field.getType().getComponentType();
 						// If the field is any kind of array
-						if(field.get(model).getClass().isArray()) {
+						if(field.getType().isArray()) {
 							// We change only a single index
 							if(keyRaw.contains("[")) {
 								String[] keySplit = keyRaw.split("\\[");
 								String iiString = keySplit[1];
 								iiString = iiString.replace("[","");
 								iiString = iiString.replace("]","");
-								// Array of array (matrix)
+								// Array of array (2D, matrix)
 								if(keySplit.length>2) {
-									String fieldClassName = fieldClass.getComponentType().getComponentType().getName();
 									String jjString = keySplit[2];
 									jjString = jjString.replace("[","");
 									jjString = jjString.replace("]","");
 									int ii = Integer.parseInt(iiString);
 									int jj = Integer.parseInt(jjString);
 									// boolean[][]					// OPTIMISE: We could make this with generics, virtually the same code is used for all these types
-									if(fieldClassName.equals("boolean")) {
+									if(fieldClass.equals(Boolean.TYPE)) {
 										boolean[][] bool = (boolean[][]) field.get(model);
 										if(bool[ii][jj] = (Integer.parseInt(value) == 1 ? true : false)) {
 											bool[ii][jj] = Integer.parseInt(value) == 1 ? true : false;
@@ -174,28 +173,15 @@ public class Interface{
 										continue args;
 									}
 									// double[][]
-									if(fieldClassName.equals("double")) {
-//										double[][] numberRef = (double[][]) field.get(modelRef);
+									if(fieldClass.equals(Double.TYPE)) {
 										double[][] number = (double[][]) field.get(model);
-										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
-										if(value.startsWith("*")) {	// Relative
-											double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-											if(multiplier != 1.0 && doRelative) {
-												number[ii][jj] *= multiplier;
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + number[ii][jj], "");
-											}
-										} else {
-											if(number[ii][jj] != Double.parseDouble(value)) {
-												number[ii][jj] = Double.parseDouble(value);
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + number[ii][jj], "");
-											}
-										}
+										number[ii][jj] = Double.parseDouble(value);
+										field.set(model, number);
+										model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + number[ii][jj], "");
 										continue args;
 									}
 									// int[][]
-									if(fieldClassName.equals("int")) {
+									if(fieldClass.equals(Integer.TYPE)) {
 										int[][] number = (int[][]) field.get(model);
 										if(number[ii][jj] != Integer.parseInt(value)) {
 											number[ii][jj] = Integer.parseInt(value);
@@ -205,7 +191,7 @@ public class Interface{
 										continue args;
 									}
 									// String[][]
-									if(fieldClassName.equals("String")) {
+									if(fieldClass.equals(Integer.TYPE)) {		// FIXME
 										String[][] string = (String[][]) field.get(model);
 										if(value.equals(string[ii][jj])) {
 											string[ii][jj] = value;
@@ -216,10 +202,9 @@ public class Interface{
 									}	
 								// Array (vector)									
 								} else {
-									String fieldClassName = fieldClass.getComponentType().getName();
 									int ii = Integer.parseInt(iiString);
 									// boolean[]
-									if(fieldClassName.equals("boolean")) {
+									if(fieldClass.equals(Boolean.TYPE)) {
 										boolean[] bool = (boolean[]) field.get(model);
 										if(bool[ii] != (Integer.parseInt(value) == 1 ? true : false)) {
 											bool[ii] = (Integer.parseInt(value) == 1 ? true : false);
@@ -229,27 +214,18 @@ public class Interface{
 										continue args;
 									}
 									// double[]
-									if(fieldClassName.equals("double")) {
+									if(fieldClass.equals(Double.TYPE)) {
 										double[] number = (double[]) field.get(model);
 										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
-										if(value.startsWith("*")) {	// Relative
-											double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-											if(multiplier != 1.0 && doRelative) {
-												number[ii] *= multiplier;
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-											}
-										} else {
-											if(number[ii] != Double.parseDouble(value)) {
-												number[ii] = Double.parseDouble(value);
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-											}
+										if(number[ii] != Double.parseDouble(value)) {
+											number[ii] = Double.parseDouble(value);
+											field.set(model, number);
+											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
 										}
 										continue args;
 									}
 									// int[]
-									if(fieldClassName.equals("int")) {
+									if(fieldClass.equals(Integer.TYPE)) {
 										int[] number = (int[]) field.get(model);
 										if(number[ii] != Integer.parseInt(value)) {
 											number[ii] = Integer.parseInt(value);
@@ -259,7 +235,7 @@ public class Interface{
 										continue args;
 									}
 									// String[]
-									if(fieldClassName.equals("String")) {
+									if(fieldClass.equals(Integer.TYPE)) {		// FIXME
 										String[] string = (String[]) field.get(model);
 										if(string[ii] != value) {
 											string[ii] = value;
@@ -271,14 +247,13 @@ public class Interface{
 								}
 							// We make an entirely new array
 							} else {
-								String fieldClassName = fieldClass.getComponentType().getName();
 								String[] splitValue = value.split(",");			// Split at comma
 								for(int ii=0; ii<splitValue.length; ii++) {		// Replace all curly braces
 									splitValue[ii] = splitValue[ii].replace("{","");
 									splitValue[ii] = splitValue[ii].replace("}","");
 								}
 								// boolean[]
-								if(fieldClassName.equals("boolean")) {
+								if(fieldClass.equals(Boolean.TYPE)) {
 									boolean[] bool = new boolean[splitValue.length];
 									for(int ii=0; ii<splitValue.length; ii++) {
 										if(bool[ii] != (Integer.parseInt(splitValue[ii]) == 1 ? true : false)) {
@@ -290,32 +265,17 @@ public class Interface{
 									continue args;
 								}
 								// double[]
-								if(fieldClassName.equals("double")) {
+								if(fieldClass.equals(Double.TYPE)) {
 									double[] number = new double[splitValue.length];
-									double[] numberOld = (double[]) field.get(model);
 									for(int ii=0; ii<splitValue.length; ii++) {
-										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
-										if(splitValue[ii].startsWith("*")) {											// Relative
-											double multiplier = Double.parseDouble(splitValue[ii].substring(1));		// Cut off *
-											if(multiplier != 1.0 && doRelative) {
-												number[ii] = numberOld[ii] * multiplier;
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-											}
-											
-										} else {
-											if(number[ii] != numberOld[ii]) {											// Here we already have numberOld, so we can use this
-												number[ii] = Double.parseDouble(splitValue[ii]);
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-											}
-										}
-										
+										number[ii] = Double.parseDouble(splitValue[ii]);
+										field.set(model, number);
+										model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
 									}
 									continue args;
 								}
 								// int[]
-								if(fieldClassName.equals("int")) {
+								if(fieldClass.equals(Integer.TYPE)) {
 									int[] number = new int[splitValue.length];
 									for(int ii=0; ii<splitValue.length; ii++) {
 										if(number[ii] != Integer.parseInt(splitValue[ii])) {
@@ -327,7 +287,7 @@ public class Interface{
 									continue args;
 								}
 								// String[]
-								if(fieldClassName.equals("String")) {
+								if(fieldClass.equals(Integer.TYPE)) {		// FIXME
 									String[] string = new String[splitValue.length];
 									for(int ii=0; ii<splitValue.length; ii++) {
 										if(splitValue[ii].equals(string[ii])) {
@@ -341,9 +301,8 @@ public class Interface{
 							}
 						// The field is NOT an array
 						} else {
-							String fieldClassName = fieldClass.getSimpleName();
 							// boolean
-							if(fieldClassName.equals("Boolean")) {
+							if(fieldClass.equals(Boolean.TYPE)) {
 								boolean bool = Integer.parseInt(value) == 1 ? true : false;
 								if(field.getBoolean(model) != bool) {
 									field.setBoolean(model, bool);
@@ -352,27 +311,18 @@ public class Interface{
 								continue args;
 							}
 							// double
-							if(fieldClassName.equals("Double")) {
+							if(fieldClass.equals(Double.TYPE)) {
 								double number = field.getDouble(model);
 								// See if we have a relative (e.g. Kan *10) or absolute (e.g. Kan 1e-10) value
-								if(value.startsWith("*")) {						// Relative
-									double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-									if(multiplier != 1.0 && doRelative) {
-										number = field.getDouble(model) * multiplier;				// Hasn't been multiplied before, so do it
-										field.setDouble(model, number);
-										model.Write(field.getName() + " set to " + number, "");
-									}
-								} else {
-									number = Double.parseDouble(value);			// Absolute
-									if(field.getDouble(model) != number) {
-										field.setDouble(model, number);
-										model.Write(field.getName() + " set to " + number, "");
-									}
+								number = Double.parseDouble(value);			// Absolute
+								if(field.getDouble(model) != number) {
+									field.setDouble(model, number);
+									model.Write(field.getName() + " set to " + number, "");
 								}
 								continue args;									// Check next argument (i.e. continue outer loop)
 							}
 							// int
-							if(fieldClassName.equals("Integer")) {
+							if(fieldClass.equals(Integer.TYPE)) {
 								int number = Integer.parseInt(value);
 								if(field.getInt(model) != number) {
 									field.setInt(model, number);
@@ -381,7 +331,7 @@ public class Interface{
 								continue args;
 							}
 							// String
-							if(fieldClassName.equals("String")) {
+							if(fieldClass.equals(Integer.TYPE)) {			// FIXME
 								if(!value.equalsIgnoreCase((String) field.get(model))) {
 									field.set(model, value);
 									model.Write(field.getName() + " set to " + value, "");
