@@ -145,10 +145,9 @@ public class Interface{
 				if(key.equalsIgnoreCase(field.getName())) {
 					key = field.getName();						// Update key to the correct Capitalisation
 					try {
-						@SuppressWarnings("rawtypes")
-						Class fieldClass = field.getType().getComponentType();
 						// If the field is any kind of array
 						if(field.getType().isArray()) {
+							Class<?> fieldClass = field.getType().getComponentType();
 							// We change only a single index
 							if(keyRaw.contains("[")) {
 								String[] keySplit = keyRaw.split("\\[");
@@ -191,7 +190,7 @@ public class Interface{
 										continue args;
 									}
 									// String[][]
-									if(fieldClass.equals(Integer.TYPE)) {		// FIXME
+									if(fieldClass.equals(fieldClass.equals(String.class))) {
 										String[][] string = (String[][]) field.get(model);
 										if(value.equals(string[ii][jj])) {
 											string[ii][jj] = value;
@@ -235,7 +234,7 @@ public class Interface{
 										continue args;
 									}
 									// String[]
-									if(fieldClass.equals(Integer.TYPE)) {		// FIXME
+									if(fieldClass.equals(fieldClass.equals(String.class))) {
 										String[] string = (String[]) field.get(model);
 										if(string[ii] != value) {
 											string[ii] = value;
@@ -287,7 +286,7 @@ public class Interface{
 									continue args;
 								}
 								// String[]
-								if(fieldClass.equals(Integer.TYPE)) {		// FIXME
+								if(fieldClass.equals(fieldClass.equals(String.class))) {
 									String[] string = new String[splitValue.length];
 									for(int ii=0; ii<splitValue.length; ii++) {
 										if(splitValue[ii].equals(string[ii])) {
@@ -301,6 +300,7 @@ public class Interface{
 							}
 						// The field is NOT an array
 						} else {
+							Class<?> fieldClass = field.getType();
 							// boolean
 							if(fieldClass.equals(Boolean.TYPE)) {
 								boolean bool = Integer.parseInt(value) == 1 ? true : false;
@@ -331,7 +331,7 @@ public class Interface{
 								continue args;
 							}
 							// String
-							if(fieldClass.equals(Integer.TYPE)) {			// FIXME
+							if(fieldClass.equals(String.class)) {
 								if(!value.equalsIgnoreCase((String) field.get(model))) {
 									field.set(model, value);
 									model.Write(field.getName() + " set to " + value, "");
