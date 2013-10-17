@@ -7,4 +7,4 @@
 
 # Set cs.root and start the .jar
 #screen /usr/lib/jvm/java-1.6.0-sun-1.6.0.33.x86_64/bin/java -Xss4m -Xms256m -Xmx1024m -XX:MaxPermSize=256m -Dcs.root=/usr/local/stow/comsol-4.2a -jar diatomas.jar $@
-screen java -Dcs.root=/usr/local/stow/comsol-4.2a -jar diatomas.jar $@
+java -Dcs.root=/usr/local/stow/comsol-4.2a -jar diatomas.jar $@ ; sleep 10

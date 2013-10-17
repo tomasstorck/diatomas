@@ -1,4 +1,4 @@
-function RenderFun(fid, model, ii, right, aspect, plane, camPosDifference)
+function RenderFun(fid, model, ii, right, aspect, plane, camPosDifference, ceilLightColour, camLightColour, cellColour, filColour, stickColour, anchorColour)
 
 % Settings
 L = [20,20,20];
@@ -7,14 +7,6 @@ diffuse = 0.7;
 phong = 0.0;
 phongSize = 25;
 % Colours
-filColour = [.10 .10 .10];			% Filament spring is black
-stickColour = [0.80 .80 0.80];		% Sticking spring is white
-anchorColour = [.50 .50 .50];		% Anchoring spring is grey
-cellColour = [0.60 0.00 0.00;		% Cell colours: 
-	1.00 1.00 0.85;
-	0.50 0.88 1.00;
-	0.00 1.00 0.20];
-	
 
 minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates. 2 is for dimension 2
 maxPos = max([model.ballArray.pos],[],2)*1e6;
@@ -52,8 +44,8 @@ fprintf(fid,['camera {\n',...
 	'}\n\n']);
 fprintf(fid,'background { color rgb <1, 1, 1> }\n\n');
 % Light sources
-fprintf(fid,'light_source { < 0.0,  10*Ly,  0.0> color rgb <.8,.8,.8> }\n');											% Ceiling light
-fprintf(fid,'light_source { < %f,  %f,  %f> color rgb <.6,.6,.6> shadowless}\n',camPos(1),camPos(2),camPos(3));			% Dimmer light from the camera position
+fprintf(fid,'light_source { < 0.0,  10*Ly,  0.0> color rgb <%g,%g,%g> }\n', ceilLightColour(1),ceilLightColour(2),ceilLightColour(3));									% Ceiling light
+fprintf(fid,'light_source { < %f,  %f,  %f> color rgb <%g,%g,%g> shadowless}\n',camPos(1),camPos(2),camPos(3),camLightColour(1),camLightColour(2),camLightColour(3));	% Dimmer light from the camera position
 
 % Build spheres and rods
 for iCell=1:length(model.cellArray)
@@ -313,8 +305,8 @@ if plane
 		'\t\t\t\trotate<0.0 45 0.0>\n',...
 		'\t\t\t}\n',...
 		'\t\t\tfinish {\n',...
-		['\t\t\t\tambient ' num2str(ambient) '\n'],...
-		['\t\t\t\tdiffuse ' num2str(diffuse) '\n'],...
+		['\t\t\t\tambient 0.6\n'],...
+		['\t\t\t\tdiffuse 0.5\n'],...
 		'\t\t\t}\n',...
 		'\t\t}\n',...
 		'\t}\n',...

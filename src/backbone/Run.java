@@ -463,10 +463,11 @@ public class Run {
 				model.Save();
 				ser2mat.Convert(model);
 			}
+			// TODO move this text to before saving
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
 			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
-			// Lower beta in ODE solver if too many steps
+			// Lower beta in ODE solver if too many steps TODO move to before saving
 			if(model.ODEbeta>0.0 && nstp>(int)4e4*model.relaxationTimeStep) {
 				if(model.ODEbeta>1e-3) 	model.ODEbeta *= 0.75;
 				else 					model.ODEbeta = 0.0;
