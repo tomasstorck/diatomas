@@ -6,8 +6,13 @@ imageFolderName = 'image-persp-movie';
 renderIter = 1;		% Which results to render, as in 1:renderIter:end
 loadFileMax = 500;		% Maximum number of files to load per folder before moving on to the next
 
+% Plot only a select range or all
+fixLoadFileNameList = false;
+% fixLoadFileNameList = true;
+% loadFileNameList = {'g0073r0073.mat'};
+
 % AS
-folderFilter = 'as_low*';
+folderFilter = 'as_*';
 plane = false;
 ceilLightColour = [0.8,0.8,0.8];
 camLightColour = [0.6 0.6 0.6];
@@ -26,19 +31,29 @@ aspect = imageWidth/imageHeight;
 
 % Various
 % plane = true;
+% plane = false;
 removePOV = true;
+% removePOV = false;
 appendText = true;
+% appendText = false;
 appendScaleBar = true;
+LScale = 1;		% micron
+% appendScaleBar = false;
 
 % Zooming
 rightIter = 10;			% How often to realign the zoom factor ("right")
 fixRight = false;		% Set our own right value
-% right =	148.923;		% Be sure to comment this out when fixRight = false
+% Be sure to comment below when fixRight = false
+% fixRight = true;
+% right =	148.923;	% AS paper
+% right = 108;		% E. coli paper (with 90 degree rotation)
 
 % Where the camera will hover compared to camView
 camPosDifference = [0.0; 40; -80];  	% Perspective
 % camPosDifference = [0.0; 40; 0];		% Top
 % camPosDifference = [0.0; 0; -80];		% Side
+camRotate = [0; 0; 0];
+% camRotate = [0; 90; 0];					% Useful for E. coli fil in IbM paper
 
 % Colours
 cellColour = [0.60 0.00 0.00;		% Cell colours: 
@@ -70,9 +85,12 @@ while true
     
     % Analyse these folders
     for ii=1:length(folderList)
-        % Clear camera zoom
+        % New folder. Clean up old data
 		if ~fixRight
 			clear right;
+		end
+		if ~fixLoadFileNameList
+			clear loadFileNameList
 		end
         % Get folder name, mark as being rendered and start rendering
         simulationFolderName = folderList{ii};
@@ -93,8 +111,10 @@ while true
 		if ~exist(imageLoc ,'dir') && exist(location,'dir')        % Added second statement so we don't generate the base folder if it was removed
 			mkdir(imageLoc );
 		end
-		loadFileNameList = dir([location filesep 'output' filesep '*.mat']);
-		loadFileNameList = {loadFileNameList.name};
+		if ~exist('loadFileNameList','var')
+			loadFileNameList = dir([location filesep 'output' filesep '*.mat']);
+			loadFileNameList = {loadFileNameList.name};
+		end
 		% Remove all that are already plotted from loadFileNameList
 		removeFromFileNameList = [];
 		pngNameList = dir([imageLoc filesep 'pov_*.png']);
@@ -113,12 +133,15 @@ while true
 				end
 			end
 		end
-		loadFileNameList(removeFromFileNameList) = [];
 		loadFileRange = length(loadFileNameList):-1:1;
 		for iFile=loadFileRange
 			% See if we want to break the for loop, so we can start rendering the other folders
 			if find(loadFileRange==iFile) > loadFileMax
 				break;
+			end
+			% See if we want to skip this file, if it's in removeFromFileNameList
+			if any(iFile==removeFromFileNameList)
+				continue;
 			end
 			% Continue rendering
 			loadFileName = loadFileNameList{iFile};
@@ -126,7 +149,7 @@ while true
 				continue                % Already plotted, skip
 			end
 			fprintf([loadFileName '\n']);
-			try
+% 			try
 				load([location filesep 'output' filesep loadFileName]);
 				NSave = length(model.ballArray(1).posSave);
 				if model.relaxationIter==0 && model.growthIter==0
@@ -142,10 +165,21 @@ while true
 						delete(povName{ii+1}) % remove old .pov file
 					end
 					fid = fopen(povName{ii+1},'a');
-					if (rem(iFile,rightIter)==0 || (~exist('right','var') || ~exist('camView','var') )) && ~fixRight
-						[right, camView] = RenderCalcRight(model, imageWidth, imageHeight, camPosDifference);
+					% See if we need to find right, camView, or both
+					if (rem(iFile,rightIter)==0 && ~fixRight)  || ~exist('right','var') || ~exist('camView','var')
+						[newRight, newCamView] = RenderCalcRight(model, imageWidth, imageHeight, camPosDifference);
+						if rem(iFile,rightIter)==0 || ~exist('right','var')
+							right = newRight;
+% 							%%%%%%%%%%
+% 							% Horribly ugly fix for rotation (FIXME)
+% 							right = right*imageWidth/imageHeight;
+% 							%%%%%%%%%%
+						end
+						if rem(iFile,rightIter)==0 || ~exist('camView','var')
+							camView = newCamView;
+						end
 					end
-					RenderBuildPov(fid, model, ii, right, aspect, plane, camPosDifference, ceilLightColour,camLightColour, cellColour, filColour, stickColour, anchorColour, camView);
+					RenderBuildPov(fid, model, ii, right, aspect, plane, camPosDifference, ceilLightColour,camLightColour, cellColour, filColour, stickColour, anchorColour, camView, camRotate);
 					% Finalise the file
 					fclose(fid);
 					systemInput = ['povray ' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' imageLoc filesep imageName{ii+1} ' +A +Q4'];		% +A +Q4 instead of +A -J
@@ -160,13 +194,9 @@ while true
 					
 					if appendScaleBar
 						% Append scale bar
-						A = camView+camPosDifference;
-						C = camView;
-						AC = norm(A-C);
-						BC = tan(deg2rad(0.5*camAngle))*AC;
-						LLine = 1/BC * imageWidth/2;
-						system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''1 um'' ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
-						system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imageLoc{ii+1} ' ' imageLoc{ii+1}]);
+						LLine = LScale * 1/right * imageWidth;
+						system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''' num2str(LScale) ' um'' ' imagePath{ii+1} ' ' imagePath{ii+1}]);
+						system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imagePath{ii+1} ' ' imagePath{ii+1}]);
 					end
 					
 					% Remove POV file if desired
@@ -175,15 +205,15 @@ while true
 						[~,~] = system(['cd ' location ' ; ' remove ' ; cd ..']);
 					end
 				end
-			catch ME
-                if exist([location filesep 'rendering'],'file')
-                    % Done with this folder, delete "mark as rendered"
-					delete([location filesep 'rendering']);
-					continue
-				end
-				warning(['Encountered error: ' ME.message])
-				continue;
-			end
+% 			catch ME
+%                 if exist([location filesep 'rendering'],'file')
+%                     % Done with this folder, delete "mark as rendered"
+% 					delete([location filesep 'rendering']);
+% 					continue
+% 				end
+% 				warning(['Encountered error: ' ME.message])
+% 				continue;
+% 			end
         end
         % Done with this folder, delete "mark as rendered"
 		delete([location filesep 'rendering']);

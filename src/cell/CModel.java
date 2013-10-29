@@ -47,7 +47,7 @@ public class CModel implements Serializable {
 	// --> Anchoring
 	public boolean anchoring = false;
 	public double Kan	= 1e-11;				// anchor
-	public double anchorStretchLim = 1e-6;	// Maximum tension for anchoring springs
+	public double anchorStretchLim = 1e-6;		// Maximum tension for anchoring springs
 	public double anchorFormLim = 0.5e-6;		// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	// --> Filaments
 	public boolean filament = false;
@@ -55,8 +55,8 @@ public class CModel implements Serializable {
 	public double KfSphere 	= 2e-11;			// filament spring for sphere-sphere filial links
 	public double[] KfRod 	= {2e-11, 2e-11};	// filament spring for rod-rod filial links {short spring, long spring}
 	public boolean filSphereStraightFil = false;// Make streptococci-like structures if true, otherwise staphylococci
-	public double filRodBranchFrequency = 0.0;// Which fraction of daughter cells form a branching filial link instead of a straight
-	public double filStretchLim = 2e-6;		// Maximum tension for sticking springs
+	public double filRodBranchFrequency = 0.0;	// Which fraction of daughter cells form a branching filial link instead of a straight
+	public double filStretchLim = 2e-6;			// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
 	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 	// --> Gravity/buoyancy and drag
