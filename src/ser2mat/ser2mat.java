@@ -233,7 +233,7 @@ public class ser2mat {
 		// === COMSOL STUFF ===
 		mlModel.setField("port",                          new MLDouble(null, new double[] {model.port}, 1));                              	
 		mlModel.setField("bit64",                         new MLDouble(null, new double[] {model.bit64?1:0}, 1));                         	
-//		mlModel.setField("yieldXS",                       new MLDouble(null, model.yieldXS, model.yieldXS.length));                       	
+		mlModel.setField("yieldXS",                       new MLDouble(null, model.yieldXS, model.yieldXS.length));                       	
 
 		// Create a list and add mlModel
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);

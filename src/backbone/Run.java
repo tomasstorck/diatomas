@@ -326,7 +326,7 @@ public class Run {
 				ArrayList<CCell> oxCellArray = new ArrayList<CCell>();
 				ArrayList<CCell> redCellArray = new ArrayList<CCell>();
 				final int oxType = 4;
-				final int redType = 5;
+				final int redType = 0;
 				for(CCell cell : model.cellArray) {
 					if(cell.type==oxType)					// FIXME Correct cell type?
 						oxCellArray.add(cell);
@@ -463,11 +463,10 @@ public class Run {
 				model.Save();
 				ser2mat.Convert(model);
 			}
-			// TODO move this text to before saving
 			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
 			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
 			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
-			// Lower beta in ODE solver if too many steps TODO move to before saving
+			// Lower beta in ODE solver if too many steps
 			if(model.ODEbeta>0.0 && nstp>(int)4e4*model.relaxationTimeStep) {
 				if(model.ODEbeta>1e-3) 	model.ODEbeta *= 0.75;
 				else 					model.ODEbeta = 0.0;

@@ -1,19 +1,14 @@
-function [tt, Ct] = orientation(location)
+function [tt, Ct] = orientation
 
-if ~exist('location','var')
-	location = uigetdir;
-end
+location = uigetdir;
 
 pad = [location '/output/'];
 
 Ct= [];
 tt = [];
 t = -1;
-tmax = 83;
-
-while t<tmax			% Keep going till we run out of files
+while true			% Keep going till we run out of files
 	t=t+1;
-	disp([datestr(now) '  growth iter = ' num2str(t)]);
 	files=dir([pad sprintf('g%04.0f*.mat',t(end))]);
 	if isempty(files)
 		% That was he last one, exit
@@ -53,14 +48,5 @@ while t<tmax			% Keep going till we run out of files
 	tt(end+1)  =	t;
 end
 
-% [ttA,CtA]=orientation('../ecoli_anchor');
-% [~,htN]=height('../ecoli_noanchor_rerun'); 
-% [~,htA]=height('../ecoli_anchor'); 
-% [~,htF]=height('../ecoli_fil_kF5e-13');
-figure; 
-dt = model.growthTimeStep/3600;
-subplot(1,2,1); hold on; plot(ttN*dt, CtN, '-k', 'LineWidth',2); plot(ttA*dt, CtA, '--k', 'LineWidth',2); plot(ttF*dt, CtF, '-.k', 'LineWidth',2);
-legend('Default case','With anchoring', 'With filial links'); xlabel('Growth time (h)'), ylabel('Orientation correlation (-)'); set(gcf,'color','white')
-subplot(1,2,2); hold on; plot(ttN*dt, htN, '-k', 'LineWidth',2); plot(ttA*dt, htA, '--k', 'LineWidth',2); plot(ttF*dt, htF, '-.k', 'LineWidth',2);
-legend('Default case','With anchoring', 'With filial links'); xlabel('Growth time (h)'), ylabel('Biofilm height (\mum)'); set(gcf,'color','white')
-set(findall(gcf,'type','text'),'fontSize',12,'fontName','Times')
+% hold on; plot(ttN, CtN, 'LineWidth',2,'Color',[0 0 0]+0.7); plot(ttY, CtY, 'LineWidth',2,'Color',[0 0 0]);
+% legend('no anchoring','anchoring'); xlabel('growth time (h)'), ylabel('Orientation correlation (-)'); set(gcf,'color','white')

@@ -1,4 +1,4 @@
-function [right, camView] = RenderCalcRight(model, imageWidth, imageHeight, camPosDifference)
+function right = RenderCalcRight(model, imageWidth, imageHeight, camPosDifference)
 
 % Create camera, background and lighting based on L
 %%%%%%%%
@@ -20,7 +20,7 @@ aspect = imageWidth/imageHeight;
 C = (maxPos+minPos)/2;	% Camera view point is at the plane, right in the middle, height == radius
 % Find vector perpendicular to x axis AND camera axis
 camView = C;
-camPos = camView+camPosDifference;
+camPos = C+camPosDifference;
 vertAxis = cross(camView-camPos, [1; 0; 0]);
 % Reset ranges
 horRange = 0.0;
