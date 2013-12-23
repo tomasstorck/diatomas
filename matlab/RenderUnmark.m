@@ -1,7 +1,7 @@
 function RenderMovie
 
 % Make list of folders with an output subfolder
-folderList = dir('../');
+folderList = dir('../results/');
 folderList = {folderList.name};
 for ii=length(folderList):-1:1
 	remove = false;
@@ -9,7 +9,7 @@ for ii=length(folderList):-1:1
 	if folderName(1)=='.';
 		remove = true;
 	end
-	if ~exist(['../' folderName '/output'],'dir')
+	if ~exist(['../results/' folderName '/output'],'dir')
 		remove = true;
 	end
 	if remove
@@ -19,7 +19,7 @@ end
 
 % Analyse these folders
 for ii=1:length(folderList)
-	if exist(['..' filesep folderList{ii} filesep 'rendering'],'file')
-		delete(['..' filesep folderList{ii} filesep 'rendering']);
+	if exist(['../results/' folderList{ii} filesep 'rendering'],'file')
+		delete(['../results/' folderList{ii} filesep 'rendering']);
 	end
 end

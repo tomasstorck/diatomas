@@ -162,15 +162,19 @@ public class CModel implements Serializable {
 			System.out.println(string);
 		}
 		// Write to file
+		final String simulationPath = "results/" + name; 
 		if(!suppressFileOutput) {
 			try {
-				if(!(new File(name)).exists()) {
-					new File(name).mkdir();
+				if(!(new File("results")).exists()) {
+					new File("results").mkdir();
 				}
-				if(!(new File(name + "/output")).exists()) {
-					new File(name + "/output").mkdir();
+				if(!(new File(simulationPath)).exists()) {
+					new File(simulationPath).mkdir();
 				}
-				PrintWriter fid = new PrintWriter(new FileWriter(name + "/" + "logfile.txt",true));		// True is for append
+				if(!(new File(simulationPath + "/output")).exists()) {
+					new File(simulationPath + "/output").mkdir();
+				}
+				PrintWriter fid = new PrintWriter(new FileWriter(simulationPath + "/" + "logfile.txt",true));		// True is for append
 				fid.println(string);
 				fid.close();
 			} catch(IOException E) {
@@ -1262,7 +1266,7 @@ public class CModel implements Serializable {
 		GZIPOutputStream gz = null;
 		ObjectOutputStream oos = null;
 		try {
-			fos = new FileOutputStream(String.format("%s/output/g%04dr%04d.ser", name, growthIter, relaxationIter));
+			fos = new FileOutputStream(String.format("results/%s/output/g%04dr%04d.ser", name, growthIter, relaxationIter));
 			gz = new GZIPOutputStream(fos);
 			oos = new ObjectOutputStream(gz);
 			oos.writeObject(this);

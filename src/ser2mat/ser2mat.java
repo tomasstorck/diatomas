@@ -239,7 +239,7 @@ public class ser2mat {
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);
 		list.add(mlModel);
 		try {
-			new MatFileWriter(model.name + "/output/" + String.format("g%04dr%04d", model.growthIter, model.relaxationIter) + ".mat",list);
+			new MatFileWriter("results/" + model.name + "/output/" + String.format("g%04dr%04d", model.growthIter, model.relaxationIter) + ".mat",list);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

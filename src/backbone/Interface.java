@@ -37,7 +37,7 @@ public class Interface{
 				System.out.println("where [value] be a number (and 0 == false, 1 == true) or string");
 				System.out.println("");
 				System.out.println("args\t\t\t\t Shows all possible model input arguments");
-				System.out.println("load [path/filename.seg]\t Load the specified file instead of the default parameters. Automatically starts model after loading");
+				System.out.println("load [path/filename.seg]\t Load the specified file instead of the default parameters (do not forget the results/ folder). Automatically starts model after loading");
 				System.out.println("ser2mat [path] \t\t\t Converts all .ser files found in [path]/output/ to .mat files. Automatically inhibits model starting after loading");
 				return;
 			// Case argument enumeration

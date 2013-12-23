@@ -9,7 +9,7 @@ camPosDifference = [0.0; 40; -80];		% Where the camera will hover compared to ca
 
 while true
     % Make list of folders with an output subfolder
-    folderList = dir('../');
+    folderList = dir('../results/');
     folderList = {folderList.name};
     for ii=length(folderList):-1:1
         remove = false;
@@ -17,7 +17,7 @@ while true
         if folderName(1)=='.';
             remove = true;
         end
-        if ~exist(['../' folderName '/output'],'dir')
+        if ~exist(['../results/' folderName '/output'],'dir')
             remove = true;
         end
         if remove
@@ -32,7 +32,7 @@ while true
         % Get folder name, mark as being rendered and start rendering
         folderName = folderList{ii};
         disp([datestr(now) '  ' folderName]);
-        location = ['../' folderName];
+        location = ['../results/' folderName];
 		imageLoc = [location filesep 'image-sketch'];
         % See if this is already being rendered
 		if exist([location filesep 'rendering'],'file')
@@ -66,21 +66,24 @@ while true
 				for ii=0:2:NSave
 					imageName{ii+1} = sprintf('pov_g%04dr%04d_%02d', model.growthIter, model.relaxationIter, ii);
 					imagePath{ii+1} = [imageLoc filesep imageName{ii+1} '.png'];
-					povName{ii+1} = [location sprintf('/output/pov_g%04dr%04d_%02d.pov', model.growthIter, model.relaxationIter, ii)];
+					povName{ii+1} = [sprintf('output/pov_g%04dr%04d_%02d.pov', model.growthIter, model.relaxationIter, ii)];
 				end
 				for ii=0:2:NSave
-					fid = fopen(povName{ii+1},'a');
+					fid = fopen([location '/' povName{ii+1}],'a');
 					if rem(iFile,5)==0 || ~exist('right','var')
 						right = RenderCalcRight(model, imageWidth, imageHeight, camPosDifference);
 					end
 					RenderFun(fid, model, ii, right, aspect, plane, camPosDifference);
 					% Finalise the file
 					fclose(fid);
-					systemInput = ['povray ' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' imageLoc filesep imageName{ii+1} ' +A +Q4'];		% +A +Q4 instead of +A -J
+					systemInput = ['povray ' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +Oimage-sketch/' imageName{ii+1} ' +A +Q4'];		% +A +Q4 instead of +A -J
 					remove = ['rm ' povName{ii+1}];
-					[~,message] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
+					[~, message] = system(['cd ' location ' ; ' systemInput]);
 					% Append text for relaxation and growth
-					system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' sprintf('%5.2f h',model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStep+ii*model.relaxationTimeStepdt)  imagePath{ii+1} ' ' imagePath{ii+1}]);
+					system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+30+50 ''Growth time:     ' ...
+						sprintf('%5.2f h',   model.growthIter*model.growthTimeStep/3600.0) '\nRelaxation time: ' ...
+						sprintf('%5.2f s'' ',model.relaxationIter*model.relaxationTimeStep+ii*model.relaxationTimeStepdt) ...
+						imagePath{ii+1} ' ' imagePath{ii+1}]);
 					
 					% 	% Append scale bar
 					% 	A = camPos;
