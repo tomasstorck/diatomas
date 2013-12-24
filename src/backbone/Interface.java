@@ -37,7 +37,7 @@ public class Interface{
 				System.out.println("where [value] be a number (and 0 == false, 1 == true) or string");
 				System.out.println("");
 				System.out.println("args\t\t\t\t Shows all possible model input arguments");
-				System.out.println("load [path/filename.seg]\t Load the specified file instead of the default parameters (do not forget the results/ folder). Automatically starts model after loading");
+				System.out.println("load [path/filename.seg]\t Load the specified file instead of the default parameters (do not include the results/ folder). Automatically starts model after loading");
 				System.out.println("ser2mat [path] \t\t\t Converts all .ser files found in [path]/output/ to .mat files. Automatically inhibits model starting after loading");
 				return;
 			// Case argument enumeration
@@ -83,11 +83,11 @@ public class Interface{
 		//
 		
 		if(argument.containsKey("load")){						// Iterations > 0
-			String loadPath = argument.get("load");
-			if(!loadPath.contains("/")) {
+			String loadName = argument.get("load");
+			if(!loadName.contains("/")) {
 				// loadPath doesn't state which simulation to load --> load the most recent one
 				// Open directory
-				File dir = new File(loadPath + "/output/");
+				File dir = new File("results/" + loadName + "/output/");
 				// Construct filter
 				FilenameFilter filter = new FilenameFilter() {
 					public boolean accept(File dir, String name) {
@@ -96,14 +96,14 @@ public class Interface{
 				};
 				// List filtered files
 				String[] files = dir.list(filter);
-				if(files==null) throw new Exception("No .ser files found in directory " + loadPath + "/output/");
+				if(files==null) throw new Exception("No .ser files found in directory " + loadName + "/output/");
 				// Update loadPath based on found .ser files
 				java.util.Arrays.sort(files);
-				loadPath = loadPath + "/output/" + files[files.length-1];
+				loadName = "results/" + loadName + "/output/" + files[files.length-1];
 			}
-			model = Load(loadPath);
+			model = Load(loadName);
 			instance = new Run(model);
-			model.Write("Loaded " + loadPath, "");
+			model.Write("Loaded " + loadName, "");
 			SetArgument(model, argument, true);
 			
 		} else {												// Start from zero
