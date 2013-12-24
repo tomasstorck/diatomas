@@ -8,6 +8,12 @@ import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -115,7 +121,10 @@ public class Interface{
 			instance.Initialise();
 			SetArgument(model, argument, true);
 		}
-		// Done analysing input arguments. Start model
+		// Copy simulation .jar file to this folder
+		model.Write("Copying .jar file to simulation folder", "");
+		CopyJar(model);
+		// Done analysing input arguments and preparing. Start model
 		try {
 			model.Write("=====================================", "");
 			String message = "Starting simulation '" + model.name + "' w/ arguments: ";
@@ -421,8 +430,27 @@ public class Interface{
 		
 		// Update model name
 		String[] splitLoadPath = loadPath.split("/");
-		model.name = splitLoadPath[0];
+		model.name = splitLoadPath[1];					// Used to be 0, but now 1 because the first will be results
 		
 		return model;
+	}
+	
+	public static void CopyJar(CModel model) {
+		try {
+			// Construct date and time
+			DateFormat dateFormat = new SimpleDateFormat("yyMMdd_HHmmss");
+			Calendar cal = Calendar.getInstance();
+			// Extract format from input arguments
+			String dateTime = dateFormat.format(cal.getTime());
+			// Prepare input and output stream
+			String inPathString = "diatomas.jar";
+			String outPathString = "results/" + model.name + "/diatomas_" + dateTime + ".jar";
+			Path inPath  = Paths.get(inPathString);
+			Path outPath = Paths.get(outPathString);
+			Files.copy(inPath, outPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return;
 	}
 }

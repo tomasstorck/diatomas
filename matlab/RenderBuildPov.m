@@ -1,4 +1,4 @@
-function RenderFun(fid, model, ii, right, aspect, plane, camPosDifference, ceilLightColour, camLightColour, cellColour, filColour, stickColour, anchorColour)
+function RenderBuildPov(fid, model, ii, right, aspect, plane, camPosDifference, ceilLightColour, camLightColour, cellColour, filColour, stickColour, anchorColour, camView, camRotate)
 
 % Settings
 L = [20,20,20];
@@ -6,13 +6,12 @@ ambient = 0.4;
 diffuse = 0.7;
 phong = 0.0;
 phongSize = 25;
-% Colours
+
+%%%%%%%%%
 
 minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coordinates. 2 is for dimension 2
 maxPos = max([model.ballArray.pos],[],2)*1e6;
-C = (maxPos+minPos)/2;	% Camera view point is at the plane, right in the middle, height == radius
-camView = C;
-camPos = C+camPosDifference;
+camPos = camView+camPosDifference;
 
 NSave = length(model.ballArray(1).posSave);
 if model.relaxationIter==0 && model.growthIter==0
@@ -41,6 +40,7 @@ fprintf(fid,['camera {\n',...
 	sprintf('\tlook_at  <%g, %g, %g>\n', camView(1), camView(2), camView(3)),...
 	sprintf('\tright <%g, 0.0, 0.0>\n', right),...
 	sprintf('\tup <0.0, %g/%g, 0.0>\n', right, aspect),...
+	sprintf('\trotate <%g, %g, %g>\n', camRotate(1), camRotate(2), camRotate(3))...
 	'}\n\n']);
 fprintf(fid,'background { color rgb <1, 1, 1> }\n\n');
 % Light sources
@@ -295,8 +295,8 @@ if plane
 	% OR uniformal colour plane
 	fprintf(fid,['union {\n',...
 		'\tbox {\n',...
-		'\t\t<' num2str(minPos(1)-25) ', ' num2str(yPlane) ', ' num2str(minPos(3)-25) '>\n',...				% Corner 1. Centred around 0.5 Lx and 0.5 Lz
-		'\t\t<' num2str(maxPos(1)+25) ', ' num2str(yPlane) ', ' num2str(maxPos(3)+25) '>\n',...				% Corner 2
+		'\t\t<' num2str(minPos(1)-250) ', ' num2str(yPlane) ', ' num2str(minPos(3)-250) '>\n',...				% Corner 1. Centred around 0.5 Lx and 0.5 Lz
+		'\t\t<' num2str(maxPos(1)+250) ', ' num2str(yPlane) ', ' num2str(maxPos(3)+250) '>\n',...				% Corner 2
 		'\t\trotate<0.0, 45, 0.0>\n',...
 		'\t\ttexture {\n',...
 		'\t\t\tpigment {\n',...
