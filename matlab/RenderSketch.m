@@ -1,9 +1,9 @@
 function RenderSketch
 
 % Settings for what to plot
-imageFolderName = 'image-persp-movie';
+imageFolderName = 'sketch';
 % folderFilter = 'as_*';
-renderIter = 1;		% Which results to render, as in 1:renderIter:end
+renderIter = 10;		% Which results to render, as in 1:renderIter:end
 loadFileMax = 500;		% Maximum number of files to load per folder before moving on to the next
 
 % Plot only a select range or all
@@ -22,10 +22,8 @@ plane = true;
 ceilLightColour = [0.65,0.65,0.65];
 camLightColour = [0.45 0.45 0.45];
 
-
-
 % Resolution
-resolutionFactor = 1;
+resolutionFactor = 0.5;
 imageWidth = 1024*resolutionFactor;
 imageHeight = 768*resolutionFactor;
 aspect = imageWidth/imageHeight;
@@ -187,7 +185,7 @@ while true
 					% Finalise the file
 					fclose(fid);
 					systemInput = ['povray ' imageFolderName '/' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' imageFolderName '/' imageName{ii+1} ' +A +Q4'];		% +A +Q4 instead of +A -J
-					[~,message] = system(['cd ' location ' ; ' systemInput ' ; cd ..']);
+					[~,message] = system(['cd ' location ' ; ' systemInput]);
 					if any(strfind(message,'Render failed'))
 						error(['Render failed: ...' message(end-300:end)]);
 					end
@@ -206,7 +204,7 @@ while true
 					% Remove POV file if desired
 					if removePOV
 						remove = ['rm ' povName{ii+1}];
-						[~,~] = system(['cd ' location ' ; ' remove ' ; cd ..']);
+						[~,~] = system(['cd ' location '/' imageFolderName  '/ ; ' remove]);
 					end
 				end
 % 			catch ME
