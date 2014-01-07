@@ -1,5 +1,7 @@
 package backbone;
 
+import interactor.Interactor;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
@@ -8,9 +10,6 @@ import java.io.ObjectInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -436,20 +435,20 @@ public class Interface{
 	}
 	
 	public static void CopyJar(CModel model) {
-		try {
-			// Construct date and time
-			DateFormat dateFormat = new SimpleDateFormat("yyMMdd_HHmmss");
-			Calendar cal = Calendar.getInstance();
-			// Extract format from input arguments
-			String dateTime = dateFormat.format(cal.getTime());
-			// Prepare input and output stream
-			String inPathString = "diatomas.jar";
-			String outPathString = "results/" + model.name + "/diatomas_" + dateTime + ".jar";
-			Path inPath  = Paths.get(inPathString);
-			Path outPath = Paths.get(outPathString);
-			Files.copy(inPath, outPath);
-		} catch (IOException e) {
-			e.printStackTrace();
+		// Construct date and time
+		DateFormat dateFormat = new SimpleDateFormat("yyMMdd_HHmmss");
+		Calendar cal = Calendar.getInstance();
+		// Extract format from input arguments
+		String dateTime = dateFormat.format(cal.getTime());
+		// Copy file, so determine if this is Windows (copy) or Linux/Mac (cp)
+		String response = null;
+		if(Interactor.getOS().compareTo("Windows")==0) {
+			response = Interactor.executeCommand("copy ./diatomas.jar ./results/" + model.name + "/diatomas_" + dateTime + ".jar", true, false);
+		} else {
+			response = Interactor.executeCommand("cp ./diatomas.jar ./results/" + model.name + "/diatomas_" + dateTime + ".jar", true, false);
+		}
+		if(response.compareTo("")==0) {
+			model.Write("Couldn't copy model .jar file: \n" + response, "warning");
 		}
 		return;
 	}

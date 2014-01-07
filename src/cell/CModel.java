@@ -623,7 +623,6 @@ public class CModel implements Serializable {
 		// Calculate gravity+bouyancy, normal forces and drag
 		for(CBall ball : ballArray) {
 			// Contact forces
-			double x = ball.pos.x;
 			double y = ball.pos.y;
 			double r = ball.radius;
 			if(normalForce) {

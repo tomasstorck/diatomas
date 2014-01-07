@@ -12,6 +12,7 @@ fprintf(fid2,'import java.util.ArrayList;\n\n');
 fprintf(fid2,'import cell.*;\n');
 fprintf(fid2,'import jmatio.*;\n\n');
 fprintf(fid2,'public class ser2mat {\n');
+fprintf(fid2,'\t@SuppressWarnings("static-access")\n');
 
 fprintf(fid2,'\tpublic static void Convert(CModel model) {\n');
 fprintf(fid2,'\t\tMLStructure mlModel = new MLStructure("model", new int[] {1,1});\n');

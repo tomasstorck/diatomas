@@ -7,6 +7,7 @@ import cell.*;
 import jmatio.*;
 
 public class ser2mat {
+	@SuppressWarnings("static-access")
 	public static void Convert(CModel model) {
 		MLStructure mlModel = new MLStructure("model", new int[] {1,1});
 		int N;
@@ -239,7 +240,7 @@ public class ser2mat {
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);
 		list.add(mlModel);
 		try {
-			new MatFileWriter("results/" + model.name + "/output/" + String.format("g%04dr%04d", model.growthIter, model.relaxationIter) + ".mat",list);
+			new MatFileWriter(model.name + "/output/" + String.format("g%04dr%04d", model.growthIter, model.relaxationIter) + ".mat",list);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

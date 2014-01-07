@@ -15,7 +15,7 @@ public class Interactor {
 	public static String executeCommand(String command, boolean waitForResponse, boolean showCommand) {
 		String response = "";
 		ProcessBuilder pb;
-		if(System.getProperty("os.name").startsWith("Windows",0)) {
+		if(getOS().compareTo("Windows")==0) {
 			command = command.replace("/","\\");		// Convert from Unix file separators to Windows (important: note that in the model you should ALWAYS use /). \\ because backslash needs to be escaped.
 			pb = new ProcessBuilder("cmd", "/C", command);
 		} else {
@@ -80,6 +80,15 @@ public class Interactor {
 		else {
 			return "";
 		}
+	}
+	
+	public static String getOS() {
+		if(System.getProperty("os.name").startsWith("Windows",0)) {
+			return "Windows";
+		} else {
+			return "Unix";
+		}
+		
 	}
 
 }
