@@ -1,0 +1,4 @@
+The following software packages need to be installed and included in the PATH variable
+JRE 6 (Either OpenJDK or Oracle should work)
+POVRay >=3.7 (http://www.povray.org/)
+ImageMagick (http://www.imagemagick.org/script/index.php)

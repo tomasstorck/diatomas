@@ -447,7 +447,7 @@ public class Interface{
 		} else {
 			response = Interactor.executeCommand("cp ./diatomas.jar ./results/" + model.name + "/diatomas_" + dateTime + ".jar", true, false);
 		}
-		if(response.compareTo("")==0) {
+		if(!(response.compareTo("")==0)) {
 			model.Write("Couldn't copy model .jar file: \n" + response, "warning");
 		}
 		return;
