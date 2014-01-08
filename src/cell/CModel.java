@@ -59,11 +59,13 @@ public class CModel implements Serializable {
 	public double filStretchLim = 2e-6;		// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
 	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
-	// --> Gravity/buoyancy and drag
-	public double Kd 	= 1e-13;				// drag force coefficient
-	public boolean gravity = false;
+	// --> Gravity/buoyancy, drag and electrostatics
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
+	public boolean gravity = false;
 	public boolean gravityZ = false;
+	public double Kd 	= 1e-13;				// drag force coefficient
+	public boolean electrostatic = false;
+	public double Ke	= 1e-9;
 	// --> Substratum and normal forces
 	public boolean normalForce = false;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = false;	// All initial balls are positioned at y(t=0) = ball.radius
@@ -638,7 +640,12 @@ public class CModel implements Serializable {
 					ball.force.y += G * (rhoX-rhoWater) * ball.n*MWX/rhoX;  //let the ball fall. Note that G is negative 
 				}
 			}
-			
+			// Electrostatic attraction
+			if(electrostatic) {
+				if(y > r+10e-9) {
+					ball.force.y -= Ke/(y-(r+10e-9));
+				}
+			}
 			// Velocity damping
 			ball.force = ball.force.minus(ball.vel.times(Kd));			// TODO Should be v^2
 		}
