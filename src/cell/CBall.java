@@ -53,18 +53,22 @@ public class CBall implements Serializable {
 	/////////////////////////////////////////////////////
 	
 	public double Radius() {		
-		return Radius(n, cell.type, cell.model);
+		return Radius(n, cell.type, cell.model, cell.radiusModifier);
 	}
 	
 	public static double Radius(double n, int type, CModel model) {
+		return Radius(n, type, model, 0.0);
+	}
+	
+	public static double Radius(double n, int type, CModel model, double radiusModifier) {
 		if (type<2) {
 			return Math.pow( 							n*model.MWX / (Math.PI * model.rhoX * 4.0/3.0), .333333);						// Note that rho is in kg m-3 but cell mass is in Cmol
 		} else {
 			double aspect = model.lengthCellMax[type] / model.radiusCellMax[type];														// Aspect is here length over radius (not diameter) 
 			if(type<4) {			// type == 2 || 3 is variable radius balls
-				return Math.pow(				    2.0*n*model.MWX / (Math.PI * model.rhoX * (aspect + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
+				return Math.pow(					2.0*n*model.MWX / (Math.PI * model.rhoX * (aspect + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
 			} else {					// type == 4 || 5 is fixed radius (variable length) rod
-				return Math.pow(    model.nCellMax[type]*model.MWX	/ (Math.PI * model.rhoX * (aspect + 4.0/3.0)), .333333);			// Static
+				return Math.pow(     model.nCellMax[type]*model.MWX	/ (Math.PI * model.rhoX * (aspect + 4.0/3.0)), .333333) + radiusModifier;			// No longer static due to radiusModifier
 			}
 		}
 	}

@@ -47,11 +47,13 @@ public class ser2mat {
 		mlModel.setField("filStretchLim",                 new MLDouble(null, new double[] {model.filStretchLim}, 1));                     	// Maximum tension for sticking springs
 		mlModel.setField("filLengthSphere",               new MLDouble(null, new double[] {model.filLengthSphere}, 1));                   	// How many times R2 the sphere filament's rest length is
 		mlModel.setField("filLengthRod",                  new MLDouble(null, model.filLengthRod, model.filLengthRod.length));             	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
-		// --> Gravity/buoyancy and drag
-		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
-		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
+		// --> Gravity/buoyancy, drag and electrostatics
 		mlModel.setField("G",                             new MLDouble(null, new double[] {model.G}, 1));                                 	// [m/s2], acceleration due to gravity
+		mlModel.setField("gravity",                       new MLDouble(null, new double[] {model.gravity?1:0}, 1));                       	
 		mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      	
+		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
+		mlModel.setField("electrostatic",                 new MLDouble(null, new double[] {model.electrostatic?1:0}, 1));                 	
+		mlModel.setField("Ke",                            new MLDouble(null, new double[] {model.Ke}, 1));                                	
 		// --> Substratum and normal forces
 		mlModel.setField("normalForce",                   new MLDouble(null, new double[] {model.normalForce?1:0}, 1));                   	// Use normal force to simulate cells colliding with substratum (at y=0)
 		mlModel.setField("initialAtSubstratum",           new MLDouble(null, new double[] {model.initialAtSubstratum?1:0}, 1));           	// All initial balls are positioned at y(t=0) = ball.radius
@@ -68,6 +70,7 @@ public class ser2mat {
 		mlModel.setField("radiusCellMin",                 new MLDouble(null, model.radiusCellMin, model.radiusCellMin.length));           	
 		mlModel.setField("lengthCellMax",                 new MLDouble(null, model.lengthCellMax, model.lengthCellMax.length));           	
 		mlModel.setField("lengthCellMin",                 new MLDouble(null, model.lengthCellMin, model.lengthCellMin.length));           	
+		mlModel.setField("radiusCellStDev",               new MLDouble(null, model.radiusCellStDev, model.radiusCellStDev.length));       	
 		mlModel.setField("nCellMax",                      new MLDouble(null, model.nCellMax, model.nCellMax.length));                     	
 		mlModel.setField("nCellMin",                      new MLDouble(null, model.nCellMin, model.nCellMin.length));                     	
 		mlModel.setField("muAvgSimple",                   new MLDouble(null, model.muAvgSimple, model.muAvgSimple.length));               	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
@@ -127,6 +130,7 @@ public class ser2mat {
 				mlcellArray.setField("mother",                    new MLDouble(null, new double[] {obj.mother.Index()}, 1), ii);                  
 			mlcellArray.setField("born",                      new MLDouble(null, new double[] {obj.born}, 1), ii);                            	// Growth iteration at which this cell was born
 			mlcellArray.setField("Rx",                        new MLDouble(null, new double[] {obj.Rx}, 1), ii);                              	// Reaction rate for this cell, normalised to substrate [mol/s]
+			mlcellArray.setField("radiusModifier",            new MLDouble(null, new double[] {obj.radiusModifier}, 1), ii);                  	
 		}
 		mlModel.setField("cellArray", mlcellArray);
 

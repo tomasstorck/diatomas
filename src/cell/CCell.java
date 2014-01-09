@@ -20,7 +20,9 @@ public class CCell implements Serializable {
 	public double Rx = 0.0;													// Reaction rate for this cell, normalised to substrate [mol/s]
 	// Pointer stuff
 	public CModel model;
-	
+	// Var. radius stuff
+	public double radiusModifier;
+
 	////////////////////////////////////////////////////////////////////////////////////////////
 	
 	public CCell(int type, double n, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, CModel model) {
@@ -41,6 +43,9 @@ public class CCell implements Serializable {
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
+
+		// Assign radius modifier due to deviation
+		radiusModifier = model.radiusCellStDev[type] * (random.rand.Gaussian());
 	}
 	
 	public CCell(int type, double n, Vector3d base0, Vector3d base1, boolean filament, CModel model) {

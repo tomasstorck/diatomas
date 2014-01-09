@@ -82,6 +82,7 @@ public class CModel implements Serializable {
 	public double[] radiusCellMin = new double[NXType];
 	public double[] lengthCellMax = new double[NXType];
 	public double[] lengthCellMin = new double[NXType];
+	public double[] radiusCellStDev = new double[NXType];
 	public double[] nCellMax =	new double[NXType];
 	public double[] nCellMin =	new double[NXType];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
@@ -141,6 +142,7 @@ public class CModel implements Serializable {
 				radiusCellMin[ii] = radiusCellMax[ii];
 				lengthCellMin[ii] = nCellMin[ii]*MWX/(Math.PI*rhoX*Math.pow(radiusCellMin[ii],2.0)) - 4.0/3.0*radiusCellMin[ii];	
 			}
+			
 		}
 	}
 	
