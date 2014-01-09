@@ -20,7 +20,7 @@ public class Run {
 		this.model = model;
 	}
 	
-	public void Initialise() throws Exception{				
+	public void Initialise() throws RuntimeException{				
 		rand.Seed(model.randomSeed);			// Set seed
 		switch(model.simulation) {
 		case 0:

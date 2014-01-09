@@ -114,7 +114,7 @@ public class CModel implements Serializable {
 	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(0);
 	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(0);
 	// === SOLVER STUFF ===
-	public double ODEbeta = 0.08;
+	public double ODEbeta = 0.12;
 	public double ODEalpha = 1.0/8.0-ODEbeta*0.2;
 	// === COMSOL STUFF ===
 	public static int port = 2036;
@@ -840,7 +840,7 @@ public class CModel implements Serializable {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public ArrayList<CCell> GrowthSimple() throws Exception {									// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+	public ArrayList<CCell> GrowthSimple() throws RuntimeException {									// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int NCell = cellArray.size();
 		ArrayList<CCell> dividedCell = new ArrayList<CCell>(); 
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -866,7 +866,7 @@ public class CModel implements Serializable {
 		return dividedCell;
 	}
 	
-	public ArrayList<CCell> GrowthFlux() throws Exception {
+	public ArrayList<CCell> GrowthFlux() throws RuntimeException {
 		int NCell = cellArray.size();
 		ArrayList<CCell> dividedCell = new ArrayList<CCell>();
 		for(int iCell=0; iCell<NCell; iCell++){
