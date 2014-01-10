@@ -1,4 +1,4 @@
-function RenderSketch
+function RenderSketch(root)
 
 % Settings for what to plot
 imageFolderName = 'sketch';
@@ -69,7 +69,7 @@ anchorColour = [.50 .50 .50];		% Anchoring spring is grey
 
 while true
     % Make list of folders with an output subfolder
-    folderList = dir(['../results/' folderFilter]);
+    folderList = dir(['../' root '/results/' folderFilter]);
     folderList = {folderList.name};
     for ii=length(folderList):-1:1
         remove = false;
@@ -77,7 +77,7 @@ while true
         if simulationFolderName(1)=='.';
             remove = true;
         end
-        if ~exist(['../results/' simulationFolderName '/output'],'dir')
+        if ~exist(['../' root '/results/' simulationFolderName '/output'],'dir')
             remove = true;
         end
         if remove
@@ -97,7 +97,7 @@ while true
         % Get folder name, mark as being rendered and start rendering
         simulationFolderName = folderList{ii};
         disp([datestr(now) '  ' simulationFolderName]);
-        location = ['../results/' simulationFolderName];
+        location = ['../' root '/results/' simulationFolderName];
 % 		imageLoc = [location filesep imageFolderName];
         % See if this is already being rendered
 		if exist([location filesep 'rendering'],'file')
