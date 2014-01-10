@@ -44,8 +44,10 @@ public class CCell implements Serializable {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
 
-		// Assign radius modifier due to deviation
-		radiusModifier = model.radiusCellStDev[type] * (random.rand.Gaussian());
+		// Assign radius modifier due to deviation. If no modifier skip this, maintains reproducibility (WORKAROUND)
+		if(model.radiusCellStDev[type]==0) {
+			radiusModifier = model.radiusCellStDev[type] * (random.rand.Gaussian());
+		}
 	}
 	
 	public CCell(int type, double n, Vector3d base0, Vector3d base1, boolean filament, CModel model) {

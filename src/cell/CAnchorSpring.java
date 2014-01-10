@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class CAnchorSpring extends CSpring {
 	private static final long serialVersionUID = 1L;
-	public Vector3d anchorPoint = new Vector3d();
+//	public Vector3d anchorPoint = new Vector3d();
 	public ArrayList<CAnchorSpring> siblingArray = new ArrayList<CAnchorSpring>(2);
 
 	///////////////////////////////////////////////////////////////////
@@ -13,7 +13,7 @@ public class CAnchorSpring extends CSpring {
 		// We don't use the super constructor here: CAnchorSpring is different
 		ballArray = new CBall[1];
 		ballArray[0] = ball0;
-		this.anchorPoint = anchorPoint;
+//		this.anchorPoint = anchorPoint;
 		ResetK();
 		ResetRestLength();
 		// Add to arrays
@@ -61,6 +61,6 @@ public class CAnchorSpring extends CSpring {
 	}
 	
 	public Vector3d GetL() {
-		return ballArray[0].pos.minus(anchorPoint);
+		return new Vector3d(0.0, ballArray[0].pos.y, 0.0);
 	}
 }

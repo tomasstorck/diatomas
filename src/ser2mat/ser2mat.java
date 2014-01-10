@@ -226,7 +226,6 @@ public class ser2mat {
 			mlanchorSpringArray.setField("ballArray",         new MLDouble(null, arrayIndex, 1), ii);                                         	
 			mlanchorSpringArray.setField("K",                 new MLDouble(null, new double[] {obj.K}, 1), ii);                               	
 			mlanchorSpringArray.setField("restLength",        new MLDouble(null, new double[] {obj.restLength}, 1), ii);                      	
-			mlanchorSpringArray.setField("anchorPoint",       new MLDouble(null, new double[] {obj.anchorPoint.x, obj.anchorPoint.y, obj.anchorPoint.z}, 3), ii);	
 			arrayIndex = new double[obj.siblingArray.size()];
 			for(int jj=0; jj<obj.siblingArray.size(); jj++)	arrayIndex[jj] = obj.siblingArray.get(jj).Index();
 			mlanchorSpringArray.setField("siblingArray",      new MLDouble(null, arrayIndex, 1), ii);                                         	
