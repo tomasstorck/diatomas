@@ -45,7 +45,7 @@ public class CCell implements Serializable {
 		}
 
 		// Assign radius modifier due to deviation. If no modifier skip this, maintains reproducibility (WORKAROUND)
-		if(model.radiusCellStDev[type]==0) {
+		if(model.radiusCellStDev[type]!=0) {
 			radiusModifier = model.radiusCellStDev[type] * (random.rand.Gaussian());
 		}
 	}

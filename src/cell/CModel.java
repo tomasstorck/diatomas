@@ -403,7 +403,7 @@ public class CModel implements Serializable {
 		ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 		
 		for(CAnchorSpring anchor : anchorSpringArray) {
-			double al = anchor.ballArray[0].pos.y;		// al = Actual Length
+			double al = (anchor.ballArray[0].pos.minus(anchor.anchorPoint)).norm();		// al = Actual Length
 			if(al > maxStretch*anchor.restLength) {
 				breakArray.add(anchor);
 			}
@@ -652,7 +652,7 @@ public class CModel implements Serializable {
 			ball.force = ball.force.minus(ball.vel.times(Kd));			// TODO Should be v^2
 		}
 		
-		// Elastic forces between springs within cells (CSpring in type>1)
+		// Elastic forces between springs within cells
 		for(CRodSpring rod : rodSpringArray) {
 			CBall ball0 = rod.ballArray[0];
 			CBall ball1 = rod.ballArray[1];
@@ -670,7 +670,7 @@ public class CModel implements Serializable {
 		
 		// Apply forces due to anchor springs
 		for(CAnchorSpring anchor : anchorSpringArray) {
-			Vector3d diff = anchor.GetL();
+			Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 			double dn = diff.norm();
 			// Get force
 			double f = anchor.K/dn * (dn - anchor.restLength);
@@ -741,7 +741,7 @@ public class CModel implements Serializable {
 					ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 					for(CAnchorSpring anchor : cell0.anchorSpringArray) {
 						// Break anchor?
-						Vector3d diff = anchor.GetL();
+						Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
 						double dn = diff.norm();
 						if(dn > anchor.restLength+anchorStretchLim) {	// too much tension --> break the spring
 							breakArray.add(anchor);

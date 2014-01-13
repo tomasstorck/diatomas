@@ -1,5 +1,9 @@
 function RenderSketch(root)
 
+if ~exist('root','var')
+	root = '';
+end
+
 % Settings for what to plot
 imageFolderName = 'sketch';
 % folderFilter = 'as_*';
