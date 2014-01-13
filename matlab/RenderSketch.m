@@ -15,16 +15,16 @@ fixLoadFileNameList = false;
 % fixLoadFileNameList = true;
 % loadFileNameList = {'g0073r0073.mat'};
 
-% % AS
-% folderFilter = 'as_*';
-% plane = false;
-% ceilLightColour = [0.8,0.8,0.8];
-% camLightColour = [0.6 0.6 0.6];
-% E coli
-folderFilter = 'ecoli_*';
-plane = true;
-ceilLightColour = [0.65,0.65,0.65];
-camLightColour = [0.45 0.45 0.45];
+% AS
+folderFilter = 'default*';
+plane = false;
+ceilLightColour = [0.8,0.8,0.8];
+camLightColour = [0.6 0.6 0.6];
+% % E coli
+% folderFilter = 'ecoli_*';
+% plane = true;
+% ceilLightColour = [0.65,0.65,0.65];
+% camLightColour = [0.45 0.45 0.45];
 
 % Resolution
 resolutionFactor = 0.5;

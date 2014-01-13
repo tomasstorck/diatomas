@@ -189,7 +189,7 @@ public class Run {
 		// Start server and connect if we're using COMSOL
 		if(model.comsol) {
 			model.Write("Starting server and connecting model to localhost:" + CModel.port, "iter");
-			Server.Start(CModel.port);
+//			Server.Start(CModel.port);
 			Server.Connect(CModel.port);
 		}
 		

@@ -33,9 +33,9 @@ public class Comsol {
 	
 	public void Initialise() throws FlException {
 		// Create model, initialise geometry, mesh, study and physics
-		ModelUtil.initStandalone(false);
-		ModelUtil.showProgress(false);								// enabling this causes COMSOL to run something SWT/graphical --> crash
-		ModelUtil.showProgress(java.name + "/logfile_comsol.txt");
+//		ModelUtil.initStandalone(false);
+//		ModelUtil.showProgress(false);								// enabling this causes COMSOL to run something SWT/graphical --> crash
+//		ModelUtil.showProgress("results/" + java.name + "/logfile_comsol.txt");
 		comsol = ModelUtil.create("Model");
 	    comsol.modelPath("/home/tomas/Desktop");					// UPDATE
 	    comsol.modelNode().create("mod1");
@@ -592,7 +592,7 @@ public class Comsol {
 	}
 	
 	public void Save() throws IOException {
-		comsol.save(System.getProperty("user.dir") + "/" + java.name + "/output/" + String.format("g%04dm%04d", java.growthIter, java.relaxationIter));		// No 2nd arguments --> save as .mph
+		comsol.save(System.getProperty("user.dir") + "/results/" + java.name + "/output/" + String.format("g%04dm%04d", java.growthIter, java.relaxationIter));		// No 2nd arguments --> save as .mph
 	}
 	
 	//////////////////////////////////
