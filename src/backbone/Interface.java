@@ -69,7 +69,7 @@ public class Interface{
 				};
 				// List filtered files and convert
 				String[] files = dir.list(filter);
-				if(files==null) throw new Exception("No .ser files found in directory " + modelPath + "/output/");
+				if(files==null) throw new RuntimeException("No .ser files found in directory " + modelPath + "/output/");
 				java.util.Arrays.sort(files);
 				for(String fileName : files) { 
 					model.Write("Loading " + fileName,"", true, false);
@@ -101,7 +101,7 @@ public class Interface{
 				};
 				// List filtered files
 				String[] files = dir.list(filter);
-				if(files==null) throw new Exception("No .ser files found in directory " + loadName + "/output/");
+				if(files==null) throw new RuntimeException("No .ser files found in directory " + loadName + "/output/");
 				// Update loadPath based on found .ser files
 				java.util.Arrays.sort(files);
 				loadName = "results/" + loadName + "/output/" + files[files.length-1];
@@ -399,8 +399,8 @@ public class Interface{
 							// Throw an error
 							throw new RuntimeException("Unknown class type");
 						}
-					} catch (Exception ex) {
-						ex.printStackTrace();
+					} catch (Exception E) {
+						E.printStackTrace();
 					}
 				}
 			}
