@@ -216,7 +216,7 @@ public class Run {
 			case 1: case 2:
 				// Set type
 				final int filF = 4;
-				final int flocF = 0;
+				final int flocF = 5;
 				for(int ii=0; ii<model.NCellInit; ii++)			 {
 					if(model.nCellMax[flocF]>model.nCellMax[filF]) {
 						final int div = (int) (model.nCellMax[flocF] / model.nCellMax[filF]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
