@@ -8,6 +8,8 @@ public class CAnchorSpring extends CSpring {
 	public ArrayList<CAnchorSpring> siblingArray = new ArrayList<CAnchorSpring>(2);
 
 	///////////////////////////////////////////////////////////////////
+	// This class can have two forms: normal (static point) or gliding (moving point) anchoring links
+	// To switch, only the GetL() function needs to be changed.
 	
 	public CAnchorSpring(CBall ball0, Vector3d anchorPoint) {
 		// We don't use the super constructor here: CAnchorSpring is different
@@ -61,6 +63,10 @@ public class CAnchorSpring extends CSpring {
 	}
 	
 	public Vector3d GetL() {
-		return ballArray[0].pos.minus(anchorPoint);
+		// Static anchoring links
+		return anchorPoint.minus(ballArray[0].pos);
+//		// Moving anchoring links
+//		return new Vector3d(0.0, ballArray[0].pos.y, 0.0);
+
 	}
 }

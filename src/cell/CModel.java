@@ -416,8 +416,8 @@ public class CModel implements Serializable {
 		
 		int iSpring = 0;
 		while(iSpring < stickSpringArray.size()) {
-			CStickSpring spring = stickSpringArray.get(iSpring);
-			double al = (spring.ballArray[1].pos.minus(  spring.ballArray[0].pos)  ).norm();		// al = Actual Length
+			CStickSpring spring = stickSpringArray.get(iSpring);				// TODO: replace name with stick for consistency
+			double al = spring.GetL().norm();		// al = Actual Length
 			if(al > maxStretch*spring.restLength) {
 				breakArray.add(spring);
 			}
@@ -657,7 +657,7 @@ public class CModel implements Serializable {
 			CBall ball0 = rod.ballArray[0];
 			CBall ball1 = rod.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = ball1.pos.minus(ball0.pos);
+			Vector3d diff = rod.GetL();
 			double dn = diff.norm();
 			// Get force
 			double f = rod.K/dn * (dn - rod.restLength);
@@ -670,7 +670,7 @@ public class CModel implements Serializable {
 		
 		// Apply forces due to anchor springs
 		for(CAnchorSpring anchor : anchorSpringArray) {
-			Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);	// TODO: replace with GetL()
+			Vector3d diff = anchor.GetL();
 			double dn = diff.norm();
 			// Get force
 			double f = anchor.K/dn * (dn - anchor.restLength);
@@ -686,7 +686,7 @@ public class CModel implements Serializable {
 			CBall ball0 = stick.ballArray[0];
 			CBall ball1 = stick.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = ball1.pos.minus(ball0.pos);
+			Vector3d diff = stick.GetL();
 			double dn = diff.norm();
 			// Get force
 			double f = stick.K/dn * (dn - stick.restLength);
@@ -702,7 +702,7 @@ public class CModel implements Serializable {
 			CBall ball0 = fil.ballArray[0];
 			CBall ball1 = fil.ballArray[1];
 			{// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = ball1.pos.minus(ball0.pos);
+			Vector3d diff = fil.GetL();
 			double dn = diff.norm();
 			// Get force
 			double f = fil.K/dn * (dn - fil.restLength);
@@ -781,7 +781,7 @@ public class CModel implements Serializable {
 				}
 				if(isFilament) {							// Can only be true if filaments are enabled 
 					// Don't stick this. It shouldn't be stuck so don't check if we can break sticking springs. Instead, see if we can break the filial link 
-					double distance = filamentSpring.ballArray[0].pos.minus(filamentSpring.ballArray[1].pos).norm();
+					double distance = filamentSpring.GetL().norm();
 					// Check if we can break this spring
 					if(distance>filamentSpring.restLength+filStretchLim) {
 						Assistant.NFilBreak += filamentSpring.Break();	// Also breaks its siblings
@@ -791,7 +791,7 @@ public class CModel implements Serializable {
 					CBall c0b0 = cell0.ballArray[0];
 					CBall c1b0 = cell1.ballArray[0];				
 					if(isStuck) {							// Stuck --> can we break this spring (and its siblings)?
-						double dist = (c1b0.pos.minus(c0b0.pos)).norm();
+						double dist = stickingSpring.GetL().norm();
 						if(dist > stickingSpring.restLength+stickStretchLim) 		Assistant.NStickBreak += stickingSpring.Break();
 					} else {								// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case
 						double R2 = c0b0.radius + c1b0.radius;
@@ -799,7 +799,7 @@ public class CModel implements Serializable {
 						double dist;
 						if(cell0.type<2 && cell1.type<2) {	// both spheres
 							if(stickType[cell0.type][cell1.type]) { 
-								dist = (c1b0.pos.minus(c0b0.pos)).norm();
+								dist = (c1b0.pos.minus(c0b0.pos)).norm();						// Not a spring, so can't use GetL() yet
 							} else continue;
 						} else if(cell0.type<2) {			// 1st sphere, 2nd rod
 							double H2f =  1.5*(stickFormLim+(lengthCellMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect

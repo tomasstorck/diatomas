@@ -67,6 +67,10 @@ public class CStickSpring extends CSpring {
 		return count;
 	}
 	
+	public Vector3d GetL() {
+		return ballArray[1].pos.minus(ballArray[0].pos);
+	}
+	
 	public int Index() {
 		final CModel model = ballArray[0].cell.model;
 		return super.Index(model.stickSpringArray);
