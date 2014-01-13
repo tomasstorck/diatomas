@@ -59,11 +59,13 @@ public class CModel implements Serializable {
 	public double filStretchLim = 2e-6;		// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
 	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
-	// --> Gravity/buoyancy and drag
-	public double Kd 	= 1e-13;				// drag force coefficient
-	public boolean gravity = false;
+	// --> Gravity/buoyancy, drag and electrostatics
 	public double G		= -9.8;					// [m/s2], acceleration due to gravity
+	public boolean gravity = false;
 	public boolean gravityZ = false;
+	public double Kd 	= 1e-13;				// drag force coefficient
+	public boolean electrostatic = false;
+	public double Ke	= 1e-9;
 	// --> Substratum and normal forces
 	public boolean normalForce = false;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = false;	// All initial balls are positioned at y(t=0) = ball.radius
@@ -80,6 +82,7 @@ public class CModel implements Serializable {
 	public double[] radiusCellMin = new double[NXType];
 	public double[] lengthCellMax = new double[NXType];
 	public double[] lengthCellMin = new double[NXType];
+	public double[] radiusCellStDev = new double[NXType];
 	public double[] nCellMax =	new double[NXType];
 	public double[] nCellMin =	new double[NXType];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
@@ -139,6 +142,7 @@ public class CModel implements Serializable {
 				radiusCellMin[ii] = radiusCellMax[ii];
 				lengthCellMin[ii] = nCellMin[ii]*MWX/(Math.PI*rhoX*Math.pow(radiusCellMin[ii],2.0)) - 4.0/3.0*radiusCellMin[ii];	
 			}
+			
 		}
 	}
 	
@@ -399,7 +403,7 @@ public class CModel implements Serializable {
 		ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 		
 		for(CAnchorSpring anchor : anchorSpringArray) {
-			double al = (anchor.ballArray[0].pos.minus(anchor.anchorPoint)).norm();		// al = Actual Length
+			double al = (anchor.GetL()).norm();		// al = Actual Length
 			if(al > maxStretch*anchor.restLength) {
 				breakArray.add(anchor);
 			}
@@ -638,12 +642,17 @@ public class CModel implements Serializable {
 					ball.force.y += G * (rhoX-rhoWater) * ball.n*MWX/rhoX;  //let the ball fall. Note that G is negative 
 				}
 			}
-			
+			// Electrostatic attraction
+			if(electrostatic) {
+				if(y > r+10e-9) {
+					ball.force.y -= Ke/(y-(r+10e-9));
+				}
+			}
 			// Velocity damping
 			ball.force = ball.force.minus(ball.vel.times(Kd));			// TODO Should be v^2
 		}
 		
-		// Elastic forces between springs within cells (CSpring in type>1)
+		// Elastic forces between springs within cells
 		for(CRodSpring rod : rodSpringArray) {
 			CBall ball0 = rod.ballArray[0];
 			CBall ball1 = rod.ballArray[1];
@@ -661,7 +670,7 @@ public class CModel implements Serializable {
 		
 		// Apply forces due to anchor springs
 		for(CAnchorSpring anchor : anchorSpringArray) {
-			Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
+			Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);	// TODO: replace with GetL()
 			double dn = diff.norm();
 			// Get force
 			double f = anchor.K/dn * (dn - anchor.restLength);
@@ -732,7 +741,7 @@ public class CModel implements Serializable {
 					ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 					for(CAnchorSpring anchor : cell0.anchorSpringArray) {
 						// Break anchor?
-						Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
+						Vector3d diff = anchor.GetL();
 						double dn = diff.norm();
 						if(dn > anchor.restLength+anchorStretchLim) {	// too much tension --> break the spring
 							breakArray.add(anchor);
@@ -831,7 +840,7 @@ public class CModel implements Serializable {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public ArrayList<CCell> GrowthSimple() throws Exception {									// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+	public ArrayList<CCell> GrowthSimple() throws RuntimeException {									// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
 		int NCell = cellArray.size();
 		ArrayList<CCell> dividedCell = new ArrayList<CCell>(); 
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -857,7 +866,7 @@ public class CModel implements Serializable {
 		return dividedCell;
 	}
 	
-	public ArrayList<CCell> GrowthFlux() throws Exception {
+	public ArrayList<CCell> GrowthFlux() throws RuntimeException {
 		int NCell = cellArray.size();
 		ArrayList<CCell> dividedCell = new ArrayList<CCell>();
 		for(int iCell=0; iCell<NCell; iCell++){

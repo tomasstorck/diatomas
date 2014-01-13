@@ -86,7 +86,7 @@ public class Odeint<Stepper extends StepperBase> {
 			}
 			s.h=s.hnext;							// Set stepsize and continue
 		}
-		throw new Exception("Too many steps in Odeint (>" + MAXSTP + ")");
+		throw new RuntimeException("Too many steps in Odeint (>" + MAXSTP + ")");
 	}
 	
 	double SIGN(double a, double b) {				// Return a if both are same sign, else return -a
