@@ -403,7 +403,7 @@ public class CModel implements Serializable {
 		ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 		
 		for(CAnchorSpring anchor : anchorSpringArray) {
-			double al = (anchor.ballArray[0].pos.minus(anchor.anchorPoint)).norm();		// al = Actual Length
+			double al = (anchor.GetL()).norm();		// al = Actual Length
 			if(al > maxStretch*anchor.restLength) {
 				breakArray.add(anchor);
 			}
@@ -670,7 +670,7 @@ public class CModel implements Serializable {
 		
 		// Apply forces due to anchor springs
 		for(CAnchorSpring anchor : anchorSpringArray) {
-			Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
+			Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);	// TODO: replace with GetL()
 			double dn = diff.norm();
 			// Get force
 			double f = anchor.K/dn * (dn - anchor.restLength);
@@ -741,7 +741,7 @@ public class CModel implements Serializable {
 					ArrayList<CAnchorSpring> breakArray = new ArrayList<CAnchorSpring>();
 					for(CAnchorSpring anchor : cell0.anchorSpringArray) {
 						// Break anchor?
-						Vector3d diff = anchor.anchorPoint.minus(anchor.ballArray[0].pos);
+						Vector3d diff = anchor.GetL();
 						double dn = diff.norm();
 						if(dn > anchor.restLength+anchorStretchLim) {	// too much tension --> break the spring
 							breakArray.add(anchor);
