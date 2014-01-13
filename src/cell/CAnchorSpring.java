@@ -66,7 +66,7 @@ public class CAnchorSpring extends CSpring {
 		// Static anchoring links
 		return anchorPoint.minus(ballArray[0].pos);
 //		// Moving anchoring links
-//		return new Vector3d(0.0, ballArray[0].pos.y, 0.0);
+//		return new Vector3d(0.0, -1.0*ballArray[0].pos.y, 0.0);
 
 	}
 }
