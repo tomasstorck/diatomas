@@ -645,7 +645,7 @@ public class CModel implements Serializable {
 			// Electrostatic attraction
 			if(electrostatic) {
 				if(y > r+10e-9) {
-					ball.force.y -= Ke/(y-(r+10e-9));
+					ball.force.y -= Ke/Math.pow(y-r,2);
 				}
 			}
 			// Velocity damping

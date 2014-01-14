@@ -1,7 +1,11 @@
-function RenderMovie
+function RenderUnmark(root)
+
+if ~exist('root','var')
+    root = '';
+end
 
 % Make list of folders with an output subfolder
-folderList = dir('../results/');
+folderList = dir(['../' root '/results/']);
 folderList = {folderList.name};
 for ii=length(folderList):-1:1
 	remove = false;
@@ -9,7 +13,7 @@ for ii=length(folderList):-1:1
 	if folderName(1)=='.';
 		remove = true;
 	end
-	if ~exist(['../results/' folderName '/output'],'dir')
+	if ~exist(['../' root '/results/' folderName '/output'],'dir')
 		remove = true;
 	end
 	if remove
@@ -19,7 +23,7 @@ end
 
 % Analyse these folders
 for ii=1:length(folderList)
-	if exist(['../results/' folderList{ii} filesep 'rendering'],'file')
-		delete(['../results/' folderList{ii} filesep 'rendering']);
+	if exist(['../' root '/results/' folderList{ii} filesep 'rendering'],'file')
+		delete(['../' root '/results/' folderList{ii} filesep 'rendering']);
 	end
 end
