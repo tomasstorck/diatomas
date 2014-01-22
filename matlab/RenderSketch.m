@@ -5,30 +5,30 @@ if ~exist('root','var')
 end
 
 % Settings for what to plot
-imageFolderName = 'sketch';
-% folderFilter = 'as_*';
-renderIter = 10;		% Which results to render, as in 1:renderIter:end
+imageFolderName = 'image-persp-fixed';
+renderIter = 1;		% Which results to render, as in 1:renderIter:end
 loadFileMax = 500;		% Maximum number of files to load per folder before moving on to the next
 
 % Plot only a select range or all
 fixLoadFileNameList = false;
 % fixLoadFileNameList = true;
 % loadFileNameList = {'g0073r0073.mat'};
+% loadFileNameList = {'g0112r0112.mat'};
 
-% % AS
-% folderFilter = 'as_*';
-% plane = false;
-% ceilLightColour = [0.8,0.8,0.8];
-% camLightColour = [0.6 0.6 0.6];
-% E coli
-folderFilter = 'ecoli_*';
-% plane = true;
+% AS
+folderFilter = 'as_low*';
 plane = false;
-ceilLightColour = [0.65,0.65,0.65];
-camLightColour = [0.45 0.45 0.45];
+ceilLightColour = [0.8,0.8,0.8];
+camLightColour = [0.6 0.6 0.6];
+% % E coli
+% folderFilter = 'ecoli_*';
+% % plane = true;
+% plane = false;
+% ceilLightColour = [0.65,0.65,0.65];
+% camLightColour = [0.45 0.45 0.45];
 
 % Resolution
-resolutionFactor = 0.5;
+resolutionFactor = 0.5;	% 0.5 is sketch, 1.0 is paper
 imageWidth = 1024*resolutionFactor;
 imageHeight = 768*resolutionFactor;
 aspect = imageWidth/imageHeight;
@@ -47,7 +47,7 @@ LScale = 1;		% micron
 % Zooming
 rightIter = 10;			% How often to realign the zoom factor ("right")
 fixRight = false;		% Set our own right value
-% Be sure to comment below when fixRight = false
+% Be sure to comment out below when fixRight = false
 % fixRight = true;
 % right =	148.923;	% AS paper
 % right = 108;		% E. coli paper (with 90 degree rotation)

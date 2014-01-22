@@ -65,7 +65,7 @@ public class CModel implements Serializable {
 	public boolean gravityZ = false;
 	public double Kd 	= 1e-13;				// drag force coefficient
 	public boolean electrostatic = false;
-	public double Ke	= 1e-9;
+	public double Ces	= 1e-9;
 	// --> Substratum and normal forces
 	public boolean normalForce = false;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = false;	// All initial balls are positioned at y(t=0) = ball.radius
@@ -644,9 +644,12 @@ public class CModel implements Serializable {
 			}
 			// Electrostatic attraction
 			if(electrostatic) {
-				if(y > r+10e-9) {
-					ball.force.y -= Ke/Math.pow(y-r,2);
-				}
+				final double dRest = 15e-9;					// [m]
+				final double kappa = -1.0/dRest; 			// inverse of Debye length [1/m]
+				ball.force.y += Ces/y * (kappa+1.0/y) * Math.exp(-kappa/y); 
+//				if(y > r+10e-9) {
+//					ball.force.y -= Ke/Math.pow(y-r,2);
+//				}
 			}
 			// Velocity damping
 			ball.force = ball.force.minus(ball.vel.times(Kd));			// TODO Should be v^2
