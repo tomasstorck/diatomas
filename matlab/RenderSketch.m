@@ -5,8 +5,8 @@ if ~exist('root','var')
 end
 
 % Settings for what to plot
-imageFolderName = 'image-persp-fixed';
-renderIter = 1;		% Which results to render, as in 1:renderIter:end
+imageFolderName = 'sketch';
+renderIter = 10;		% Which results to render, as in 1:renderIter:end
 loadFileMax = 500;		% Maximum number of files to load per folder before moving on to the next
 
 % Plot only a select range or all
@@ -15,17 +15,17 @@ fixLoadFileNameList = false;
 % loadFileNameList = {'g0073r0073.mat'};
 % loadFileNameList = {'g0112r0112.mat'};
 
-% AS
-folderFilter = 'as_low*';
-plane = false;
-ceilLightColour = [0.8,0.8,0.8];
-camLightColour = [0.6 0.6 0.6];
-% % E coli
-% folderFilter = 'ecoli_*';
-% % plane = true;
+% % AS
+% folderFilter = 'as_low*';
 % plane = false;
-% ceilLightColour = [0.65,0.65,0.65];
-% camLightColour = [0.45 0.45 0.45];
+% ceilLightColour = [0.8,0.8,0.8];
+% camLightColour = [0.6 0.6 0.6];
+% E coli
+folderFilter = 'es_*';
+% plane = true;
+plane = false;
+ceilLightColour = [0.65,0.65,0.65];
+camLightColour = [0.45 0.45 0.45];
 
 % Resolution
 resolutionFactor = 0.5;	% 0.5 is sketch, 1.0 is paper

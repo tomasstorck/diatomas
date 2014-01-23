@@ -30,7 +30,7 @@ public class Run {
 			/////////////
 			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
 			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
-			model.radiusCellStDev[4] = 0.0;// [m] Standard deviation from radiusCellMax. Note that this will work only with fixed radius rods! Spheres and var. radius rods must have a "free" radius
+			model.radiusCellStDev[4] = model.radiusCellMax[4]*0.05;	// [m] Standard deviation from radiusCellMax. Note that this will work only with fixed radius rods! Spheres and var. radius rods must have a "free" radius
 			model.NCellInit = 1;
 			model.normalForce = true;
 			model.filStretchLim = 0.75e-6;

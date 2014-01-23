@@ -645,7 +645,7 @@ public class CModel implements Serializable {
 			// Electrostatic attraction
 			if(electrostatic) {
 				final double dRest = 15e-9;					// [m]
-				final double kappa = -1.0/dRest; 			// inverse of Debye length [1/m]
+				final double kappa = 1.0/dRest; 			// inverse of Debye length [1/m]
 				ball.force.y += Ces/y * (kappa+1.0/y) * Math.exp(-kappa/y); 
 //				if(y > r+10e-9) {
 //					ball.force.y -= Ke/Math.pow(y-r,2);
