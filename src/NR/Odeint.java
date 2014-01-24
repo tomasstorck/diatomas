@@ -49,7 +49,7 @@ public class Odeint<Stepper extends StepperBase> {
 		out.init(s.neqn, x1, x2);	// Initialise intermediate values object
 	}
 	
-	public int integrate() throws Exception {
+	public int integrate() throws RuntimeException {
 		derivs.Calculate(s.x,s.y,s.dydx);
 		if(dense)	out.out(-1,s.x,s.y,s,s.h);	// -1 --> save initial values, see Output class. Note that h should not be obtained in out() as the syntax differs a few lines below here
 		else		out.save(s.x, s.y);
@@ -82,7 +82,7 @@ public class Odeint<Stepper extends StepperBase> {
 				}
 			}
 			if (Math.abs(s.hnext)<=hmin) {
-				throw new Exception("Warning: Step size too small in Odeint (" + s.hnext + ")");
+				throw new RuntimeException("Warning: Step size too small in Odeint (" + s.hnext + ")");
 			}
 			s.h=s.hnext;							// Set stepsize and continue
 		}

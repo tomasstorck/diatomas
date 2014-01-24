@@ -443,7 +443,7 @@ public class CModel implements Serializable {
 	//////////////////////
 	// Relaxation stuff //
 	//////////////////////
-	public int Relaxation() throws Exception {
+	public int Relaxation() throws RuntimeException {
 		// Reset counter
 		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NFilBreak = Assistant.NStickBreak = Assistant.NStickForm = 0;
 		
@@ -646,7 +646,7 @@ public class CModel implements Serializable {
 			if(electrostatic) {
 				final double dRest = 15e-9;					// [m]
 				final double kappa = 1.0/dRest; 			// inverse of Debye length [1/m]
-				ball.force.y += Ces/y * (kappa+1.0/y) * Math.exp(-kappa/y); 
+				ball.force.y += Ces * Math.exp(-kappa*(y-r))/(y-r) * (kappa+1.0/(y-r)); 
 //				if(y > r+10e-9) {
 //					ball.force.y -= Ke/Math.pow(y-r,2);
 //				}

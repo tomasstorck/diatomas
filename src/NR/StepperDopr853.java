@@ -86,7 +86,7 @@ public class StepperDopr853 extends StepperBase {
 		}
 	}
 
-	public void step(double htry,feval derivs) throws Exception {
+	public void step(double htry,feval derivs) throws RuntimeException {
 		Vector dydxnew = new Vector(n);
 		h=htry;
 
@@ -96,7 +96,7 @@ public class StepperDopr853 extends StepperBase {
 
 			if (con.success(err)) 
 				break;
-			if (Math.abs(h) <= Math.abs(x)*EPS) throw new Exception("stepsize underflow in StepperDopr853");
+			if (Math.abs(h) <= Math.abs(x)*EPS) throw new RuntimeException("stepsize underflow in StepperDopr853");
 		}
 		derivs.Calculate(x+h,yout,dydxnew);
 		if (dense)
