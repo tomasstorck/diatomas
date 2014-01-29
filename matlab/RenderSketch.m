@@ -21,7 +21,7 @@ fixLoadFileNameList = false;
 % ceilLightColour = [0.8,0.8,0.8];
 % camLightColour = [0.6 0.6 0.6];
 % E coli
-folderFilter = 'es_*';
+folderFilter = 'ecoli_*';
 % plane = true;
 plane = false;
 ceilLightColour = [0.65,0.65,0.65];
