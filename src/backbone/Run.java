@@ -30,7 +30,7 @@ public class Run {
 			/////////////
 			model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
 			model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
-			model.radiusCellStDev[4] = model.radiusCellMax[4]*0.025;	// [m] Standard deviation from radiusCellMax. Note that this will work only with fixed radius rods! Spheres and var. radius rods must have a "free" radius
+			model.radiusCellStDev[4] = model.radiusCellMax[4]*0.05;	// [m] Standard deviation from radiusCellMax. Note that this will work only with fixed radius rods! Spheres and var. radius rods must have a "free" radius
 			model.NCellInit = 1;
 			model.normalForce = true;
 			model.filStretchLim = 0.75e-6;
@@ -207,8 +207,8 @@ public class Run {
 				for(int ii=0; ii<model.NCellInit; ii++) {
 					typeInit[ii] = 4;
 					nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
-					directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 														(rand.Double()-0.5))			.normalise();
-					position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(nInit[ii]/2.0, typeInit[ii], model)+0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);						// *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
+					directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 																		(rand.Double()-0.5))			.normalise();
+					position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(nInit[ii]/2.0, typeInit[ii], model)+0.0*rand.Double()+2.0/model.kappa,		(rand.Double()-0.5)*model.L.z);						// *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
 					final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 					position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 				}
