@@ -65,7 +65,8 @@ public class CModel implements Serializable {
 	public boolean gravityZ = false;
 	public double Kd 	= 1e-13;				// drag force coefficient
 	public boolean electrostatic = false;
-	public double Ces	= 1e-9;
+	public double kappa = 10e-9;				// [1/m], inverse Debye length for ionic concentration of ... [Hermansson 1999]
+	public double Ces	= 2e-9;					// [m], grouped parameters, A*r/(c1*phi^2)
 	// --> Substratum and normal forces
 	public boolean normalForce = false;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = false;	// All initial balls are positioned at y(t=0) = ball.radius
@@ -644,13 +645,20 @@ public class CModel implements Serializable {
 			}
 			// Electrostatic attraction
 			if(electrostatic) {
-				final double dRest = 15e-9;					// [m]
-				final double kappa = 1.0/dRest; 			// inverse of Debye length [1/m]
-				ball.force.y += Ces * Math.exp(-kappa*(y-r))/(y-r) * (-kappa+1.0/(y-r)); 
-//				if(y > r+10e-9) {
-//					ball.force.y -= Ke/Math.pow(y-r,2);
-//				}
+				ball.force.y += (y-r)*Math.exp(-kappa*(y-r)) - Ces;
+				// Throw warning if on unstable end of curve
+				final double unstableLim = 1.0/kappa;
+				if(y<unstableLim && !Assistant.warningGiven) {
+					Write("Electrostatic forces have become unstable","warning");
+					Assistant.warningGiven = true;
+				} else {
+					if(y>unstableLim && Assistant.warningGiven) {
+						Write("Electrostatic forces no longer unstable","warning");
+						Assistant.warningGiven = false;
+					}
+				}
 			}
+			
 			// Velocity damping
 			ball.force = ball.force.minus(ball.vel.times(Kd));			// TODO Should be v^2
 		}

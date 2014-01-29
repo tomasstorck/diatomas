@@ -11,4 +11,6 @@ public class Assistant {
 	public static int NStickBreak = 0;
 	public static int NStickForm = 0;
 	public static int NFilBreak = 0;
+	// Electrostatic forces warning
+	public static boolean warningGiven = false;
 }
