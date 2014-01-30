@@ -35,9 +35,7 @@ public class Run {
 			model.normalForce = true;
 			model.filStretchLim = 0.75e-6;
 			model.filType[4] = true;
-			model.stickType[4][4] = true;
-			model.stickStretchLim = 0.2e-6;
-			model.anchorStretchLim = 0.2e-6;
+			model.anchorStretchLim = 0.5e-6;	// Bit longer than initial to work with DLVO forces 
 			model.sticking = model.filament = false;
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986

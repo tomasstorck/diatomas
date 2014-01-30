@@ -6,10 +6,26 @@ set(gcf,'PaperPositionMode','manual');
 set(gcf,'PaperSize',[20.984 29.6774]);
 set(gcf,'Position', [360 278 357 259]);
 
-[tt0,ht0] = height('../ecoli_noanchor');
-[tt1,ht1] = height('../ecoli_anchor');
-[tt2,ht2] = height('../ecoli_fil');
 
+range = 0:10;
+N = length(range);
+
+tt0 = cell(N,1);
+tt1 = cell(N,1);
+tt2 = cell(N,1);
+ht0 = cell(N,1);
+ht1 = cell(N,1);
+ht2 = cell(N,1);
+
+for ii=range
+	[tt0(:,ii),ht0(:,ii)] = height(['../ecoli_noanchor_seed' num2str(ii)]);
+	[tt1(:,ii),ht1(:,ii)] = height(['../ecoli_anchor_seed' num2str(ii)]);
+	[tt2(:,ii),ht2(:,ii)] = height(['../ecoli_fil_seed' num2str(ii)]);
+end
+
+tt0 =		mean(tt0,2);		% Same as taking an index, tt should match for all. This will return funny values if something funny happened
+ht0mu =		mean(ht0,2);
+ht0std =	std()
 
 dt = 4/60;
 micron = 1e6;
