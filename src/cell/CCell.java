@@ -25,10 +25,11 @@ public class CCell implements Serializable {
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public CCell(int type, double n, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, CModel model) {
+	public CCell(int type, double n, double radiusModifier, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, CModel model) {
 		this.model = model;
 		this.type = type;
 		this.filament = filament;
+		this.radiusModifier = radiusModifier;
 		this.born = model.growthIter;
 		
 		model.cellArray.add(this);				// Add it here so we can use cell.Index()
@@ -43,16 +44,26 @@ public class CCell implements Serializable {
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
-
-		// Assign radius modifier due to deviation. If no modifier skip this, maintains reproducibility (WORKAROUND)
-		if(model.radiusCellStDev[type]!=0) {
-			radiusModifier = model.radiusCellStDev[type] * (random.rand.Gaussian());
-		}
+	}
+	
+	// Vector3d instead of double
+	public CCell(int type, double n, double radiusModifier, Vector3d base0, Vector3d base1, boolean filament, CModel model) {
+		this(type, n, radiusModifier, base0.x, base0.y, base0.z, base1.x, base1.y, base1.z, filament, model);
+	}
+	
+	// Without radiusModifier (generate randomly or skip, depending on model.radiusModifier)
+	public CCell(int type, double n, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, CModel model) {
+		this(type, n, 
+				model.radiusCellStDev[type]==0.0?0.0:(model.radiusCellStDev[type]*random.rand.Gaussian()),		// Assign radius modifier due to deviation. If no modifier skip this, maintains reproducibility (WORKAROUND). Has to be done inline due Java limitations
+				base0x, base0y, base0z, base1x, base1y, base1z, filament, model);
 	}
 	
 	public CCell(int type, double n, Vector3d base0, Vector3d base1, boolean filament, CModel model) {
-		this(type, n, base0.x, base0.y, base0.z, base1.x, base1.y, base1.z, filament, model);
+		this(type, n,
+				model.radiusCellStDev[type]==0.0?0.0:(model.radiusCellStDev[type]*random.rand.Gaussian()),		// Assign radius modifier due to deviation. If no modifier skip this, maintains reproducibility (WORKAROUND). Has to be done inline due Java limitations 
+				base0.x, base0.y, base0.z, base1.x, base1.y, base1.z, filament, model);
 	}
+	
 	
 	/////////////////////////////////////////////////////////
 	
@@ -158,8 +169,6 @@ public class CCell implements Serializable {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
 	}
-	
-	/////////////////
 	
 	public double SurfaceArea() {
 		return SurfaceArea(1.0);

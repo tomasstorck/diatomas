@@ -41,7 +41,7 @@ public class Run {
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 			model.growthTimeStep = 240.0;		// s, i.e. 4 minutes
 			break;
-		case 1: case 2:
+		case 2:
 			model.Write("Loading parameters for AS","");
 			////////
 			// AS //
@@ -67,117 +67,12 @@ public class Run {
 			model.sticking = true;
 			model.stickType[4][5] = model.stickType[5][4] = model.stickType[4][4] = model.stickType[5][5] = true;	// Anything sticks
 			model.stickType[4][0] = model.stickType[0][4] = model.stickType[4][4] = model.stickType[0][0] = true;	// Anything sticks
-			if(model.simulation==1) {
-				model.anchoring = true;
-				model.normalForce = true;
-			} else {
-				model.anchoring = false;
-				model.normalForce = false;
-			}
-			break;
-		case 3:
-			model.Write("Loading parameters for COMSOL","");
-			////////////
-			// COMSOL //
-			////////////
-			model.comsol = true;
-			model.allowOverlap = true;
-			model.relaxationIterSuccessiveMax = Integer.MAX_VALUE;
-			model.L = new Vector3d(7e-6, 7e-6, 7e-6);
-			model.radiusCellMax[0] = 0.6e-6;
-//			model.radiusCellMax[1] = 0.5e-6;
-			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
-//			model.radiusCellMax[5] = 0.35e-6;	// [m] (Lau 1984)
-			model.lengthCellMax[4] = 4e-6;	// [m] (Lau 1984), compensated for model length = actual length - 2*r
-//			model.lengthCellMax[5] = 1.1e-6;	// [m] (Lau 1984), compensated
-			model.NCellInit = 18;
-			model.sticking = true;
-			model.stickType[0][4] = model.stickType[4][0] = model.stickType[0][0] = model.stickType[4][4] = true;	// Anything sticks
-			// Granule building
-//			model.attachCellType = 0;
-//			model.attachCellType = 4;
-//			model.attachNotTo = new int[]{};
-//			model.attachmentRate = 3600.0/model.growthTimeStep*2.0;
-//			// non-COMSOL
-//			model.muAvgSimple[4] = 0.271;		// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
-//			model.muAvgSimple[0] = 0.383;		// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
-//			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
-//			model.muStDev[0] = 0.2*model.muAvgSimple[0];		//
-//			model.growthTimeStep = 300.0;
-			// COMSOL
-			model.comsol = true;
-			model.growthTimeStep = 3600.0;
-			model.allowOverlap = false;
-			model.relaxationIterSuccessiveMax = 10;
-			break;
-		case 4:
-			model.Write("Loading parameters for Heterogeneous Floc","");
-			////////////////////////
-			// Heterogeneous Floc //
-			////////////////////////
-			model.L = new Vector3d(5e-6, 5e-6, 5e-6);
-			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
-			model.radiusCellMax[0] = 0.8e-6;	// [m] (Lau 1984)
-			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated for model length = actual length - 2*r
-//			// No syn
-//			model.muAvgSimple[4] = 0.33;			// [h-1]  
-//			model.muAvgSimple[0] = 0.33;			// [h-1]
-			// Syn
-			model.syntrophyFactor = 1.5;
-			model.muAvgSimple[4] = 0.33/1.5;			// [h-1]  
-			model.muAvgSimple[0] = 0.33/1.5;			// [h-1]
-			//
-			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
-			model.muStDev[0] = 0.2*model.muAvgSimple[5];		//
-			model.NCellInit = 18;
-			model.sticking = true;
-			model.stickType[4][0] = model.stickType[0][4] = model.stickType[4][4] = model.stickType[0][0] = true;	// Anything sticks
-			// No comsol stuff
-			model.growthTimeStep = 300.0;
-//			// Comsol stuff
-//			model.growthTimeStep = 3600;
-//			model.comsol = true;
-//			model.allowOverlap = false;
-//			model.relaxationIterSuccessiveMax = 10;
-			//
-			break;
-		case 5:
-			model.Write("Loading parameters for Bridging Floc","");
-			////////////////////////
-			// Bridging      Floc //
-			////////////////////////
-			model.L = new Vector3d(10e-6, 10e-6, 10e-6);
-//			model.radiusCellMax[0] = 0.8e-6;	// [m]
-			model.radiusCellMax[0] = 0.52e-6;	// [m], default for cocci in IBM paper
-//			model.radiusCellMax[4] = 0.35e-6;	// [m] (Lau 1984)
-//			model.lengthCellMax[4] = 1.1e-6;	// [m] (Lau 1984), compensated
-			model.radiusCellMax[4] = 0.5e-6;	// [m] (Lau 1984)
-			model.lengthCellMax[4] = 4e-6;		// [m] (Lau 1984), compensated
-			model.muAvgSimple[4] = 0.271;		// [h-1] 
-			model.muAvgSimple[0] = 0.383;		// [h-1]
-			model.muStDev[4] = 0.2*model.muAvgSimple[4];		// Defined as one fifth 
-			model.muStDev[0] = 0.2*model.muAvgSimple[5];		//
-			model.NCellInit = 18;
-			model.growthTimeStep = 300.0;
-			model.sticking = true;
-			model.stickType[4][0] = model.stickType[0][4] = model.stickType[4][4] = model.stickType[0][0] = true;	// Anything sticks
-			model.filament = true;
-			model.filType[4] = true;
-			// Attachment
-			model.attachCellType = 0;
-			model.attachNotTo = new int[]{};
-			model.attachmentRate = 1;
-			// Low conc growth
-			model.muAvgSimple[4] *= 0.8;
-			model.muAvgSimple[0] *= 0.4;
-			model.muStDev[4] *= 0.8; 
-			model.muStDev[0] *= 0.4;
-			model.growthTimeStep = 540;
+			model.anchoring = false;
+			model.normalForce = false;
 			break;
 		default:
 			throw new IndexOutOfBoundsException("Model simulation: " + model.simulation);
 		}
-		//		Add things here to hardcode/overwrite
 	}
 	
 	public void Start() throws Exception {
@@ -197,21 +92,24 @@ public class Run {
 			rand.Seed(model.randomSeed);
 			int[] typeInit = new int[model.NCellInit];
 			double[] nInit = new double[model.NCellInit];
+			double[] radiusModifier = new double[model.NCellInit];
 			Vector3d[] directionInit = new Vector3d[model.NCellInit];
 			Vector3d[] position0Init = new Vector3d[model.NCellInit];
 			Vector3d[] position1Init = new Vector3d[model.NCellInit];
+			
 			switch(model.simulation) {
 			case 0:
 				for(int ii=0; ii<model.NCellInit; ii++) {
 					typeInit[ii] = 4;
 					nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
-					directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 																		(rand.Double()-0.5))			.normalise();
-					position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(nInit[ii]/2.0, typeInit[ii], model)+0.0*rand.Double()+2.0/model.kappa,		(rand.Double()-0.5)*model.L.z);						// *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
+					radiusModifier[ii] = model.radiusCellStDev[typeInit[ii]]*random.rand.Gaussian();
+					directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 																				(rand.Double()-0.5))			.normalise();
+					position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii] + 0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);						// *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
 					final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 					position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 				}
 				break;
-			case 1: case 2:
+			case 2:
 				// Set type
 				final int filF = 4;
 				final int flocF = 5;
@@ -224,44 +122,9 @@ public class Run {
 						typeInit[ii] = ii%div==0 ? filF : flocF;
 					}
 				}
-
-				if(model.simulation==1) {
-					model.Write("Defining cell parameters for AS/biofilm","");
-					// Biofilm-like
-					for(int ii=0; ii<model.NCellInit; ii++) {
-						nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
-						directionInit[ii] = new Vector3d((rand.Double()-0.5), (rand.Double()-0.5)+5.0, (rand.Double()-0.5)).normalise();
-						position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, CBall.Radius(nInit[ii]/2.0, typeInit[ii], model)+0.0*rand.Double(),	(rand.Double()-0.5)*model.L.z);
-						final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
-						position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
-					}
-				} else {
-					model.Write("Defining cell parameters for AS/flock","");
-					// Flock-like
-					for(int ii=0; ii<model.NCellInit; ii++) {
-						nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
-						directionInit[ii] = new Vector3d((rand.Double()-0.5), (rand.Double()-0.5), (rand.Double()-0.5)).normalise();
-						final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
-						position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y,															(rand.Double()-0.5)*model.L.z);
-						position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
-					}
-				}
-				break;
-			case 3: case 4: case 5:
-				final int type0 = 0;
-				final int type1 = 4;
-				for(int ii=0; ii<model.NCellInit; ii++)			 {
-					if(model.nCellMax[type1]>model.nCellMax[type0]) {
-						final int div = (int) (model.nCellMax[type1] / model.nCellMax[type0]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
-						typeInit[ii] = ii%div==0 ? type1 : type0;
-					} else {
-						final int div = (int) (model.nCellMax[type0] / model.nCellMax[type1]) + 1;
-						typeInit[ii] = ii%div==0 ? type0 : type1;
-					}
-				}
-
 				for(int ii=0; ii<model.NCellInit; ii++) {
 					nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
+					radiusModifier[ii] = 0.0; 
 					directionInit[ii] = new Vector3d((rand.Double()-0.5), (rand.Double()-0.5), (rand.Double()-0.5)).normalise();
 					final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 					position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y,															(rand.Double()-0.5)*model.L.z);
@@ -289,9 +152,10 @@ public class Run {
 				@SuppressWarnings("unused")
 				CCell cell = new CCell(typeInit[iCell], 				// Type of biomass
 						nInit[iCell],
+						radiusModifier[iCell],
 						position0Init[iCell],
 						position1Init[iCell],
-						filament,											// With capability to form filaments?
+						filament,										// With capability to form filaments?
 						model);
 			}
 			model.Write(model.cellArray.size() + " initial cells created","iter");
