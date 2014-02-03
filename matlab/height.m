@@ -1,9 +1,15 @@
-function [tt, ht] = height
+function [tt, ht] = height(location)
 
-location = uigetdir;
+if ~exist('location','var')
+    location = uigetdir;
+end
 
 pad = [location '/output/'];
 
+if ~exist(pad,'dir')
+	error(['Path not found: ' pad])
+end
+	
 ht= [];
 tt = [];
 t = -1;

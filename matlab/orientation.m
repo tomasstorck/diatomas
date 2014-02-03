@@ -1,6 +1,9 @@
-function [tt, Ct] = orientation
+% Based on Albertas Janulevicius' paper and paper cited therein
+function [tt, Ct] = orientation(location)
 
-location = uigetdir;
+if ~exist('location','var')
+	location = uigetdir;
+end
 
 pad = [location '/output/'];
 
@@ -35,7 +38,7 @@ while true			% Keep going till we run out of files
 		for jj = ii+1:size(v,1)
 			vj = v(jj,:);
 
-			theta = [theta acosd(dot(vi,vj)/(norm(vi)*norm(vj)))];
+			theta = [theta real(acosd(dot(vi,vj)/(norm(vi)*norm(vj))))];		% Used real to prevent parallel cells with freak round-off errors
 
 		end
 	end

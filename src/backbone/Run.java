@@ -33,6 +33,7 @@ public class Run {
 			model.radiusCellStDev[4] = model.radiusCellMax[4]*0.05;	// [m] Standard deviation from radiusCellMax. Note that this will work only with fixed radius rods! Spheres and var. radius rods must have a "free" radius
 			model.NCellInit = 1;
 			model.normalForce = true;
+			model.KfRod = new double[]{5e-13, 5e-13};
 			model.filStretchLim = 0.75e-6;
 			model.filType[4] = true;
 			model.anchorStretchLim = 0.5e-6;	// Bit longer than initial to work with DLVO forces 
