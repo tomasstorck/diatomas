@@ -53,7 +53,8 @@ public class ser2mat {
 		mlModel.setField("gravityZ",                      new MLDouble(null, new double[] {model.gravityZ?1:0}, 1));                      	
 		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
 		mlModel.setField("electrostatic",                 new MLDouble(null, new double[] {model.electrostatic?1:0}, 1));                 	
-		mlModel.setField("Ces",                           new MLDouble(null, new double[] {model.Ces2}, 1));                               	
+		mlModel.setField("kappa",                         new MLDouble(null, new double[] {model.kappa}, 1));                             	// [1/m], inverse Debye length for ionic concentration of ... [Hermansson 1999]
+		mlModel.setField("Ces",                           new MLDouble(null, new double[] {model.Ces}, 1));                               	// ES force scaling factor
 		// --> Substratum and normal forces
 		mlModel.setField("normalForce",                   new MLDouble(null, new double[] {model.normalForce?1:0}, 1));                   	// Use normal force to simulate cells colliding with substratum (at y=0)
 		mlModel.setField("initialAtSubstratum",           new MLDouble(null, new double[] {model.initialAtSubstratum?1:0}, 1));           	// All initial balls are positioned at y(t=0) = ball.radius

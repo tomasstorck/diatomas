@@ -66,8 +66,7 @@ public class CModel implements Serializable {
 	public double Kd 	= 1e-13;				// drag force coefficient
 	public boolean electrostatic = false;
 	public double kappa = 1.0/(10e-9);			// [1/m], inverse Debye length for ionic concentration of ... [Hermansson 1999]
-	public double Ces1	= 1e-9;					// ES force scaling factor
-	public double Ces2	= 2e-9;					// [m], grouped parameters, A*r/(c1*phi^2)
+	public double Ces	= 1e-9;					// ES force scaling factor
 	// --> Substratum and normal forces
 	public boolean normalForce = false;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = false;	// All initial balls are positioned at y(t=0) = ball.radius
@@ -646,7 +645,8 @@ public class CModel implements Serializable {
 			}
 			// Electrostatic attraction
 			if(electrostatic) {
-				ball.force.y += Ces1 * (Math.exp(-kappa*(y-r))/kappa - Ces2);			
+				double d = (y-r);
+				ball.force.y += Ces * Math.exp(-kappa*d)*(-kappa*d + 1.0);			
 			}
 			
 			// Velocity damping
