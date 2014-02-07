@@ -4,6 +4,7 @@ if ~exist('root','var')
 	root = '';
 end
 
+% Do not change here, but change below
 ECOLI = false;
 AS = false;
 PERSPECTIVE = false;
@@ -17,7 +18,6 @@ SIDE = false;
 % E. COLI
 %%%%%%%%%%%%%%%
 ECOLI = true;
-
 loadFileNameList = {'g0070r0070.mat'};		% E. coli
 
 %%%
@@ -34,7 +34,7 @@ imageFolderName = 'perspective';
 % imageFolderName = 'side';
 % %%%
 
-folderFilter = 'ecoli_filament_seed9*';		% <============================
+folderFilter = 'ecoli_anchor_anchorstretchlim*';		% <================
 plane = true;
 ceilLightColour = [0.65,0.65,0.65];
 camLightColour = [0.45 0.45 0.45];
@@ -64,43 +64,18 @@ camLightColour = [0.45 0.45 0.45];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-% %%%%%%%%%%%%%%%
-% % SKETCH
-% %%%%%%%%%%%%%%%
-% imageFolderName = ['sketch-' imageFolderName];
-% renderIter = 10;		% Which results to render, as in 1:renderIter:end
-% fixLoadFileNameList = false;
-% imageWidth = 1024*0.5;
-% imageHeight = 768*0.5;
-% aspect = imageWidth/imageHeight;
-% appendScaleBar = true;
-% LScale = 1;		% micron
-% scaleBarPos = [imageWidth-110 50];		% Could use some tuning
-% appendText = true;
-% fixRight = false;	
-% 
-% if PERSPECTIVE
-% 	camPosDifference = [0.0; 40; -80];
-% elseif TOP
-% 	camPosDifference = [0.0; 40; 0];		% Top
-% elseif SIDE
-% 	camPosDifference = [0.0; 0; -80];		% Side
-% else
-% 	error('Cannot determine camPosDifference')
-% end
-
 %%%%%%%%%%%%%%%
-% MOVIE
+% SKETCH
 %%%%%%%%%%%%%%%
-imageFolderName = ['movie-' imageFolderName];
-renderIter = 1;			% Which results to render, as in 1:renderIter:end
+imageFolderName = ['sketch-' imageFolderName];
+renderIter = 10;		% Which results to render, as in 1:renderIter:end
 fixLoadFileNameList = false;
-imageWidth = 1024;
-imageHeight = 768;
+imageWidth = 1024*0.5;
+imageHeight = 768*0.5;
 aspect = imageWidth/imageHeight;
 appendScaleBar = true;
 LScale = 1;		% micron
-scaleBarPos = [imageWidth-110 70];
+scaleBarPos = [imageWidth-110 50];		% Could use some tuning
 appendText = true;
 fixRight = false;	
 
@@ -113,6 +88,31 @@ elseif SIDE
 else
 	error('Cannot determine camPosDifference')
 end
+
+% %%%%%%%%%%%%%%%
+% % MOVIE
+% %%%%%%%%%%%%%%%
+% imageFolderName = ['movie-' imageFolderName];
+% renderIter = 1;			% Which results to render, as in 1:renderIter:end
+% fixLoadFileNameList = false;
+% imageWidth = 1024;
+% imageHeight = 768;
+% aspect = imageWidth/imageHeight;
+% appendScaleBar = true;
+% LScale = 1;		% micron
+% scaleBarPos = [imageWidth-110 70];
+% appendText = true;
+% fixRight = false;	
+% 
+% if PERSPECTIVE
+% 	camPosDifference = [0.0; 40; -80];
+% elseif TOP
+% 	camPosDifference = [0.0; 40; 0];		% Top
+% elseif SIDE
+% 	camPosDifference = [0.0; 0; -80];		% Side
+% else
+% 	error('Cannot determine camPosDifference')
+% end
 
 % %%%%%%%%%%%%%%%
 % % PAPER
