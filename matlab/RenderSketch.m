@@ -4,60 +4,158 @@ if ~exist('root','var')
 	root = '';
 end
 
-% Settings for what to plot
-imageFolderName = 'sketch';
-renderIter = 10;		% Which results to render, as in 1:renderIter:end
-loadFileMax = 500;		% Maximum number of files to load per folder before moving on to the next
+ECOLI = false;
+AS = false;
+PERSPECTIVE = false;
+TOP = false;
+SIDE = false;
 
-% Plot only a select range or all
-fixLoadFileNameList = false;
-% fixLoadFileNameList = true;
-% loadFileNameList = {'g0073r0073.mat'};
-% loadFileNameList = {'g0112r0112.mat'};
 
-% % AS
-% folderFilter = 'as_low*';
-% plane = false;
-% ceilLightColour = [0.8,0.8,0.8];
-% camLightColour = [0.6 0.6 0.6];
-% E coli
-folderFilter = 'ecoli_*';
-% plane = true;
-plane = false;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%
+% E. COLI
+%%%%%%%%%%%%%%%
+ECOLI = true;
+
+loadFileNameList = {'g0070r0070.mat'};		% E. coli
+
+%%%
+% Perspective
+PERSPECTIVE = true;
+imageFolderName = 'perspective';
+% %%%
+% % Top
+% TOP = true;
+% imageFolderName = 'top';
+% %%%
+% Side
+% SIDE = true;
+% imageFolderName = 'side';
+% %%%
+
+folderFilter = 'ecoli_filament_seed9*';		% <============================
+plane = true;
 ceilLightColour = [0.65,0.65,0.65];
 camLightColour = [0.45 0.45 0.45];
 
-% Resolution
-resolutionFactor = 0.5;	% 0.5 is sketch, 1.0 is paper
-imageWidth = 1024*resolutionFactor;
-imageHeight = 768*resolutionFactor;
-aspect = imageWidth/imageHeight;
-
-% Various
-% plane = true;
+% %%%%%%%%%%%%%%%
+% % AS
+% %%%%%%%%%%%%%%%
+% AS = true;
+% PERSPECTIVE = true;
+% %%%
+% % AS low
+% loadFileNameList = {'g0112r0112.mat'};		% AS low
+% folderFilter = 'as_low*';
+% %%%
+% % AS high
+% loadFileNameList = {'g0092r0092.mat'};		% AS high
+% folderFilter = 'as_high*';
+% %%%
+% 
 % plane = false;
-removePOV = true;
-% removePOV = false;
-appendText = true;
-% appendText = false;
+% ceilLightColour = [0.8,0.8,0.8];
+% camLightColour = [0.6 0.6 0.6];
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% %%%%%%%%%%%%%%%
+% % SKETCH
+% %%%%%%%%%%%%%%%
+% imageFolderName = ['sketch-' imageFolderName];
+% renderIter = 10;		% Which results to render, as in 1:renderIter:end
+% fixLoadFileNameList = false;
+% imageWidth = 1024*0.5;
+% imageHeight = 768*0.5;
+% aspect = imageWidth/imageHeight;
+% appendScaleBar = true;
+% LScale = 1;		% micron
+% scaleBarPos = [imageWidth-110 50];		% Could use some tuning
+% appendText = true;
+% fixRight = false;	
+% 
+% if PERSPECTIVE
+% 	camPosDifference = [0.0; 40; -80];
+% elseif TOP
+% 	camPosDifference = [0.0; 40; 0];		% Top
+% elseif SIDE
+% 	camPosDifference = [0.0; 0; -80];		% Side
+% else
+% 	error('Cannot determine camPosDifference')
+% end
+
+%%%%%%%%%%%%%%%
+% MOVIE
+%%%%%%%%%%%%%%%
+imageFolderName = ['movie-' imageFolderName];
+renderIter = 1;			% Which results to render, as in 1:renderIter:end
+fixLoadFileNameList = false;
+imageWidth = 1024;
+imageHeight = 768;
+aspect = imageWidth/imageHeight;
 appendScaleBar = true;
 LScale = 1;		% micron
+scaleBarPos = [imageWidth-110 70];
+appendText = true;
+fixRight = false;	
+
+if PERSPECTIVE
+	camPosDifference = [0.0; 40; -80];
+elseif TOP
+	camPosDifference = [0.0; 40; 0];		% Top
+elseif SIDE
+	camPosDifference = [0.0; 0; -80];		% Side
+else
+	error('Cannot determine camPosDifference')
+end
+
+% %%%%%%%%%%%%%%%
+% % PAPER
+% %%%%%%%%%%%%%%%
+% imageFolderName = ['paper-' imageFolderName];
+% renderIter = 10;		% Which results to render, as in 1:renderIter:end
+% fixLoadFileNameList = true;
+% imageWidth = 1024;
+% imageHeight = 768;
+% aspect = imageWidth/imageHeight;
 % appendScaleBar = false;
+% LScale = 10;		% micron
+% scaleBarPos = [imageWidth-110 imageHeight-70];			% [posX posY]
+% appendText = false;
 
-% Zooming
+% fixRight = true;		% Set our own right value
+% if PERSPECTIVE && AS
+% 	camPosDifference = [0.0; 40; -80];
+% 	right =	148.923;						% AS paper (fixed perspective)
+% elseif ECOLI && TOP
+% 	camPosDifference = [0.0; 40; 0];		% Top
+% 	right = 67.5245;						% E. coli paper (fixed top-down)
+% elseif ECOLI && SIDE
+% 	camPosDifference = [0.0; 0; -80];		% Side
+% 	right = 67.5245;						% E. coli paper (fixed side view)
+% else
+% 	error('Cannot determine camPosDifference')
+% end
+% 
+% % SCALEBAR - sometimes we DO want a scalebar
+% appendScaleBar = true
+% %%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%
+% GENERAL
+%%%%%%%%%%%%%%%
+loadFileMax = 500;		% Maximum number of files to load per folder before moving on to the next
+removePOV = true;
 rightIter = 10;			% How often to realign the zoom factor ("right")
-fixRight = false;		% Set our own right value
-% Be sure to comment out below when fixRight = false
-% fixRight = true;
-% right =	148.923;	% AS paper
-% right = 108;		% E. coli paper (with 90 degree rotation)
-
-% Where the camera will hover compared to camView
-camPosDifference = [0.0; 40; -80];  	% Perspective
-% camPosDifference = [0.0; 40; 0];		% Top
-% camPosDifference = [0.0; 0; -80];		% Side
 camRotate = [0; 0; 0];
-% camRotate = [0; 90; 0];					% Useful for E. coli fil in IbM paper
 
 % Colours
 cellColour = [0.60 0.00 0.00;		% Cell colours: 
@@ -202,8 +300,8 @@ while true
 					if appendScaleBar
 						% Append scale bar
 						LLine = LScale * 1/right * imageWidth;
-						system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+880+50 ''' num2str(LScale) ' um'' ' imagePath{ii+1} ' ' imagePath{ii+1}]);
-						system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(imageWidth-110-LLine/2) ',70 ' num2str(imageWidth-110+LLine/2) ',70" ' imagePath{ii+1} ' ' imagePath{ii+1}]);
+						system(['convert -antialias -pointsize 30 -font courier-bold -annotate 0x0+' num2str(scaleBarPos(1)-30) '+' num2str(scaleBarPos(2)-20) ' ''' num2str(LScale) ' um'' ' imagePath{ii+1} ' ' imagePath{ii+1}]);
+						system(['convert -stroke black -strokewidth 3 -draw "line ' num2str(scaleBarPos(1)-LLine/2) ',' num2str(scaleBarPos(2))  ' ' num2str(scaleBarPos(1)+LLine/2) ',' num2str(scaleBarPos(2)) '" ' imagePath{ii+1} ' ' imagePath{ii+1}]);
 					end
 					
 					% Remove POV file if desired

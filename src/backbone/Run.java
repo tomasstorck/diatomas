@@ -34,9 +34,9 @@ public class Run {
 			model.NCellInit = 1;
 			model.normalForce = true;
 			model.KfRod = new double[]{5e-13, 5e-13};
-			model.filStretchLim = 0.75e-6;
+			model.filStretchLim = 1e-6;
 			model.filType[4] = true;
-			model.anchorStretchLim = 0.5e-6;	// Bit longer than initial to work with DLVO forces 
+			model.anchorStretchLim = 1e-6;		// Bit longer than initial to work with DLVO forces 
 			model.sticking = model.filament = false;
 			model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 			model.muStDev[4] = 0.277;			// h-1. Képès, 1986

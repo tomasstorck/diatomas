@@ -69,21 +69,18 @@ ht2ci = tinv(1-0.025,Nsam2-1)  .*  ht2std  ./  sqrt( Nsam2);
 
 
 % Plot
-set(0,'DefaultAxesFontName','Times New Roman')
-set(0,'DefaultTextFontName','Times New Roman')
-
 figure
 % set(gcf,'PaperPosition',[0.634517 6.34517 20.3046 15.2284])
 set(gcf,'PaperPositionMode','manual');
 % set(gcf,'PaperSize',[20.984 29.6774]);
-set(gcf,'Position', [ 330   548   505   285]);
+set(gcf,'Position',[300,300,500,400]);
 set(gcf,'DefaultAxesColorOrder',[...
-	0.8 0.0 0.0; 0.8 0.0 0.0; 0.8 0.0 0.0;
-	0.5 1.0 0.5; 0.5 1.0 0.5; 0.5 1.0 0.5; ...
-	0.2 0.8 1.0; 0.2 0.8 1.0; 0.2 0.8 1.0]);
+	0.6 0.0 0.0; 0.6 0.0 0.0; 0.6 0.0 0.0;
+	0.7 0.9 1.0; 0.7 0.9 1.0; 0.7 0.9 1.0;
+	0.2 1.0 0.2; 0.2 1.0 0.2; 0.2 1.0 0.2;]);
 
-xlabel('Time (h)');
-ylabel('Biofilm height (micron)')
+xlabel('Time (h)','FontName','Times New Roman','FontSize',12);
+ylabel('Biofilm height (\mum)','FontName','Times New Roman','FontSize',12)
 
 set(gcf,'color',[1 1 1])
 dt = 4/60;
@@ -97,10 +94,9 @@ for mm=0:2
 	c = [c sprintf('tt%d*dt,(ht%dmu+ht%dci)*micron,''--'',',mm,mm,mm)];
 	c = [c sprintf('tt%d*dt,(ht%dmu-ht%dci)*micron,''--'',',mm,mm,mm)];
 end
-c = [c '''LineWidth'',2)'];
+c = [c '''LineWidth'',1)'];
 eval(c);
-% h0=plot(tt0*dt,ht0*micron,'k-');
-% h1=plot(tt1*dt,ht1*micron,'k--');
-% h2=plot(tt2*dt,ht2*micron,'k-.');
-legend(h(1:3:Nsim),'without anchoring and filial','anchoring only','filial only','Location','NorthWest')	% Set legends for means only
-set(h(1:3:Nsim),'LineWidth',2)	% Set LineWidth for means
+set(gca,'FontName','Times New Roman','FontSize',9);
+hl = legend(h(1:3:end),'Default case','Anchoring links','Filial links','Location','NorthWest');	% Set legends for means only
+legend(hl,'boxoff');
+set(h(1:3:end),'LineWidth',2)	% Set LineWidth for means

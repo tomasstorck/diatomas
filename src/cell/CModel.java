@@ -65,8 +65,10 @@ public class CModel implements Serializable {
 	public boolean gravityZ = false;
 	public double Kd 	= 1e-13;				// drag force coefficient
 	public boolean electrostatic = false;
-	public double kappa = 1.0/(10e-9);			// [1/m], inverse Debye length for ionic concentration of ... [Hermansson 1999]
-	public double Ces	= 1e-9;					// ES force scaling factor
+	public double kappa = 1.0/(20e-9);			// [1/m], inverse Debye length for ionic concentration of ... [Hermansson 1999]
+	public double Ces	= 1e-22;				// Electrostatic grouped constants (excl. kappa)
+	public double Cvdw  = 1e-31;				// van der Waals grouped constants 
+	public double dlimFactor = 6.0;				// Multiplication factor to determine minimum distance in DLVO (dlimFactor*1/kappa)
 	// --> Substratum and normal forces
 	public boolean normalForce = false;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = false;	// All initial balls are positioned at y(t=0) = ball.radius
@@ -646,7 +648,9 @@ public class CModel implements Serializable {
 			// Electrostatic attraction
 			if(electrostatic) {
 				double d = (y-r);
-				ball.force.y += Ces * Math.exp(-kappa*d)*(-kappa*d + 1.0);			
+				double dlim = dlimFactor*(1.0/kappa); 
+				d = Math.max(d, dlim);			// Limit d to dlim. If it's smaller, we will get horrible solver stiffness 
+				ball.force.y += kappa*Ces*Math.exp(-kappa*d) - Cvdw/(d*d);
 			}
 			
 			// Velocity damping
