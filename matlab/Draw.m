@@ -1,6 +1,7 @@
-opengl AutoSelect		% in case you don't have opengl. Disable if you do.
+% opengl AutoSelect		% in case you don't have opengl. Disable if you do.
 
-n = 10;		% resolution of the sphere (lower = faster)
+n = 5;		% resolution of the sphere (lower = faster)
+renderSpring = false;
 
 [x,y,z] = sphere(n);		
 yshadow = zeros(size(y));
@@ -63,25 +64,28 @@ for iCell = 0:length(model.cellArray)-1;
 	end
 end
 
-for iFil=1:length(model.filSpringArray)
-    fil = model.filSpringArray(iFil);
-    ball0 = model.ballArray(fil.ballArray(1)+1);
-    ball1 = model.ballArray(fil.ballArray(2)+1);
-	if fil.type == 5
-		colour = 'b';
-	elseif fil.type == 6
-		colour = 'm';
-	else
-		colour = 'c';
+if renderSpring
+
+	for iFil=1:length(model.filSpringArray)
+		fil = model.filSpringArray(iFil);
+		ball0 = model.ballArray(fil.ballArray(1)+1);
+		ball1 = model.ballArray(fil.ballArray(2)+1);
+		if fil.type == 5
+			colour = 'b';
+		elseif fil.type == 6
+			colour = 'm';
+		else
+			colour = 'c';
+		end
+		plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],colour);
 	end
-    plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],colour);
-end
-	
-for iStick=1:length(model.stickSpringArray)
-    stick = model.stickSpringArray(iStick);
-    ball0 = model.ballArray(stick.ballArray(1)+1);
-    ball1 = model.ballArray(stick.ballArray(2)+1);
-    plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],'r');
+
+	for iStick=1:length(model.stickSpringArray)
+		stick = model.stickSpringArray(iStick);
+		ball0 = model.ballArray(stick.ballArray(1)+1);
+		ball1 = model.ballArray(stick.ballArray(2)+1);
+		plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],'r');
+	end
 end
 
 if model.normalForce

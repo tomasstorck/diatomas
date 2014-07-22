@@ -14,51 +14,54 @@ SIDE = false;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%
-% E. COLI
-%%%%%%%%%%%%%%%
-ECOLI = true;
-loadFileNameList = {'g0070r0070.mat'};		% E. coli
-
-%%%
-% Perspective
-PERSPECTIVE = true;
-imageFolderName = 'perspective';
-% %%%
-% % Top
-% TOP = true;
-% imageFolderName = 'top';
-% %%%
-% Side
-% SIDE = true;
-% imageFolderName = 'side';
-% %%%
-
-folderFilter = 'ecoli_anchor_anchorstretchlim*';		% <================
-plane = true;
-ceilLightColour = [0.65,0.65,0.65];
-camLightColour = [0.45 0.45 0.45];
-
 % %%%%%%%%%%%%%%%
-% % AS
+% % E. COLI
 % %%%%%%%%%%%%%%%
-% AS = true;
-% PERSPECTIVE = true;
-% %%%
-% % AS low
-% loadFileNameList = {'g0112r0112.mat'};		% AS low
-% folderFilter = 'as_low*';
-% %%%
-% % AS high
-% loadFileNameList = {'g0092r0092.mat'};		% AS high
-% folderFilter = 'as_high*';
-% %%%
+% ECOLI = true;
+% loadFileNameList = {'g0070r0070.mat'};		% E. coli
 % 
-% plane = false;
-% ceilLightColour = [0.8,0.8,0.8];
-% camLightColour = [0.6 0.6 0.6];
+% %%
+% % Perspective
+% PERSPECTIVE = true;
+% imageFolderName = 'perspective';
+% %%
+% % % Top
+% % TOP = true;
+% % imageFolderName = 'top';
+% % %%
+% % % Side
+% % SIDE = true;
+% % imageFolderName = 'side';
+% % %%
+% 
+% folderFilter = 'ecoli_*';		% <================
+% plane = true;
+% ceilLightColour = [0.65,0.65,0.65];
+% camLightColour = [0.45 0.45 0.45];
 
+%%%%%%%%%%%%%%%
+% AS
+%%%%%%%%%%%%%%%
+AS = true;
+PERSPECTIVE = true;
+%%%
+% AS low
+loadFileNameList = {'g0131r0131.mat','g0112r0112.mat','g0000r0000.mat'};		% AS low
+folderFilter = 'as_low*';
+% %%%
+% % % AS high
+% % loadFileNameList = {'g0092r0092.mat'};		% AS high
+% % folderFilter = 'as_high*';
+% % %%%
+% 
+imageFolderName = 'perspective';
+plane = false;
+ceilLightColour = [0.8,0.8,0.8];
+camLightColour = [0.6 0.6 0.6];
 
+% % SWAPCOLOURS - for cocci simulations
+% swapColours = true;
+% %%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -120,14 +123,14 @@ end
 % imageFolderName = ['paper-' imageFolderName];
 % renderIter = 10;		% Which results to render, as in 1:renderIter:end
 % fixLoadFileNameList = true;
-% imageWidth = 1024;
-% imageHeight = 768;
+% imageWidth = 1024*8;
+% imageHeight = 768*8;
 % aspect = imageWidth/imageHeight;
 % appendScaleBar = false;
 % LScale = 10;		% micron
-% scaleBarPos = [imageWidth-110 imageHeight-70];			% [posX posY]
+% scaleBarPos = [imageWidth-1100 imageHeight-70];			% [posX posY]
 % appendText = false;
-
+% 
 % fixRight = true;		% Set our own right value
 % if PERSPECTIVE && AS
 % 	camPosDifference = [0.0; 40; -80];
@@ -153,7 +156,7 @@ end
 % GENERAL
 %%%%%%%%%%%%%%%
 loadFileMax = 500;		% Maximum number of files to load per folder before moving on to the next
-removePOV = true;
+removePOV = false;
 rightIter = 10;			% How often to realign the zoom factor ("right")
 camRotate = [0; 0; 0];
 
@@ -165,6 +168,12 @@ cellColour = [0.60 0.00 0.00;		% Cell colours:
 filColour = [.10 .10 .10];			% Filament spring is black
 stickColour = [0.80 .80 0.80];		% Sticking spring is white
 anchorColour = [.50 .50 .50];		% Anchoring spring is grey
+
+if exist('swapColours','var') && swapColours
+	tempColour = cellColour(1,:);
+	cellColour(1,:) = cellColour(2,:);
+	cellColour(2,:) = tempColour;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -256,7 +265,7 @@ while true
 			fprintf([loadFileName '\n']);
 % 			try
 				load([location filesep 'output' filesep loadFileName]);
-				NSave = length(model.ballArray(1).posSave);
+				NSave = size(model.ballArray(1).posSave,1);
 				if model.relaxationIter==0 && model.growthIter==0
 					NSave = 0;
 				end
@@ -287,7 +296,7 @@ while true
 					RenderBuildPov(fid, model, ii, right, aspect, plane, camPosDifference, ceilLightColour,camLightColour, cellColour, filColour, stickColour, anchorColour, camView, camRotate);
 					% Finalise the file
 					fclose(fid);
-					systemInput = ['povray ' imageFolderName '/' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' imageFolderName '/' imageName{ii+1} ' +A +Q4'];		% +A +Q4 instead of +A -J
+					systemInput = ['povray ' imageFolderName '/' povName{ii+1} ' +W' num2str(imageWidth) ' +H' num2str(imageHeight) ' +O' imageFolderName '/' imageName{ii+1} ' +A +Q11'];		% +A +Q11 instead of +A -J
 					[~,message] = system(['cd ' location ' ; ' systemInput]);
 					if any(strfind(message,'Render failed'))
 						error(['Render failed: ...' message(end-300:end)]);

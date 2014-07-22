@@ -24,8 +24,8 @@ else
 end
 
 % Build colours
-for ii=1:size(cellColour,1)
-	fprintf(fid,'#declare colour%g = rgb<%f,%f,%f>;\n', ii-1, cellColour(ii,1), cellColour(ii,2), cellColour(ii,3));
+for jj=1:size(cellColour,1)
+	fprintf(fid,'#declare colour%g = rgb<%f,%f,%f>;\n', jj-1, cellColour(jj,1), cellColour(jj,2), cellColour(jj,3));
 end
 fprintf(fid,'#declare filColour = rgb<%f,%f,%f>;\n', filColour(1), filColour(2), filColour(3));
 fprintf(fid,'#declare stickColour = rgb<%f,%f,%f>;\n', stickColour(1), stickColour(2), stickColour(3));

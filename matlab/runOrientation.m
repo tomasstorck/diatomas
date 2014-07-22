@@ -65,9 +65,9 @@ opacity = 0.50;
 muBrightness = 1.0;
 set(gcf,'renderer','openGL');		% opacity requires bitmap
 % set(gcf,'PaperPosition',[0.634517 6.34517 20.3046 15.2284])
-set(gcf,'PaperPositionMode','manual');
+% set(gcf,'PaperPositionMode','manual');
 % set(gcf,'PaperSize',[20.984 29.6774]);
-set(gcf,'Position',[300,300,500,400]);
+% set(gcf,'Position',[300,300,500,400]);
 set(gcf,'DefaultAxesColorOrder', colour);
 
 set(gcf,'color',[1 1 1])
@@ -107,6 +107,18 @@ end
 a(4)=1.01; 
 axis(a);
 
+% Set dimensions
+drawnow
+set(gcf,'Units','inches');
+set(gcf,'PaperPositionMode','auto');
+drawnow
+set(gcf,'Position',[0.1 0.1 3.25 2.6]);
+drawnow
+
 % % Render with MYAA (http://www.mathworks.com.au/matlabcentral/fileexchange/20979-myaa-my-anti-alias-for-matlab)
 % myaa([16,8]); % Downsample less than supersample --> higher resolution
-% imwrite(getfield(getframe(gca),'cdata'),'orientation.png');
+% imwrite(getfield(getframe(gca),'cdata'),'height.png');
+
+% Print withOUT anti-aliasing
+print -dpng -r1200 orientation.png
+% Then anti-alias with GIMP and save as TIFF (LHZ)

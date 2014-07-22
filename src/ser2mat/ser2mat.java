@@ -7,6 +7,28 @@ import cell.*;
 import jmatio.*;
 
 public class ser2mat {
+	
+	public MLChar GetString(String i) {
+		MLChar o = new MLChar(null, new String[] {i}, i.length()); 
+		return o;
+	}
+	
+	public MLDouble GetDouble(double i) {
+		MLDouble o = new MLDouble(null, new double[] {i}, 1);
+		return o;
+	}
+	
+	public MLDouble GetDouble(double[] i) {
+		MLDouble o = new MLDouble(null, i, i.length);
+		return o;
+	}
+	
+	public MLDouble GetBoolean(boolean i) {
+		MLDouble o = new MLDouble(null, new double[] {i?1:0}, 1);
+		return o;
+	}
+	
+	
 	@SuppressWarnings("static-access")
 	public static void Convert(CModel model) {
 		MLStructure mlModel = new MLStructure("model", new int[] {1,1});
@@ -54,7 +76,9 @@ public class ser2mat {
 		mlModel.setField("Kd",                            new MLDouble(null, new double[] {model.Kd}, 1));                                	// drag force coefficient
 		mlModel.setField("electrostatic",                 new MLDouble(null, new double[] {model.electrostatic?1:0}, 1));                 	
 		mlModel.setField("kappa",                         new MLDouble(null, new double[] {model.kappa}, 1));                             	// [1/m], inverse Debye length for ionic concentration of ... [Hermansson 1999]
-		mlModel.setField("Ces",                           new MLDouble(null, new double[] {model.Ces}, 1));                               	// ES force scaling factor
+		mlModel.setField("Ces",                           new MLDouble(null, new double[] {model.Ces}, 1));                               	// Electrostatic grouped constants (excl. kappa)
+		mlModel.setField("Cvdw",                          new MLDouble(null, new double[] {model.Cvdw}, 1));                              	// van der Waals grouped constants
+		mlModel.setField("dlimFactor",                    new MLDouble(null, new double[] {model.dlimFactor}, 1));                        	// Multiplication factor to determine minimum distance in DLVO (dlimFactor*1/kappa)
 		// --> Substratum and normal forces
 		mlModel.setField("normalForce",                   new MLDouble(null, new double[] {model.normalForce?1:0}, 1));                   	// Use normal force to simulate cells colliding with substratum (at y=0)
 		mlModel.setField("initialAtSubstratum",           new MLDouble(null, new double[] {model.initialAtSubstratum?1:0}, 1));           	// All initial balls are positioned at y(t=0) = ball.radius
