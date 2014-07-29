@@ -27,7 +27,7 @@ public class CCell implements Serializable {
 	
 	public CCell(int type, double n, double radiusModifier, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, CModel model) {
 		this.model = model;
-		this.type = type;
+		this.type = type; 				// type == 0 || type == 1 is spherical cell. type == 2 || 3 is variable radius balls rod cell. type == 4 || 5 is fixed radius (variable length) rod cell
 		this.filament = filament;
 		this.radiusModifier = radiusModifier;
 		this.born = model.growthIter;
