@@ -1,6 +1,7 @@
 package ser2mat;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 import cell.*;
@@ -32,6 +33,106 @@ public class ser2mat {
 	@SuppressWarnings("static-access")
 	public static void Convert(CModel model) {
 		MLStructure mlModel = new MLStructure("model", new int[] {1,1});
+
+		Field[] fields = CModel.class.getDeclaredFields();
+		// TODO something-something while loop to take care of cellArray and ballArray
+		for(int i=0; i<fields.length; i++) {
+			Field f = fields[i];
+			try {
+				if(f.getGenericType() == long.class) {
+					String fname = f.getName();
+					long val = f.getLong(model);
+					mlModel.setField(fname,                    new MLDouble(null, new double[] {val}, 1));
+				}
+				else if (f.getGenericType() == String.class) {
+					String fname = f.getName();
+					String val = String.valueOf(f.get(model));
+					mlModel.setField(fname,                    new MLChar(null, new String[] {val}, val.length()));
+				}
+				else if(f.getGenericType() == int.class) {
+					String fname = f.getName();
+					int val = f.getInt(model);
+					mlModel.setField(fname,                    new MLDouble(null, new double[] {val}, 1));
+				}
+				else if(f.getGenericType() == double.class) {
+					String fname = f.getName();
+					double val = f.getDouble(model);
+					mlModel.setField(fname,                    new MLDouble(null, new double[] {val}, 1));
+				}
+				else if(f.getGenericType() == boolean.class) {
+					String fname = f.getName();
+					boolean val = f.getBoolean(model);
+					mlModel.setField(fname,                    new MLDouble(null, new double[] {val?1:0}, 1));
+				}
+				else if(f.getGenericType() == cell.Vector3d.class) {
+					String fname = f.getName();
+					Vector3d val = (Vector3d) f.get(model);
+					mlModel.setField(fname,                    new MLDouble(null, new double[] {val.x, val.y, val.z}, 3));
+				}
+				// Arrays (where we can't use getGenericType())
+				else if(f.get(model) instanceof boolean[][]) {
+					String fname = f.getName();
+					boolean[][] val = (boolean[][]) f.get(model);
+					// Convert boolean[][] to double[][]
+					double[][] valDouble = new double[val.length][val[0].length]; 
+					for(int ii=0; ii<val.length; ii++)
+						for(int jj=0; jj<val[0].length; jj++)
+							valDouble[ii][jj] = val[ii][jj] ? 1.0 : 0.0;
+					mlModel.setField(fname,                    new MLDouble(null, valDouble));
+				}
+				else if(f.get(model) instanceof boolean[]) {
+					String fname = f.getName();
+					boolean[] val = (boolean[]) f.get(model);
+					// Convert boolean[] to double[]
+					double[] valDouble = new double[val.length]; 
+					for(int ii=0; ii<val.length; ii++)
+						valDouble[ii] = val[ii] ? 1.0 : 0.0;
+					mlModel.setField(fname,                    new MLDouble(null, valDouble, valDouble.length));
+				}
+				else if(f.get(model) instanceof double[][]) {
+					String fname = f.getName();
+					double[][] val = (double[][]) f.get(model);
+					mlModel.setField(fname,                    new MLDouble(null, val));
+				}
+				else if(f.get(model) instanceof double[]) {
+					String fname = f.getName();
+					double[] val = (double[]) f.get(model);
+					mlModel.setField(fname,                    new MLDouble(null, val, val.length));
+				}
+				else if(f.get(model) instanceof int[][]) {
+					String fname = f.getName();
+					int[][] val = (int[][]) f.get(model);
+					// Convert int[][] to double[][] (there is no other way than this)
+					double[][] valDouble = new double[val.length][val[0].length];
+					for(int ii=0; ii<val.length; ii++) {
+						for(int jj=0; jj<val[0].length; jj++) {
+							valDouble[ii][jj] = (int) val[ii][jj];
+						}
+					}
+					mlModel.setField(fname,                    new MLDouble(null, valDouble));
+				}
+				else if(f.get(model) instanceof int[]) {
+					String fname = f.getName();
+					int[] val = (int[]) f.get(model);
+					// Convert int[] to double[] (there is no other way than this)
+					double[] valDouble = new double[val.length];
+					for(int ii=0; ii<val.length; ii++) {
+						valDouble[ii] = (int) val[ii];
+					}
+					mlModel.setField(fname,                    new MLDouble(null, valDouble, valDouble.length));
+				}
+				else {
+					throw new RuntimeException("Unknown class: "+f.getGenericType().toString()+" for variable "+f.getName()); 
+				}
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				model.Write("Not allowed to access field"+f.getName(), "warning");
+			}
+		}
+		
+		
+		
 		int N;
 		double[] arrayIndex;
 		// Set serializable information
