@@ -66,10 +66,6 @@ public class ser2mat {
 						// Don't want to try private fields
 						if(Modifier.isPrivate(f.getModifiers()))						 
 							continue;
-						// Don't bother if it's null
-						if(f.get(o) == null) {
-							continue;
-						}
 						// Simple types (where we can use the .class field)
 						if(f.getGenericType() == long.class) {
 							String fname = f.getName();
@@ -103,11 +99,15 @@ public class ser2mat {
 						}
 						else if(f.getGenericType() == CCell.class) {
 							String fname = f.getName();
-							CCell val = (CCell) f.get(o);
-							mlO.setField(fname,                    new MLDouble(null, new double[] {val.Index()}, 1), io);
+							int val;
+							if(f.get(o) != null)
+								val = ((CCell) f.get(o)).Index();
+							else
+								val = -1;
+							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
 						}
 						else if(f.getGenericType() == CModel.class) {
-							continue;
+							continue; 		// Don't save CModel
 						}
 						// Arrays (where we can't use getGenericType())
 						else if(f.get(o) instanceof int[]) {
@@ -188,13 +188,12 @@ public class ser2mat {
 							ArrayList<?> fArrayList = (ArrayList<?>) f.get(o);
 							Object e0;
 							if(fArrayList.isEmpty())
-								continue;									// Empty --> don't care about this array // TODO problem might be here and related to null
+								continue;									// Empty --> don't care about this array
 							e0 = fArrayList.get(0);
 								
 							Class<? extends Object> c = e0.getClass();		// It's an ArrayList<Class c>
 								if(o == model) {							// This ArrayList is nested directly under CModel
-									MLStructure mlONew = new MLStructure(null, new int[] {((ArrayList<?>) f.get(o)).size() ,1});
-									mlO.setField(fname, 		   mlONew, io); // Add this new MLArray to mlModel
+									MLStructure mlONew = new MLStructure(fname, new int[] {((ArrayList<?>) f.get(o)).size() ,1}); 		
 									aTodoArray.add(f.get(o));
 									mlObjectArray.add(mlONew);
 								} else {									// NOT nested directly under CModel --> find indices now
@@ -225,12 +224,19 @@ public class ser2mat {
 			}
 			ic++;
 		}
-		// Create a list and add mlModel
+		// populate mlModel and save
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);
-		list.add(mlObjectArray.get(0));
+		MLStructure mlModel = mlObjectArray.get(0);
+		for(int is=1; is<mlObjectArray.size(); is++) { 			// Don't start at 0, that's mlModel
+			MLStructure mlO = mlObjectArray.get(is);
+//			if(!((mlO.name).equalsIgnoreCase("c")))
+				mlModel.setField(mlO.name, 		   mlO);
+//			else
+//				model.Write("skipped","");
+		}
+		list.add(mlModel);
+		
 		try {
-			MLStructure b=mlObjectArray.get(0); //FIXME. Problem=in ballArray!!!
-			MLStructure c=mlObjectArray.get(2); //FIXME. Problem=in ballArray!!!
 			new MatFileWriter("results/" + model.name + "/output/" + String.format("g%04dr%04d", model.growthIter, model.relaxationIter) + ".mat",list);
 		} catch (IOException e) {
 			e.printStackTrace();
