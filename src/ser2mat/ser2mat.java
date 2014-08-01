@@ -34,41 +34,39 @@ public class ser2mat {
 		return o;
 	}
 	
-	
+	@SuppressWarnings("unchecked")
 	public static void Convert(CModel model) {
 		// Loop over classes, starting with model
-		ArrayList<Object> aTodoArray = new ArrayList<Object>();			// Array to-do array - yes, an "ArrayList< ArrayList<?> >"
+		ArrayList<Object> oTodoArray = new ArrayList<Object>();			// Array to-do array - yes, can be an "ArrayList< ArrayList<?> >"
 		ArrayList<MLStructure> mlObjectArray = new ArrayList<MLStructure>();
-		aTodoArray.add(model);
+		oTodoArray.add(model);
 		mlObjectArray.add(new MLStructure("model", new int[] {1,1}));
-		int ic = 0;
-		while(ic<aTodoArray.size()) {
-			Object a = aTodoArray.get(ic);
-			MLStructure mlO = mlObjectArray.get(ic);
-			
+		int it = 0; 													// it for Todo
+		while(it<oTodoArray.size()) {
+			Object oRaw = oTodoArray.get(it); 							// Perhaps still to be wrapped
+			MLStructure mlO = mlObjectArray.get(it);
 			// Wrap oRaw into an ArrayList oArray if we haven't already
 			ArrayList<Object> oArray;
-			if(a instanceof ArrayList) {
-				oArray = ((ArrayList<Object>) a);
-			} else if(a instanceof Object[]) {
-				oArray = new ArrayList<Object>(Arrays.asList(a));
+			if(oRaw instanceof ArrayList<?>) {
+				oArray = (ArrayList<Object>) oRaw;						// This causes a "unchecked" warning we don't need to worry about. Will always be an ArrayList<Object>. Suppressed
+			} else if(oRaw instanceof Object[]) {
+				oArray = new ArrayList<Object>(Arrays.asList(oRaw));
 			} else {
 				oArray = new ArrayList<Object>();
-				oArray.add(a);
+				oArray.add(oRaw);
 			}
-			// And loop over the different elements in ArrayList<o.class>
+			// And loop over the different elements in ArrayList<o.class> oArray
 			for(int io=0; io<oArray.size(); io++) {
 				Object o = oArray.get(io);
-				Field[] fields = o.getClass().getDeclaredFields(); 			// Should remain the same for oArray
-				
-				for(int jf=0; jf<fields.length; jf++) {
-					Field f = fields[jf];
+				Field[] fields = o.getClass().getDeclaredFields(); 		// Should remain the same for oArray
+				// Loop over the fields in o
+				for(Field f : fields) {
 					try {
 						// Don't want to try private fields
 						if(Modifier.isPrivate(f.getModifiers()))						 
 							continue;
-						// Simple types (where we can use the .class field)
-						if(f.getGenericType() == long.class) {
+						/* Simple types (where we can use the .class field) */
+						if(f.getGenericType() 		== long.class) {
 							String fname = f.getName();
 							long val = f.getLong(o);
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
@@ -78,27 +76,27 @@ public class ser2mat {
 							String val = String.valueOf(f.get(o));
 							mlO.setField(fname,                    new MLChar(null, new String[] {val}, val.length()), io);
 						}
-						else if(f.getGenericType() == int.class) {
+						else if(f.getGenericType() 	== int.class) {
 							String fname = f.getName();
 							int val = f.getInt(o);
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
 						}
-						else if(f.getGenericType() == double.class) {
+						else if(f.getGenericType() 	== double.class) {
 							String fname = f.getName();
 							double val = f.getDouble(o);
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
 						}
-						else if(f.getGenericType() == boolean.class) {
+						else if(f.getGenericType() 	== boolean.class) {
 							String fname = f.getName();
 							boolean val = f.getBoolean(o);
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val?1:0}, 1), io);
 						}
-						else if(f.getGenericType() == cell.Vector3d.class) {
+						else if(f.getGenericType() 	== cell.Vector3d.class) {
 							String fname = f.getName();
 							Vector3d val = (Vector3d) f.get(o);
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val.x, val.y, val.z}, 3), io);
 						}
-						else if(f.getGenericType() == CCell.class) {
+						else if(f.getGenericType() 	== CCell.class) {
 							String fname = f.getName();
 							int val;
 							if(f.get(o) != null)
@@ -107,11 +105,10 @@ public class ser2mat {
 								val = -1;
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
 						}
-						else if(f.getGenericType() == CModel.class) {
-							continue; 		// Don't save CModel
+						else if(f.getGenericType() 	== CModel.class) {
+							continue; 									// Don't save CModel
 						}
-						// Arrays (where we can't use getGenericType())
-						else if(f.get(o) instanceof int[]) {
+						else if(f.getType() == int[].class) {
 							String fname = f.getName();
 							int[] val = (int[]) f.get(o);
 							// Convert int[] to double[] (there is no other way than this)
@@ -121,7 +118,7 @@ public class ser2mat {
 							}
 							mlO.setField(fname,                    new MLDouble(null, valDouble, valDouble.length), io);
 						}
-						else if(f.get(o) instanceof int[][]) {
+						else if(f.getType() == int[][].class) {
 							String fname = f.getName();
 							int[][] val = (int[][]) f.get(o);
 							// Convert int[][] to double[][] (there is no other way than this)
@@ -133,17 +130,17 @@ public class ser2mat {
 							}
 							mlO.setField(fname,                    new MLDouble(null, valDouble), io);
 						}
-						else if(f.get(o) instanceof double[]) {
+						else if(f.getType() == double[].class) {
 							String fname = f.getName();
 							double[] val = (double[]) f.get(o);
 							mlO.setField(fname,                    new MLDouble(null, val, val.length), io);
 						}
-						else if(f.get(o) instanceof double[][]) {
+						else if(f.getType() == double[][].class) {
 							String fname = f.getName();
 							double[][] val = (double[][]) f.get(o);
 							mlO.setField(fname,                    new MLDouble(null, val), io);
 						}
-						else if(f.get(o) instanceof boolean[]) { 		// Alternatively: f.get(model).getClass().getComponentType()
+						else if(f.getType() == boolean[].class) { 		// Alternatively: f.get(model).getClass().getComponentType()
 							String fname = f.getName();
 							boolean[] val = (boolean[]) f.get(o);
 							// Convert boolean[] to double[]
@@ -152,7 +149,7 @@ public class ser2mat {
 								valDouble[ii] = val[ii] ? 1.0 : 0.0;
 							mlO.setField(fname,                    new MLDouble(null, valDouble, valDouble.length), io);
 						}
-						else if(f.get(o) instanceof boolean[][]) {
+						else if(f.getType() == boolean[][].class) {
 							String fname = f.getName();
 							boolean[][] val = (boolean[][]) f.get(o);
 							// Convert boolean[][] to double[][]
@@ -162,7 +159,7 @@ public class ser2mat {
 									valDouble[ii][jj] = val[ii][jj] ? 1.0 : 0.0;
 							mlO.setField(fname,                    new MLDouble(null, valDouble), io);
 						}
-						else if(f.get(o) instanceof CBall[]) {
+						else if(f.getType() == CBall[].class) {
 							String fname = f.getName();
 							CBall[] val = (CBall[]) f.get(o);
 							// Convert CBall[] to double[] by looking at indices
@@ -171,7 +168,7 @@ public class ser2mat {
 								valDouble[ii] = val[ii].Index();
 							mlO.setField(fname,                    new MLDouble(null, valDouble, valDouble.length), io);
 						}
-						else if(f.get(o) instanceof cell.Vector3d[]) {
+						else if(f.getType() == Vector3d[].class) {
 							String fname = f.getName();
 							Vector3d[] val = (Vector3d[]) f.get(o);
 							// Convert Vector3d[] to double[][]
@@ -190,14 +187,14 @@ public class ser2mat {
 							Class<?> c = GetParClass(f);					// It's an ArrayList<Class c>
 								if(o == model) {							// This ArrayList is nested directly under CModel
 									MLStructure mlONew = new MLStructure(fname, new int[] {((ArrayList<?>) f.get(o)).size() ,1}); 		
-									aTodoArray.add(f.get(o));
+									oTodoArray.add(f.get(o));
 									mlObjectArray.add(mlONew);
 								} else {									// NOT nested directly under CModel --> find indices now
-									Method IndexMethod = c.getMethod("Index", null);
+									Method IndexMethod = c.getMethod("Index");
 									double[] fIndexArray = new double[fArrayList.size()]; 		// Though it is int, we'll save it as double
 									for(int ie=0; ie<fArrayList.size(); ie++) {
 										Object e1 = fArrayList.get(ie);
-										fIndexArray[ie] = (int) IndexMethod.invoke(e1, null);
+										fIndexArray[ie] = (int) IndexMethod.invoke(e1);
 									}
 									mlO.setField(fname,            new MLDouble(null, fIndexArray, fIndexArray.length), io);
 								}
@@ -218,17 +215,14 @@ public class ser2mat {
 					}
 				}
 			}
-			ic++;
+			it++;
 		}
 		// populate mlModel and save
 		ArrayList<MLArray> list = new ArrayList<MLArray>(1);
 		MLStructure mlModel = mlObjectArray.get(0);
 		for(int is=1; is<mlObjectArray.size(); is++) { 			// Don't start at 0, that's mlModel
 			MLStructure mlO = mlObjectArray.get(is);
-//			if(!((mlO.name).equalsIgnoreCase("c")))
-				mlModel.setField(mlO.name, 		   mlO);
-//			else
-//				model.Write("skipped","");
+			mlModel.setField(mlO.name, 		   mlO);
 		}
 		list.add(mlModel);
 		
