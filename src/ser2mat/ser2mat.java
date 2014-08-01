@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -182,16 +183,11 @@ public class ser2mat {
 							}
 							mlO.setField(fname,                    new MLDouble(null, valDouble), io);
 						}
-						// Get the really tricky ones (cellArray, ballArray). Luckily we can generalise these
+						// Get the really tricky ones (cellArray, ballArray, ...). Luckily we can generalise these
 						else if(f.get(o) instanceof ArrayList) { 			// It's an ArrayList
 							String fname = f.getName();
-							ArrayList<?> fArrayList = (ArrayList<?>) f.get(o);
-							Object e0;
-							if(fArrayList.isEmpty())
-								continue;									// Empty --> don't care about this array
-							e0 = fArrayList.get(0);
-								
-							Class<? extends Object> c = e0.getClass();		// It's an ArrayList<Class c>
+							ArrayList<?> fArrayList = (ArrayList<?>) f.get(o); 
+							Class<?> c = GetParClass(f);					// It's an ArrayList<Class c>
 								if(o == model) {							// This ArrayList is nested directly under CModel
 									MLStructure mlONew = new MLStructure(fname, new int[] {((ArrayList<?>) f.get(o)).size() ,1}); 		
 									aTodoArray.add(f.get(o));
@@ -241,6 +237,10 @@ public class ser2mat {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static Class<?> GetParClass(Field f) {
+		return (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
 	}
 }
 
