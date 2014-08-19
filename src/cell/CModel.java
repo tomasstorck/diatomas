@@ -20,7 +20,6 @@ import NR.StepperDopr853;
 import NR.Vector;
 import NR.feval;
 import NR.Common;
-import backbone.Assistant;
 
 public class CModel implements Serializable {
 	// Set serializable information
@@ -446,10 +445,7 @@ public class CModel implements Serializable {
 	//////////////////////
 	// Relaxation stuff //
 	//////////////////////
-	public int Relaxation() throws RuntimeException {
-		// Reset counter
-		Assistant.NAnchorBreak = Assistant.NAnchorForm = Assistant.NFilBreak = Assistant.NStickBreak = Assistant.NStickForm = 0;
-		
+	public int[] Relaxation() throws RuntimeException {
 		int ntimes = (int) (relaxationTimeStep/relaxationTimeStepdt);
 		double atol = 1.0e-6, rtol = atol;
 		double h1 = 0.00001, hmin = 0;
@@ -495,7 +491,7 @@ public class CModel implements Serializable {
 			ball.vel.y = out.ysave.get(iVar++,iTime);
 			ball.vel.z = out.ysave.get(iVar++,iTime);
 		}}
-		return nstp;
+		return new int[]{nstp, ode.NAnchorBreak, ode.NAnchorForm, ode.NStickBreak, ode.NStickForm, ode.NFilBreak};
 	}
 	
 	public Vector CalculateForces(Vector yode) {	
@@ -734,7 +730,13 @@ public class CModel implements Serializable {
 		return dydx;
 	}
 	
-	public void FormBreak() {								// Breaks and forms sticking, filament springs when needed. Used during Relaxation()
+	public int[] FormBreak() {								// Breaks and forms sticking, filament springs when needed. Used during Relaxation()
+		int NAnchorBreak= 0;
+		int NAnchorForm = 0;
+		int NStickBreak = 0;
+		int NStickForm 	= 0;
+		int NFilBreak 	= 0;
+		
 		for(int ii=0; ii<cellArray.size(); ii++) {
 			CCell cell0 = cellArray.get(ii);
 			// Anchoring
@@ -752,14 +754,14 @@ public class CModel implements Serializable {
 							breakArray.add(anchor);
 						}
 					}
-					for(CAnchorSpring anchor : breakArray)		Assistant.NAnchorBreak += anchor.Break();
+					for(CAnchorSpring anchor : breakArray)		NAnchorBreak += anchor.Break();
 				} else {									// Cell is not yet anchored
 					// Form anchor?
 					boolean formBall0 = (ball0.pos.y < anchorFormLim+ball0.radius) ? true : false;
 					boolean formBall1 = false;
 					if(cell0.type > 1) 	formBall1 = (ball1.pos.y < anchorFormLim+ball1.radius) ? true : false;			// If ball1 != null
 					if(formBall0 || formBall1) {
-						Assistant.NAnchorForm += cell0.Anchor();
+						NAnchorForm += cell0.Anchor();
 					}
 				}
 			}
@@ -789,7 +791,7 @@ public class CModel implements Serializable {
 					double distance = filamentSpring.GetL().norm();
 					// Check if we can break this spring
 					if(distance>filamentSpring.restLength+filStretchLim) {
-						Assistant.NFilBreak += filamentSpring.Break();	// Also breaks its siblings
+						NFilBreak += filamentSpring.Break();	// Also breaks its siblings
 					}
 				} else if (sticking){						// Check if we want to do sticking, or break the sticking spring
 					// Determine current distance, required for formation and breaking
@@ -797,7 +799,7 @@ public class CModel implements Serializable {
 					CBall c1b0 = cell1.ballArray[0];				
 					if(isStuck) {							// Stuck --> can we break this spring (and its siblings)?
 						double dist = stickingSpring.GetL().norm();
-						if(dist > stickingSpring.restLength+stickStretchLim) 		Assistant.NStickBreak += stickingSpring.Break();
+						if(dist > stickingSpring.restLength+stickStretchLim) 		NStickBreak += stickingSpring.Break();
 					} else {								// Not stuck --> can we stick them? We have already checked if they are linked through filaments, not the case
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
@@ -835,11 +837,12 @@ public class CModel implements Serializable {
 							throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
 						}
 						// Stick if distance is small enough
-						if(dist<R2+stickFormLim) 	Assistant.NStickForm += cell0.Stick(cell1);
+						if(dist<R2+stickFormLim) 	NStickForm += cell0.Stick(cell1);
 					}
 				}
 			}
 		}
+		return new int[]{NAnchorForm, NAnchorBreak, NStickForm, NStickBreak, NFilBreak};
 	}
 	
 	//////////////////

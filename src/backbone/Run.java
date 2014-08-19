@@ -294,14 +294,22 @@ public class Run {
 			// Relaxation
 			boolean keepMoving = true;
 			int relaxationIterInit=model.relaxationIter;
-			int nstp=0;
 			while(keepMoving) {
 				model.Write("Starting relaxation calculations","iter");
 				int iter = model.relaxationIter-relaxationIterInit;
-				nstp = model.Relaxation();
+				int[] relaxationOut = model.Relaxation();
+				int nstp 		= relaxationOut[0]; 
+				int NAnchorBreak= relaxationOut[1];
+				int NAnchorForm	= relaxationOut[2];
+				int NStickBreak = relaxationOut[3];
+				int NStickForm 	= relaxationOut[4];
+				int NFilBreak 	= relaxationOut[5];
 				model.relaxationIter++;
 				model.relaxationTime += model.relaxationTimeStepdt;
 				model.Write("Relaxation finished in " + nstp + " solver steps","iter");
+				model.Write("Anchor springs broken/formed: " + NAnchorBreak + "/" + NAnchorForm + ", net " + (NAnchorForm-NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
+				model.Write("Filament springs broken: " + NFilBreak + ", total " + model.filSpringArray.size(), "iter");
+				model.Write("Stick springs broken/formed: " + NStickBreak + "/" + NStickForm + ", net " + (NStickForm-NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
 				// Check if we need to keep relaxing
 				keepMoving = false;
 				// Keep moving if velocities or forces exceed limits
@@ -326,16 +334,13 @@ public class Run {
 				model.Write("Saving model as serialised file", "iter");
 				model.Save();
 				ser2mat.Convert(model);
-			}
-			model.Write("Anchor springs broken/formed: " + Assistant.NAnchorBreak + "/" + Assistant.NAnchorForm + ", net " + (Assistant.NAnchorForm-Assistant.NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
-			model.Write("Filament springs broken: " + Assistant.NFilBreak + ", total " + model.filSpringArray.size(), "iter");
-			model.Write("Stick springs broken/formed: " + Assistant.NStickBreak + "/" + Assistant.NStickForm + ", net " + (Assistant.NStickForm-Assistant.NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
-			// Lower beta in ODE solver if too many steps
-			if(model.ODEbeta>0.0 && nstp>(int)4e4*model.relaxationTimeStep) {
-				if(model.ODEbeta>1e-3) 	model.ODEbeta *= 0.75;
-				else 					model.ODEbeta = 0.0;
-				model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
-				model.Write("Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
+				// Lower beta in ODE solver if too many steps
+				if(model.ODEbeta>0.0 && nstp>(int)4e4*model.relaxationTimeStep) {
+					if(model.ODEbeta>1e-3) 	model.ODEbeta *= 0.75;
+					else 					model.ODEbeta = 0.0;
+					model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
+					model.Write("Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
+				}
 			}
 		}
 	}

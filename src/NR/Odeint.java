@@ -20,6 +20,11 @@ public class Odeint<Stepper extends StepperBase> {
 	feval derivs; 					// feval object containing information about the derivatives, including method to calculate them
 	public StepperDopr853 s;		// Our stepper. Made public to be able to alter alpha and beta
 	CModel model;
+	public int NAnchorBreak = 0;
+	public int NAnchorForm = 0;
+	public int NStickBreak = 0;
+	public int NStickForm = 0;
+	public int NFilBreak = 0;
 
 	public Odeint(Vector ystartt, double xx1, double xx2, 			// initial values, intial integration interval point, end of interval 
 			double atol, double rtol, double h1, double hminn,		// absolute tolerance, relative tolerance, initial stepsize, minimum stepsize allowed
@@ -61,7 +66,12 @@ public class Odeint<Stepper extends StepperBase> {
 				++nok;
 				/////////////////////////////
 				// What else do we want to do after a successful step --> model specific! Remove this if solver applied to other model
-				model.FormBreak();
+				int[] NSpringArray = model.FormBreak();
+				NAnchorBreak+= NSpringArray[0];
+				NAnchorForm += NSpringArray[1];
+				NStickBreak += NSpringArray[2];
+				NStickForm 	+= NSpringArray[3];
+				NFilBreak 	+= NSpringArray[4];
 				/////////////////////////////
 			} else {
 				++nbad;
