@@ -292,46 +292,36 @@ public class Run {
 			model.attachCounter -= (int)model.attachCounter;	// Subtract how many cells we've added this turn
 
 			// Relaxation
-			boolean keepMoving = true;
-			int relaxationIterInit=model.relaxationIter;
-			while(keepMoving) {
-				model.Write("Starting relaxation calculations","iter");
-				int iter = model.relaxationIter-relaxationIterInit;
+			int relaxationIterInit = (int) (model.relaxationTimeStep/model.relaxationTimeStepdt);
+			model.Write("Starting relaxation calculations","iter"); 
+			int NAnchorBreak= 0;
+			int NAnchorForm	= 0;
+			int NStickBreak = 0;
+			int NStickForm 	= 0;
+			int NFilBreak 	= 0;
+			for(int ir=0; ir<relaxationIterInit; ir++) {
 				int[] relaxationOut = model.Relaxation();
-				int nstp 		= relaxationOut[0]; 
-				int NAnchorBreak= relaxationOut[1];
-				int NAnchorForm	= relaxationOut[2];
-				int NStickBreak = relaxationOut[3];
-				int NStickForm 	= relaxationOut[4];
-				int NFilBreak 	= relaxationOut[5];
+				int nstp 	
+				=  relaxationOut[0]; 
+				NAnchorBreak+= relaxationOut[1];
+				NAnchorForm	+= relaxationOut[2];
+				NStickBreak += relaxationOut[3];
+				NStickForm 	+= relaxationOut[4];
+				NFilBreak 	+= relaxationOut[5];
 				model.relaxationIter++;
 				model.relaxationTime += model.relaxationTimeStepdt;
-				model.Write("Relaxation finished in " + nstp + " solver steps","iter");
-				model.Write("Anchor springs broken/formed: " + NAnchorBreak + "/" + NAnchorForm + ", net " + (NAnchorForm-NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
-				model.Write("Filament springs broken: " + NFilBreak + ", total " + model.filSpringArray.size(), "iter");
-				model.Write("Stick springs broken/formed: " + NStickBreak + "/" + NStickForm + ", net " + (NStickForm-NStickBreak) + ", total " + model.stickSpringArray.size(), "iter");
-				// Check if we need to keep relaxing
-				keepMoving = false;
-				// Keep moving if velocities or forces exceed limits
-				if(!model.allowMovement) {
-					for(CBall ball : model.ballArray) {
-						final double thresholdForce = 1e-20;
-						final double thresholdVel = 1e-7;
-						if( ball.force.x + ball.force.y + ball.force.z > thresholdForce   ||   ball.vel.x + ball.vel.y + ball.vel.z > thresholdVel )
-							keepMoving = true;
+				model.Write("    Relaxation finished in " + nstp + " solver steps","iter");
+				// Throw warning if cells are overlapping (will crash COMSOL)
+				ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.01);
+				if(!overlapCellArray.isEmpty()) {
+					String overlapCellArrayString = ""; 
+					for(CCell c : overlapCellArray) {
+						overlapCellArrayString += c.Index() + " ";
 					}
-				}
-				// Keep moving if cells are overlapping
-				if(!model.allowOverlap && !model.DetectCellCollision_Proper(1.01).isEmpty())
-					keepMoving = true;
-				// Stop relaxing if we have relaxted too much already
-				if(iter==model.relaxationIterSuccessiveMax) {
-					if(iter>0)
-						model.Write("Maximum successive relaxation steps done, continuing", "warning");
-					keepMoving = false;
+					model.Write("    Overlapping cells detected: " + overlapCellArrayString, "warning");
 				}
 				// And finally: save stuff
-				model.Write("Saving model as serialised file", "iter");
+				model.Write("    Saving model as serialised file", "iter");
 				model.Save();
 				ser2mat.Convert(model);
 				// Lower beta in ODE solver if too many steps
@@ -339,9 +329,12 @@ public class Run {
 					if(model.ODEbeta>1e-3) 	model.ODEbeta *= 0.75;
 					else 					model.ODEbeta = 0.0;
 					model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
-					model.Write("Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
-				}
+					model.Write("    Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
+				}	
 			}
+			model.Write("Anchor springs broken/formed: " + NAnchorBreak + "/" + NAnchorForm + ", net " + (NAnchorForm-NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
+			model.Write("Filament springs broken: "      + NFilBreak          														+ ", total " + model.filSpringArray.size(), "iter");
+			model.Write("Stick springs broken/formed: "  + NStickBreak  + "/" + NStickForm  + ", net " + (NStickForm-NStickBreak) 	+ ", total " + model.stickSpringArray.size(), "iter");
 		}
 	}
 }
