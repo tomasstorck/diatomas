@@ -325,13 +325,6 @@ public class Run {
 				model.Write("    Saving model as serialised file", "iter");
 				model.Save();
 				ser2mat.Convert(model);
-				// Lower beta in ODE solver if too many steps
-				if(model.ODEbeta>0.0 && nstp>(int)4e4*model.relaxationTimeStep) {
-					if(model.ODEbeta>1e-3) 	model.ODEbeta *= 0.75;
-					else 					model.ODEbeta = 0.0;
-					model.ODEalpha = 1.0/8.0-model.ODEbeta*0.2;		// alpha is per default a function of beta
-					model.Write("    Lowered ODE beta to " + model.ODEbeta +  " for next relaxation iteration","warning");
-				}	
 			}
 			model.Write("Anchor springs broken/formed: " + NAnchorBreak + "/" + NAnchorForm + ", net " + (NAnchorForm-NAnchorBreak) + ", total " + model.anchorSpringArray.size(), "iter");
 			model.Write("Filament springs broken: "      + NFilBreak          														+ ", total " + model.filSpringArray.size(), "iter");

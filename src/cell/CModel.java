@@ -116,9 +116,6 @@ public class CModel implements Serializable {
 	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(0);
 	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(0);
 	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(0);
-	// === SOLVER STUFF ===
-	public double ODEbeta = 0.08;
-	public double ODEalpha = 1.0/8.0-ODEbeta*0.2;
 	// === COMSOL STUFF ===
 	public static int port = 2036;
 	public static boolean bit64 = true;
@@ -454,6 +451,7 @@ public class CModel implements Serializable {
 
 			public void handleStep(StepInterpolator interpolator, boolean isLast) {
 				int[] springChanges = FormBreak();
+				ode.NStep++;
 				ode.NAnchorForm += springChanges[0]; 
 				ode.NAnchorBreak += springChanges[1];
 				ode.NStickForm += springChanges[2];
@@ -475,7 +473,7 @@ public class CModel implements Serializable {
 			y[ii++] = ball.vel.z;
 		}
 		// Set up solver
-		dp853.integrate(ode, 0.0, y, relaxationTimeStepdt, y); // now y contains final state at time t=1.0 starting at t=0.0;
+		dp853.integrate(ode, 0.0, y, relaxationTimeStepdt, y); 	// y will contain solution
 
 		ii = 0; 												// TODO This is probably redundant, already transferred in calculateDerivative 
 		for(CBall ball : ballArray) {
@@ -486,7 +484,7 @@ public class CModel implements Serializable {
 			ball.vel.y = y[ii++];
 			ball.vel.z = y[ii++];
 		}
-		return new int[]{dp853.getEvaluations(), ode.NAnchorBreak, ode.NAnchorForm, ode.NStickBreak, ode.NStickForm, ode.NFilBreak};
+		return new int[]{ode.NStep, ode.NAnchorBreak, ode.NAnchorForm, ode.NStickBreak, ode.NStickForm, ode.NFilBreak};
 //		return new int[]{0,0,0,0,0,0};
 		
 		
