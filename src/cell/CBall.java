@@ -12,8 +12,6 @@ public class CBall implements Serializable {
 	public Vector3d pos;
 	public Vector3d vel;
 	public Vector3d force;
-	public Vector3d[] posSave;
-	public Vector3d[] velSave;
 //	public int index;
 	public CCell cell;
 //	public int ballArrayIndex;
@@ -28,16 +26,6 @@ public class CBall implements Serializable {
 		vel = new Vector3d(0, 0, 0);
 		force = new Vector3d(0, 0, 0);
 
-		int NSave = (int)(model.relaxationTimeStep/model.relaxationTimeStepdt);	// -1 for not saving the final value, +1 for saving the initial value
-		posSave = new Vector3d[NSave];
-		velSave = new Vector3d[NSave];
-//		forceSave = new Vector3d[NSave];
-		for(int iSave=0; iSave<NSave; iSave++) {
-			posSave[iSave] = new Vector3d();
-			velSave[iSave] = new Vector3d();
-//			forceSave[iSave] = new Vector3d();
-		}
-		
 		this.n = amount;
 		
 		// Add ball to required arrays

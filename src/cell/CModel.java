@@ -13,12 +13,13 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
+import org.apache.commons.math3.ode.FirstOrderIntegrator;
+import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
+import org.apache.commons.math3.ode.sampling.StepHandler;
+import org.apache.commons.math3.ode.sampling.StepInterpolator;
+
 import random.rand;
-import NR.Odeint;
-import NR.Output;
-import NR.StepperDopr853;
-import NR.Vector;
-import NR.feval;
 import NR.Common;
 
 public class CModel implements Serializable {
@@ -446,288 +447,97 @@ public class CModel implements Serializable {
 	// Relaxation stuff //
 	//////////////////////
 	public int[] Relaxation() throws RuntimeException {
-		int ntimes = (int) (relaxationTimeStep/relaxationTimeStepdt);
-		double atol = 1.0e-6, rtol = atol;
-		double h1 = 0.00001, hmin = 0;
-		double t1 = relaxationTime; 
-		double t2 = t1 + relaxationTimeStep;
-		Vector ystart = new Vector(6*ballArray.size(),0.0);
-
+		
+		FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
+		FirstOrderDifferentialEquations ode = new RelaxationODE(this);
+//		StepHandler stepHandler = new StepHandler() {
+//			public void init(double t0, double[] y0, double t) {}
+//
+//			public void handleStep(StepInterpolator interpolator, boolean isLast) {
+//				double   t = interpolator.getCurrentTime();
+//				double[] y = interpolator.getInterpolatedState();
+//				System.out.println(t + "  |  " + y[0] + " " + y[1] + " " + y[2] + "   |   " + y[3] + " " + y[4] + " " + y[5]);
+//			}
+//		};
+//		dp853.addStepHandler(stepHandler);
+		
+		// Define initial conditions
+		double[] y = new double[ballArray.size()*6];
 		int ii=0;											// Determine initial value vector
 		for(CBall ball : ballArray) { 
-			ystart.set(ii++, ball.pos.x);
-			ystart.set(ii++, ball.pos.y);
-			ystart.set(ii++, ball.pos.z);
-			ystart.set(ii++, ball.vel.x);
-			ystart.set(ii++, ball.vel.y);
-			ystart.set(ii++, ball.vel.z);
+			y[ii++] = ball.pos.x;
+			y[ii++] = ball.pos.y;
+			y[ii++] = ball.pos.z;
+			y[ii++] = ball.vel.x;
+			y[ii++] = ball.vel.y;
+			y[ii++] = ball.vel.z;
 		}
-		Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
-		feval dydt = new feval(this);
-		Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt, this);
-		// Update alpha and beta
-		ode.s.alpha = ODEalpha;
-		ode.s.beta = ODEbeta;
-		// Integrate to find solution
-		int nstp = ode.integrate();
-		for(int iTime=0; iTime<out.nsave; iTime++) {		// Save all intermediate results to the save variables
-			int iVar = 0;
-			for(CBall ball : ballArray) {
-				ball.posSave[iTime].x = out.ysave.get(iVar++,iTime);
-				ball.posSave[iTime].y = out.ysave.get(iVar++,iTime);
-				ball.posSave[iTime].z = out.ysave.get(iVar++,iTime);
-				ball.velSave[iTime].x = out.ysave.get(iVar++,iTime);
-				ball.velSave[iTime].y = out.ysave.get(iVar++,iTime);
-				ball.velSave[iTime].z = out.ysave.get(iVar++,iTime);
-			}
-		}
-		{int iVar = 0;										// Only the final value is stored in the pos and vel variables
-		int iTime = out.nsave;
-		for(CBall ball : ballArray) {
-			ball.pos.x = out.ysave.get(iVar++,iTime);
-			ball.pos.y = out.ysave.get(iVar++,iTime);
-			ball.pos.z = out.ysave.get(iVar++,iTime);
-			ball.vel.x = out.ysave.get(iVar++,iTime);
-			ball.vel.y = out.ysave.get(iVar++,iTime);
-			ball.vel.z = out.ysave.get(iVar++,iTime);
-		}}
-		return new int[]{nstp, ode.NAnchorBreak, ode.NAnchorForm, ode.NStickBreak, ode.NStickForm, ode.NFilBreak};
-	}
-	
-	public Vector CalculateForces(Vector yode) {	
-		// Read data from y
-		int ii=0; 				// TODO: Completely redundant? Check via StepperBase
-		for(CBall ball : ballArray) {
-			ball.pos.x = 	yode.get(ii++);
-			ball.pos.y = 	yode.get(ii++);
-			ball.pos.z = 	yode.get(ii++);
-			ball.vel.x = 	yode.get(ii++);
-			ball.vel.y = 	yode.get(ii++);
-			ball.vel.z = 	yode.get(ii++);
-			ball.force.x = 0;	// Clear forces for first use
-			ball.force.y = 0;
-			ball.force.z = 0;
-		}
-		// Collision forces
-		for(int iCell=0; iCell<cellArray.size(); iCell++) {
-			CCell cell0 = cellArray.get(iCell);
-			CBall c0b0 = cell0.ballArray[0];
-			// Base collision on the cell type
-			if(cell0.type<2) {														// cell0 is a ball
-				// Check for all remaining cells
-				for(int jCell=iCell+1; jCell<cellArray.size(); jCell++) {
-					CCell cell1 = cellArray.get(jCell);
-					CBall c1b0 = cell1.ballArray[0];
-					double R2 = c0b0.radius + c1b0.radius;
-					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					if(cell1.type<2) {												// The other cell1 is a ball too
-						double dist = dirn.norm();
-						// do a simple collision detection if close enough
-						double d = R2*1.01-dist;									// d is the magnitude of the overlap vector, as defined in the IbM paper
-						if(d>0.0) {
-							// We have a collision
-							Vector3d Fs = dirn.normalise().times(Kc*d);
-							// Add forces
-							c0b0.force = c0b0.force.plus(Fs);
-							c1b0.force = c1b0.force.minus(Fs);
-						}
-					} else if(cell1.type<6) {										// cell0 is a ball, cell1 is a rod
-						double H2 = 1.5*(lengthCellMax[cell1.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect. 1.5 is to make it more robust (stretching)
-						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
-							// do a sphere-rod collision detection
-							CBall c1b1 = cell1.ballArray[1];
-							EricsonObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
-							Vector3d dP = C.dP;
-							double dist = C.dist;									// Make distance more accurate
-							double sc = C.sc;
-							// Collision detection
-							double d = R2*1.01-dist;								// d is the magnitude of the overlap vector, as defined in the IbM paper
-							if(d>0.0) {
-								double f = Kc/dist*d;
-								Vector3d Fs = dP.times(f);
-								// Add these elastic forces to the cells
-								// both balls in rod
-								c1b0.force = c1b0.force.plus(Fs.times(1.0-sc)); 
-								c1b1.force = c1b1.force.plus(Fs.times(sc));
-								// ball in sphere
-								c0b0.force = c0b0.force.minus(Fs);
-							}	
-						}
-					} else {
-						throw new RuntimeException("Unknown cell type");
-					}
-				}
-			} else if (cell0.type<6) {												// cell0.type > 1
-				CBall c0b1 = cell0.ballArray[1];
-				for(int jCell = iCell+1; jCell<cellArray.size(); jCell++) {
-					CCell cell1 = cellArray.get(jCell);
-					CBall c1b0 = cell1.ballArray[0];
-					double R2 = c0b0.radius + c1b0.radius;
-					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					if(cell1.type<2) {												// cell0 is a rod, the cell1 is a ball
-						double H2 = 1.5*(lengthCellMax[cell0.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
-							// do a rod-sphere collision detection
-							EricsonObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
-							Vector3d dP = C.dP;
-							double dist = C.dist;
-							double sc = C.sc;
-							// Collision detection
-							double d = R2*1.01-dist;								// d is the magnitude of the overlap vector, as defined in the IbM paper
-							if(d>0.0) {
-								double f = Kc/dist*d;
-								Vector3d Fs = dP.times(f);
-								// Add these elastic forces to the cells
-								double sc1 = 1-sc;
-								// both balls in rod
-								c0b0.force = c0b0.force.plus(Fs.times(sc1));
-								c0b1.force = c0b1.force.plus(Fs.times(sc));
-								// ball in sphere
-								c1b0.force = c1b0.force.minus(Fs);
-							}	
-						}
-					} else if (cell1.type<6){										// type>1 --> the other cell is a rod too. This is where it gets tricky
-						Vector3d c0b0pos = new Vector3d(c0b0.pos);
-						Vector3d c0b1pos = new Vector3d(c0b1.pos);
-						Vector3d c1b0pos = new Vector3d(c1b0.pos);
-						CBall c1b1 = cell1.ballArray[1];
-						Vector3d c1b1pos = new Vector3d(c1b1.pos);
-						double H2 = 1.5*( lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2 );		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
-						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
-							// calculate the distance between the segments
-							EricsonObject C = DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
-							Vector3d dP = C.dP;					// dP is vector from closest point 2 --> 1
-							double dist = C.dist;
-							double sc = C.sc;
-							double tc = C.tc;
-							double d = R2*1.01-dist;								// d is the magnitude of the overlap vector, as defined in the IbM paper
-							if(d>0.0) {
-								double f = Kc/dist*d;
-								Vector3d Fs = dP.times(f);
-								// Add these elastic forces to the cells
-								double sc1 = 1-sc;
-								double tc1 = 1-tc;
-								// both balls in 1st rod
-								c0b0.force = c0b0.force.plus(Fs.times(sc1));
-								c0b1.force = c0b1.force.plus(Fs.times(sc));
-								// both balls in 1st rod
-								c1b0.force = c1b0.force.minus(Fs.times(tc1));
-								c1b1.force = c1b1.force.minus(Fs.times(tc));
-							}
-						}
-					} else {
-						throw new RuntimeException("Unknown cell type");
-					}
-				}
-			} else {
-				throw new RuntimeException("Unknown cell type");
-			}
-		}
-		// Calculate gravity+bouyancy, normal forces and drag
-		for(CBall ball : ballArray) {
-			// Contact forces
-			double y = ball.pos.y;
-			double r = ball.radius;
-			if(normalForce) {
-				if(y<r){
-					ball.force.y += Kw*(r-y);
-				}
-			}
-			// Gravity and buoyancy
-			if(gravity) {
-				if(gravityZ) {
-					ball.force.z += G * (rhoX-rhoWater) * ball.n*MWX/rhoX;
-				} else if(y>r*1.1) {			// Only if not already at the floor plus a tiny bit 
-					ball.force.y += G * (rhoX-rhoWater) * ball.n*MWX/rhoX;  //let the ball fall. Note that G is negative 
-				}
-			}
-			// Electrostatic attraction
-			if(electrostatic) {
-				double d = (y-r);
-				double dlim = dlimFactor*(1.0/kappa); 
-				d = Math.max(d, dlim);			// Limit d to dlim. If it's smaller, we will get horrible solver stiffness 
-				ball.force.y += kappa*Ces*Math.exp(-kappa*d) - Cvdw/(d*d);
-			}
-			
-			// Velocity damping
-			ball.force = ball.force.minus(ball.vel.times(Kd));			// TODO Should be v^2
-		}
-		
-		// Elastic forces between springs within cells
-		for(CRodSpring rod : rodSpringArray) {
-			CBall ball0 = rod.ballArray[0];
-			CBall ball1 = rod.ballArray[1];
-			// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = rod.GetL();
-			double dn = diff.norm();
-			// Get force
-			double f = rod.K/dn * (dn - rod.restLength);
-			// Hooke's law
-			Vector3d Fs = diff.times(f);
-			// apply forces on balls
-			ball0.force = ball0.force.plus(Fs);
-			ball1.force = ball1.force.minus(Fs);
-		}
-		
-		// Apply forces due to anchor springs
-		for(CAnchorSpring anchor : anchorSpringArray) {
-			Vector3d diff = anchor.GetL();
-			double dn = diff.norm();
-			// Get force
-			double f = anchor.K/dn * (dn - anchor.restLength);
-			// Hooke's law
-			Vector3d Fs = diff.times(f);
-			// apply forces on balls
-			anchor.ballArray[0].force = anchor.ballArray[0].force.plus(Fs);
+		// Set up solver
+//		System.out.println(0.0000000000000 + "  |  " + y[0] + " " + y[1] + " " + y[2] + "   |   " + y[3] + " " + y[4] + " " + y[5]);
+//		System.out.println();
+		dp853.integrate(ode, 0.0, y, relaxationTimeStepdt, y); // now y contains final state at time t=1.0 starting at t=0.0;
+//		System.out.println();
+//		System.out.println("final " + "  |  " + y[0] + " " + y[1] + " " + y[2] + "   |   " + y[3] + " " + y[4] + " " + y[5]);
 
-		}
-		
-		// Apply forces on sticking springs
-		for(CStickSpring stick : stickSpringArray) {
-			CBall ball0 = stick.ballArray[0];
-			CBall ball1 = stick.ballArray[1];
-			// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = stick.GetL();
-			double dn = diff.norm();
-			// Get force
-			double f = stick.K/dn * (dn - stick.restLength);
-			// Hooke's law
-			Vector3d Fs = diff.times(f);
-			// apply forces on balls
-			ball0.force = ball0.force.plus(Fs);
-			ball1.force = ball1.force.minus(Fs);
-		}
-		
-		// Filament spring elastic force (CSpring in filSpringArray)
-		for(CSpring fil : filSpringArray) {
-			CBall ball0 = fil.ballArray[0];
-			CBall ball1 = fil.ballArray[1];
-			{// find difference vector and distance dn between balls (euclidian distance) 
-			Vector3d diff = fil.GetL();
-			double dn = diff.norm();
-			// Get force
-			double f = fil.K/dn * (dn - fil.restLength);
-			// Hooke's law
-			Vector3d Fs = diff.times(f);
-			// apply forces on balls
-			ball0.force = ball0.force.plus(Fs);
-			ball1.force = ball1.force.minus(Fs);
-			}
-		}
-		
-		// Return results
-		Vector dydx = new Vector(yode.size());
-		int jj=0;
+		ii = 0;
 		for(CBall ball : ballArray) {
-			double m = ball.n*MWX;	
-			dydx.set(jj++,ball.vel.x);						// dpos/dt = v;
-			dydx.set(jj++,ball.vel.y);
-			dydx.set(jj++,ball.vel.z);
-			dydx.set(jj++,ball.force.x/m);					// dvel/dt = a = f/M
-			dydx.set(jj++,ball.force.y/m);
-			dydx.set(jj++,ball.force.z/m);
+			ball.pos.x = y[ii++];
+			ball.pos.y = y[ii++];
+			ball.pos.z = y[ii++];
+			ball.vel.x = y[ii++];
+			ball.vel.y = y[ii++];
+			ball.vel.z = y[ii++];
 		}
-		return dydx;
+//		return new int[]{nstp, ode.NAnchorBreak, ode.NAnchorForm, ode.NStickBreak, ode.NStickForm, ode.NFilBreak};
+		return new int[]{0,0,0,0,0,0};
+		
+		
+//		int ntimes = (int) (relaxationTimeStep/relaxationTimeStepdt);
+//		double atol = 1.0e-6, rtol = atol;
+//		double h1 = 0.00001, hmin = 0;
+//		double t1 = relaxationTime; 
+//		double t2 = t1 + relaxationTimeStep;
+//		Vector ystart = new Vector(6*ballArray.size(),0.0);
+//
+//		int ii=0;											// Determine initial value vector
+//		for(CBall ball : ballArray) { 
+//			ystart.set(ii++, ball.pos.x);
+//			ystart.set(ii++, ball.pos.y);
+//			ystart.set(ii++, ball.pos.z);
+//			ystart.set(ii++, ball.vel.x);
+//			ystart.set(ii++, ball.vel.y);
+//			ystart.set(ii++, ball.vel.z);
+//		}
+//		Output<StepperDopr853> out = new Output<StepperDopr853>(ntimes);
+//		feval dydt = new feval(this);
+//		Odeint<StepperDopr853> ode = new Odeint<StepperDopr853>(ystart, t1, t2, atol, rtol, h1, hmin, out, dydt, this);
+//		// Update alpha and beta
+//		ode.s.alpha = ODEalpha;
+//		ode.s.beta = ODEbeta;
+//		// Integrate to find solution
+//		int nstp = ode.integrate();
+//		for(int iTime=0; iTime<out.nsave; iTime++) {		// Save all intermediate results to the save variables
+//			int iVar = 0;
+//			for(CBall ball : ballArray) {
+//				ball.posSave[iTime].x = out.ysave.get(iVar++,iTime);
+//				ball.posSave[iTime].y = out.ysave.get(iVar++,iTime);
+//				ball.posSave[iTime].z = out.ysave.get(iVar++,iTime);
+//				ball.velSave[iTime].x = out.ysave.get(iVar++,iTime);
+//				ball.velSave[iTime].y = out.ysave.get(iVar++,iTime);
+//				ball.velSave[iTime].z = out.ysave.get(iVar++,iTime);
+//			}
+//		}
+//		{int iVar = 0;										// Only the final value is stored in the pos and vel variables
+//		int iTime = out.nsave;
+//		for(CBall ball : ballArray) {
+//			ball.pos.x = out.ysave.get(iVar++,iTime);
+//			ball.pos.y = out.ysave.get(iVar++,iTime);
+//			ball.pos.z = out.ysave.get(iVar++,iTime);
+//			ball.vel.x = out.ysave.get(iVar++,iTime);
+//			ball.vel.y = out.ysave.get(iVar++,iTime);
+//			ball.vel.z = out.ysave.get(iVar++,iTime);
+//		}}
+//		return new int[]{nstp, ode.NAnchorBreak, ode.NAnchorForm, ode.NStickBreak, ode.NStickForm, ode.NFilBreak};
 	}
 	
 	public int[] FormBreak() {								// Breaks and forms sticking, filament springs when needed. Used during Relaxation()

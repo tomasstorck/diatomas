@@ -13,10 +13,12 @@ minPos = min([model.ballArray.pos],[],2)*1e6;		% *1e6 to convert to POVRay coord
 maxPos = max([model.ballArray.pos],[],2)*1e6;
 camPos = camView+camPosDifference;
 
-NSave = length(model.ballArray(1).posSave);
-if model.relaxationIter==0 && model.growthIter==0
+if (model.relaxationIter==0 && model.growthIter==0) || ~isfield(model.ballArray,'posSave')
 	NSave = 0;
+else
+	NSave = length(model.ballArray(1).posSave);
 end
+
 if ii~=NSave
 	plotIntermediate=true;		% If this is not the first iteration, do the intermediate plotting (i.e. use posSave instead of pos)
 else
