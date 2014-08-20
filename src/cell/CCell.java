@@ -206,17 +206,17 @@ public class CCell implements Serializable {
 			if(cell.type<2)	{													// Sphere-sphere
 				return cell.ballArray[0].pos.minus(ballArray[0].pos).norm();
 			} else if(cell.type<6) {											// Sphere-rod
-				ericson.ReturnObject C = model.DetectLinesegPoint(cell.ballArray[0].pos, cell.ballArray[1].pos, this.ballArray[0].pos);
+				ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(cell.ballArray[0].pos, cell.ballArray[1].pos, this.ballArray[0].pos);
 				return C.dist;
 			} else {															// Unknown!
 				throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 			}
 		} else if(this.type<6) {												// Rod-???
 			if(cell.type<2) {													// Rod-sphere
-				ericson.ReturnObject C = model.DetectLinesegPoint(this.ballArray[0].pos, this.ballArray[1].pos, cell.ballArray[0].pos);
+				ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(this.ballArray[0].pos, this.ballArray[1].pos, cell.ballArray[0].pos);
 				return C.dist; 
 			} else if(cell.type<6) {											// Rod-rod
-				ericson.ReturnObject C = model.DetectLinesegLineseg(this.ballArray[0].pos, this.ballArray[1].pos, cell.ballArray[0].pos, cell.ballArray[1].pos);
+				ericson.ReturnObject C = ericson.DetectCollision.LinesegLineseg(this.ballArray[0].pos, this.ballArray[1].pos, cell.ballArray[0].pos, cell.ballArray[1].pos);
 				return C.dist;		
 			} else {															// Unknown!
 				throw new IndexOutOfBoundsException("Cell type: " + cell.type);

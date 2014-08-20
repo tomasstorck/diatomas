@@ -312,7 +312,7 @@ public class Run {
 				model.Write("    Relaxation finished in " + nstp + " solver steps","iter");
 				// Throw warning if cells are overlapping (will crash COMSOL)
 				if(model.comsol) {
-					ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.01);
+					ArrayList<CCell> overlapCellArray = model.DetectCollisionCellArray(1.01);
 					if(!overlapCellArray.isEmpty()) {
 						String overlapCellArrayString = ""; 
 						for(CCell c : overlapCellArray) {

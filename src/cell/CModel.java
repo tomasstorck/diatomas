@@ -208,33 +208,14 @@ public class CModel implements Serializable {
 		return collisionCell;
 	}
 	
-	public ArrayList<CCell> DetectCellCollision_Simple(double touchFactor) {			// Using ArrayList, no idea how big this one will get
-		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
-		
-		for(int iBall=0; iBall<ballArray.size(); iBall++) {						// If we stick to indexing, it'll be easier to determine which cells don't need to be analysed
-			CBall ball = ballArray.get(iBall);
-			for(int iBall2 = iBall+1; iBall2<ballArray.size(); iBall2++) {
-				CBall ball2 = ballArray.get(iBall2);
-				if(ball.cell.Index()!=ball2.cell.Index()) {
-					Vector3d diff = ball2.pos.minus(ball.pos);
-					if(Math.abs(diff.norm()) - touchFactor*(ball.radius+ball2.radius) < 0) {
-						collisionCell.add(ball.cell);
-						collisionCell.add(ball2.cell);
-					}
-				}
-			}
-		}
-		return collisionCell;
-	}
-	
-	public ArrayList<CCell> DetectCellCollision_Proper(double touchFactor) {
+	public ArrayList<CCell> DetectCollisionCellArray(double touchFactor) {
 		ArrayList<CCell> collisionCell = new ArrayList<CCell>();
 		int NCell = cellArray.size();
 		for(int ii=0; ii<NCell; ii++) {
 			CCell cell0 = cellArray.get(ii);
 			for(int jj=ii+1; jj<NCell; jj++) {
 				CCell cell1 = cellArray.get(jj);
-				if(DetectCellCollision_Proper(cell0, cell1, touchFactor)){
+				if(DetectCollisionCellCell(cell0, cell1, touchFactor)){
 					collisionCell.add(cell0);
 					collisionCell.add(cell1);
 				}
@@ -243,7 +224,7 @@ public class CModel implements Serializable {
 		return collisionCell;
 	}
 	
-	public boolean DetectCellCollision_Proper(CCell cell0, CCell cell1, double touchFactor) {
+	public boolean DetectCollisionCellCell(CCell cell0, CCell cell1, double touchFactor) {
 		double R2 = cell0.ballArray[0].radius + cell1.ballArray[0].radius; 
 		if(cell0.type < 2 && cell1.type < 2) {				// Ball-ball. Nice and simple
 			double dist = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos).norm();
@@ -261,7 +242,7 @@ public class CModel implements Serializable {
 				H2 = 1.5*(touchFactor*( lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still
 				if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
 					// Do good collision detection
-					ericson.ReturnObject C = DetectLinesegLineseg(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos, cell1.ballArray[1].pos);
+					ericson.ReturnObject C = ericson.DetectCollision.LinesegLineseg(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos, cell1.ballArray[1].pos);
 					dist = C.dist;							// Then check if dist is small enough (end of method)
 				} else {
 					return false;							// Not close enough, won't overlap
@@ -277,7 +258,7 @@ public class CModel implements Serializable {
 				H2 = 1.5*(touchFactor*( lengthCellMax[rod.type] + R2 ));// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 				if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
 					// Do good collision detection
-					ericson.ReturnObject C = DetectLinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos);
+					ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos);
 					dist = C.dist;							// Then check if dist is small enough (end of method)
 				} else {
 					return false;							// Not close enough, won't overlap
@@ -294,107 +275,6 @@ public class CModel implements Serializable {
 		}
 	}
 		
-	public ericson.ReturnObject DetectLinesegLineseg(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {		// This is line segment - line segment collision detection. 
-		// Rewritten 120912 because of strange results with the original function
-		// Computes closest points C1 and C2 of S1(s) = P1+s*(Q1-P1) and S2(t) = P2+t*(Q2-P2)
-		Vector3d d1 = q1.minus(p1);		// Direction of S1
-		Vector3d d2 = q2.minus(p2);		// Direction of S2
-		Vector3d r = p1.minus(p2);
-		double a = d1.dot(d1);			// Squared length of S1, >0
-		double e = d2.dot(d2);			// Squared length of S2, >0
-		double f = d2.dot(r);
-		double c = d1.dot(r);
-		double b = d1.dot(d2);
-		double denom = a*e-b*b;			// Always >0
-		
-		// If segments are not parallel, compute closest point on L1 to L2 and clamp to segment S1, otherwise pick arbitrary s (=0)
-		double s;
-		if(denom!=0.0) {
-			s = Common.Clamp((b*f-c*e) /  denom, 0.0, 1.0);
-		} else	s = 0.0;
-		// Compute point on L2 closest to S1(s) using t = ((P1+D1*s) - P2).dot(D2) / D2.dot(D2) = (b*s + f) / e
-		double t = (b*s + f) / e;
-		
-		// If t is in [0,1] (i.e. on S2) we're done. Else Clamp(t), recompute s for the new value of t using s = ((P2+D2*t) - P1).dot(D1) / D1.dot(D1) = (t*b - c) / a and clamp s to [0,1]
-		if(t<0.0) {
-			t = 0.0;
-			s = Common.Clamp(-c/a, 0.0, 1.0);
-		} else if (t>1.0) {
-			t = 1.0;
-			s = Common.Clamp((b-c)/a, 0.0, 1.0);
-		}
-		
-		Vector3d c1 = p1.plus(d1.times(s));	// Collision point on S1
-		Vector3d c2 = p2.plus(d2.times(t));	// Collision point on S2
-		
-		Vector3d dP = c1.minus(c2);  	// = S1(sc) - S2(tc)
-		
-		double dist2 = (c1.minus(c2)).dot(c1.minus(c2));
-		
-		return new ericson.ReturnObject(dP, Math.sqrt(dist2), s, t, c1, c2);
-	}
-	
-	public ericson.ReturnObject DetectLineSegLine(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {
-		// Based on DetectLineSegLineSeg from Ericson
-		// Computes closest points C1 and C2 of L1(s) = P1+s*(Q1-P1) and S2(t) = P2+t*(Q2-P2). s is unlimited, t is limited to [0, 1]
-		Vector3d d1 = q1.minus(p1);		// Direction of S1
-		Vector3d d2 = q2.minus(p2);		// Direction of S2
-		Vector3d r = p1.minus(p2);
-		double a = d1.dot(d1);			// Squared length of S1, >0
-		double e = d2.dot(d2);			// Squared length of S2, >0
-		double f = d2.dot(r);
-		double c = d1.dot(r);
-		double b = d1.dot(d2);
-		double denom = a*e-b*b;			// Always >0
-		
-		// If segments are not parallel, compute closest point on L1 to L2 and clamp to segment S1, otherwise pick arbitrary s (=0)
-		double s;
-		if(denom!=0.0) {
-			s = Common.Clamp((b*f-c*e) /  denom, 0.0, 1.0);
-		} else	s = 0.0;
-		// Compute point on L2 closest to S1(s) using t = ((P1+D1*s) - P2).dot(D2) / D2.dot(D2) = (b*s + f) / e
-		double t = (b*s + f) / e;
-		// t is unlimited, so no need to clamp --> we're done
-		
-		Vector3d c1 = p1.plus(d1.times(s));
-		Vector3d c2 = p2.plus(d2.times(t));
-		
-		Vector3d dP = c1.minus(c2);  	// = S1(sc) - S2(tc)
-		
-		double dist2 = (c1.minus(c2)).dot(c1.minus(c2));
-		
-		return new ericson.ReturnObject(dP, Math.sqrt(dist2), s, t, c1, c2);
-	}
-	
-	public ericson.ReturnObject DetectLinesegPoint(Vector3d p1, Vector3d q1, Vector3d p2) {
-		Vector3d ab = q1.minus(p1);  	// line
-		Vector3d w = p2.minus(p1);		//point-line
-		//Project c onto ab, computing parameterized position d(t) = a + t*(b-a)
-		double rpos = w.dot(ab)/ab.dot(ab);
-		//if outside segment, clamp t and therefore d to the closest endpoint
-		rpos = Common.Clamp(rpos, 0.0, 1.0);
-		//compute projected position from the clamped t
-		Vector3d d = p1.plus(ab.times(rpos));
-		//calculate the vector p2 --> d
-		Vector3d dP = d.minus(p2);
-		ericson.ReturnObject R = new ericson.ReturnObject(dP, dP.norm(), rpos);	// Defined at the end of the model class. OPTIMISE: we don't need dP.norm() sometimes and could leave it out
-		return R;
-	}
-	
-	public ericson.ReturnObject DetectLinePoint(Vector3d p1, Vector3d q1, Vector3d p2) {
-		Vector3d ab = q1.minus(p1);  	// vector from p1 to q1 (i.e. the line segment)
-		Vector3d w = p2.minus(p1);		// vector from p1 to p2
-		//Project c onto ab, computing parameterized position d(t) = a + t*(b-a). rpos can be >1.0, i.e. d can be longer than the line segment
-		double rpos = w.dot(ab)/ab.dot(ab);
-		// Do not clamp rpos to the range of the line segment, so our line segment becomes a line when projected onto it
-		// Compute projected position of p1 --> p2 onto p1 --> q1
-		Vector3d d = p1.plus(ab.times(rpos));
-		//calculate the vector p2 --> d
-		Vector3d dP = d.minus(p2);
-		ericson.ReturnObject R = new ericson.ReturnObject(dP, dP.norm(), rpos);	// Defined at the end of the model class
-		return R;
-	}
-
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
@@ -618,7 +498,7 @@ public class CModel implements Serializable {
 							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c1b1 = cell1.ballArray[1];
 								// do a sphere-rod collision detection
-								ericson.ReturnObject C = DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
+								ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 								dist = C.dist;
 							} else continue;
 						} else if(cell1.type<2) {			// 2nd sphere, 1st rod
@@ -626,7 +506,7 @@ public class CModel implements Serializable {
 							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
 								CBall c0b1 = cell0.ballArray[1];
 								// do a sphere-rod collision detection
-								ericson.ReturnObject C = DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
+								ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
 								dist = C.dist;
 							} else continue;
 						} else if(cell0.type<6 && cell1.type<6) {  	// both rod
@@ -635,7 +515,7 @@ public class CModel implements Serializable {
 								CBall c0b1 = cell0.ballArray[1];
 								CBall c1b1 = cell1.ballArray[1];
 								// calculate the distance between the two segments
-								ericson.ReturnObject C = DetectLinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
+								ericson.ReturnObject C = ericson.DetectCollision.LinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
 								dist = C.dist;
 							} else continue;
 						} else {
@@ -734,9 +614,9 @@ public class CModel implements Serializable {
 				ArrayList<CCell> copyCellArray = new ArrayList<CCell>(cellArray);
 				copyCellArray.remove(c0);		copyCellArray.remove(c1);
 				boolean overlap = false;
-				if(DetectCellCollision_Proper(c0, c1, 1.0))		overlap = true; 
+				if(DetectCollisionCellCell(c0, c1, 1.0))		overlap = true; 
 				for(CCell cell : copyCellArray) {
-					if(DetectCellCollision_Proper(c0, cell, 1.0) || DetectCellCollision_Proper(c1, cell, 1.0)) {
+					if(DetectCollisionCellCell(c0, cell, 1.0) || DetectCollisionCellCell(c1, cell, 1.0)) {
 						overlap = true; 
 						break;
 					}
@@ -958,7 +838,7 @@ public class CModel implements Serializable {
 				
 				// Find if the new cell can attach to a spherical cell
 				for(CBall ball : ballArray) {
-					ericson.ReturnObject E = DetectLinePoint(dest, dest.plus(dirn), ball.pos);			// Detect distance line-point, with line the path and point the ball.pos
+					ericson.ReturnObject E = ericson.DetectCollision.LinePoint(dest, dest.plus(dirn), ball.pos);			// Detect distance line-point, with line the path and point the ball.pos
 					// Check if ball.pos is close enough to path to touch the attaching particle by analysing the distance obtained from Ericsson
 					if( E.dist < rNew+ball.radius ) {
 						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with other 
@@ -977,7 +857,7 @@ public class CModel implements Serializable {
 					// Find the distance between the path of the particle (a line) and the rod spring (a line segment)
 					CBall ball0 = spring.ballArray[0];
 					CBall ball1 = spring.ballArray[1];
-					ericson.ReturnObject E = DetectLineSegLine(ball0.pos, ball1.pos, dest, dest.plus(dirn));							// Detect distance line-point, with line the path and point the ball.pos
+					ericson.ReturnObject E = ericson.DetectCollision.LineSegLine(ball0.pos, ball1.pos, dest, dest.plus(dirn));							// Detect distance line-point, with line the path and point the ball.pos
 					if( E.dist < rNew+ball0.radius ) {
 						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with the rod
 						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet
@@ -1017,7 +897,7 @@ public class CModel implements Serializable {
 				// Check if it is not overlapping with any other cells
 				for(int iCell=0; iCell<cellArray.size()-1; iCell++) {
 					CCell cell = cellArray.get(iCell);
-					if(DetectCellCollision_Proper(newCell, cell, 1.0))	
+					if(DetectCollisionCellCell(newCell, cell, 1.0))	
 						continue tryloop;
 				}
 //				// See if within range of origin

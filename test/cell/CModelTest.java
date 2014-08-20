@@ -60,7 +60,7 @@ public class CModelTest {
 		cell0.ballArray[0].radius = 0.5e-6;
 		CCell cell1 = new CCell(0, 0,  0.5001e-6, 0e-6, 0e-6, 0, 0, 0, false, model);
 		cell1.ballArray[0].radius = 0.5e-6;
-		ArrayList<CCell> overlap = model.DetectCellCollision_Proper(1.0);
+		ArrayList<CCell> overlap = model.DetectCollisionCellArray(1.0);
 		assertTrue(overlap.isEmpty());
 	}
 	
@@ -71,7 +71,7 @@ public class CModelTest {
 		cell0.ballArray[0].radius = 0.5e-6;
 		CCell cell1 = new CCell(0, 0,  0.499e-6, 0e-6, 0e-6, 0, 0, 0, false, model);
 		cell1.ballArray[0].radius = 0.5e-6;
-		ArrayList<CCell> overlap = model.DetectCellCollision_Proper(1.0);
+		ArrayList<CCell> overlap = model.DetectCollisionCellArray(1.0);
 		assertTrue(overlap.size() == 2);
 	}
 
@@ -82,7 +82,7 @@ public class CModelTest {
 		cell0.ballArray[0].radius = 0.5e-6;
 		CCell cell1 = new CCell(0, 0,  0.5001e-6, 0e-6, 0e-6,  2.5001e-6, 0e-6, 0e-6, false, model);
 		cell1.ballArray[0].radius = 0.5e-6;
-		ArrayList<CCell> overlap = model.DetectCellCollision_Proper(1.0);
+		ArrayList<CCell> overlap = model.DetectCollisionCellArray(1.0);
 		assertTrue(overlap.isEmpty());
 	}
 
@@ -93,7 +93,7 @@ public class CModelTest {
 		cell0.ballArray[0].radius = 0.5e-6;
 		CCell cell1 = new CCell(2, 0,  0.499e-6, 0e-6, 0e-6,  2.499e-6, 0e-6, 0e-6, false, model);
 		cell1.ballArray[0].radius = 0.5e-6;
-		ArrayList<CCell> overlap = model.DetectCellCollision_Proper(1.0);
+		ArrayList<CCell> overlap = model.DetectCollisionCellArray(1.0);
 		assertTrue(overlap.size() == 2);
 	}
 }
