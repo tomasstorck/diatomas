@@ -63,7 +63,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a sphere-rod collision detection
 							CBall c1b1 = cell1.ballArray[1];
-							EricsonObject C = model.DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos); 			// TODO migrate DetectLinesegPoint to separate class/package
+							ericson.ReturnObject C = model.DetectLinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos); 			// TODO migrate DetectLinesegPoint to separate class/package
 							Vector3d dP = C.dP;
 							double dist = C.dist;									// Make distance more accurate
 							double sc = C.sc;
@@ -95,7 +95,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 						double H2 = 1.5*(model.lengthCellMax[cell0.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// do a rod-sphere collision detection
-							EricsonObject C = model.DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
+							ericson.ReturnObject C = model.DetectLinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
 							Vector3d dP = C.dP;
 							double dist = C.dist;
 							double sc = C.sc;
@@ -122,7 +122,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 						double H2 = 1.5*( model.lengthCellMax[cell0.type] + model.lengthCellMax[cell1.type] + R2 );		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
 						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
 							// calculate the distance between the segments
-							EricsonObject C = model.DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
+							ericson.ReturnObject C = model.DetectLinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
 							Vector3d dP = C.dP;					// dP is vector from closest point 2 --> 1
 							double dist = C.dist;
 							double sc = C.sc;
