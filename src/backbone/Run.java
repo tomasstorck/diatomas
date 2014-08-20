@@ -301,8 +301,7 @@ public class Run {
 			int NFilBreak 	= 0;
 			for(int ir=0; ir<relaxationIterInit; ir++) {
 				int[] relaxationOut = model.Relaxation();
-				int nstp 	
-				=  relaxationOut[0]; 
+				int nstp 	=  relaxationOut[0]; 
 				NAnchorBreak+= relaxationOut[1];
 				NAnchorForm	+= relaxationOut[2];
 				NStickBreak += relaxationOut[3];
@@ -312,13 +311,15 @@ public class Run {
 				model.relaxationTime += model.relaxationTimeStepdt;
 				model.Write("    Relaxation finished in " + nstp + " solver steps","iter");
 				// Throw warning if cells are overlapping (will crash COMSOL)
-				ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.01);
-				if(!overlapCellArray.isEmpty()) {
-					String overlapCellArrayString = ""; 
-					for(CCell c : overlapCellArray) {
-						overlapCellArrayString += c.Index() + " ";
+				if(model.comsol) {
+					ArrayList<CCell> overlapCellArray = model.DetectCellCollision_Proper(1.01);
+					if(!overlapCellArray.isEmpty()) {
+						String overlapCellArrayString = ""; 
+						for(CCell c : overlapCellArray) {
+							overlapCellArrayString += c.Index() + " ";
+						}
+						model.Write("    Overlapping cells detected: " + overlapCellArrayString, "warning");
 					}
-					model.Write("    Overlapping cells detected: " + overlapCellArrayString, "warning");
 				}
 				// And finally: save stuff
 				model.Write("    Saving model as serialised file", "iter");

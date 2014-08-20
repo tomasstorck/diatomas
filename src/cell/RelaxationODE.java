@@ -5,9 +5,15 @@ import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 
 public class RelaxationODE implements FirstOrderDifferentialEquations {
 	CModel model;
+	public int NAnchorBreak, NAnchorForm, NStickBreak, NStickForm, NFilBreak;
 	
 	public RelaxationODE(CModel model) {
 		this.model = model;
+		this.NAnchorBreak = 0;
+		this.NAnchorForm = 0;
+		this.NStickBreak = 0;
+		this.NStickForm = 0;
+		this.NFilBreak = 0;
 	}
 	
 	public int getDimension() {

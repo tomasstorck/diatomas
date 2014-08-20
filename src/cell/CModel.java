@@ -447,19 +447,21 @@ public class CModel implements Serializable {
 	// Relaxation stuff //
 	//////////////////////
 	public int[] Relaxation() throws RuntimeException {
-		
-		FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
-		FirstOrderDifferentialEquations ode = new RelaxationODE(this);
-//		StepHandler stepHandler = new StepHandler() {
-//			public void init(double t0, double[] y0, double t) {}
-//
-//			public void handleStep(StepInterpolator interpolator, boolean isLast) {
-//				double   t = interpolator.getCurrentTime();
-//				double[] y = interpolator.getInterpolatedState();
-//				System.out.println(t + "  |  " + y[0] + " " + y[1] + " " + y[2] + "   |   " + y[3] + " " + y[4] + " " + y[5]);
-//			}
-//		};
-//		dp853.addStepHandler(stepHandler);
+		final FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
+		final RelaxationODE ode = new RelaxationODE(this); 			// Subclass of FirstOrderDifferentialEquations in Apache Commons
+		StepHandler stepHandler = new StepHandler() {
+			public void init(double t0, double[] y0, double t) {}
+
+			public void handleStep(StepInterpolator interpolator, boolean isLast) {
+				int[] springChanges = FormBreak();
+				ode.NAnchorForm += springChanges[0]; 
+				ode.NAnchorBreak += springChanges[1];
+				ode.NStickForm += springChanges[2];
+				ode.NStickBreak += springChanges[3];
+				ode.NFilBreak += springChanges[4];
+			}
+		};
+		dp853.addStepHandler(stepHandler);
 		
 		// Define initial conditions
 		double[] y = new double[ballArray.size()*6];
@@ -473,13 +475,9 @@ public class CModel implements Serializable {
 			y[ii++] = ball.vel.z;
 		}
 		// Set up solver
-//		System.out.println(0.0000000000000 + "  |  " + y[0] + " " + y[1] + " " + y[2] + "   |   " + y[3] + " " + y[4] + " " + y[5]);
-//		System.out.println();
 		dp853.integrate(ode, 0.0, y, relaxationTimeStepdt, y); // now y contains final state at time t=1.0 starting at t=0.0;
-//		System.out.println();
-//		System.out.println("final " + "  |  " + y[0] + " " + y[1] + " " + y[2] + "   |   " + y[3] + " " + y[4] + " " + y[5]);
 
-		ii = 0;
+		ii = 0; 												// TODO This is probably redundant, already transferred in calculateDerivative 
 		for(CBall ball : ballArray) {
 			ball.pos.x = y[ii++];
 			ball.pos.y = y[ii++];
@@ -488,8 +486,8 @@ public class CModel implements Serializable {
 			ball.vel.y = y[ii++];
 			ball.vel.z = y[ii++];
 		}
-//		return new int[]{nstp, ode.NAnchorBreak, ode.NAnchorForm, ode.NStickBreak, ode.NStickForm, ode.NFilBreak};
-		return new int[]{0,0,0,0,0,0};
+		return new int[]{dp853.getEvaluations(), ode.NAnchorBreak, ode.NAnchorForm, ode.NStickBreak, ode.NStickForm, ode.NFilBreak};
+//		return new int[]{0,0,0,0,0,0};
 		
 		
 //		int ntimes = (int) (relaxationTimeStep/relaxationTimeStepdt);
