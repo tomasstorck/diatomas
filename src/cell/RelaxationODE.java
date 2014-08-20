@@ -35,7 +35,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			ball.force.y = 0;
 			ball.force.z = 0;
 		}
-		// Collision formodel.Ces
+		// Collision force
 		for(int iCell=0; iCell<model.cellArray.size(); iCell++) {
 			CCell cell0 = model.cellArray.get(iCell);
 			CBall c0b0 = cell0.ballArray[0];
@@ -54,7 +54,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 						if(d>0.0) {
 							// We have a collision
 							Vector3d Fs = dirn.normalise().times(model.Kc*d);
-							// Add formodel.Ces
+							// Add force
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
 						}
@@ -72,7 +72,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 							if(d>0.0) {
 								double f = model.Kc/dist*d;
 								Vector3d Fs = dP.times(f);
-								// Add these elastic formodel.Ces to the cells
+								// Add these elastic force to the cells
 								// both balls in rod
 								c1b0.force = c1b0.force.plus(Fs.times(1.0-sc)); 
 								c1b1.force = c1b1.force.plus(Fs.times(sc));
@@ -104,7 +104,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 							if(d>0.0) {
 								double f = model.Kc/dist*d;
 								Vector3d Fs = dP.times(f);
-								// Add these elastic formodel.Ces to the cells
+								// Add these elastic force to the cells
 								double sc1 = 1-sc;
 								// both balls in rod
 								c0b0.force = c0b0.force.plus(Fs.times(sc1));
@@ -131,7 +131,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 							if(d>0.0) {
 								double f = model.Kc/dist*d;
 								Vector3d Fs = dP.times(f);
-								// Add these elastic formodel.Ces to the cells
+								// Add these elastic force to the cells
 								double sc1 = 1-sc;
 								double tc1 = 1-tc;
 								// both balls in 1st rod
@@ -150,9 +150,9 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 				throw new RuntimeException("Unknown cell type");
 			}
 		}
-		// Calculate gravity+bouyancy, normal formodel.Ces and drag
+		// Calculate gravity+bouyancy, normal force and drag
 		for(CBall ball : model.ballArray) {
-			// Contact formodel.Ces
+			// Contact force
 			double yPos = ball.pos.y;
 			double r = ball.radius;
 			if(model.normalForce) {
@@ -180,7 +180,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			ball.force = ball.force.minus(ball.vel.times(model.Kd));			// TODO Should be v^2
 		}
 		
-		// Elastic formodel.Ces between springs within cells
+		// Elastic force between springs within cells
 		for(CRodSpring rod : model.rodSpringArray) {
 			CBall ball0 = rod.ballArray[0];
 			CBall ball1 = rod.ballArray[1];
@@ -191,12 +191,12 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			double f = rod.K/dn * (dn - rod.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
-			// apply formodel.Ces on balls
+			// apply force on balls
 			ball0.force = ball0.force.plus(Fs);
 			ball1.force = ball1.force.minus(Fs);
 		}
 		
-		// Apply formodel.Ces due to anchor springs
+		// Apply force due to anchor springs
 		for(CAnchorSpring anchor : model.anchorSpringArray) {
 			Vector3d diff = anchor.GetL();
 			double dn = diff.norm();
@@ -204,12 +204,12 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			double f = anchor.K/dn * (dn - anchor.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
-			// apply formodel.Ces on balls
+			// apply force on balls
 			anchor.ballArray[0].force = anchor.ballArray[0].force.plus(Fs);
 
 		}
 		
-		// Apply formodel.Ces on sticking springs
+		// Apply force on sticking springs
 		for(CStickSpring stick : model.stickSpringArray) {
 			CBall ball0 = stick.ballArray[0];
 			CBall ball1 = stick.ballArray[1];
@@ -220,7 +220,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			double f = stick.K/dn * (dn - stick.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
-			// apply formodel.Ces on balls
+			// apply force on balls
 			ball0.force = ball0.force.plus(Fs);
 			ball1.force = ball1.force.minus(Fs);
 		}
@@ -236,7 +236,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			double f = fil.K/dn * (dn - fil.restLength);
 			// Hooke's law
 			Vector3d Fs = diff.times(f);
-			// apply formodel.Ces on balls
+			// apply force on balls
 			ball0.force = ball0.force.plus(Fs);
 			ball1.force = ball1.force.minus(Fs);
 			}
