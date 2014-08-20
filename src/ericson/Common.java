@@ -1,7 +1,5 @@
 package ericson;
 
-import cell.Vector3d;
-
 public class Common {
 	
 	// "Clamps" a vlue between two extremities
