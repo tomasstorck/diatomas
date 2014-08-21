@@ -18,7 +18,6 @@ import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
 import org.apache.commons.math3.ode.sampling.StepHandler;
 import org.apache.commons.math3.ode.sampling.StepInterpolator;
 
-import ericson.Common;
 import random.rand;
 
 public class CModel implements Serializable {
