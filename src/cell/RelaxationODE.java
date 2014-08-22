@@ -23,34 +23,39 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 	
 	public void computeDerivatives(double t, double[] y, double[] yDot) {	
 		// Read data from y
-		int ii=0; 				// TODO: Completely redundant? Check via StepperBase
-		for(CBall ball : model.ballArray) {
-			ball.pos.x = 	y[ii++];
-			ball.pos.y = 	y[ii++];
-			ball.pos.z = 	y[ii++];
-			ball.vel.x = 	y[ii++];
-			ball.vel.y = 	y[ii++];
-			ball.vel.z = 	y[ii++];
+		for(int ii=0; ii<model.ballArray.size(); ii++) {
+			CBall ball = model.ballArray.get(ii);
+			ball.pos.x = 	y[6*ii];
+			ball.pos.y = 	y[6*ii+1];
+			ball.pos.z = 	y[6*ii+2];
+			ball.vel.x = 	y[6*ii+3];
+			ball.vel.y = 	y[6*ii+4];
+			ball.vel.z = 	y[6*ii+5];
 			ball.force.x = 0;	// Clear forces for first use
 			ball.force.y = 0;
 			ball.force.z = 0;
 		}
 		// Collision force
+		final double radiusModifier = 1.01; 												// Multiplication factor for ball radii, maintaining a certain distance between balls
 		for(int iCell=0; iCell<model.cellArray.size(); iCell++) {
 			CCell cell0 = model.cellArray.get(iCell);
 			CBall c0b0 = cell0.ballArray[0];
-			// Base collision on the cell type
-			if(cell0.type<2) {														// cell0 is a ball
-				// Check for all remaining cells
-				for(int jCell=iCell+1; jCell<model.cellArray.size(); jCell++) {
-					CCell cell1 = model.cellArray.get(jCell);
-					CBall c1b0 = cell1.ballArray[0];
-					double R2 = c0b0.radius + c1b0.radius;
-					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					if(cell1.type<2) {												// The other cell1 is a ball too
-						double dist = dirn.norm();
-						// do a simple collision detection if close enough
-						double d = R2*1.01-dist;									// d is the magnitude of the overlap vector, as defined in the IbM paper
+			for(int jCell=iCell+1; jCell<model.cellArray.size(); jCell++) { 		// Factorial elimination to optimise loop
+				CCell cell1 = model.cellArray.get(jCell);
+				CBall c1b0 = cell1.ballArray[0];
+				// Do a very simple, cheap collision detection
+				Vector3d dirn = c0b0.pos.minus(c1b0.pos);
+				double dist = dirn.norm();
+				final double maxCollDist = 								// The maximum distance between two overlapping cells can never be more than sum of:  
+						(Common.maxArray(model.lengthCellMax) 			// 1) length of the longest cell
+						+ Common.maxArray(model.radiusCellMax) * 2.0) 	// 2) twice the radius of the largest ball
+						* 2.0; 											// 3) whatever stretching can be observed due to links (e.g. factor 2, up for discussion)
+				// More accurate collision detection if overlap is possible
+				if(dist<maxCollDist) { 												// Balls are close enough that they could collide --> further investigate
+					double R2 = c0b0.radius + c1b0.radius; 							// We assume radius ball 0 and 1 are equal for all cells
+					// Ball-ball collision
+					if( cell0.type<2 && cell1.type<2 ) {
+						double d = R2*radiusModifier - dist;
 						if(d>0.0) {
 							// We have a collision
 							Vector3d Fs = dirn.normalise().times(model.Kc*d);
@@ -58,96 +63,63 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
 						}
-					} else if(cell1.type<6) {										// cell0 is a ball, cell1 is a rod
-						double H2 = 1.5*(model.lengthCellMax[cell1.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect. 1.5 is to make it more robust (stretching)
-						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
-							// do a sphere-rod collision detection
-							CBall c1b1 = cell1.ballArray[1];
-							ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos); 			// TODO migrate DetectLinesegPoint to separate class/package
-							Vector3d dP = C.dP;
-							double dist = C.dist;									// Make distance more accurate
-							double sc = C.sc;
-							// Collision detection
-							double d = R2*1.01-dist;								// d is the magnitude of the overlap vector, as defined in the IbM paper
-							if(d>0.0) {
-								double f = model.Kc/dist*d;
-								Vector3d Fs = dP.times(f);
-								// Add these elastic force to the cells
-								// both balls in rod
-								c1b0.force = c1b0.force.plus(Fs.times(1.0-sc)); 
-								c1b1.force = c1b1.force.plus(Fs.times(sc));
-								// ball in sphere
-								c0b0.force = c0b0.force.minus(Fs);
-							}	
+					// Ball-rod (or rod-ball) collision
+					} else if( cell0.type<2 || cell1.type<2 ) {
+						// Find out which cell is rod, which is ball, and assign
+						CBall ballb0, rodb0, rodb1;
+						if(cell0.type < 2) {
+							ballb0 = c0b0;
+							rodb0 = c1b0;
+							rodb1 = cell1.ballArray[1];
+						} else {
+							ballb0 = c1b0;
+							rodb0 = c0b0;
+							rodb1 = cell0.ballArray[1];
 						}
-					} else {
-						throw new RuntimeException("Unknown cell type");
-					}
-				}
-			} else if (cell0.type<6) {												// cell0.type > 1
-				CBall c0b1 = cell0.ballArray[1];
-				for(int jCell = iCell+1; jCell<model.cellArray.size(); jCell++) {
-					CCell cell1 = model.cellArray.get(jCell);
-					CBall c1b0 = cell1.ballArray[0];
-					double R2 = c0b0.radius + c1b0.radius;
-					Vector3d dirn = c0b0.pos.minus(c1b0.pos);
-					if(cell1.type<2) {												// cell0 is a rod, the cell1 is a ball
-						double H2 = 1.5*(model.lengthCellMax[cell0.type] + R2);			// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
-							// do a rod-sphere collision detection
-							ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos); 
-							Vector3d dP = C.dP;
-							double dist = C.dist;
-							double sc = C.sc;
-							// Collision detection
-							double d = R2*1.01-dist;								// d is the magnitude of the overlap vector, as defined in the IbM paper
-							if(d>0.0) {
-								double f = model.Kc/dist*d;
-								Vector3d Fs = dP.times(f);
-								// Add these elastic force to the cells
-								double sc1 = 1-sc;
-								// both balls in rod
-								c0b0.force = c0b0.force.plus(Fs.times(sc1));
-								c0b1.force = c0b1.force.plus(Fs.times(sc));
-								// ball in sphere
-								c1b0.force = c1b0.force.minus(Fs);
-							}	
-						}
-					} else if (cell1.type<6){										// type>1 --> the other cell is a rod too. This is where it gets tricky
-						Vector3d c0b0pos = new Vector3d(c0b0.pos);
-						Vector3d c0b1pos = new Vector3d(c0b1.pos);
-						Vector3d c1b0pos = new Vector3d(c1b0.pos);
+						ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(rodb0.pos, rodb1.pos, ballb0.pos);
+						Vector3d dP = C.dP;
+						dist = C.dist;											// Make distance more accurate
+						double sc = C.sc;
+						double d = R2*radiusModifier - dist;					// d is the magnitude of the overlap vector, as defined in the IbM paper
+						if(d>0.0) {
+							double f = model.Kc/dist*d;
+							Vector3d Fs = dP.times(f);
+							// Add these elastic force to the cells
+							// ball in sphere
+							ballb0.force = ballb0.force.minus(Fs);
+							// both balls in rod
+							rodb0.force = rodb0.force.plus(Fs.times(1.0-sc)); 
+							rodb1.force = rodb1.force.plus(Fs.times(sc));
+						}	
+					// Rod-rod
+					} else if( cell0.type<6 && cell1.type<6 ) {
+						CBall c0b1 = cell0.ballArray[1];
 						CBall c1b1 = cell1.ballArray[1];
-						Vector3d c1b1pos = new Vector3d(c1b1.pos);
-						double H2 = 1.5*( model.lengthCellMax[cell0.type] + model.lengthCellMax[cell1.type] + R2 );		// aspect0*2*R0 + aspect1*2*R1 + R0 + R1
-						if(dirn.x<H2 && dirn.z<H2 && dirn.y<H2) {
-							// calculate the distance between the segments
-							ericson.ReturnObject C = ericson.DetectCollision.LinesegLineseg(c0b0pos, c0b1pos, c1b0pos, c1b1pos);
-							Vector3d dP = C.dP;					// dP is vector from closest point 2 --> 1
-							double dist = C.dist;
-							double sc = C.sc;
-							double tc = C.tc;
-							double d = R2*1.01-dist;								// d is the magnitude of the overlap vector, as defined in the IbM paper
-							if(d>0.0) {
-								double f = model.Kc/dist*d;
-								Vector3d Fs = dP.times(f);
-								// Add these elastic force to the cells
-								double sc1 = 1-sc;
-								double tc1 = 1-tc;
-								// both balls in 1st rod
-								c0b0.force = c0b0.force.plus(Fs.times(sc1));
-								c0b1.force = c0b1.force.plus(Fs.times(sc));
-								// both balls in 1st rod
-								c1b0.force = c1b0.force.minus(Fs.times(tc1));
-								c1b1.force = c1b1.force.minus(Fs.times(tc));
-							}
+						// calculate the distance between the segments
+						ericson.ReturnObject C = ericson.DetectCollision.LinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
+						Vector3d dP = C.dP;										// dP is vector from closest point 2 --> 1
+						dist = C.dist; 											// Make distance more accurate
+						double sc = C.sc;
+						double tc = C.tc;
+						double d = R2*radiusModifier - dist;					// d is the magnitude of the overlap vector, as defined in the IbM paper
+						if(d>0.0) {
+							double f = model.Kc/dist*d;
+							Vector3d Fs = dP.times(f);
+							// Add these elastic force to the cells
+							double sc1 = 1-sc;
+							double tc1 = 1-tc;
+							// both balls in 1st rod
+							c0b0.force = c0b0.force.plus(Fs.times(sc1));
+							c0b1.force = c0b1.force.plus(Fs.times(sc));
+							// both balls in 2nd rod
+							c1b0.force = c1b0.force.minus(Fs.times(tc1));
+							c1b1.force = c1b1.force.minus(Fs.times(tc));
 						}
+					// Invalid cells
 					} else {
 						throw new RuntimeException("Unknown cell type");
 					}
 				}
-			} else {
-				throw new RuntimeException("Unknown cell type");
 			}
 		}
 		// Calculate gravity+bouyancy, normal force and drag
@@ -241,17 +213,16 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			ball1.force = ball1.force.minus(Fs);
 			}
 		}
-		
 		// Return results
-		int jj=0;
-		for(CBall ball : model.ballArray) {
+		for(int ii=0; ii<model.ballArray.size(); ii++) {
+			CBall ball = model.ballArray.get(ii);
 			double m = ball.n*model.MWX;	
-			yDot[jj++] = ball.vel.x;						// dpos/dt = v;
-			yDot[jj++] = ball.vel.y;
-			yDot[jj++] = ball.vel.z;
-			yDot[jj++] = ball.force.x/m;					// dvel/dt = a = f/M
-			yDot[jj++] = ball.force.y/m;
-			yDot[jj++] = ball.force.z/m;
+			yDot[6*ii  ] = ball.vel.x;						// dpos/dt = v;
+			yDot[6*ii+1] = ball.vel.y;
+			yDot[6*ii+2] = ball.vel.z;
+			yDot[6*ii+3] = ball.force.x/m;					// dvel/dt = a = f/M
+			yDot[6*ii+4] = ball.force.y/m;
+			yDot[6*ii+5] = ball.force.z/m;
 		}
 	}
 }
