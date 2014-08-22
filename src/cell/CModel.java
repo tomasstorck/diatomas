@@ -322,11 +322,11 @@ public class CModel implements Serializable {
 	// Relaxation stuff //
 	//////////////////////
 	public int[] Relaxation() throws RuntimeException {
-		final FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
+		final FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1e-8, 1e-8); 		// (minStep, maxStep, absTol, relTol)
 		final RelaxationODE ode = new RelaxationODE(this); 			// Subclass of FirstOrderDifferentialEquations in Apache Commons
 		StepHandler stepHandler = new StepHandler() {
 			public void init(double t0, double[] y0, double t) {}
-
+			// Let the solver (1) count time steps and (2) form and break springs after each successful iteration
 			public void handleStep(StepInterpolator interpolator, boolean isLast) {
 				int[] springChanges = FormBreak();
 				ode.NStep++;
