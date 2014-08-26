@@ -34,7 +34,7 @@ imageFolderName = 'perspective';
 % imageFolderName = 'side';
 % %%
 
-folderFilter = 'ecoli_*';		% <================
+folderFilter = '*';		% <================
 plane = true;
 ceilLightColour = [0.65,0.65,0.65];
 camLightColour = [0.45 0.45 0.45];

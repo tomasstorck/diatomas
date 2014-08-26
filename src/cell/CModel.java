@@ -13,8 +13,11 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.math3.analysis.integration.MidPointIntegrator;
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
+import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
+import org.apache.commons.math3.ode.nonstiff.MidpointIntegrator;
 import org.apache.commons.math3.ode.sampling.StepHandler;
 import org.apache.commons.math3.ode.sampling.StepInterpolator;
 
@@ -322,7 +325,8 @@ public class CModel implements Serializable {
 	// Relaxation stuff //
 	//////////////////////
 	public int[] Relaxation() throws RuntimeException {
-		final FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1e-7, 1e-7); 		// (minStep, maxStep, absTol, relTol)
+		final FirstOrderIntegrator odeIntegrator = new DormandPrince54Integrator(0, relaxationTimeStepdt, 1e-7, 1e-7); 		// (minStep, maxStep, absTol, relTol)
+//		final FirstOrderIntegrator odeIntegrator = new MidpointIntegrator(2e-3); 		// (stepSize)
 		final RelaxationODE ode = new RelaxationODE(this); 			// Subclass of FirstOrderDifferentialEquations in Apache Commons
 		StepHandler stepHandler = new StepHandler() {
 			public void init(double t0, double[] y0, double t) {}
@@ -337,7 +341,7 @@ public class CModel implements Serializable {
 				ode.NFilBreak += springChanges[4];
 			}
 		};
-		dp853.addStepHandler(stepHandler);
+		odeIntegrator.addStepHandler(stepHandler);
 		
 		// Define initial conditions
 		double[] y = new double[ballArray.size()*6];
@@ -351,7 +355,7 @@ public class CModel implements Serializable {
 			y[ii++] = ball.vel.z;
 		}
 		// Set up solver
-		dp853.integrate(ode, 0.0, y, relaxationTimeStepdt, y); 	// y will contain solution
+		odeIntegrator.integrate(ode, 0.0, y, relaxationTimeStepdt, y); 	// y will contain solution
 
 		ii = 0; 												// TODO This is probably redundant, already transferred in calculateDerivative 
 		for(CBall ball : ballArray) {
