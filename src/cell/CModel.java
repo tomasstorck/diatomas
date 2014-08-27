@@ -553,7 +553,7 @@ public class CModel implements Serializable {
 					break;
 				}
 			}
-			amount *= Math.exp(mu*growthAcceleration*growthTimeStep/3600.0);					// We need growthTimeStep s-1 --> h-1
+			amount *= Math.exp(mu*growthAcceleration*growthTimeStep/3600.0);					// We need growthTimeStep s --> h
 
 			// Syntrophic growth for sticking cells
 			mother.SetAmount(amount);

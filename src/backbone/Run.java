@@ -279,6 +279,20 @@ public class Run {
 //				for(int ii=1; ii<dividedCellArray.size(); ii++) 	cellNumber += ", " + dividedCellArray.get(ii).Index();
 //				model.Write("Cells grown: " + cellNumber,"iter");
 			}
+			// Adjust growth time step if needed
+			final int growthStepNMax = 100;
+			final double growthFactorExpected;
+			if(model.simulation == 0) {
+				growthFactorExpected = Math.exp(model.muAvgSimple[4]*model.growthTimeStep/3600);
+			} else if(model.simulation == 2) {
+				growthFactorExpected = Math.exp(0.5*(model.muAvgSimple[4]+model.muAvgSimple[5])*model.growthTimeStep/3600);
+			} else {
+				growthFactorExpected = 0.0;
+			}
+			if(model.cellArray.size()*(growthFactorExpected-1.0) > growthStepNMax) {
+				model.Write("At least " + growthStepNMax + " cells expected to divide next step, halving growth time step", "warning");
+				model.growthTimeStep *= 0.5;
+			}
 			// Reset springs where needed
 			model.Write("Resetting springs","iter");
 			for(CSpring rod : model.rodSpringArray) 	rod.ResetRestLength();
