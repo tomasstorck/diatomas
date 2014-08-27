@@ -13,11 +13,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.math3.analysis.integration.MidPointIntegrator;
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
-import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
-import org.apache.commons.math3.ode.nonstiff.MidpointIntegrator;
 import org.apache.commons.math3.ode.sampling.StepHandler;
 import org.apache.commons.math3.ode.sampling.StepInterpolator;
 
@@ -117,9 +114,10 @@ public class CModel implements Serializable {
 	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(0);
 	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(0);
 	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(0);
+	// === AS STUFF ===
+	public int flocF = 4;
+	public int filF = 5;
 	// === COMSOL STUFF ===
-	public static int port = 2036;
-	public static boolean bit64 = true;
 	public double[] yieldXS = new double[]{2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};		// [Cmol X/mol reaction] yield of biomass. Reactions are normalised to mol substrate 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	

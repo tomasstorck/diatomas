@@ -1,13 +1,12 @@
 package comsol;
 
 import interactor.Interactor;
-import cell.CModel;
 import com.comsol.model.util.ModelUtil;
 
 
 public class Server {
-	public static void Start(int port) throws RuntimeException {
-		String architecture = (CModel.bit64) ? "-64 " : "-32 ";
+	public static void Start(int port, boolean bit64) throws RuntimeException {
+		String architecture = (bit64) ? "-64 " : "-32 ";
 		int NProcAvailable = Runtime.getRuntime().availableProcessors();
 		String NProcessor;
 		if(NProcAvailable<2)

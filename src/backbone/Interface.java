@@ -24,13 +24,14 @@ import ser2mat.ser2mat;
 import cell.CModel;
 
 public class Interface{
+	static CModel model;
+	static Run instance;
 
 	public static void main(String[] args) throws Exception{
 		System.out.println("DIATOMAS Java model");
 
 		// Initialise model, simulation and create an object for a copy
-		CModel model = new CModel();
-		Run instance;
+		model = new CModel();
 		// Analyse command line arguments, immediately execute some, save rest to Hashtable
 		int NArg = args.length;
 		Map<String, String> argument = Collections.synchronizedMap(new LinkedHashMap<String, String>());
@@ -80,12 +81,9 @@ public class Interface{
 				return;
 			// Case argument needs to be set in the model
 			} else {
-				// Save all other arguments in the hashtable
-				argument.put(arg.toLowerCase(), args[ii+1]);
+				argument.put(arg.toLowerCase(), args[ii+1]); 	// Save all other arguments in the hashtable
 			}
 		}
-		
-		//
 		
 		if(argument.containsKey("load")){						// Iterations > 0
 			String loadName = argument.get("load");
@@ -107,26 +105,42 @@ public class Interface{
 				loadName = "results/" + loadName + "/output/" + files[files.length-1];
 			}
 			model = Load(loadName);
-			instance = new Run(model);
 			model.Write("Loaded " + loadName, "");
-			SetArgument(model, argument, true);
-			
-		} else {												// Start from zero
-			// Set name to prevent writing things to default folder
+		}
+		// Set name to prevent writing things to default folder
+		if(!argument.containsKey("load")) {
 			if(argument.containsKey("name"))		model.name = argument.get("name");
-			// Initialise parameters
-			instance = new Run(model);
+			if(argument.containsKey("simulation"))	model.simulation = Integer.parseInt(argument.get("simulation"));
+		}
+		// Initialise parameters
+		String message = "Starting simulation '";
+		if(model.simulation == 0) {
+			message += "E. coli";
+			instance = new RunEcoli(model);
+		} else if(model.simulation == 2) {
+			message += "Activated Sludge";
+			instance = new RunAS(model);
+		} else if(model.simulation == 4) {
+			message += "COMSOL";
+			instance = new RunComsol(model);
+		} else {
+			throw new RuntimeException("Unknown simulation type: " + model.simulation);
+		}
+		// Finish String message
+		message += "', name '" + model.name + "' w/ arguments: ";
+		// Set command line arguments
+		if(!argument.containsKey("load")) {
 			SetArgument(model, argument, false);				// Don't want to do multiplications (e.g. Kan[0] *0.1) just yet to prevent from doubling it up
 			instance.Initialise();
-			SetArgument(model, argument, true);
 		}
+		SetArgument(model, argument, true);
+		
 		// Copy simulation .jar file to this folder
 		model.Write("Copying .jar file to simulation folder", "");
 		CopyJar(model);
 		// Done analysing input arguments and preparing. Start model
 		try {
 			model.Write("=====================================", "");
-			String message = "Starting simulation '" + model.name + "' w/ arguments: ";
 			for(int jj=0; jj<args.length; jj++) 	message += args[jj] + " ";
 			model.Write(message,"");
 			model.Write("=====================================", "");
@@ -142,6 +156,66 @@ public class Interface{
 		}
 	}
 			
+	public static void SetArgument(Run run, Map<String,String> argument, CModel model) {
+		Iterator<Entry<String, String>> argumentKeys = argument.entrySet().iterator();
+		args:while(argumentKeys.hasNext()) {
+			Entry<String, String> iter = argumentKeys.next(); 
+			String key = iter.getKey();
+			String value = iter.getValue();
+			for(Field field : Run.class.getFields()) {
+				if(key.equalsIgnoreCase(field.getName())) {
+					key = field.getName();						// Update key to the correct Capitalisation
+					try {
+						@SuppressWarnings("rawtypes")
+						Class fieldClass = Run.class.getField(key).get(run).getClass();
+						String fieldClassName = fieldClass.getSimpleName();
+						// boolean
+						if(fieldClassName.equals("Boolean")) {
+							boolean bool = Integer.parseInt(value) == 1 ? true : false;
+							if(field.getBoolean(run) != bool) {
+								field.setBoolean(run, bool);
+								model.Write(field.getName() + " set to " + (bool?"true":"false"), "");
+							}
+							continue args;
+						}
+						// double
+						if(fieldClassName.equals("Double")) {
+							double number = field.getDouble(run);
+							// See if we have a relative (e.g. Kan *10) or absolute (e.g. Kan 1e-10) value
+							number = Double.parseDouble(value);			// Absolute
+							if(field.getDouble(run) != number) {
+								field.setDouble(run, number);
+								model.Write(field.getName() + " set to " + number, "");
+							}
+							continue args;									// Check next argument (i.e. continue outer loop)
+						}
+						// int
+						if(fieldClassName.equals("Integer")) {
+							int number = Integer.parseInt(value);
+							if(field.getInt(run) != number) {
+								field.setInt(run, number);
+								model.Write(field.getName() + " set to " + number, "");
+							}
+							continue args;
+						}
+						// String
+						if(fieldClassName.equals("String")) {
+							if(!value.equalsIgnoreCase((String) field.get(run))) {
+								field.set(run, value);
+								model.Write(field.getName() + " set to " + value, "");
+							}
+							continue args;
+						}
+						// Throw an error
+						throw new RuntimeException("Unknown class type for Run");
+					} catch (Exception E) {
+						E.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+	
 	public static void SetArgument(CModel model, Map<String, String> argument, boolean doRelative) {
 		Iterator<Entry<String, String>> argumentKeys = argument.entrySet().iterator();
 		args:while(argumentKeys.hasNext()) {
@@ -397,7 +471,7 @@ public class Interface{
 								continue args;
 							}
 							// Throw an error
-							throw new RuntimeException("Unknown class type");
+							throw new RuntimeException("Unknown class type for CModel");
 						}
 					} catch (Exception E) {
 						E.printStackTrace();
@@ -405,7 +479,62 @@ public class Interface{
 				}
 			}
 			// Are you still here?
-			if(!key.equalsIgnoreCase("load"))		throw new RuntimeException("Unknown argument: " + key);
+			if(!key.equalsIgnoreCase("load")) {			// Load will be handled later
+				// Perhaps it's for instance
+				for(Field field : Run.class.getFields()) {
+					if(key.equalsIgnoreCase(field.getName())) {
+						key = field.getName();						// Update key to the correct Capitalisation
+						try {
+							@SuppressWarnings("rawtypes")
+							Class fieldClass = Run.class.getField(key).get(instance).getClass();
+							String fieldClassName = fieldClass.getSimpleName();
+							// boolean
+							if(fieldClassName.equals("Boolean")) {
+								boolean bool = Integer.parseInt(value) == 1 ? true : false;
+								if(field.getBoolean(instance) != bool) {
+									field.setBoolean(instance, bool);
+									model.Write("For this instance, " + field.getName() + " set to " + (bool?"true":"false"), "");
+								}
+								continue args;
+							}
+							// double
+							if(fieldClassName.equals("Double")) {
+								double number = field.getDouble(instance);
+								// See if we have a relative (e.g. Kan *10) or absolute (e.g. Kan 1e-10) value
+								number = Double.parseDouble(value);			// Absolute
+								if(field.getDouble(instance) != number) {
+									field.setDouble(instance, number);
+									model.Write(field.getName() + " set to " + number, "");
+								}
+								continue args;									// Check next argument (i.e. continue outer loop)
+							}
+							// int
+							if(fieldClassName.equals("Integer")) {
+								int number = Integer.parseInt(value);
+								if(field.getInt(instance) != number) {
+									field.setInt(instance, number);
+									model.Write(field.getName() + " set to " + number, "");
+								}
+								continue args;
+							}
+							// String
+							if(fieldClassName.equals("String")) {
+								if(!value.equalsIgnoreCase((String) field.get(instance))) {
+									field.set(instance, value);
+									model.Write(field.getName() + " set to " + value, "");
+								}
+								continue args;
+							}
+							// Throw an error
+							throw new RuntimeException("Unknown class type for Run");
+						} catch (Exception E) {
+							E.printStackTrace();
+						}
+					}
+				}
+				// It's not for instance either
+				throw new RuntimeException("Unknown argument: " + key);
+			}
 		}
 	}
 
