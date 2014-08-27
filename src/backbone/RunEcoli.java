@@ -118,14 +118,14 @@ public class RunEcoli extends Run {
 				model.Write(dividingCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
 				model.Write(NFil + " filament springs formed, " + NBranch + " new branches", "iter");
 			}
-			// Adjust growth time step if needed
-			final int growthStepNMax = 100;
-			final double growthFactorExpected;
-			growthFactorExpected = Math.exp(model.muAvgSimple[4]*model.growthTimeStep/3600);
-			if(model.cellArray.size()*(growthFactorExpected-1.0) > growthStepNMax) {
-				model.Write("At least " + growthStepNMax + " cells expected to divide next step, halving growth time step", "warning");
-				model.growthTimeStep *= 0.5;
-			}
+//			// Adjust growth time step if needed
+//			final int growthStepNMax = 100;
+//			final double growthFactorExpected;
+//			growthFactorExpected = Math.exp(model.muAvgSimple[4]*model.growthTimeStep/3600);
+//			if(model.cellArray.size()*(growthFactorExpected-1.0) > growthStepNMax) {
+//				model.Write("At least " + growthStepNMax + " cells expected to divide next step, halving growth time step", "warning");
+//				model.growthTimeStep *= 0.5;
+//			}
 			// Reset springs where needed
 			model.Write("Resetting springs","iter");
 			for(CSpring rod : model.rodSpringArray) 	rod.ResetRestLength();

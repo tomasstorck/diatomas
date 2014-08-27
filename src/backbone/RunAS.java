@@ -154,14 +154,14 @@ public class RunAS extends Run {
 				if(cell.type == model.filF) 	NCellFil++;
 				else if(cell.type == model.flocF) 	NCellFloc++;
 			}
-			// Adjust growth time step if needed
-			final int growthStepNMax = 100;
-			final double growthFactorExpectedFil =  Math.exp(model.muAvgSimple[model.filF] *model.growthTimeStep/3600);
-			final double growthFactorExpectedFloc = Math.exp(model.muAvgSimple[model.flocF]*model.growthTimeStep/3600);
-			if((NCellFil*(growthFactorExpectedFil-1.0) + NCellFloc*(growthFactorExpectedFloc-1.0)) > growthStepNMax) {
-				model.Write("At least " + growthStepNMax + " cells expected to divide next step, halving growth time step", "warning");
-				model.growthTimeStep *= 0.5;
-			}
+//			// Adjust growth time step if needed
+//			final int growthStepNMax = 100;
+//			final double growthFactorExpectedFil =  Math.exp(model.muAvgSimple[model.filF] *model.growthTimeStep/3600);
+//			final double growthFactorExpectedFloc = Math.exp(model.muAvgSimple[model.flocF]*model.growthTimeStep/3600);
+//			if((NCellFil*(growthFactorExpectedFil-1.0) + NCellFloc*(growthFactorExpectedFloc-1.0)) > growthStepNMax) {
+//				model.Write("At least " + growthStepNMax + " cells expected to divide next step, halving growth time step", "warning");
+//				model.growthTimeStep *= 0.5;
+//			}
 			// Attach new cells
 			final double NNew = model.attachmentRate*(model.growthTimeStep/3600.0);
 			model.attachCounter += NNew;
