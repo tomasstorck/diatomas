@@ -248,11 +248,7 @@ while true
 			end
 		end
 		loadFileRange = length(loadFileNameList):-1:1;
-		for iFile=loadFileRange
-			% See if we want to break the for loop, so we can start rendering the other folders
-			if find(loadFileRange==iFile) > loadFileMax
-				break;
-			end
+        for iFile=loadFileRange
 			% See if we want to skip this file, if it's in removeFromFileNameList
 			if any(iFile==removeFromFileNameList)
 				continue;
