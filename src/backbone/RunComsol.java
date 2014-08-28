@@ -212,12 +212,12 @@ public class RunComsol extends Run {
 			model.Write("Resetting springs","iter");
 			for(CSpring rod : model.rodSpringArray) 	rod.ResetRestLength();
 			for(CSpring fil : model.filSpringArray) 	fil.ResetRestLength();
-			// Count number of filament formers and floc formers 
-			int NCellFil = 0, NCellFloc = 0;
-			for(CCell cell : model.cellArray) {
-				if(cell.type == filF) 	NCellFil++;
-				else if(cell.type == flocF) 	NCellFloc++;
-			}
+//			// Count number of filament formers and floc formers 
+//			int NCellFil = 0, NCellFloc = 0;
+//			for(CCell cell : model.cellArray) {
+//				if(cell.type == filF) 	NCellFil++;
+//				else if(cell.type == flocF) 	NCellFloc++;
+//			}
 //			// Adjust growth time step if needed
 //			final int growthStepNMax = 100;
 //			final double growthFactorExpectedFil =  Math.exp(model.muAvgSimple[filF] *model.growthTimeStep/3600);

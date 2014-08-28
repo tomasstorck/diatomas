@@ -148,12 +148,12 @@ public class RunAS extends Run {
 			model.Write("Resetting springs","iter");
 			for(CSpring rod : model.rodSpringArray) 	rod.ResetRestLength();
 			for(CSpring fil : model.filSpringArray) 	fil.ResetRestLength();
-			// Count number of filament formers and floc formers 
-			int NCellFil = 0, NCellFloc = 0;
-			for(CCell cell : model.cellArray) {
-				if(cell.type == model.filF) 	NCellFil++;
-				else if(cell.type == model.flocF) 	NCellFloc++;
-			}
+//			// Count number of filament formers and floc formers 
+//			int NCellFil = 0, NCellFloc = 0;
+//			for(CCell cell : model.cellArray) {
+//				if(cell.type == model.filF) 		NCellFil++;
+//				else if(cell.type == model.flocF) 	NCellFloc++;
+//			}
 //			// Adjust growth time step if needed
 //			final int growthStepNMax = 100;
 //			final double growthFactorExpectedFil =  Math.exp(model.muAvgSimple[model.filF] *model.growthTimeStep/3600);

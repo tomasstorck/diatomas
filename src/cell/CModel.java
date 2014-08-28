@@ -15,7 +15,6 @@ import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
-import org.apache.commons.math3.ode.nonstiff.MidpointIntegrator;
 import org.apache.commons.math3.ode.sampling.StepHandler;
 import org.apache.commons.math3.ode.sampling.StepInterpolator;
 
@@ -115,6 +114,8 @@ public class CModel implements Serializable {
 	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(0);
 	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(0);
 	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(0);
+	// ODE settings
+	public double ODETol = 1e-7;
 	// === AS STUFF ===
 	public int flocF = 4;
 	public int filF = 5;
@@ -324,8 +325,8 @@ public class CModel implements Serializable {
 	// Relaxation stuff //
 	//////////////////////
 	public int[] Relaxation() throws RuntimeException {
-//		final FirstOrderIntegrator odeIntegrator = new DormandPrince54Integrator(0, relaxationTimeStepdt, 1e-7, 1e-7); 		// (minStep, maxStep, absTol, relTol)
-		final FirstOrderIntegrator odeIntegrator = new MidpointIntegrator(2e-3); 											// (stepSize)
+		final FirstOrderIntegrator odeIntegrator = new DormandPrince54Integrator(0, relaxationTimeStepdt, ODETol, ODETol); 	// (minStep, maxStep, absTol, relTol)
+//		final FirstOrderIntegrator odeIntegrator = new MidpointIntegrator(ODETol); 											// (stepSize)
 		final RelaxationODE ode = new RelaxationODE(this); 			// Subclass of FirstOrderDifferentialEquations in Apache Commons
 		StepHandler stepHandler = new StepHandler() {
 			public void init(double t0, double[] y0, double t) {}
