@@ -58,7 +58,7 @@ public class ser2mat {
 			// And loop over the different elements in ArrayList<o.class> oArray
 			for(int io=0; io<oArray.size(); io++) {
 				Object o = oArray.get(io);
-				Field[] fields = o.getClass().getDeclaredFields(); 		// Should remain the same for oArray
+				Field[] fields = GetAllClassFields(o.getClass()); 		// Should remain the same for oArray
 				// Loop over the fields in o
 				for(Field f : fields) {
 					try {
@@ -235,5 +235,18 @@ public class ser2mat {
 
 	private static Class<?> GetParClass(Field f) {
 		return (Class<?>) ((ParameterizedType) f.getGenericType()).getActualTypeArguments()[0];
+	}
+	
+	private static Field[] GetAllClassFields(Class<?> c) {
+		if(c.getSuperclass() == null || c.getSuperclass() == Object.class) {
+			return c.getDeclaredFields();
+		} else {
+			ArrayList<Field> allFields = new ArrayList<Field>();
+			// Add this class' fields
+			for( Field f : c.getDeclaredFields() )					allFields.add(f);
+			// Analyse superclass in the same way as this class (might have another super class)
+			for( Field f : GetAllClassFields(c.getSuperclass()))	allFields.add(f);
+			return  Arrays.copyOf(allFields.toArray(), allFields.size(), Field[].class);
+		}
 	}
 }

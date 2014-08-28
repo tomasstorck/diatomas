@@ -56,7 +56,7 @@ for iCell=1:length(model.cellArray)
 	% Determine colour for this cell
 	ancestor = cell;
 	ancestorIndex = iCell-1;
-	while ancestorIndex+1>size(cellColour,1) && ~isempty(ancestor.mother)	% Find the oldest ancestor that we can colour
+	while ancestorIndex+1>size(cellColour,1) && ancestor.mother~=-1	% Find the oldest ancestor that we can colour
 		ancestorIndex = ancestor.mother;
 		ancestor = model.cellArray(ancestorIndex+1);
 	end

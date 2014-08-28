@@ -15,6 +15,7 @@ import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
+import org.apache.commons.math3.ode.nonstiff.MidpointIntegrator;
 import org.apache.commons.math3.ode.sampling.StepHandler;
 import org.apache.commons.math3.ode.sampling.StepInterpolator;
 
@@ -323,8 +324,8 @@ public class CModel implements Serializable {
 	// Relaxation stuff //
 	//////////////////////
 	public int[] Relaxation() throws RuntimeException {
-		final FirstOrderIntegrator odeIntegrator = new DormandPrince54Integrator(0, relaxationTimeStepdt, 1e-7, 1e-7); 		// (minStep, maxStep, absTol, relTol)
-//		final FirstOrderIntegrator odeIntegrator = new MidpointIntegrator(2e-3); 		// (stepSize)
+//		final FirstOrderIntegrator odeIntegrator = new DormandPrince54Integrator(0, relaxationTimeStepdt, 1e-7, 1e-7); 		// (minStep, maxStep, absTol, relTol)
+		final FirstOrderIntegrator odeIntegrator = new MidpointIntegrator(2e-3); 											// (stepSize)
 		final RelaxationODE ode = new RelaxationODE(this); 			// Subclass of FirstOrderDifferentialEquations in Apache Commons
 		StepHandler stepHandler = new StepHandler() {
 			public void init(double t0, double[] y0, double t) {}
