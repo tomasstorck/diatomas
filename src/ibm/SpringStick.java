@@ -1,20 +1,20 @@
-package cell;
+package ibm;
 
 import java.util.ArrayList;
 
-public class CStickSpring extends CSpring {
+public class SpringStick extends Spring {
 	private static final long serialVersionUID = 1L;
-	public ArrayList<CStickSpring> siblingArray = new ArrayList<CStickSpring>(4);;
+	public ArrayList<SpringStick> siblingArray = new ArrayList<SpringStick>(4);;
 	///////////////////////////////////////////////////////////////////
 	
-	public CStickSpring(CBall ball0, CBall ball1) {
-		ballArray = new CBall[2];
+	public SpringStick(Ball ball0, Ball ball1) {
+		ballArray = new Ball[2];
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
 		ResetK();
 		ResetRestLength();
 		// Add to arrays
-		final CModel model = ball0.cell.model;
+		final Model model = ball0.cell.model;
 		model.stickSpringArray.add(this);
 		ball0.cell.stickSpringArray.add(this);
 		ball1.cell.stickSpringArray.add(this);
@@ -29,16 +29,16 @@ public class CStickSpring extends CSpring {
 	}
 	
 	public void ResetRestLength() {
-		CBall ball0 = ballArray[0];
-		CBall ball1 = ballArray[1];
+		Ball ball0 = ballArray[0];
+		Ball ball1 = ballArray[1];
 		restLength = RestLength(ball0.pos, ball1.pos, ball0.radius, ball1.radius);
 	}
 	
 	public void ResetK() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		double springDiv;
-		CCell cell0 = ballArray[0].cell;
-		CCell cell1 = ballArray[1].cell;
+		Cell cell0 = ballArray[0].cell;
+		Cell cell1 = ballArray[1].cell;
 		if(cell0.type<2 && cell1.type<2)		springDiv = 1.0;
 		else if(cell0.type>1 && cell1.type>1) {
 			if(cell0.type<6 && cell1.type<6) 	springDiv = 4.0;
@@ -48,10 +48,10 @@ public class CStickSpring extends CSpring {
 	}
 	
 	public int Break() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		int count = 0;
-		CCell cell0 = ballArray[0].cell;
-		CCell cell1 = ballArray[1].cell;
+		Cell cell0 = ballArray[0].cell;
+		Cell cell1 = ballArray[1].cell;
 		// Tell cells they're no longer stuck to each other
 		cell0.stickCellArray.remove(cell1);
 		cell1.stickCellArray.remove(cell0);	
@@ -59,7 +59,7 @@ public class CStickSpring extends CSpring {
 		count += (model.stickSpringArray.remove(this))?1:0;			// Add one to counter if successfully removed
 		cell0.stickSpringArray.remove(this);
 		cell1.stickSpringArray.remove(this);
-		for(CSpring sibling : siblingArray) {
+		for(Spring sibling : siblingArray) {
 			cell0.stickSpringArray.remove(sibling);
 			cell1.stickSpringArray.remove(sibling);
 			count += (model.stickSpringArray.remove(sibling))?1:0;
@@ -72,7 +72,7 @@ public class CStickSpring extends CSpring {
 	}
 	
 	public int Index() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		return super.Index(model.stickSpringArray);
 	}
 }

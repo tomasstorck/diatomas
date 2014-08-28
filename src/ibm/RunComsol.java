@@ -1,4 +1,4 @@
-package backbone;
+package ibm;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -7,15 +7,9 @@ import comsol.Comsol;
 import comsol.Server;
 import random.rand;
 import ser2mat.ser2mat;
-import cell.CBall;
-import cell.CCell;
-import cell.CModel;
-import cell.CRodSpring;
-import cell.CSpring;
-import cell.Vector3d;
 
 public class RunComsol extends Run {
-	public RunComsol(CModel model) {
+	public RunComsol(Model model) {
 		this.model = model;
 	}
 	
@@ -83,7 +77,7 @@ public class RunComsol extends Run {
 				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 				radiusModifier[ii] = 0.0; 
 				directionInit[ii] = new Vector3d((rand.Double()-0.5), (rand.Double()-0.5), (rand.Double()-0.5)).normalise();
-				final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
+				final double restLength =  SpringRod.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, (rand.Double()-0.5)*model.L.y,															(rand.Double()-0.5)*model.L.z);
 				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}
@@ -92,7 +86,7 @@ public class RunComsol extends Run {
 			for(int iCell = 0; iCell < model.NCellInit; iCell++){
 				boolean filament = model.filament && model.filType[typeInit[iCell]];
 				@SuppressWarnings("unused")
-				CCell cell = new CCell(typeInit[iCell], 				// Type of biomass
+				Cell cell = new Cell(typeInit[iCell], 				// Type of biomass
 						nInit[iCell],
 						radiusModifier[iCell],
 						position0Init[iCell],
@@ -120,17 +114,17 @@ public class RunComsol extends Run {
 			comsol.Initialise();
 			model.Write("\tCreating cells", "iter");
 			// Create cells in the COMSOL model
-			for(CCell cell : model.cellArray) {
+			for(Cell cell : model.cellArray) {
 				if(cell.type<2) 		comsol.CreateSphere(cell);
 				else if(cell.type<6)	comsol.CreateRod(cell);
 				else 					throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 			}
 			// Compile array with oxidating, reducing MO
-			ArrayList<CCell> oxCellArray = new ArrayList<CCell>();
-			ArrayList<CCell> redCellArray = new ArrayList<CCell>();
+			ArrayList<Cell> oxCellArray = new ArrayList<Cell>();
+			ArrayList<Cell> redCellArray = new ArrayList<Cell>();
 			final int oxType = 4;
 			final int redType = 0;
-			for(CCell cell : model.cellArray) {
+			for(Cell cell : model.cellArray) {
 				if(cell.type==oxType)					// FIXME Correct cell type?
 					oxCellArray.add(cell);
 				else if(cell.type==redType)
@@ -146,7 +140,7 @@ public class RunComsol extends Run {
 			model.Write("\tAdding acid dissociation reactions, setting cell electric potentials and currents", "iter");
 			comsol.CreateAcidDissociation();
 			String iet = "diet";
-			for(CCell cell : model.cellArray) {
+			for(Cell cell : model.cellArray) {
 				String type = cell.type==oxType?"ox":"red";
 				comsol.CreateCurrentDiscontinuity(cell, type);
 				comsol.CreateBiomassReaction(cell, type);
@@ -160,7 +154,7 @@ public class RunComsol extends Run {
 			model.Write("\tRunning model", "iter");
 			comsol.Run();							// Run model to calculate concentrations
 			model.Write("\tCalculating cell surface concentrations", "iter");
-			for(CCell cell : model.cellArray) {
+			for(Cell cell : model.cellArray) {
 				String type = cell.type==oxType?"ox":"red";
 				cell.Rx = comsol.GetRx(cell, type, iet);
 			}
@@ -172,15 +166,15 @@ public class RunComsol extends Run {
 			model.GrowthFlux();
 			
 			// Mark mother cell for division if ready
-			ArrayList<CCell> dividingCellArray = new ArrayList<CCell>(0);
-			for(CCell mother : model.cellArray) {
+			ArrayList<Cell> dividingCellArray = new ArrayList<Cell>(0);
+			for(Cell mother : model.cellArray) {
 				if(mother.GetAmount() > model.nCellMax[mother.type])
 					dividingCellArray.add(mother);
 			}
 			// Divide marked cells
 			int NFil = 0; int NBranch = 0;													// Keep track of how many filament springs and how many new branches we make
-			for(CCell mother : dividingCellArray) {
-				CCell daughter = model.DivideCell(mother);
+			for(Cell mother : dividingCellArray) {
+				Cell daughter = model.DivideCell(mother);
 				if(mother.filament) {
 					if(mother.type<2) {
 						if(model.filSphereStraightFil)
@@ -188,7 +182,7 @@ public class RunComsol extends Run {
 						model.CreateFilament(mother, daughter);
 						NFil += 1;
 					} else if (mother.type<6) {
-						CCell neighbourDaughter = mother.GetNeighbour();
+						Cell neighbourDaughter = mother.GetNeighbour();
 						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency && neighbourDaughter != null) {
 							model.CreateFilament(daughter, mother, neighbourDaughter);		// 3 arguments --> branched, 2 springs daughter to mother and 2 daughter to neighbour 
 							NFil += 4; NBranch++;
@@ -210,8 +204,8 @@ public class RunComsol extends Run {
 			}
 			// Reset springs where needed
 			model.Write("Resetting springs","iter");
-			for(CSpring rod : model.rodSpringArray) 	rod.ResetRestLength();
-			for(CSpring fil : model.filSpringArray) 	fil.ResetRestLength();
+			for(Spring rod : model.rodSpringArray) 	rod.ResetRestLength();
+			for(Spring fil : model.filSpringArray) 	fil.ResetRestLength();
 //			// Count number of filament formers and floc formers 
 //			int NCellFil = 0, NCellFloc = 0;
 //			for(CCell cell : model.cellArray) {
@@ -249,10 +243,10 @@ public class RunComsol extends Run {
 				model.relaxationTime += model.relaxationTimeStepdt;
 				model.Write("    Relaxation finished in " + nstp + " solver steps","iter");
 				// Throw warning if cells are overlapping (will crash COMSOL)
-				ArrayList<CCell> overlapCellArray = model.DetectCollisionCellArray(1.01);
+				ArrayList<Cell> overlapCellArray = model.DetectCollisionCellArray(1.01);
 				if(!overlapCellArray.isEmpty()) {
 					String overlapCellArrayString = ""; 
-					for(CCell c : overlapCellArray) {
+					for(Cell c : overlapCellArray) {
 						overlapCellArrayString += c.Index() + " ";
 					}
 					model.Write("    Overlapping cells detected: " + overlapCellArrayString, "warning");

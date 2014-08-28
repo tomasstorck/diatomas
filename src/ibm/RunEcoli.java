@@ -1,20 +1,14 @@
-package backbone;
+package ibm;
 
 import java.util.ArrayList;
 
 import random.rand;
 import ser2mat.ser2mat;
-import cell.CBall;
-import cell.CCell;
-import cell.CModel;
-import cell.CRodSpring;
-import cell.CSpring;
-import cell.Vector3d;
 
 public class RunEcoli extends Run {
-	CModel model;
+	Model model;
 	
-	public RunEcoli(CModel model) {
+	public RunEcoli(Model model) {
 		this.model = model;
 	}
 	
@@ -58,8 +52,8 @@ public class RunEcoli extends Run {
 				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 				radiusModifier[ii] = model.radiusCellStDev[typeInit[ii]]*random.rand.Gaussian();
 				directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 																				(rand.Double()-0.5))			.normalise();
-				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	CBall.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii] + 0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);						// *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
-				final double restLength =  CRodSpring.RestLength(CBall.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
+				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	Ball.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii] + 0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);						// *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
+				final double restLength =  SpringRod.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}
 			
@@ -67,7 +61,7 @@ public class RunEcoli extends Run {
 			for(int iCell = 0; iCell < model.NCellInit; iCell++){
 				boolean filament = model.filament && model.filType[typeInit[iCell]];
 				@SuppressWarnings("unused")
-				CCell cell = new CCell(typeInit[iCell], 				// Type of biomass
+				Cell cell = new Cell(typeInit[iCell], 				// Type of biomass
 						nInit[iCell],
 						radiusModifier[iCell],
 						position0Init[iCell],
@@ -90,17 +84,17 @@ public class RunEcoli extends Run {
 			model.Write("Growing cells", "iter");
 			model.GrowthSimple();
 			// Mark mother cell for division if ready
-			ArrayList<CCell> dividingCellArray = new ArrayList<CCell>(0);
-			for(CCell mother : model.cellArray) {
+			ArrayList<Cell> dividingCellArray = new ArrayList<Cell>(0);
+			for(Cell mother : model.cellArray) {
 				if(mother.GetAmount() > model.nCellMax[mother.type])
 					dividingCellArray.add(mother);
 			}
 			// Divide marked cells
 			int NFil = 0; int NBranch = 0;													// Keep track of how many filament springs and how many new branches we make
-			for(CCell mother : dividingCellArray) {
-				CCell daughter = model.DivideCell(mother);
+			for(Cell mother : dividingCellArray) {
+				Cell daughter = model.DivideCell(mother);
 				if(mother.filament) {
-					CCell neighbourDaughter = mother.GetNeighbour();
+					Cell neighbourDaughter = mother.GetNeighbour();
 					if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency && neighbourDaughter != null) {
 						model.CreateFilament(daughter, mother, neighbourDaughter);		// 3 arguments --> branched, 2 springs daughter to mother and 2 daughter to neighbour 
 						NFil += 4; NBranch++;
@@ -128,8 +122,8 @@ public class RunEcoli extends Run {
 //			}
 			// Reset springs where needed
 			model.Write("Resetting springs","iter");
-			for(CSpring rod : model.rodSpringArray) 	rod.ResetRestLength();
-			for(CSpring fil : model.filSpringArray) 	fil.ResetRestLength();
+			for(Spring rod : model.rodSpringArray) 	rod.ResetRestLength();
+			for(Spring fil : model.filSpringArray) 	fil.ResetRestLength();
 			// Attach new cells
 			final double NNew = model.attachmentRate*(model.growthTimeStep/3600.0);
 			model.attachCounter += NNew;

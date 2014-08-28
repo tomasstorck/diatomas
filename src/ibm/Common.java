@@ -1,4 +1,4 @@
-package cell;
+package ibm;
 
 public class Common {
 	public static double maxArray(double[] array) {

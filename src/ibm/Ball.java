@@ -1,10 +1,10 @@
-package cell;
+package ibm;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 
 
-public class CBall implements Serializable {
+public class Ball implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
 	public double n;		// [mol] Chemical amount 
@@ -13,14 +13,14 @@ public class CBall implements Serializable {
 	public Vector3d vel;
 	public Vector3d force;
 //	public int index;
-	public CCell cell;
+	public Cell cell;
 //	public int ballArrayIndex;
 	
 	///////////////////////////////////////////////////////////////////
 	
-	public CBall(double posx, double posy, double posz, double amount, int ballArrayIndex, CCell cell){	// Create a new ball, make it belong to cell
+	public Ball(double posx, double posy, double posz, double amount, int ballArrayIndex, Cell cell){	// Create a new ball, make it belong to cell
 		this.cell = cell;
-		CModel model = cell.model; 
+		Model model = cell.model; 
 		
 		pos = new Vector3d(posx, posy, posz);
 		vel = new Vector3d(0, 0, 0);
@@ -36,7 +36,7 @@ public class CBall implements Serializable {
 		this.radius = Radius();
 	}
 		
-	public CBall() {} 				// Empty constructor for loading. Doesn't add the ball to any ball arrays!
+	public Ball() {} 				// Empty constructor for loading. Doesn't add the ball to any ball arrays!
 	
 	/////////////////////////////////////////////////////
 	
@@ -44,11 +44,11 @@ public class CBall implements Serializable {
 		return Radius(n, cell.type, cell.model, cell.radiusModifier);
 	}
 	
-	public static double Radius(double n, int type, CModel model) {
+	public static double Radius(double n, int type, Model model) {
 		return Radius(n, type, model, 0.0);
 	}
 	
-	public static double Radius(double n, int type, CModel model, double radiusModifier) {
+	public static double Radius(double n, int type, Model model, double radiusModifier) {
 		if (type<2) {
 			return Math.pow( 							n*model.MWX / (Math.PI * model.rhoX * 4.0/3.0), .333333);						// Note that rho is in kg m-3 but cell mass is in Cmol
 		} else {
@@ -62,8 +62,8 @@ public class CBall implements Serializable {
 	}
 	
 	public int Index() {
-		CModel model = cell.model;
-		ArrayList<CBall> array = model.ballArray;
+		Model model = cell.model;
+		ArrayList<Ball> array = model.ballArray;
 		for(int index=0; index<array.size(); index++) {
 			if(array.get(index).equals(this))	return index;
 		}

@@ -1,20 +1,20 @@
 package comsol;
 
+// ibm.Model and com.comsol.model.Model are not imported due to naming conflict, instead full path is used 
+
+import ibm.Ball;
+import ibm.Cell;
+import ibm.Vector3d;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
-import cell.CBall;
-import cell.CCell;
-import cell.CModel;
-import cell.Vector3d;
-
-import com.comsol.model.Model;
 import com.comsol.model.util.ModelUtil;
 import com.comsol.util.exceptions.FlException;
 
 public class Comsol {
-	Model comsol;				// The COMSOL model
-	CModel java;
+	com.comsol.model.Model comsol;				// The COMSOL model
+	ibm.Model ibm;
 	
 	final double dimensionFactor = 0.75;	// FIXME, was 0.75, should be 1.0
 	
@@ -25,8 +25,8 @@ public class Comsol {
 	// Settings for model
 	static int meshSize = 8;
 	
-	public Comsol(CModel java) {
-		this.java = java;  
+	public Comsol(ibm.Model ibm) {
+		this.ibm = ibm;  
 	}
 	
 	//////////////////////////////////
@@ -35,7 +35,7 @@ public class Comsol {
 		// Create model, initialise geometry, mesh, study and physics
 //		ModelUtil.initStandalone(false);
 //		ModelUtil.showProgress(false);								// enabling this causes COMSOL to run something SWT/graphical --> crash
-//		ModelUtil.showProgress("results/" + java.name + "/logfile_comsol.txt");
+//		ModelUtil.showProgress("results/" + ibm.name + "/logfile_comsol.txt");
 		comsol = ModelUtil.create("Model");
 	    comsol.modelPath("/home/tomas/Desktop");					// UPDATE
 	    comsol.modelNode().create("mod1");
@@ -314,7 +314,7 @@ public class Comsol {
 	    comsol.sol("sol1").feature("s1").feature("dDef").active(true);
     }
 	
-	public void CreateSphere(CCell cell) throws FlException {
+	public void CreateSphere(Cell cell) throws FlException {
 		// Pure geometry
 		String name = GetCellName(cell);
 	    comsol.geom("geom1").feature().create(name, "Sphere");
@@ -327,7 +327,7 @@ public class Comsol {
 	    sphList.add(name);
 	}
 	
-	public void CreateRod(CCell cell) throws FlException {
+	public void CreateRod(Cell cell) throws FlException {
 //		double cellHT = ( (cell.ballArray[1].pos.minus(cell.ballArray[0].pos)).norm() + 2.0*cell.ballArray[0].radius )*dimensionFactor;		// HT = Head-Tail
 		double cellL = cell.ballArray[1].pos.minus(cell.ballArray[0].pos).norm()*dimensionFactor;
 		Vector3d pos0 = cell.ballArray[0].pos.plus(cell.ballArray[1].pos.minus(cell.ballArray[0].pos).times((1.0-dimensionFactor)*0.5));
@@ -397,7 +397,7 @@ public class Comsol {
 	    double maxY = 0;
 	    double minZ = 10;
 	    double maxZ = 0;
-	    for(CBall ball : java.ballArray) {
+	    for(Ball ball : ibm.ballArray) {
 	    	if(ball.pos.x < minX) 	minX = ball.pos.x - ball.radius;		// Using radius because initially balls might be in the same plane
 	    	if(ball.pos.x > maxX) 	maxX = ball.pos.x + ball.radius;
 	    	if(ball.pos.y < minY) 	minY = ball.pos.y - ball.radius;
@@ -444,7 +444,7 @@ public class Comsol {
 	    comsol.physics("chnp").feature("reacAD").set("R", new String[][]{{"-ra_hpro"}, {"ra_hpro"}, {"-ra_hac"}, {"ra_hac"}, {"-ra_co2"}, {"ra_co2-ra_hco3"}, {"ra_hco3"}, {"0"}, {"0"}, {"ra_hpro+ra_hac+ra_co2+ra_hco3+ra_hoh"}, {"ra_hoh"}, {"0"}, {"0"}});
 	}
 
-	public void CreateElectricPotential(CCell cell) {		// Would rather make this a single physics with a larger selection, but couldn't get COMSOL to select multiple named domains. We might be able to convert names to int[] (which should work) using selection.entities()  
+	public void CreateElectricPotential(Cell cell) {		// Would rather make this a single physics with a larger selection, but couldn't get COMSOL to select multiple named domains. We might be able to convert names to int[] (which should work) using selection.entities()  
 //		String[] cellNameArray = Arrays.copyOf(cellList.toArray(), cellList.size(), String[].class);	// Convert cellList from ArrayList<String> to String[]. Typecast doesn't work for some reason
 //		int[] test = comsol.geom("geom1").feature("rod0").selection().entities(2);
 		String potName = "pot" + cell.Index();
@@ -453,7 +453,7 @@ public class Comsol {
 
 	}
 	
-	public void CreateBiomassReaction(CCell cell, String type) {
+	public void CreateBiomassReaction(Cell cell, String type) {
 		String reacName = "reac" + cell.Index(); 
 		String cellName = GetCellName(cell);
 	    comsol.physics("chnp").feature().create(reacName, "Reactions", 3);
@@ -474,7 +474,7 @@ public class Comsol {
 	    comsol.variable("var1").set(RxName, "F_" + type + "_diet*" + RxMaxName);
 	}
 	
-	public void CreateCurrentDiscontinuity(CCell cell, String type) {
+	public void CreateCurrentDiscontinuity(Cell cell, String type) {
 		String cellName = GetCellName(cell);
 		String cdName = "cdisc" + cell.Index();
 		comsol.physics("chnp").feature().create(cdName, "CurrentDiscontinuity", 2);
@@ -488,7 +488,7 @@ public class Comsol {
 	    }
 	}
 	
-	public void CreateAverageOp(CCell cell) {	    // Create domain average function
+	public void CreateAverageOp(Cell cell) {	    // Create domain average function
 		String avName = "aveop" + cell.Index();
 		String Xname = "X_" + GetCellName(cell).toUpperCase();
 	    comsol.cpl().create(avName, "Average", "geom1");
@@ -496,13 +496,13 @@ public class Comsol {
 	    comsol.cpl(avName).selection().named("geom1_" + GetCellName(cell) + "_bnd");
 	}
 	
-	public void CreateRatioDiet(ArrayList<CCell> oxCellArray, ArrayList<CCell> redCellArray) {
+	public void CreateRatioDiet(ArrayList<Cell> oxCellArray, ArrayList<Cell> redCellArray) {
 		String stringOx = "";
-		for(CCell cell : oxCellArray) {
+		for(Cell cell : oxCellArray) {
 			 stringOx = stringOx + "+Rx_max_ox" + cell.Index() + "_diet";
 		}
 		String stringRed = "";
-		for(CCell cell : redCellArray) {
+		for(Cell cell : redCellArray) {
 			 stringRed = stringRed + "+Rx_max_red" + cell.Index() + "_diet";
 		}
 		comsol.variable("var1").set("ratio_diet", "(6*(" + stringOx + "))/(8*(" + stringRed + "))");
@@ -511,16 +511,16 @@ public class Comsol {
 
 	}
 	
-	public void CreateRepair(ArrayList<CCell> cellArray) {				// Most likely requires CAD toolbox/license
+	public void CreateRepair(ArrayList<Cell> cellArray) {				// Most likely requires CAD toolbox/license
 	    comsol.geom("geom1").feature().create("rep1", "Repair");		// Default is 1e-5, yet is different from setting value in Geometry node to this 
-	    for(CCell cell : cellArray) {
+	    for(Cell cell : cellArray) {
 	    	comsol.geom("geom1").feature("rep1").selection("input").add(new String[]{GetCellName(cell)});
 	    }
 	}
 	
 	//////////////////////////////////
 
-	public String GetCellName(CCell cell) {
+	public String GetCellName(Cell cell) {
 		if(cell.type<2)
 			return "sph" + cell.Index();
 		else if(cell.type <6)
@@ -529,14 +529,14 @@ public class Comsol {
 			throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 	}
 	
-	public double GetRx(CCell cell, String type, String iet) throws FlException {
+	public double GetRx(Cell cell, String type, String iet) throws FlException {
 		String gevName = "gev" + cell.Index();		// gev for Global EValuation
 	    comsol.result().numerical().create(gevName, "EvalGlobal");
 		comsol.result().numerical(gevName).set("expr", "Rx_" + type + cell.Index() + "_" + iet);
 		return comsol.result().numerical(gevName).getReal()[0][0];								// Return the value's [0][0] (getReal returns a double[][])
 	}
 	
-	public double GetParameter(CCell cell, String parameter, String name) throws FlException {
+	public double GetParameter(Cell cell, String parameter, String name) throws FlException {
 		String avName = "av" + Integer.toString(cell.Index()) + "_" + name;						// e.g. av0_c0
 		String cellName = (cell.type<2 ? "sph" : "rod") + cell.Index();							// We named it either sphere or rod + the cell's number  
 		comsol.result().numerical().create(avName,"AvSurface");									// Determine the average surface value...
@@ -557,34 +557,34 @@ public class Comsol {
 			} catch(FlException E) {
 				String message = E.toString();
 				if(message.contains("Out of memory LU factorization")) {
-					java.Write("\tOut of memory during LU factorisation","warning");
+					ibm.Write("\tOut of memory during LU factorisation","warning");
 					if(meshSize<9) {
-						java.Write("\tIncreasing mesh size by 1 to " + ++meshSize + " and re-running", "iter");
+						ibm.Write("\tIncreasing mesh size by 1 to " + ++meshSize + " and re-running", "iter");
 						comsol.mesh("mesh1").autoMeshSize(meshSize);	// Add 1 to meshSize, enter that value		
 						comsol.mesh("mesh1").run();					// Run mesh again
 						continue;									// Try solving again
 					} else {
-						java.Write("\tCannot increase mesh size any further", "warning");
+						ibm.Write("\tCannot increase mesh size any further", "warning");
 					}
 				} else if(message.contains("Failed to respect boundary element edge on geometry face")) {
-					java.Write("\tBoundary element edge meshing problem","warning");
+					ibm.Write("\tBoundary element edge meshing problem","warning");
 					if(meshSize>1) {
-						java.Write("Decreasing mesh size by 1 to " + --meshSize + " and re-running", "iter");
+						ibm.Write("Decreasing mesh size by 1 to " + --meshSize + " and re-running", "iter");
 						comsol.mesh("mesh1").autoMeshSize(meshSize);	// Add 1 to meshSize, enter that value		
 						comsol.mesh("mesh1").run();						// Run mesh again
 						continue;
-					} else 		java.Write("\tCannot increase mesh size any further", "warning");
+					} else 		ibm.Write("\tCannot increase mesh size any further", "warning");
 				} else if(message.contains("Mean operator requires an adjacent domain of higher dimension")) {
-					java.Write("\tMean operator domain size problem","warning");
+					ibm.Write("\tMean operator domain size problem","warning");
 					if(meshSize>1) {
-						java.Write("Decreasing mesh size by 1 to " + --meshSize + " and re-running", "iter");
+						ibm.Write("Decreasing mesh size by 1 to " + --meshSize + " and re-running", "iter");
 						comsol.mesh("mesh1").autoMeshSize(meshSize);	// Add 1 to meshSize, enter that value		
 						comsol.mesh("mesh1").run();						// Run mesh again
 						continue;
-					} else 		java.Write("\tCannot increase mesh size any further", "warning");
+					} else 		ibm.Write("\tCannot increase mesh size any further", "warning");
 				}
 				// If we're still here, throw error
-				java.Write(message,"");
+				ibm.Write(message,"");
 				throw new RuntimeException("Don't know how to deal with error above, exiting");
 			}
 		}
@@ -592,7 +592,7 @@ public class Comsol {
 	}
 	
 	public void Save() throws IOException {
-		comsol.save(System.getProperty("user.dir") + "/results/" + java.name + "/output/" + String.format("g%04dm%04d", java.growthIter, java.relaxationIter));		// No 2nd arguments --> save as .mph
+		comsol.save(System.getProperty("user.dir") + "/results/" + ibm.name + "/output/" + String.format("g%04dm%04d", ibm.growthIter, ibm.relaxationIter));		// No 2nd arguments --> save as .mph
 	}
 	
 	//////////////////////////////////

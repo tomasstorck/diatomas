@@ -1,13 +1,13 @@
-package cell;
+package ibm;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 
 
-public abstract class CSpring implements Serializable {
+public abstract class Spring implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
-	public CBall[] ballArray;
+	public Ball[] ballArray;
 //	public Vector3d anchorPoint;
 	public double K;
 	public double restLength;
@@ -160,7 +160,7 @@ public abstract class CSpring implements Serializable {
 		return -1;
 	}
 	
-	public int Index(ArrayList<? extends CSpring> array) {
+	public int Index(ArrayList<? extends Spring> array) {
 //		CModel model = this.ballArray[0].cell.model;
 //		ArrayList<CSpring> array = new ArrayList<CSpring>();
 //		switch(type) {

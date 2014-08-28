@@ -1,30 +1,30 @@
-package cell;
+package ibm;
 
 import java.util.ArrayList;
 
-public class CFilSpring extends CSpring {
+public class SpringFil extends Spring {
 	private static final long serialVersionUID = 1L;
 //	ArrayList<CFilSpring> siblingArray;
 	public int type;
-	public ArrayList<CFilSpring> siblingArray = new ArrayList<CFilSpring>();;
+	public ArrayList<SpringFil> siblingArray = new ArrayList<SpringFil>();;
 	
 	///////////////////////////////////////////////////////////////////
 
-	public CFilSpring(CBall ball0, CBall ball1, int filType) {
-		ballArray = new CBall[2];
+	public SpringFil(Ball ball0, Ball ball1, int filType) {
+		ballArray = new Ball[2];
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
 		type = filType;
 		ResetK();
 		ResetRestLength();
 		// Add to arrays
-		final CModel model = ball0.cell.model;
+		final Model model = ball0.cell.model;
 		model.filSpringArray.add(this);
 		ball0.cell.filSpringArray.add(this);
 		ball1.cell.filSpringArray.add(this);
 	}
 
-	public static double RestLength(int type, double radius0, double radius1, double rl0, double rl1, CModel model) {
+	public static double RestLength(int type, double radius0, double radius1, double rl0, double rl1, Model model) {
 		final double avgFilLengthRod = 0.5*(model.filLengthRod[0]+model.filLengthRod[1]);
 		switch(type) {
 		case 3:				// Small fil spring
@@ -44,9 +44,9 @@ public class CFilSpring extends CSpring {
 	}
 	
 	public void ResetRestLength() {
-		final CModel model = ballArray[0].cell.model;
-		CBall ball0 = ballArray[0];
-		CBall ball1 = ballArray[1];
+		final Model model = ballArray[0].cell.model;
+		Ball ball0 = ballArray[0];
+		Ball ball1 = ballArray[1];
 		double rodRestLength0;
 		double rodRestLength1;
 		switch(type) {
@@ -65,9 +65,9 @@ public class CFilSpring extends CSpring {
 	}
 
 	public void ResetK() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		double springDiv;
-		CCell cell0 = ballArray[0].cell;
+		Cell cell0 = ballArray[0].cell;
 		switch(type) {
 		case 3:														// Two different balls, same cell type
 			// Sphere filament
@@ -96,15 +96,15 @@ public class CFilSpring extends CSpring {
 	}
 
 	public int Break() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		int count = 0;
-		CCell cell0 = ballArray[0].cell;
-		CCell cell1 = ballArray[1].cell;
+		Cell cell0 = ballArray[0].cell;
+		Cell cell1 = ballArray[1].cell;
 		// Remove this and siblings from model and cells
 		count += (model.filSpringArray.remove(this))?1:0;			// Add one to counter if successfully removed
 		cell0.filSpringArray.remove(this);
 		cell1.filSpringArray.remove(this);
-		for(CSpring sibling : siblingArray) {
+		for(Spring sibling : siblingArray) {
 			cell0.filSpringArray.remove(sibling);
 			cell1.filSpringArray.remove(sibling);
 			count += (model.filSpringArray.remove(sibling))?1:0;
@@ -117,7 +117,7 @@ public class CFilSpring extends CSpring {
 	}
 
 	public int Index() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		return Index(model.filSpringArray);
 	}
 }

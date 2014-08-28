@@ -1,5 +1,7 @@
 package ser2mat;
 
+import ibm.*;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -9,7 +11,6 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import cell.*;
 import jmatio.*;
 
 public class ser2mat {
@@ -35,7 +36,7 @@ public class ser2mat {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static void Convert(CModel model) {
+	public static void Convert(Model model) {
 		// Loop over classes, starting with model
 		ArrayList<Object> oTodoArray = new ArrayList<Object>();			// Array to-do array - yes, can be an "ArrayList< ArrayList<?> >"
 		ArrayList<MLStructure> mlObjectArray = new ArrayList<MLStructure>();
@@ -91,21 +92,21 @@ public class ser2mat {
 							boolean val = f.getBoolean(o);
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val?1:0}, 1), io);
 						}
-						else if(f.getGenericType() 	== cell.Vector3d.class) {
+						else if(f.getGenericType() 	== ibm.Vector3d.class) {
 							String fname = f.getName();
 							Vector3d val = (Vector3d) f.get(o);
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val.x, val.y, val.z}, 3), io);
 						}
-						else if(f.getGenericType() 	== CCell.class) {
+						else if(f.getGenericType() 	== Cell.class) {
 							String fname = f.getName();
 							int val;
 							if(f.get(o) != null)
-								val = ((CCell) f.get(o)).Index();
+								val = ((Cell) f.get(o)).Index();
 							else
 								val = -1;
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
 						}
-						else if(f.getGenericType() 	== CModel.class) {
+						else if(f.getGenericType() 	== Model.class) {
 							continue; 									// Don't save CModel
 						}
 						else if(f.getType() == int[].class) {
@@ -159,9 +160,9 @@ public class ser2mat {
 									valDouble[ii][jj] = val[ii][jj] ? 1.0 : 0.0;
 							mlO.setField(fname,                    new MLDouble(null, valDouble), io);
 						}
-						else if(f.getType() == CBall[].class) {
+						else if(f.getType() == Ball[].class) {
 							String fname = f.getName();
-							CBall[] val = (CBall[]) f.get(o);
+							Ball[] val = (Ball[]) f.get(o);
 							// Convert CBall[] to double[] by looking at indices
 							double[] valDouble = new double[val.length]; 
 							for(int ii=0; ii<val.length; ii++)

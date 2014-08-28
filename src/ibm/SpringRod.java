@@ -1,23 +1,23 @@
-package cell;
+package ibm;
 
-public class CRodSpring extends CSpring {
+public class SpringRod extends Spring {
 	private static final long serialVersionUID = 1L;
 
 	///////////////////////////////////////////////////////////////////
 	
-	public CRodSpring(CBall ball0, CBall ball1) {
-		ballArray = new CBall[2];
+	public SpringRod(Ball ball0, Ball ball1) {
+		ballArray = new Ball[2];
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
 		ResetK();
 		ResetRestLength();
 		// Add to arrays
-		final CModel model = ball0.cell.model;
+		final Model model = ball0.cell.model;
 		model.rodSpringArray.add(this);
 		ball0.cell.rodSpringArray.add(this);
 	}
 	
-	public static double RestLength(double radius, double amount, int type, CModel model) {
+	public static double RestLength(double radius, double amount, int type, Model model) {
 		// If type == 1 based on mass, type==2 based on max mass
 		if(type<4) {
 			return radius * model.lengthCellMax[type]/model.radiusCellMax[type];							// About 2 balls in the same cell, so no need to make it complicated  
@@ -29,14 +29,14 @@ public class CRodSpring extends CSpring {
 	}
 	
 	public void ResetRestLength() {
-		CBall ball0 = ballArray[0];
-		CCell cell0 = ballArray[0].cell;
-		final CModel model = cell0.model;
+		Ball ball0 = ballArray[0];
+		Cell cell0 = ballArray[0].cell;
+		final Model model = cell0.model;
 		restLength = RestLength(ball0.radius, cell0.GetAmount(), cell0.type, model);
 	}
 
 	public void ResetK() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		this.K = model.Kr;
 	}
 	
@@ -47,7 +47,7 @@ public class CRodSpring extends CSpring {
 	}
 	
 	public int Index() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		return super.Index(model.rodSpringArray);
 	}
 }

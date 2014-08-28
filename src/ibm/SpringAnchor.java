@@ -1,25 +1,25 @@
-package cell;
+package ibm;
 
 import java.util.ArrayList;
 
-public class CAnchorSpring extends CSpring {
+public class SpringAnchor extends Spring {
 	private static final long serialVersionUID = 1L;
 	public Vector3d anchorPoint = new Vector3d();
-	public ArrayList<CAnchorSpring> siblingArray = new ArrayList<CAnchorSpring>(2);
+	public ArrayList<SpringAnchor> siblingArray = new ArrayList<SpringAnchor>(2);
 
 	///////////////////////////////////////////////////////////////////
 	// This class can have two forms: normal (static point) or gliding (moving point) anchoring links
 	// To switch, only the GetL() function needs to be changed.
 	
-	public CAnchorSpring(CBall ball0, Vector3d anchorPoint) {
+	public SpringAnchor(Ball ball0, Vector3d anchorPoint) {
 		// We don't use the super constructor here: CAnchorSpring is different
-		ballArray = new CBall[1];
+		ballArray = new Ball[1];
 		ballArray[0] = ball0;
 		this.anchorPoint = anchorPoint;
 		ResetK();
 		ResetRestLength();
 		// Add to arrays
-		final CModel model = ball0.cell.model;
+		final Model model = ball0.cell.model;
 		model.anchorSpringArray.add(this);
 		ball0.cell.anchorSpringArray.add(this);
 	}
@@ -29,14 +29,14 @@ public class CAnchorSpring extends CSpring {
 	}
 	
 	public void ResetRestLength() {
-		final CBall ball = ballArray[0];							// Final because anchoring springs are not recycled
+		final Ball ball = ballArray[0];							// Final because anchoring springs are not recycled
 		restLength = RestLength(ball.pos.y, ball.radius);
 	}
 	
 	public void ResetK() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		double springDiv;
-		CCell cell = ballArray[0].cell;
+		Cell cell = ballArray[0].cell;
 		if(cell.type<2)						springDiv = 1.0;
 		else if(cell.type<6)				springDiv = 2.0;
 		else throw new IndexOutOfBoundsException("Cell type: " + cell.type);
@@ -44,13 +44,13 @@ public class CAnchorSpring extends CSpring {
 	}
 	
 	public int Break() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		int count = 0;
-		CCell cell0 = ballArray[0].cell;
+		Cell cell0 = ballArray[0].cell;
 		// Remove this and siblings from model and cells			// Anchoring springs
 		count += (model.anchorSpringArray.remove(this))?1:0;		// Add one to counter if successfully removed
 		cell0.anchorSpringArray.remove(this);
-		for(CSpring sibling : siblingArray) {
+		for(Spring sibling : siblingArray) {
 			cell0.anchorSpringArray.remove(sibling);
 			count += (model.anchorSpringArray.remove(sibling))?1:0;
 		}
@@ -58,7 +58,7 @@ public class CAnchorSpring extends CSpring {
 	}
 	
 	public int Index() {
-		final CModel model = ballArray[0].cell.model;
+		final Model model = ballArray[0].cell.model;
 		return super.Index(model.anchorSpringArray);
 	}
 	

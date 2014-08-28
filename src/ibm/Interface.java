@@ -1,4 +1,5 @@
-package backbone;
+// This is the default class to run, interfacing with command line and remaining Java code.
+package ibm;
 
 import interactor.Interactor;
 
@@ -21,17 +22,16 @@ import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 
 import ser2mat.ser2mat;
-import cell.CModel;
 
 public class Interface{
-	static CModel model;
+	static Model model;
 	static Run instance;
 
 	public static void main(String[] args) throws Exception{
 		System.out.println("DIATOMAS Java model");
 
 		// Initialise model, simulation and create an object for a copy
-		model = new CModel();
+		model = new Model();
 		// Analyse command line arguments, immediately execute some, save rest to Hashtable
 		int NArg = args.length;
 		Map<String, String> argument = Collections.synchronizedMap(new LinkedHashMap<String, String>());
@@ -50,7 +50,7 @@ public class Interface{
 			} else if(arg.equalsIgnoreCase("args")) {
 				System.out.println("Possible command line arguments:");
 				int counter = 1;
-				for(Field field : CModel.class.getFields()) {
+				for(Field field : Model.class.getFields()) {
 					System.out.print(String.format("%-25s",field.getName()));
 					if(counter%3==0)	System.out.println("");		
 					counter++;
@@ -156,7 +156,7 @@ public class Interface{
 		}
 	}
 			
-	public static void SetArgument(Run run, Map<String,String> argument, CModel model) {
+	public static void SetArgument(Run run, Map<String,String> argument, Model model) {
 		Iterator<Entry<String, String>> argumentKeys = argument.entrySet().iterator();
 		args:while(argumentKeys.hasNext()) {
 			Entry<String, String> iter = argumentKeys.next(); 
@@ -216,19 +216,19 @@ public class Interface{
 		}
 	}
 	
-	public static void SetArgument(CModel model, Map<String, String> argument, boolean doRelative) {
+	public static void SetArgument(Model model, Map<String, String> argument, boolean doRelative) {
 		Iterator<Entry<String, String>> argumentKeys = argument.entrySet().iterator();
 		args:while(argumentKeys.hasNext()) {
 			Entry<String, String> iter = argumentKeys.next(); 
 			String keyRaw = iter.getKey();
 			String key = keyRaw.contains("[") ? keyRaw.split("\\[")[0] : keyRaw;	// Double escape was necessary. Remove the part at and after "[" if present
 			String value = iter.getValue();											
-			for(Field field : CModel.class.getFields()) {
+			for(Field field : Model.class.getFields()) {
 				if(key.equalsIgnoreCase(field.getName())) {
 					key = field.getName();						// Update key to the correct Capitalisation
 					try {
 						@SuppressWarnings("rawtypes")
-						Class fieldClass = CModel.class.getField(key).get(model).getClass();
+						Class fieldClass = Model.class.getField(key).get(model).getClass();
 						// If the field is any kind of array
 						if(field.get(model).getClass().isArray()) {
 							// We change only a single index
@@ -538,17 +538,17 @@ public class Interface{
 		}
 	}
 
-	public static CModel Load(String loadPath) {
+	public static Model Load(String loadPath) {
 		FileInputStream fis = null;
 		GZIPInputStream gz = null;
 		ObjectInputStream ois = null;
-		CModel model = null;
+		Model model = null;
 		
 		try {
 			fis = new FileInputStream(loadPath);
 			gz = new GZIPInputStream(fis);
 			ois = new ObjectInputStream(gz);
-			model = (CModel) ois.readObject();
+			model = (Model) ois.readObject();
 			ois.close();
 		} catch (IOException ex) {
 			ex.printStackTrace();
@@ -563,7 +563,7 @@ public class Interface{
 		return model;
 	}
 	
-	public static void CopyJar(CModel model) {
+	public static void CopyJar(Model model) {
 		// Construct date and time
 		DateFormat dateFormat = new SimpleDateFormat("yyMMdd_HHmmss");
 		Calendar cal = Calendar.getInstance();

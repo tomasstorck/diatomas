@@ -1,6 +1,6 @@
 package ericson;
 
-import cell.Vector3d;
+import ibm.Vector3d;
 
 public class ReturnObject {		// Used for collision detection multiple return
 	public Vector3d dP;

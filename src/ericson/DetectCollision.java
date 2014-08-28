@@ -1,6 +1,6 @@
 package ericson;
 
-import cell.Vector3d;
+import ibm.Vector3d;
 
 public class DetectCollision {
 	public static ericson.ReturnObject LinesegLineseg(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {		// This is line segment - line segment collision detection. 

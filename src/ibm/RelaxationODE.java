@@ -1,13 +1,13 @@
-package cell;
+package ibm;
 
 // Import Apache Commons ODE stuff
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 
 public class RelaxationODE implements FirstOrderDifferentialEquations {
-	CModel model;
+	Model model;
 	public int NStep, NAnchorBreak, NAnchorForm, NStickBreak, NStickForm, NFilBreak;
 	
-	public RelaxationODE(CModel model) {
+	public RelaxationODE(Model model) {
 		this.model = model;
 		this.NStep = 0;
 		this.NAnchorBreak = 0;
@@ -24,7 +24,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 	public void computeDerivatives(double t, double[] y, double[] yDot) {	
 		// Read data from y
 		for(int ii=0; ii<model.ballArray.size(); ii++) {
-			CBall ball = model.ballArray.get(ii);
+			Ball ball = model.ballArray.get(ii);
 			ball.pos.x = 	y[6*ii];
 			ball.pos.y = 	y[6*ii+1];
 			ball.pos.z = 	y[6*ii+2];
@@ -38,11 +38,11 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		// Collision force
 		final double radiusModifier = 1.01; 												// Multiplication factor for ball radii, maintaining a certain distance between balls
 		for(int iCell=0; iCell<model.cellArray.size(); iCell++) {
-			CCell cell0 = model.cellArray.get(iCell);
-			CBall c0b0 = cell0.ballArray[0];
+			Cell cell0 = model.cellArray.get(iCell);
+			Ball c0b0 = cell0.ballArray[0];
 			for(int jCell=iCell+1; jCell<model.cellArray.size(); jCell++) { 		// Factorial elimination to optimise loop
-				CCell cell1 = model.cellArray.get(jCell);
-				CBall c1b0 = cell1.ballArray[0];
+				Cell cell1 = model.cellArray.get(jCell);
+				Ball c1b0 = cell1.ballArray[0];
 				// Do a very simple, cheap collision detection
 				Vector3d dirn = c0b0.pos.minus(c1b0.pos);
 				double dist = dirn.norm();
@@ -66,7 +66,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 					// Ball-rod (or rod-ball) collision
 					} else if( cell0.type<2 || cell1.type<2 ) {
 						// Find out which cell is rod, which is ball, and assign
-						CBall ballb0, rodb0, rodb1;
+						Ball ballb0, rodb0, rodb1;
 						if(cell0.type < 2) {
 							ballb0 = c0b0;
 							rodb0 = c1b0;
@@ -93,8 +93,8 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 						}	
 					// Rod-rod
 					} else if( cell0.type<6 && cell1.type<6 ) {
-						CBall c0b1 = cell0.ballArray[1];
-						CBall c1b1 = cell1.ballArray[1];
+						Ball c0b1 = cell0.ballArray[1];
+						Ball c1b1 = cell1.ballArray[1];
 						// calculate the distance between the segments
 						ericson.ReturnObject C = ericson.DetectCollision.LinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
 						Vector3d dP = C.dP;										// dP is vector from closest point 2 --> 1
@@ -123,7 +123,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			}
 		}
 		// Calculate gravity+bouyancy, normal force and drag
-		for(CBall ball : model.ballArray) {
+		for(Ball ball : model.ballArray) {
 			// Contact force
 			double yPos = ball.pos.y;
 			double r = ball.radius;
@@ -153,9 +153,9 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		}
 		
 		// Elastic force between springs within cells
-		for(CRodSpring rod : model.rodSpringArray) {
-			CBall ball0 = rod.ballArray[0];
-			CBall ball1 = rod.ballArray[1];
+		for(SpringRod rod : model.rodSpringArray) {
+			Ball ball0 = rod.ballArray[0];
+			Ball ball1 = rod.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
 			Vector3d diff = rod.GetL();
 			double dn = diff.norm();
@@ -169,7 +169,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		}
 		
 		// Apply force due to anchor springs
-		for(CAnchorSpring anchor : model.anchorSpringArray) {
+		for(SpringAnchor anchor : model.anchorSpringArray) {
 			Vector3d diff = anchor.GetL();
 			double dn = diff.norm();
 			// Get force
@@ -182,9 +182,9 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		}
 		
 		// Apply force on sticking springs
-		for(CStickSpring stick : model.stickSpringArray) {
-			CBall ball0 = stick.ballArray[0];
-			CBall ball1 = stick.ballArray[1];
+		for(SpringStick stick : model.stickSpringArray) {
+			Ball ball0 = stick.ballArray[0];
+			Ball ball1 = stick.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
 			Vector3d diff = stick.GetL();
 			double dn = diff.norm();
@@ -198,9 +198,9 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		}
 		
 		// Filament spring elastic force (CSpring in filSpringArray)
-		for(CSpring fil : model.filSpringArray) {
-			CBall ball0 = fil.ballArray[0];
-			CBall ball1 = fil.ballArray[1];
+		for(Spring fil : model.filSpringArray) {
+			Ball ball0 = fil.ballArray[0];
+			Ball ball1 = fil.ballArray[1];
 			{// find difference vector and distance dn between balls (euclidian distance) 
 			Vector3d diff = fil.GetL();
 			double dn = diff.norm();
@@ -215,7 +215,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		}
 		// Return results
 		for(int ii=0; ii<model.ballArray.size(); ii++) {
-			CBall ball = model.ballArray.get(ii);
+			Ball ball = model.ballArray.get(ii);
 			double m = ball.n*model.MWX;	
 			yDot[6*ii  ] = ball.vel.x;						// dpos/dt = v;
 			yDot[6*ii+1] = ball.vel.y;

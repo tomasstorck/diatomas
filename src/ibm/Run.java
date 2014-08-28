@@ -1,9 +1,8 @@
-package backbone;
+package ibm;
 
-import cell.CModel;
 
 public abstract class Run {
-	CModel model;
+	Model model;
 	public int port = 2036;
 	public boolean bit64 = false;
 	

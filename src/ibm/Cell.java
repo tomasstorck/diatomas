@@ -1,31 +1,31 @@
-package cell;
+package ibm;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class CCell implements Serializable {
+public class Cell implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
 	public int type;
 	public boolean filament;
-	public CBall[] ballArray = 	new CBall[1];								// Note that this ballArray has the same name as CModel's
-	public ArrayList<CRodSpring> rodSpringArray = new ArrayList<CRodSpring>(0);
-	public ArrayList<CCell> stickCellArray = new ArrayList<CCell>(0);
-	public ArrayList<CStickSpring> stickSpringArray = new ArrayList<CStickSpring>(0);
-	public ArrayList<CAnchorSpring> anchorSpringArray = new ArrayList<CAnchorSpring>(0);
-	public ArrayList<CFilSpring> filSpringArray = new ArrayList<CFilSpring>(0);
-	public CCell mother;
+	public Ball[] ballArray = 	new Ball[1];								// Note that this ballArray has the same name as CModel's
+	public ArrayList<SpringRod> rodSpringArray = new ArrayList<SpringRod>(0);
+	public ArrayList<Cell> stickCellArray = new ArrayList<Cell>(0);
+	public ArrayList<SpringStick> stickSpringArray = new ArrayList<SpringStick>(0);
+	public ArrayList<SpringAnchor> anchorSpringArray = new ArrayList<SpringAnchor>(0);
+	public ArrayList<SpringFil> filSpringArray = new ArrayList<SpringFil>(0);
+	public Cell mother;
 	public int born;														// Growth iteration at which this cell was born
 	// CFD stuff
 	public double Rx = 0.0;													// Reaction rate for this cell, normalised to substrate [mol/s]
 	// Pointer stuff
-	public CModel model;
+	public Model model;
 	// Var. radius stuff
 	public double radiusModifier;
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public CCell(int type, double n, double radiusModifier, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, CModel model) {
+	public Cell(int type, double n, double radiusModifier, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, Model model) {
 		this.model = model;
 		this.type = type; 				// type == 0 || type == 1 is spherical cell. type == 2 || 3 is variable radius balls rod cell. type == 4 || 5 is fixed radius (variable length) rod cell
 		this.filament = filament;
@@ -35,30 +35,30 @@ public class CCell implements Serializable {
 		model.cellArray.add(this);				// Add it here so we can use cell.Index()
 		
 		if(type<2) { // Leaves ballArray and springArray, and mother
-			ballArray[0] = new CBall(base0x, base0y, base0z, n,   0, this);
+			ballArray[0] = new Ball(base0x, base0y, base0z, n,   0, this);
 		} else if(type<6){
-			ballArray = 	new CBall[2];		// Reinitialise ballArray to contain 2 balls
-			new CBall(base0x, base0y, base0z, n/2.0, 0, this);		// Constructor adds it to the array
-			new CBall(base1x, base1y, base1z, n/2.0, 1, this);		// Constructor adds it to the array
-			new CRodSpring(ballArray[0],ballArray[1]);				// Constructor adds it to the array
+			ballArray = 	new Ball[2];		// Reinitialise ballArray to contain 2 balls
+			new Ball(base0x, base0y, base0z, n/2.0, 0, this);		// Constructor adds it to the array
+			new Ball(base1x, base1y, base1z, n/2.0, 1, this);		// Constructor adds it to the array
+			new SpringRod(ballArray[0],ballArray[1]);				// Constructor adds it to the array
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
 	}
 	
 	// Vector3d instead of double
-	public CCell(int type, double n, double radiusModifier, Vector3d base0, Vector3d base1, boolean filament, CModel model) {
+	public Cell(int type, double n, double radiusModifier, Vector3d base0, Vector3d base1, boolean filament, Model model) {
 		this(type, n, radiusModifier, base0.x, base0.y, base0.z, base1.x, base1.y, base1.z, filament, model);
 	}
 	
 	// Without radiusModifier (generate randomly or skip, depending on model.radiusModifier)
-	public CCell(int type, double n, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, CModel model) {
+	public Cell(int type, double n, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, Model model) {
 		this(type, n, 
 				model.radiusCellStDev[type]==0.0?0.0:(model.radiusCellStDev[type]*random.rand.Gaussian()),		// Assign radius modifier due to deviation. If no modifier skip this, maintains reproducibility (WORKAROUND). Has to be done inline due Java limitations
 				base0x, base0y, base0z, base1x, base1y, base1z, filament, model);
 	}
 	
-	public CCell(int type, double n, Vector3d base0, Vector3d base1, boolean filament, CModel model) {
+	public Cell(int type, double n, Vector3d base0, Vector3d base1, boolean filament, Model model) {
 		this(type, n,
 				model.radiusCellStDev[type]==0.0?0.0:(model.radiusCellStDev[type]*random.rand.Gaussian()),		// Assign radius modifier due to deviation. If no modifier skip this, maintains reproducibility (WORKAROUND). Has to be done inline due Java limitations 
 				base0.x, base0.y, base0.z, base1.x, base1.y, base1.z, filament, model);
@@ -68,7 +68,7 @@ public class CCell implements Serializable {
 	/////////////////////////////////////////////////////////
 	
 	public int Index() {
-		ArrayList<CCell> array = model.cellArray;
+		ArrayList<Cell> array = model.cellArray;
 		for(int index=0; index<array.size(); index++) {
 			if(array.get(index).equals(this))	return index;
 		}
@@ -76,17 +76,17 @@ public class CCell implements Serializable {
 	}
 	
 	public int Anchor() {
-		for(CBall ball : ballArray) {
+		for(Ball ball : ballArray) {
 			Vector3d substratumPos = new Vector3d(ball.pos);
 			substratumPos.y = 0.0;
-			new CAnchorSpring(ball, substratumPos);
+			new SpringAnchor(ball, substratumPos);
 		}
 
 		// Add sibling springs, assuming all anchors in this cell are siblings
 		for(int ii=0; ii<anchorSpringArray.size(); ii++) {
 			for(int jj=ii+1; jj<anchorSpringArray.size(); jj++) {
-				CAnchorSpring anchor0 = anchorSpringArray.get(ii);
-				CAnchorSpring anchor1 = anchorSpringArray.get(jj);
+				SpringAnchor anchor0 = anchorSpringArray.get(ii);
+				SpringAnchor anchor1 = anchorSpringArray.get(jj);
 				anchor0.siblingArray.add(anchor1);
 				anchor1.siblingArray.add(anchor0);
 			}
@@ -95,14 +95,14 @@ public class CCell implements Serializable {
 	}
 	
 
-	public boolean IsFilament(CCell cell) {
+	public boolean IsFilament(Cell cell) {
 		if(!this.filament && !cell.filament)	return false;
 		
 		if((mother!=null && mother.equals(cell)) || (cell.mother!=null && cell.mother.equals(this))) 		return true;
 		else return false;
 	}
 	
-	public int Stick(CCell cell) {
+	public int Stick(Cell cell) {
 		// Determine how many sticking springs we need
 		int NSpring0 = 0, NSpring1 = 0;
 		if(type<2) 			NSpring0 = 1; else 
@@ -113,7 +113,7 @@ public class CCell implements Serializable {
 			throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 		
 		int NSpring = NSpring0 * NSpring1;
-		CCell cell0, cell1;
+		Cell cell0, cell1;
 		if(type > 1 && cell.type < 2) {		// Sphere goes first (see indexing next paragraph)
 			cell0 = cell;
 			cell1 = this;
@@ -122,17 +122,17 @@ public class CCell implements Serializable {
 			cell1 = cell;
 		}
 		
-		CStickSpring[] stickArray = new CStickSpring[NSpring];
+		SpringStick[] stickArray = new SpringStick[NSpring];
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
-			CBall ball0 = cell0.ballArray[iSpring/2];							// 0, 0, 1, 1, ...
-			CBall ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
-			CStickSpring spring = new CStickSpring(	ball0, ball1);
+			Ball ball0 = cell0.ballArray[iSpring/2];							// 0, 0, 1, 1, ...
+			Ball ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
+			SpringStick spring = new SpringStick(	ball0, ball1);
 			stickArray[iSpring] = spring;
 		}
 		
 		// Define siblings, link them OPTIMISE
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and sibling spring			
-			CStickSpring spring = stickArray[iSpring];			
+			SpringStick spring = stickArray[iSpring];			
 			for(int iSpring2 = 0; iSpring2 < NSpring; iSpring2++) {			
 				if(iSpring != iSpring2) {									// For all its siblings
 					spring.siblingArray.add(stickArray[iSpring2]);
@@ -148,7 +148,7 @@ public class CCell implements Serializable {
 			
 	public double GetAmount() {
 		double amount = 0;
-		for(CBall ball : ballArray) {
+		for(Ball ball : ballArray) {
 			amount += ball.n;
 		}
 		return amount;
@@ -164,7 +164,7 @@ public class CCell implements Serializable {
 			ballArray[1].n = newAmount/2.0;
 			ballArray[1].radius = ballArray[1].Radius();
 			// Reset rod spring length
-			for(CSpring rod : ballArray[0].cell.rodSpringArray) rod.ResetRestLength();
+			for(Spring rod : ballArray[0].cell.rodSpringArray) rod.ResetRestLength();
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
@@ -201,7 +201,7 @@ public class CCell implements Serializable {
 		}
 	}
 	
-	public double GetDistance(CCell cell) {										// This method probably has a higher overhead than the code in CollisionDetection
+	public double GetDistance(Cell cell) {										// This method probably has a higher overhead than the code in CollisionDetection
 		if(this.type<2) {														// Sphere-???
 			if(cell.type<2)	{													// Sphere-sphere
 				return cell.ballArray[0].pos.minus(ballArray[0].pos).norm();
@@ -226,8 +226,8 @@ public class CCell implements Serializable {
 		}
 	}
 	
-	public CCell GetNeighbour() {										// Returns neighbour of cell in straight filament. Not of branched
-		for(CFilSpring fil : filSpringArray) {
+	public Cell GetNeighbour() {										// Returns neighbour of cell in straight filament. Not of branched
+		for(SpringFil fil : filSpringArray) {
 			if(fil.type==4) {											// Get the other cell in the straight filament, via short spring
 				if(fil.ballArray[0] == ballArray[1])		return fil.ballArray[1].cell;		// We only look at ball1, so we're already excluding mother (that is connected at ball0)
 				if(fil.ballArray[1] == ballArray[1])		return fil.ballArray[0].cell; 
