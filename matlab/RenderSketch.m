@@ -156,7 +156,7 @@ end
 % GENERAL
 %%%%%%%%%%%%%%%
 loadFileMax = 500;		% Maximum number of files to load per folder before moving on to the next
-removePOV = false;
+removePOV = true;
 rightIter = 10;			% How often to realign the zoom factor ("right")
 camRotate = [0; 0; 0];
 
