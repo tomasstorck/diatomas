@@ -1,3 +1,5 @@
+// TODO: this required a rewrite, branching is doing strange things and putting a lot of tension on springs (140829)
+
 package ibm;
 
 import java.util.ArrayList;

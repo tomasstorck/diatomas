@@ -1,7 +1,7 @@
 % opengl AutoSelect		% in case you don't have opengl. Disable if you do.
 
 n = 5;		% resolution of the sphere (lower = faster)
-renderSpring = false;
+renderSpring = true;
 
 [x,y,z] = sphere(n);		
 yshadow = zeros(size(y));

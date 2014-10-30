@@ -480,7 +480,7 @@ public class Interface{
 			}
 			// Are you still here?
 			if(!key.equalsIgnoreCase("load")) {			// Load will be handled later
-				// Perhaps it's for instance
+				// Perhaps it's for this instance only (e.g. COMSOL port)
 				for(Field field : Run.class.getFields()) {
 					if(key.equalsIgnoreCase(field.getName())) {
 						key = field.getName();						// Update key to the correct Capitalisation
