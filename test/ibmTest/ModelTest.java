@@ -1,4 +1,4 @@
-package cell;
+package ibmTest;
 
 import static org.junit.Assert.*;
 
@@ -9,7 +9,7 @@ import ibm.Model;
 
 import java.util.ArrayList;
 
-public class CModelTest {
+public class ModelTest {
 
 	@Test
 	public void testCModelInitialisation() {				

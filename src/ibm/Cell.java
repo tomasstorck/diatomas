@@ -6,7 +6,7 @@ import java.util.ArrayList;
 public class Cell implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
-	public int type;
+	public int type; 														// type == 0 || type == 1 is spherical cell. type == 2 || 3 is variable radius balls rod cell. type == 4 || 5 is fixed radius (variable length) rod cell 
 	public boolean filament;
 	public Ball[] ballArray = 	new Ball[1];								// Note that this ballArray has the same name as CModel's
 	public ArrayList<SpringRod> rodSpringArray = new ArrayList<SpringRod>(0);
@@ -27,7 +27,7 @@ public class Cell implements Serializable {
 	
 	public Cell(int type, double n, double radiusModifier, double base0x, double base0y, double base0z, double base1x, double base1y, double base1z, boolean filament, Model model) {
 		this.model = model;
-		this.type = type; 				// type == 0 || type == 1 is spherical cell. type == 2 || 3 is variable radius balls rod cell. type == 4 || 5 is fixed radius (variable length) rod cell
+		this.type = type; 						// type == 0 || type == 1 is spherical cell. type == 2 || 3 is variable radius balls rod cell. type == 4 || 5 is fixed radius (variable length) rod cell
 		this.filament = filament;
 		this.radiusModifier = radiusModifier;
 		this.born = model.growthIter;
