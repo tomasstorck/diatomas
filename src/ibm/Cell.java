@@ -9,11 +9,11 @@ public class Cell implements Serializable {
 	public int type; 														// type == 0 || type == 1 is spherical cell. type == 2 || 3 is variable radius balls rod cell. type == 4 || 5 is fixed radius (variable length) rod cell 
 	public boolean filament;
 	public Ball[] ballArray = 	new Ball[1];								// Note that this ballArray has the same name as CModel's
-	public ArrayList<SpringRod> rodSpringArray = new ArrayList<SpringRod>(0);
+	public ArrayList<RodSpring> rodSpringArray = new ArrayList<RodSpring>(0);
 	public ArrayList<Cell> stickCellArray = new ArrayList<Cell>(0);
-	public ArrayList<SpringStick> stickSpringArray = new ArrayList<SpringStick>(0);
-	public ArrayList<SpringAnchor> anchorSpringArray = new ArrayList<SpringAnchor>(0);
-	public ArrayList<SpringFil> filSpringArray = new ArrayList<SpringFil>(0);
+	public ArrayList<StickSpring> stickSpringArray = new ArrayList<StickSpring>(0);
+	public ArrayList<AnchorSpring> anchorSpringArray = new ArrayList<AnchorSpring>(0);
+	public ArrayList<FilSpring> filSpringArray = new ArrayList<FilSpring>(0);
 	public Cell mother;
 	public int born;														// Growth iteration at which this cell was born
 	// CFD stuff
@@ -40,7 +40,7 @@ public class Cell implements Serializable {
 			ballArray = 	new Ball[2];		// Reinitialise ballArray to contain 2 balls
 			new Ball(base0x, base0y, base0z, n/2.0, 0, this);		// Constructor adds it to the array
 			new Ball(base1x, base1y, base1z, n/2.0, 1, this);		// Constructor adds it to the array
-			new SpringRod(ballArray[0],ballArray[1]);				// Constructor adds it to the array
+			new RodSpring(ballArray[0],ballArray[1]);				// Constructor adds it to the array
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
@@ -79,14 +79,14 @@ public class Cell implements Serializable {
 		for(Ball ball : ballArray) {
 			Vector3d substratumPos = new Vector3d(ball.pos);
 			substratumPos.y = 0.0;
-			new SpringAnchor(ball, substratumPos);
+			new AnchorSpring(ball, substratumPos);
 		}
 
 		// Add sibling springs, assuming all anchors in this cell are siblings
 		for(int ii=0; ii<anchorSpringArray.size(); ii++) {
 			for(int jj=ii+1; jj<anchorSpringArray.size(); jj++) {
-				SpringAnchor anchor0 = anchorSpringArray.get(ii);
-				SpringAnchor anchor1 = anchorSpringArray.get(jj);
+				AnchorSpring anchor0 = anchorSpringArray.get(ii);
+				AnchorSpring anchor1 = anchorSpringArray.get(jj);
 				anchor0.siblingArray.add(anchor1);
 				anchor1.siblingArray.add(anchor0);
 			}
@@ -122,17 +122,17 @@ public class Cell implements Serializable {
 			cell1 = cell;
 		}
 		
-		SpringStick[] stickArray = new SpringStick[NSpring];
+		StickSpring[] stickArray = new StickSpring[NSpring];
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {					// Create all springs, including siblings, with input balls
 			Ball ball0 = cell0.ballArray[iSpring/2];							// 0, 0, 1, 1, ...
 			Ball ball1 = cell1.ballArray[iSpring%2];							// 0, 1, 0, 1, ...
-			SpringStick spring = new SpringStick(	ball0, ball1);
+			StickSpring spring = new StickSpring(	ball0, ball1);
 			stickArray[iSpring] = spring;
 		}
 		
 		// Define siblings, link them OPTIMISE
 		for(int iSpring = 0; iSpring < NSpring; iSpring++) {				// For each spring and sibling spring			
-			SpringStick spring = stickArray[iSpring];			
+			StickSpring spring = stickArray[iSpring];			
 			for(int iSpring2 = 0; iSpring2 < NSpring; iSpring2++) {			
 				if(iSpring != iSpring2) {									// For all its siblings
 					spring.siblingArray.add(stickArray[iSpring2]);
@@ -227,7 +227,7 @@ public class Cell implements Serializable {
 	}
 	
 	public Cell GetNeighbour() {										// Returns neighbour of cell in straight filament. Not of branched
-		for(SpringFil fil : filSpringArray) { 							// TODO: what if there are two neighbours?
+		for(FilSpring fil : filSpringArray) { 							// TODO: what if there are two neighbours?
 			if(fil.type==4) {											// Get the other cell in the straight filament, via short spring
 				if(fil.ballArray[0] == ballArray[1])		return fil.ballArray[1].cell;		// We only look at ball1, so we're already excluding mother (that is connected at ball0)
 				if(fil.ballArray[1] == ballArray[1])		return fil.ballArray[0].cell; 

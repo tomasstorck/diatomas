@@ -2,16 +2,16 @@ package ibm;
 
 import java.util.ArrayList;
 
-public class SpringAnchor extends Spring {
+public class AnchorSpring extends Spring {
 	private static final long serialVersionUID = 1L;
 	public Vector3d anchorPoint = new Vector3d();
-	public ArrayList<SpringAnchor> siblingArray = new ArrayList<SpringAnchor>(2);
+	public ArrayList<AnchorSpring> siblingArray = new ArrayList<AnchorSpring>(2);
 
 	///////////////////////////////////////////////////////////////////
 	// This class can have two forms: normal (static point) or gliding (moving point) anchoring links
 	// To switch, only the GetL() function needs to be changed.
 	
-	public SpringAnchor(Ball ball0, Vector3d anchorPoint) {
+	public AnchorSpring(Ball ball0, Vector3d anchorPoint) {
 		// We don't use the super constructor here: CAnchorSpring is different
 		ballArray = new Ball[1];
 		ballArray[0] = ball0;

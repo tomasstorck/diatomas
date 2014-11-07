@@ -4,12 +4,12 @@ import static org.junit.Assert.assertTrue;
 import ibm.Cell;
 import ibm.Ball;
 import ibm.Model;
-import ibm.SpringAnchor;
+import ibm.AnchorSpring;
 
 import org.eclipse.help.internal.Anchor;
 import org.junit.Test;
 
-public class SpringAnchorTest {
+public class AnchorSpringTest {
 	@Test
 	public void testSpringAnchorAnchor() {							
 		Model model = new Model();
@@ -127,7 +127,7 @@ public class SpringAnchorTest {
 		// Displace
 		for(Ball ball : model.ballArray) {
 			ball.pos.y = 1.0;
-			for(SpringAnchor spring : ball.cell.anchorSpringArray) {
+			for(AnchorSpring spring : ball.cell.anchorSpringArray) {
 				spring.ResetRestLength();
 			}
 		}

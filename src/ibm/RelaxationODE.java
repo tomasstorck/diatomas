@@ -153,7 +153,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		}
 		
 		// Elastic force between springs within cells
-		for(SpringRod rod : model.rodSpringArray) {
+		for(RodSpring rod : model.rodSpringArray) {
 			Ball ball0 = rod.ballArray[0];
 			Ball ball1 = rod.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 
@@ -169,7 +169,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		}
 		
 		// Apply force due to anchor springs
-		for(SpringAnchor anchor : model.anchorSpringArray) {
+		for(AnchorSpring anchor : model.anchorSpringArray) {
 			Vector3d diff = anchor.GetL();
 			double dn = diff.norm();
 			// Get force
@@ -182,7 +182,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		}
 		
 		// Apply force on sticking springs
-		for(SpringStick stick : model.stickSpringArray) {
+		for(StickSpring stick : model.stickSpringArray) {
 			Ball ball0 = stick.ballArray[0];
 			Ball ball1 = stick.ballArray[1];
 			// find difference vector and distance dn between balls (euclidian distance) 

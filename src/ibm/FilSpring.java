@@ -4,15 +4,15 @@ package ibm;
 
 import java.util.ArrayList;
 
-public class SpringFil extends Spring {
+public class FilSpring extends Spring {
 	private static final long serialVersionUID = 1L;
 //	ArrayList<CFilSpring> siblingArray;
 	public int type;
-	public ArrayList<SpringFil> siblingArray = new ArrayList<SpringFil>();;
+	public ArrayList<FilSpring> siblingArray = new ArrayList<FilSpring>();;
 	
 	///////////////////////////////////////////////////////////////////
 
-	public SpringFil(Ball ball0, Ball ball1, int filType) {
+	public FilSpring(Ball ball0, Ball ball1, int filType) {
 		ballArray = new Ball[2];
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;

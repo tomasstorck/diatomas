@@ -1,11 +1,11 @@
 package ibm;
 
-public class SpringRod extends Spring {
+public class RodSpring extends Spring {
 	private static final long serialVersionUID = 1L;
 
 	///////////////////////////////////////////////////////////////////
 	
-	public SpringRod(Ball ball0, Ball ball1) {
+	public RodSpring(Ball ball0, Ball ball1) {
 		ballArray = new Ball[2];
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;

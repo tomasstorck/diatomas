@@ -110,10 +110,10 @@ public class Model implements Serializable {
 	// Arrays
 	public ArrayList<Cell> cellArray = new ArrayList<Cell>(NCellInit);
 	public ArrayList<Ball> ballArray = new ArrayList<Ball>(2*NCellInit);
-	public ArrayList<SpringRod> rodSpringArray = new ArrayList<SpringRod>(0);
-	public ArrayList<SpringStick> stickSpringArray = new ArrayList<SpringStick>(0);
-	public ArrayList<SpringFil> filSpringArray = new ArrayList<SpringFil>(0);
-	public ArrayList<SpringAnchor> anchorSpringArray = new ArrayList<SpringAnchor>(0);
+	public ArrayList<RodSpring> rodSpringArray = new ArrayList<RodSpring>(0);
+	public ArrayList<StickSpring> stickSpringArray = new ArrayList<StickSpring>(0);
+	public ArrayList<FilSpring> filSpringArray = new ArrayList<FilSpring>(0);
+	public ArrayList<AnchorSpring> anchorSpringArray = new ArrayList<AnchorSpring>(0);
 	// ODE settings
 	public double ODETol = 1e-7;
 	// === AS STUFF ===
@@ -280,10 +280,10 @@ public class Model implements Serializable {
 	///////////////////////////////
 	// Spring breakage detection //
 	///////////////////////////////
-	public ArrayList<SpringAnchor> DetectAnchorBreak(double maxStretch) {
-		ArrayList<SpringAnchor> breakArray = new ArrayList<SpringAnchor>();
+	public ArrayList<AnchorSpring> DetectAnchorBreak(double maxStretch) {
+		ArrayList<AnchorSpring> breakArray = new ArrayList<AnchorSpring>();
 		
-		for(SpringAnchor anchor : anchorSpringArray) {
+		for(AnchorSpring anchor : anchorSpringArray) {
 			double al = (anchor.GetL()).norm();		// al = Actual Length
 			if(al > maxStretch*anchor.restLength) {
 				breakArray.add(anchor);
@@ -292,12 +292,12 @@ public class Model implements Serializable {
 		return breakArray;
 	}
 	
-	public ArrayList<SpringStick> DetectStickBreak(double maxStretch) {
-		ArrayList<SpringStick> breakArray = new ArrayList<SpringStick>();
+	public ArrayList<StickSpring> DetectStickBreak(double maxStretch) {
+		ArrayList<StickSpring> breakArray = new ArrayList<StickSpring>();
 		
 		int iSpring = 0;
 		while(iSpring < stickSpringArray.size()) {
-			SpringStick spring = stickSpringArray.get(iSpring);				// TODO: replace name with stick for consistency
+			StickSpring spring = stickSpringArray.get(iSpring);				// TODO: replace name with stick for consistency
 			double al = spring.GetL().norm();		// al = Actual Length
 			if(al > maxStretch*spring.restLength) {
 				breakArray.add(spring);
@@ -433,8 +433,8 @@ public class Model implements Serializable {
 				Ball ball1 = (cell0.type>1) ? ball1 = cell0.ballArray[1] : null;
 
 				if(cell0.anchorSpringArray.size()>0) { 		// This cell is already anchored
-					ArrayList<SpringAnchor> breakArray = new ArrayList<SpringAnchor>();
-					for(SpringAnchor anchor : cell0.anchorSpringArray) {
+					ArrayList<AnchorSpring> breakArray = new ArrayList<AnchorSpring>();
+					for(AnchorSpring anchor : cell0.anchorSpringArray) {
 						// Break anchor?
 						Vector3d diff = anchor.GetL();
 						double dn = diff.norm();
@@ -442,7 +442,7 @@ public class Model implements Serializable {
 							breakArray.add(anchor);
 						}
 					}
-					for(SpringAnchor anchor : breakArray)		NAnchorBreak += anchor.Break();
+					for(AnchorSpring anchor : breakArray)		NAnchorBreak += anchor.Break();
 				} else {									// Cell is not yet anchored
 					// Form anchor?
 					boolean formBall0 = (ball0.pos.y < anchorFormLim+ball0.radius) ? true : false;
@@ -686,7 +686,7 @@ public class Model implements Serializable {
 		}
 		// Set sticking springs
 		for(Cell cell : c0.stickCellArray) {														// We want to check each other cell
-			for(SpringStick stick : c0.stickSpringArray) {												// And find the correct spring, attached to c0 and cell
+			for(StickSpring stick : c0.stickSpringArray) {												// And find the correct spring, attached to c0 and cell
 				if(stick.ballArray[0].equals(c1) || stick.ballArray[1].equals(c1)) {				
 					if(c1.GetDistance(cell) < c0.GetDistance(cell)) {								// If c1 is closer, move sticking spring to c1
 						stick.Break();																// Break this spring and its siblings. OPTIMISE: We could restick it, but then we need to find the correct ball to Stick() to 
@@ -705,11 +705,11 @@ public class Model implements Serializable {
 	
 	public void CreateFilament(Cell c0, Cell c1) {
 		if(c0.type==c1.type && c0.type<2)
-			new SpringFil(c0.ballArray[0], c1.ballArray[0], 3);
+			new FilSpring(c0.ballArray[0], c1.ballArray[0], 3);
 		else if (c0.type==c1.type && c0.type<6) {
 			// Make new filial link between mother and daughter
-			SpringFil filSmall = 	new SpringFil(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
-			SpringFil filBig = 	new SpringFil(c1.ballArray[1], c0.ballArray[0], 5);							// type==? --> Big spring
+			FilSpring filSmall = 	new FilSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
+			FilSpring filBig = 	new FilSpring(c1.ballArray[1], c0.ballArray[0], 5);							// type==? --> Big spring
 			filSmall.siblingArray.add(filBig);
 			filBig.siblingArray.add(filSmall);
 		} else {
@@ -719,13 +719,13 @@ public class Model implements Serializable {
 	
 	public void CreateFilament(Cell daughter, Cell mother, Cell neighbour) {
 		if(mother.type==daughter.type && mother.type<2)
-			new SpringFil(mother.ballArray[0], daughter.ballArray[0], 3);
+			new FilSpring(mother.ballArray[0], daughter.ballArray[0], 3);
 		else if (mother.type==daughter.type && mother.type<6) {
 			// Make new filial link between mother and daughter
-			SpringFil filSmallDM = 	new SpringFil(daughter.ballArray[0], mother.ballArray[1], 6);
-			SpringFil filBigDM = 		new SpringFil(daughter.ballArray[1], mother.ballArray[0], 7);
-			SpringFil filSmallDN = 	new SpringFil(daughter.ballArray[0], neighbour.ballArray[0], 6);
-			SpringFil filBigDN = 		new SpringFil(daughter.ballArray[1], neighbour.ballArray[1], 7);
+			FilSpring filSmallDM = 	new FilSpring(daughter.ballArray[0], mother.ballArray[1], 6);
+			FilSpring filBigDM = 		new FilSpring(daughter.ballArray[1], mother.ballArray[0], 7);
+			FilSpring filSmallDN = 	new FilSpring(daughter.ballArray[0], neighbour.ballArray[0], 6);
+			FilSpring filBigDN = 		new FilSpring(daughter.ballArray[1], neighbour.ballArray[1], 7);
 			filSmallDM.siblingArray.add(filBigDM);
 			filBigDM.siblingArray.add(filSmallDM);
 			filSmallDN.siblingArray.add(filBigDN);
@@ -739,8 +739,8 @@ public class Model implements Serializable {
 		if(mother.type < 2 && daughter.type < 2) {
 			Ball motherBall0 = mother.ballArray[0];
 			Ball daughterBall0 = daughter.ballArray[0];
-			ArrayList<SpringFil> donateFilArray = new ArrayList<SpringFil>();
-			for(SpringFil fil : mother.filSpringArray) {
+			ArrayList<FilSpring> donateFilArray = new ArrayList<FilSpring>();
+			for(FilSpring fil : mother.filSpringArray) {
 				boolean found=false;
 				if( fil.ballArray[0] == motherBall0 ) {					// Only replace half the balls for daughter's
 					fil.ballArray[0] = daughterBall0;
@@ -750,7 +750,7 @@ public class Model implements Serializable {
 					donateFilArray.add(fil);
 				}
 			}
-			for(SpringFil fil : donateFilArray) {
+			for(FilSpring fil : donateFilArray) {
 				daughter.filSpringArray.add(fil);
 				mother.filSpringArray.remove(fil);
 				// Reset rest lengths. Spring constant won't change because it depends on cell type
@@ -761,19 +761,19 @@ public class Model implements Serializable {
 			Ball c0b1 = mother.ballArray[1];
 			Ball c1b0 = daughter.ballArray[0];
 			Ball c1b1 = daughter.ballArray[1];
-			ArrayList<SpringFil> donateFilArray = new ArrayList<SpringFil>();
-			for(SpringFil fil : mother.filSpringArray) {	// OPTIMISE
+			ArrayList<FilSpring> donateFilArray = new ArrayList<FilSpring>();
+			for(FilSpring fil : mother.filSpringArray) {	// OPTIMISE
 				boolean found=false;
 				if(fil.type == 4) {							// Short spring
 					if(fil.ballArray[0] == c0b1) {
-						for(SpringFil sibling : fil.siblingArray) {
+						for(FilSpring sibling : fil.siblingArray) {
 							if(sibling.type == 5) {
 								fil.ballArray[0] = 	c1b1;
 								found = true;
 							}
 						}
 					} else if(fil.ballArray[1] == c0b1) {
-						for(SpringFil sibling : fil.siblingArray) {
+						for(FilSpring sibling : fil.siblingArray) {
 							if(sibling.type == 5) {
 								fil.ballArray[1] = 	c1b1;
 								found = true;
@@ -782,14 +782,14 @@ public class Model implements Serializable {
 					}					
 				} else if(fil.type == 5) {	// Long spring (straight fil and branched fil resp.)
 					if(fil.ballArray[0] == c0b0) {
-						for(SpringFil sibling : fil.siblingArray) {
+						for(FilSpring sibling : fil.siblingArray) {
 							if(sibling.type == 4) {
 								fil.ballArray[0] = 	c1b0;
 								found = true;
 							}
 						}
 					} else if(fil.ballArray[1] == c0b0) {
-						for(SpringFil sibling : fil.siblingArray) {
+						for(FilSpring sibling : fil.siblingArray) {
 							if(sibling.type == 4) {
 								fil.ballArray[1] = 	c1b0;
 								found = true;
@@ -801,7 +801,7 @@ public class Model implements Serializable {
 				if(found)
 					donateFilArray.add(fil);
 			}
-			for(SpringFil fil : donateFilArray) {
+			for(FilSpring fil : donateFilArray) {
 				daughter.filSpringArray.add(fil);
 				mother.filSpringArray.remove(fil);
 				// Reset rest lengths
@@ -856,7 +856,7 @@ public class Model implements Serializable {
 					}
 				}
 				// After checking all balls, check all springs in the rods
-				for(SpringRod spring : rodSpringArray) {
+				for(RodSpring spring : rodSpringArray) {
 					// Find the distance between the path of the particle (a line) and the rod spring (a line segment)
 					Ball ball0 = spring.ballArray[0];
 					Ball ball1 = spring.ballArray[1];
@@ -918,8 +918,8 @@ public class Model implements Serializable {
 	////////////////////////////
 	// Anchor and Stick stuff //
 	////////////////////////////
-	public void BreakStick(ArrayList<SpringStick> breakArray) {
-		for(SpringStick spring : breakArray) {
+	public void BreakStick(ArrayList<StickSpring> breakArray) {
+		for(StickSpring spring : breakArray) {
 			Cell cell0 = spring.ballArray[0].cell;
 			Cell cell1 = spring.ballArray[1].cell;
 			// Remove cells from each others' stickCellArray 
@@ -935,7 +935,7 @@ public class Model implements Serializable {
 	
 	public int BuildAnchor(ArrayList<Cell> collisionArray) {
 		// Make unique
-		for(SpringAnchor pSpring : anchorSpringArray) collisionArray.remove(pSpring.ballArray[0].cell);
+		for(AnchorSpring pSpring : anchorSpringArray) collisionArray.remove(pSpring.ballArray[0].cell);
 		
 		// Anchor the non-stuck, collided cells to the ground
 		for(Cell cell : collisionArray) cell.Anchor();
@@ -949,7 +949,7 @@ public class Model implements Serializable {
 			Cell cell0 = collisionArray.get(ii);
 			Cell cell1 = collisionArray.get(ii+1);
 			// Check if already stuck, don't stick if that is the case
-			for(SpringStick pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
+			for(StickSpring pSpring : stickSpringArray) {		// This one should update automatically after something new has been stuck --> Only new ones are stuck AND, as a result, only uniques are sticked 
 				if((pSpring.ballArray[0].cell.equals(cell0) && pSpring.ballArray[1].cell.equals(cell1)) || (pSpring.ballArray[0].cell.equals(cell1) && pSpring.ballArray[1].cell.equals(cell0))) {
 					setStick = false;
 				}

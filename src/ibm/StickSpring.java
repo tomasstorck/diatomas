@@ -2,12 +2,12 @@ package ibm;
 
 import java.util.ArrayList;
 
-public class SpringStick extends Spring {
+public class StickSpring extends Spring {
 	private static final long serialVersionUID = 1L;
-	public ArrayList<SpringStick> siblingArray = new ArrayList<SpringStick>(4);;
+	public ArrayList<StickSpring> siblingArray = new ArrayList<StickSpring>(4);;
 	///////////////////////////////////////////////////////////////////
 	
-	public SpringStick(Ball ball0, Ball ball1) {
+	public StickSpring(Ball ball0, Ball ball1) {
 		ballArray = new Ball[2];
 		ballArray[0] = ball0;
 		ballArray[1] = ball1;
