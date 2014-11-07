@@ -1,8 +1,8 @@
 package ibmTest;
 
-import static org.junit.Assert.*;
-
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
+import org.junit.Before;
 
 import ibm.Cell;
 import ibm.Model;
@@ -10,90 +10,116 @@ import ibm.Model;
 import java.util.ArrayList;
 
 public class ModelTest {
-
+	Model model;
+	Cell sphere0;
+	Cell sphere1;
+	Cell rod0;
+	Cell rod1;
+	double rSphere; 
+	double nSphere; 
+	double rRod; 
+	double nRod;
+	
+	double tol = 1e-9;
+	
+	@Before
+	public void SetUp() {
+		model = new Model();
+		model.MWX = 10;
+		model.rhoX = 100;
+		rSphere = 0.5e-6; 
+		nSphere = 4.0/3.0*Math.PI*Math.pow(rSphere, 3) * model.rhoX/model.MWX; 
+		model.radiusCellMax[2] = 0.5e-6;
+		model.lengthCellMax[2] = 2*model.radiusCellMax[2];
+		rRod = 0.5e-6; 
+		nRod = (4.0/3.0*Math.PI*Math.pow(rRod, 3)  +  Math.PI*Math.pow(rRod, 2)*model.lengthCellMax[2]) * model.rhoX/model.MWX;
+		sphere0 = new Cell(0, nSphere, -1.0, 0, 0, 0, 0, 0, false, model);
+		sphere1 = new Cell(0, nSphere, -2.0, 0, 0, 0, 0, 0, false, model);
+		rod0 = 	  new Cell(2, nRod,     1.0, 0, 0, 1+model.lengthCellMax[2], 0, 0, false, model);
+		rod1 = 	  new Cell(2, nRod,     2.0, 0, 0, 2+model.lengthCellMax[2], 0, 0, false, model);
+	}
+	
 	@Test
-	public void testCModelInitialisation() {				
-		Model model = new Model();
+	public void ModelTestInitialisation() {				
 		assertTrue(model.simulation == 0);
 	}
 	
 	@Test
-	public void testCModelCellIndex() {							
-		Model model = new Model();
-		Cell cell0 = new Cell(0, 0, 0, 0, 0, 0, 0, 0, false, model);
-		Cell cell1 = new Cell(0, 0, 0, 0, 0, 0, 0, 0, false, model);
-		assertTrue(cell0.Index() == 0 && cell1.Index() == 1);
+	public void ModelTestCellIndex() {							
+		assertTrue(sphere0.Index() == 0 && sphere1.Index() == 1 &&
+				rod0.Index() == 2 && rod1.Index() == 3);
 	}
 	
 	/* Radius and mass */
-	
 	@Test
-	public void testCModelSphereRadius() {
-		Model model = new Model();
-		model.MWX = 10;
-		model.rhoX = 100;
-		double r = 0.5e-6; 
-		double n = 4.0/3.0*Math.PI*Math.pow(r, 3) * model.rhoX/model.MWX; 
-		Cell cell0 = new Cell(0, n, 0, 0, 0, 0, 0, 0, false, model);
-		assertTrue(cell0.ballArray[0].radius < r+1e-9  &&  cell0.ballArray[0].radius > r-1e-9);
+	public void ModelTestSphereRadius() {
+		assertTrue(sphere0.ballArray[0].radius < rSphere+tol && 
+				sphere0.ballArray[0].radius > rSphere-tol);
 	}
 
 	@Test
-	public void testCModelRodRadius() {
-		Model model = new Model();
-		model.MWX = 10;
-		model.rhoX = 100;
-		model.radiusCellMax[2] = 0.5e-6;
-		model.lengthCellMax[2] = 2*model.radiusCellMax[2];
-		double r = 0.5e-6; 
-		double n = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX/model.MWX;
-		Cell cell0 = new Cell(2, n, 0, 0, 0, 0, 0, 0, false, model);
-		assertTrue(cell0.ballArray[0].radius == cell0.ballArray[1].radius  &&  cell0.ballArray[0].radius < r+1e-9  &&  cell0.ballArray[0].radius > r-1e-9);
+	public void ModelTestRodRadius() {
+		assertTrue(rod0.ballArray[0].radius == rod0.ballArray[1].radius  &&  
+				rod0.ballArray[0].radius < rRod+tol && 
+				rod0.ballArray[0].radius > rRod-tol);
 	}
 	
 	/* Collision detection */
-
 	@Test
-	public void testCModelNoOverlapSphereSphere() {								
-		Model model = new Model();
-		Cell cell0 = new Cell(0, 0, -0.5001e-6, 0e-6, 0e-6, 0, 0, 0, false, model);
-		cell0.ballArray[0].radius = 0.5e-6;
-		Cell cell1 = new Cell(0, 0,  0.5001e-6, 0e-6, 0e-6, 0, 0, 0, false, model);
-		cell1.ballArray[0].radius = 0.5e-6;
+	public void ModelTestNoOverlapByDefault() {
 		ArrayList<Cell> overlap = model.DetectCollisionCellArray(1.0);
 		assertTrue(overlap.isEmpty());
+		
+	}
+	@Test
+	public void ModelTestNoOverlapSphereSphere() {								
+		// Overlap in x direction, at origin
+		double dx = 0.01e-6;
+		sphere0.ballArray[0].pos.x = -rSphere-dx;
+		sphere1.ballArray[0].pos.x = rSphere+dx;
+		ArrayList<Cell> overlap = model.DetectCollisionCellArray(1.0);
+		int iSphere0 = overlap.indexOf(sphere0);
+		int iSphere1 = overlap.indexOf(sphere1);
+		assertTrue(iSphere1-iSphere0 != 1);  	// sphere1 should be after sphere1 in overlap  
 	}
 	
 	@Test
-	public void testCModelOverlapSphereSphere() {							
-		Model model = new Model();
-		Cell cell0 = new Cell(0, 0, -0.499e-6, 0e-6, 0e-6, 0, 0, 0, false, model);
-		cell0.ballArray[0].radius = 0.5e-6;
-		Cell cell1 = new Cell(0, 0,  0.499e-6, 0e-6, 0e-6, 0, 0, 0, false, model);
-		cell1.ballArray[0].radius = 0.5e-6;
+	public void ModelTestOverlapSphereSphere() {							
+		// Overlap in x direction, at origin
+		double dx = 0.01e-6;
+		sphere0.ballArray[0].pos.x = -rSphere+dx;
+		sphere1.ballArray[0].pos.x = rSphere-dx;
 		ArrayList<Cell> overlap = model.DetectCollisionCellArray(1.0);
-		assertTrue(overlap.size() == 2);
+		int iSphere0 = overlap.indexOf(sphere0);
+		int iSphere1 = overlap.indexOf(sphere1);
+		assertTrue(iSphere1-iSphere0 == 1);  	// sphere1 should be after sphere0 in overlap
 	}
 
 	@Test
-	public void testCModelNoOverlapRodRod() {								
-		Model model = new Model();
-		Cell cell0 = new Cell(0, 0, -0.5001e-6, 0e-6, 0e-6, -2.5001e-6, 0e-6, 0e-6, false, model);
-		cell0.ballArray[0].radius = 0.5e-6;
-		Cell cell1 = new Cell(0, 0,  0.5001e-6, 0e-6, 0e-6,  2.5001e-6, 0e-6, 0e-6, false, model);
-		cell1.ballArray[0].radius = 0.5e-6;
+	public void ModelTestNoOverlapRodRod() {								
+		// NO overlap in x direction, at origin
+		double dx = 0.01e-6;
+		rod0.ballArray[0].pos.x = -rRod-dx;
+		rod0.ballArray[1].pos.x = -rRod-model.lengthCellMax[2]-dx;
+		rod1.ballArray[0].pos.x = rRod+dx;
+		rod1.ballArray[1].pos.x = rRod+model.lengthCellMax[2]+dx;
 		ArrayList<Cell> overlap = model.DetectCollisionCellArray(1.0);
-		assertTrue(overlap.isEmpty());
+		int iRod0 = overlap.indexOf(rod0);
+		int iRod1 = overlap.indexOf(rod1);
+		assertTrue(iRod1-iRod0 != 1); 
 	}
 
 	@Test
-	public void testCModelOverlapRodRod() {							
-		Model model = new Model();
-		Cell cell0 = new Cell(2, 0, -0.499e-6, 0e-6, 0e-6, -2.499e-6, 0e-6, 0e-6, false, model);
-		cell0.ballArray[0].radius = 0.5e-6;
-		Cell cell1 = new Cell(2, 0,  0.499e-6, 0e-6, 0e-6,  2.499e-6, 0e-6, 0e-6, false, model);
-		cell1.ballArray[0].radius = 0.5e-6;
+	public void ModelTestOverlapRodRod() {
+		// Overlap in x direction, at origin
+		double dx = 0.01e-6;
+		rod0.ballArray[0].pos.x = -rRod+dx;
+		rod0.ballArray[1].pos.x = -rRod-model.lengthCellMax[2]+dx;
+		rod1.ballArray[0].pos.x = rRod-dx;
+		rod1.ballArray[1].pos.x = rRod+model.lengthCellMax[2]-dx;
 		ArrayList<Cell> overlap = model.DetectCollisionCellArray(1.0);
-		assertTrue(overlap.size() == 2);
+		int iRod0 = overlap.indexOf(rod0);
+		int iRod1 = overlap.indexOf(rod1);
+		assertTrue(iRod1-iRod0 == 1); 
 	}
 }
