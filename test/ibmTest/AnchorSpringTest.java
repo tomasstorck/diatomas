@@ -98,20 +98,7 @@ public class AnchorSpringTest {
 	@Test
 	// See if spring constants are scaled equally for spheres and rods 
 	public void testSpringAnchorKScaling() {							
-		Model model = new Model();
-		model.anchoring = true;
-		model.MWX = 10;
-		model.rhoX = 100;
-		// Sphere
-		double r = 0.5e-6; 
-		double n = 4.0/3.0*Math.PI*Math.pow(r, 3) * model.rhoX/model.MWX;
-		Cell cell0 = new Cell(0, n, 1.0, r, 1.0, 0, 0, 0, false, model);
 		cell0.Anchor();
-		// Rod
-		model.radiusCellMax[2] = r;
-		model.lengthCellMax[2] = 2*model.radiusCellMax[2];
-		n = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX/model.MWX;
-		Cell cell1 = new Cell(2, n, 1.0, r, 1.0, 1.0+model.lengthCellMax[2], r, 1.0, false, model);
 		cell1.Anchor();
 		// Check for sphere
 		double sphereKNorm = cell0.anchorSpringArray.get(0).K * cell0.anchorSpringArray.size();
