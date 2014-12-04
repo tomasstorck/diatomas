@@ -699,6 +699,8 @@ public class Model implements Serializable {
 				}
 			}
 		}
+		// Set filament springs
+		
 		// Done, return daughter cell
 		return c1;
 	}

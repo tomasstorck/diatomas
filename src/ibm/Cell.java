@@ -228,6 +228,10 @@ public class Cell implements Serializable {
 	
 	public Cell GetNeighbour() {										// Returns neighbour of cell in straight filament. Not of branched
 		for(FilSpring fil : filSpringArray) { 							// TODO: what if there are two neighbours?
+			if(fil.type==3) { 											// sphere-sphere fil
+				if(fil.ballArray[0] == ballArray[0])		return fil.ballArray[1].cell;
+				if(fil.ballArray[1] == ballArray[0])		return fil.ballArray[0].cell;
+			}
 			if(fil.type==4) {											// Get the other cell in the straight filament, via short spring
 				if(fil.ballArray[0] == ballArray[1])		return fil.ballArray[1].cell;		// We only look at ball1, so we're already excluding mother (that is connected at ball0)
 				if(fil.ballArray[1] == ballArray[1])		return fil.ballArray[0].cell; 
