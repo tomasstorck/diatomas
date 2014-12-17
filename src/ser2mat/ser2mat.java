@@ -11,7 +11,8 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import jmatio.*;
+import com.jmatio.io.*;
+import com.jmatio.types.*;
 
 public class ser2mat {
 	
@@ -75,7 +76,7 @@ public class ser2mat {
 						else if (f.getGenericType() == String.class) {
 							String fname = f.getName();
 							String val = String.valueOf(f.get(o));
-							mlO.setField(fname,                    new MLChar(null, new String[] {val}, val.length()), io);
+							mlO.setField(fname,                    new MLChar(null, new String[] {val}, Math.max(val.length(),1)), io);
 						}
 						else if(f.getGenericType() 	== int.class) {
 							String fname = f.getName();
@@ -117,7 +118,7 @@ public class ser2mat {
 							for(int ii=0; ii<val.length; ii++) {
 								valDouble[ii] = (int) val[ii];
 							}
-							mlO.setField(fname,                    new MLDouble(null, valDouble, valDouble.length), io);
+							mlO.setField(fname,                    new MLDouble(null, valDouble, Math.max(valDouble.length,1)), io);
 						}
 						else if(f.getType() == int[][].class) {
 							String fname = f.getName();
@@ -134,7 +135,7 @@ public class ser2mat {
 						else if(f.getType() == double[].class) {
 							String fname = f.getName();
 							double[] val = (double[]) f.get(o);
-							mlO.setField(fname,                    new MLDouble(null, val, val.length), io);
+							mlO.setField(fname,                    new MLDouble(null, val, Math.max(val.length,1)), io);
 						}
 						else if(f.getType() == double[][].class) {
 							String fname = f.getName();
@@ -148,7 +149,7 @@ public class ser2mat {
 							double[] valDouble = new double[val.length]; 
 							for(int ii=0; ii<val.length; ii++)
 								valDouble[ii] = val[ii] ? 1.0 : 0.0;
-							mlO.setField(fname,                    new MLDouble(null, valDouble, valDouble.length), io);
+							mlO.setField(fname,                    new MLDouble(null, valDouble, Math.max(valDouble.length,1)), io);
 						}
 						else if(f.getType() == boolean[][].class) {
 							String fname = f.getName();
@@ -167,7 +168,7 @@ public class ser2mat {
 							double[] valDouble = new double[val.length]; 
 							for(int ii=0; ii<val.length; ii++)
 								valDouble[ii] = val[ii].Index();
-							mlO.setField(fname,                    new MLDouble(null, valDouble, valDouble.length), io);
+							mlO.setField(fname,                    new MLDouble(null, valDouble, Math.max(valDouble.length,1)), io);
 						}
 						else if(f.getType() == Vector3d[].class) {
 							String fname = f.getName();
@@ -197,7 +198,7 @@ public class ser2mat {
 										Object e1 = fArrayList.get(ie);
 										fIndexArray[ie] = (int) IndexMethod.invoke(e1);
 									}
-									mlO.setField(fname,            new MLDouble(null, fIndexArray, fIndexArray.length), io);
+									mlO.setField(fname,            new MLDouble(null, fIndexArray, Math.max(fIndexArray.length,1)), io);
 								}
 						}
 						else {
