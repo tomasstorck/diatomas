@@ -51,8 +51,8 @@ public class RunEcoli extends Run {
 				typeInit[ii] = 4;
 				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 				radiusModifier[ii] = model.radiusCellStDev[typeInit[ii]]*random.rand.Gaussian();
-				directionInit[ii] = new Vector3d((rand.Double()-0.5), 				0.0*rand.Double(), 																				(rand.Double()-0.5))			.normalise();
-				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	Ball.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii] + 0.0*rand.Double(),		(rand.Double()-0.5)*model.L.z);						// TODO *0.0*rand.Double() to maintain reproducibility between floc and biofilm  
+				directionInit[ii] = new Vector3d((rand.Double()-0.5), 				(rand.Double()-0.5), 			0.0).normalise();
+				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.L.x, 	(rand.Double()-0.5)*model.L.y,	Ball.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii]);  
 				final double restLength =  RodSpring.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}
