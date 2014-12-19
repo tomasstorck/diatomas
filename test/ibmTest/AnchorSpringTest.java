@@ -54,7 +54,7 @@ public class AnchorSpringTest {
 		cell1.Anchor();
 		// Break links by displacing cells
 		for(Ball ball : model.ballArray) {
-			ball.pos.y += 1.0; 
+			ball.pos.z += 1.0; 
 		}
 		model.FormBreak();
 		assertTrue(model.anchorSpringArray.size() == 0);
@@ -63,7 +63,7 @@ public class AnchorSpringTest {
 	// Form links by putting cells on plane
 	public void testSpringAnchorForm() {							
 		for(Ball ball : model.ballArray) {
-			ball.pos.y = r; 
+			ball.pos.z = r; 
 		}
 		model.FormBreak();
 		assertTrue(model.anchorSpringArray.size() == 3);
@@ -83,7 +83,7 @@ public class AnchorSpringTest {
 		cell1.Anchor();
 		// Displace
 		for(Ball ball : model.ballArray) {
-			ball.pos.y = 1.0;
+			ball.pos.z = 1.0;
 			for(AnchorSpring spring : ball.cell.anchorSpringArray) {
 				spring.ResetRestLength();
 			}

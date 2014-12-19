@@ -78,7 +78,7 @@ public class Cell implements Serializable {
 	public int Anchor() {
 		for(Ball ball : ballArray) {
 			Vector3d substratumPos = new Vector3d(ball.pos);
-			substratumPos.y = 0.0;
+			substratumPos.z = 0.0;
 			new AnchorSpring(ball, substratumPos);
 		}
 

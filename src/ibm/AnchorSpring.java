@@ -30,7 +30,7 @@ public class AnchorSpring extends Spring {
 	
 	public void ResetRestLength() {
 		final Ball ball = ballArray[0];							// Final because anchoring springs are not recycled
-		restLength = RestLength(ball.pos.y, ball.radius);
+		restLength = RestLength(ball.pos.z, ball.radius);
 	}
 	
 	public void ResetK() {

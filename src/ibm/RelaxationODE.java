@@ -125,27 +125,27 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 		// Calculate gravity+bouyancy, normal force and drag
 		for(Ball ball : model.ballArray) {
 			// Contact force
-			double yPos = ball.pos.y;
+			double zPos = ball.pos.z;
 			double r = ball.radius;
 			if(model.normalForce) {
-				if(yPos<r){
-					ball.force.y += model.Kw*(r-yPos);
+				if(zPos<r){
+					ball.force.z += model.Kw*(r-zPos);
 				}
 			}
 			// Gravity and buoyancy
 			if(model.gravity) {
 				if(model.gravityZ) {
 					ball.force.z += model.G * (model.rhoX-model.rhoWater) * ball.n*model.MWX/model.rhoX;
-				} else if(yPos>r*1.1) {			// Only if not already at the floor plus a tiny bit 
-					ball.force.y += model.G * (model.rhoX-model.rhoWater) * ball.n*model.MWX/model.rhoX;  //let the ball fall. Note that G is negative 
+				} else if(zPos>r*1.1) {			// Only if not already at the floor plus a tiny bit 
+					ball.force.z += model.G * (model.rhoX-model.rhoWater) * ball.n*model.MWX/model.rhoX;  //let the ball fall. Note that G is negative 
 				}
 			}
 			// Electrostatic attraction
 			if(model.electrostatic) {
-				double d = (yPos-r);
+				double d = (zPos-r);
 				double dlim = model.dlimFactor*(1.0/model.kappa); 
 				d = Math.max(d, dlim);			// Limit d to dlim. If it's smaller, we will get horrible solver stiffness 
-				ball.force.y += model.kappa*model.Ces*Math.exp(-model.kappa*d) - model.Cvdw/(d*d);
+				ball.force.z += model.kappa*model.Ces*Math.exp(-model.kappa*d) - model.Cvdw/(d*d);
 			}
 			
 			// Velocity damping

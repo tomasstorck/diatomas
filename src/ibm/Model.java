@@ -201,7 +201,7 @@ public class Model implements Serializable {
 			int NBall = (cell.type<2) ? 1 : 2;	// Figure out number of balls based on type
 			for(int iBall=0; iBall<NBall; iBall++) {
 				Ball ball = cell.ballArray[iBall];
-				if(ball.pos.y - touchFactor*ball.radius < 0) {
+				if(ball.pos.z - touchFactor*ball.radius < 0) {
 					collisionCell.add(cell);
 					break;
 				}
@@ -242,7 +242,7 @@ public class Model implements Serializable {
 			double dist;
 			if(cell0.type > 1 && cell1.type > 1) {			// Rod-rod
 				H2 = 1.5*(touchFactor*( lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still
-				if(Math.abs(diff.x)<H2 && Math.abs(diff.z)<H2 && Math.abs(diff.y)<H2) {
+				if(Math.abs(diff.x)<H2 && Math.abs(diff.y)<H2 && Math.abs(diff.z)<H2) {
 					// Do good collision detection
 					ericson.ReturnObject C = ericson.DetectCollision.LinesegLineseg(cell0.ballArray[0].pos, cell0.ballArray[1].pos, cell1.ballArray[0].pos, cell1.ballArray[1].pos);
 					dist = C.dist;							// Then check if dist is small enough (end of method)
@@ -445,9 +445,9 @@ public class Model implements Serializable {
 					for(AnchorSpring anchor : breakArray)		NAnchorBreak += anchor.Break();
 				} else {									// Cell is not yet anchored
 					// Form anchor?
-					boolean formBall0 = (ball0.pos.y < anchorFormLim+ball0.radius) ? true : false;
+					boolean formBall0 = (ball0.pos.z < anchorFormLim+ball0.radius) ? true : false;
 					boolean formBall1 = false;
-					if(cell0.type > 1) 	formBall1 = (ball1.pos.y < anchorFormLim+ball1.radius) ? true : false;			// If ball1 != null
+					if(cell0.type > 1) 	formBall1 = (ball1.pos.z < anchorFormLim+ball1.radius) ? true : false;			// If ball1 != null
 					if(formBall0 || formBall1) {
 						NAnchorForm += cell0.Anchor();
 					}
@@ -498,7 +498,7 @@ public class Model implements Serializable {
 							} else continue;
 						} else if(cell0.type<2) {			// 1st sphere, 2nd rod
 							double H2f =  1.5*(stickFormLim+(lengthCellMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.y<H2f && dirn.z<H2f) {
 								Ball c1b1 = cell1.ballArray[1];
 								// do a sphere-rod collision detection
 								ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
@@ -506,7 +506,7 @@ public class Model implements Serializable {
 							} else continue;
 						} else if(cell1.type<2) {			// 2nd sphere, 1st rod
 							double H2f = 1.5*(stickFormLim+(lengthCellMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
-							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.y<H2f && dirn.z<H2f) {
 								Ball c0b1 = cell0.ballArray[1];
 								// do a sphere-rod collision detection
 								ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
@@ -514,7 +514,7 @@ public class Model implements Serializable {
 							} else continue;
 						} else if(cell0.type<6 && cell1.type<6) {  	// both rod
 							double H2f = 1.5*(stickFormLim+(lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2));
-							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.z<H2f && dirn.y<H2f) {
+							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.y<H2f && dirn.z<H2f) {
 								Ball c0b1 = cell0.ballArray[1];
 								Ball c1b1 = cell1.ballArray[1];
 								// calculate the distance between the two segments
@@ -607,10 +607,10 @@ public class Model implements Serializable {
 				// Displace
 				c0.ballArray[0].pos = posOld.plus(  direction.times(displacement) );
 				c1.ballArray[0].pos = posOld.minus( direction.times(displacement) );
-				// Contain cells to y dimension of domain
+				// Contain cells to vertical dimension of domain
 				if(normalForce) {
-					c0.ballArray[0].pos.y = Math.max(c0.ballArray[0].radius, c0.ballArray[0].pos.y);					
-					c1.ballArray[0].pos.y = Math.max(c1.ballArray[0].radius, c1.ballArray[0].pos.y);
+					c0.ballArray[0].pos.z = Math.max(c0.ballArray[0].radius, c0.ballArray[0].pos.z);					
+					c1.ballArray[0].pos.z = Math.max(c1.ballArray[0].radius, c1.ballArray[0].pos.z);
 				}
 				// Check if all went well: collision detection
 				// Create a copy of cellArray and remove c0 and c1 from it
@@ -664,13 +664,13 @@ public class Model implements Serializable {
 					this);														// Same filament boolean as cell and pointer to the model
 			// Displace old cell, 2nd ball (1st ball stays in place)
 			c0b1.pos = c0b0.pos.plus(ball1Vector);
-			c0b1.pos.z += 1e-8;													// WORKAROUND: Move in z direction by 0.01 micron. Required to prevent deadlock 
+			c0b1.pos.y += 1e-8;													// WORKAROUND: Move in z direction by 0.01 micron. Required to prevent deadlock 
 			c0.rodSpringArray.get(0).ResetRestLength();
 			// Contain cells to y dimension of domain
 			if(normalForce) {
 				for(int iBall=0; iBall<2; iBall++) {
-					c0.ballArray[iBall].pos.y = Math.max(c0.ballArray[iBall].radius, c0.ballArray[iBall].pos.y);					
-					c1.ballArray[iBall].pos.y = Math.max(c1.ballArray[iBall].radius, c1.ballArray[iBall].pos.y);
+					c0.ballArray[iBall].pos.z = Math.max(c0.ballArray[iBall].radius, c0.ballArray[iBall].pos.z);					
+					c1.ballArray[iBall].pos.z = Math.max(c1.ballArray[iBall].radius, c1.ballArray[iBall].pos.z);
 				}
 			}
 			// Set properties for new cell
@@ -886,7 +886,7 @@ public class Model implements Serializable {
 				if(!success)						
 					continue tryloop;
 				// Check if it is valid in case we have a substratum
-				if(normalForce && firstPos.y<rNew)	
+				if(normalForce && firstPos.z<rNew)	
 					continue tryloop;	// the new cell went through the plane to get to this point
 				// If a cell of the correct type wins, we're happy
 				for(int ii=0; ii<attachNotTo.length; ii++)
