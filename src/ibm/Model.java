@@ -30,6 +30,7 @@ public class Model implements Serializable {
 	public boolean comsol = false;
 	// Domain properties
 	public Vector3d L 	= new Vector3d(2e-6, 2e-6, 2e-6);
+	public Vector3d Linit = new Vector3d(1e-6, 1e-6, 1e-6);
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double rhoX	= 1010;					// [kg/m3], diatoma density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2

@@ -16,7 +16,8 @@ public class RunAS extends Run {
 		// Load default parameters
 		int filF = model.filF;
 		int flocF = model.flocF;
-		model.L = new Vector3d(7e-6, 7e-6, 7e-6);
+		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
+		model.Linit = new Vector3d(7e-6, 7e-6, 7e-6);
 		model.radiusCellMax[filF] = 0.5e-6;					// [m] (Lau 1984)
 		if(flocF<2) model.radiusCellMax[flocF] = 0.52e-6; 	// Same volume as below
 		else 		model.radiusCellMax[flocF] = 0.35e-6;	// [m] (Lau 1984) 		
