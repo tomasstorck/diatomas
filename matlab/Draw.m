@@ -4,7 +4,7 @@ n = 5;		% resolution of the sphere (lower = faster)
 renderSpring = true;
 
 [x,y,z] = sphere(n);		
-yshadow = zeros(size(y));
+zshadow = zeros(size(y));
 % figure;
 hold on;
 
@@ -56,11 +56,11 @@ for iCell = 0:length(model.cellArray)-1;
 	end
 	%
 	if cell.type>1
-		surf(ball0.radius*x+ball0.pos(1),ball0.radius*z+ball0.pos(3),ball0.radius*y+ball0.pos(2),C0);
-		surf(ball1.radius*x+ball1.pos(1),ball1.radius*z+ball1.pos(3),ball1.radius*y+ball1.pos(2),C1);
-		plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],'k');
+		surf(ball0.radius*x+ball0.pos(1),ball0.radius*y+ball0.pos(2),ball0.radius*z+ball0.pos(3),C0);
+		surf(ball1.radius*x+ball1.pos(1),ball1.radius*y+ball1.pos(2),ball1.radius*z+ball1.pos(3),C1);
+		plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(2) ball0.pos(2)], [ball1.pos(3) ball0.pos(3)],'k');
 	else
-		surf(ball0.radius*x+ball0.pos(1),ball0.radius*z+ball0.pos(3),ball0.radius*y+ball0.pos(2),C0);
+		surf(ball0.radius*x+ball0.pos(1),ball0.radius*y+ball0.pos(2),ball0.radius*z+ball0.pos(3),C0);
 	end
 end
 
@@ -77,14 +77,14 @@ if renderSpring
 		else
 			colour = 'c';
 		end
-		plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],colour);
+		plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(2) ball0.pos(2)], [ball1.pos(3) ball0.pos(3)],colour);
 	end
 
 	for iStick=1:length(model.stickSpringArray)
 		stick = model.stickSpringArray(iStick);
 		ball0 = model.ballArray(stick.ballArray(1)+1);
 		ball1 = model.ballArray(stick.ballArray(2)+1);
-		plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(3) ball0.pos(3)], [ball1.pos(2) ball0.pos(2)],'r');
+		plot3([ball1.pos(1) ball0.pos(1)],[ball1.pos(2) ball0.pos(2)], [ball1.pos(3) ball0.pos(3)],'r');
 	end
 end
 
@@ -95,13 +95,13 @@ if model.normalForce
 	Vmax = max(Vpos,[],2);
 	Vmin = min(Vpos,[],2);
 
-	patch([Vmin(1) Vmax(1) Vmax(1) Vmin(1)], [Vmin(3) Vmin(3) Vmax(3) Vmax(3)], [-0.01e-6 -0.01e-6 -0.01e-6 -0.01e-6], [0.7 0.7 0.7])
+	patch([Vmin(1) Vmax(1) Vmax(1) Vmin(1)], [Vmin(2) Vmin(2) Vmax(2) Vmax(2)], [-0.01e-6 -0.01e-6 -0.01e-6 -0.01e-6], [0.7 0.7 0.7])
 
 	% Shadows
 	for ii = 1:length(model.ballArray);
 		ball = model.ballArray(ii);
 		C=zeros(n+1);
-		surf(ball.radius*x+ball.pos(1),ball.radius*z+ball.pos(3),ball.radius*yshadow,C);
+		surf(ball.radius*x+ball.pos(1),ball.radius*y+ball.pos(2),ball.radius*zshadow,C);
 	end
 end
 
