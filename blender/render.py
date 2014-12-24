@@ -17,7 +17,8 @@ from numpy import array, pi, reshape
 import scipy.io
 
 #%% Function definitions %
-def CreateRod(pos, r):
+def CreateRod(pos, r, offset=array([0,0,0])):
+    pos = array(pos)
     LV = pos[1]-pos[0]
     L = norm(LV)
     bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=sum(r)/2)
@@ -45,20 +46,19 @@ def CreateRod(pos, r):
     rotationRad = np.arccos(LV[2]/L)
     rod.rotation_axis_angle[0] = rotationRad     # W (amount of rotation around defined axis)
     # Displace. Since selected object is still ball0 (and this is at the origin), displace to correct position for this one.
-    rod.location[0] = pos[0,0]
-    rod.location[1] = pos[0,1]
-    rod.location[2] = pos[0,2]
+    rod.location = pos[0,:]+offset
     return rod                                                # Returns entire, merged cell
 
-def CreateSphere(pos, r):
-    pos = np.array(pos)
+def CreateSphere(pos, r, offset=array([0,0,0])):
+    pos = array(pos)
     r = r
-    bpy.ops.mesh.primitive_uv_sphere_add(location=(pos[0], pos[1], pos[2]), size=r)
+    bpy.ops.mesh.primitive_uv_sphere_add(location=pos+offset, size=r)
     ball0 = bpy.context.object
     bpy.ops.object.shade_smooth()
     return ball0
 
-def CreateSpring(pos, r):
+def CreateSpring(pos, r, offset=array([0,0,0])):
+    pos = array(pos)
     LV = pos[1]-pos[0]
     L = norm(LV)
     bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=0.15)
@@ -72,9 +72,7 @@ def CreateSpring(pos, r):
     rotationRad = np.arccos(LV[2]/L)
     cyl.rotation_axis_angle[0] = rotationRad
     # Displace. 
-    cyl.location[0] = (pos[0,0]+pos[1,0])/2
-    cyl.location[1] = (pos[0,1]+pos[1,1])/2
-    cyl.location[2] = (pos[0,2]+pos[1,2])/2
+    cyl.location[0] = (pos[0,:]+pos[1,:])/2 + offset
     return cyl
 
 def Say(text, verbosity=0):
@@ -85,6 +83,13 @@ def Say(text, verbosity=0):
             printText = time.strftime('%H:%M:%S-DEBUG:  ') + text
         print(printText)
 
+def ParseVal(val):
+    if val.isnumeric():     
+        return float(val)
+    elif re.search('\(.*\)',val):   # If val contains a function, evaluate it (TODO security hazard)
+        return eval(val)
+    else:
+        return val
 
 #%% Import model
 argv = sys.argv[sys.argv.index("--")+1:]                    # Get all arguments after -- (Blender won't touch these)
@@ -97,6 +102,7 @@ model = scipy.io.loadmat(matPath, chars_as_strings=True, mat_dtype=False, squeez
 # Default settings for render.py (better to override from command line or rendermonitor.py)
 settingsDict = {'renderDirName':'render',
                 'resolution_percentage':100,    # in percent
+                'offset':array([0,0,0])
                 }
 
 ###############################################################################
@@ -108,20 +114,15 @@ for key,val in zip(argv[1::2], argv[2::2]):
         parsedKey = key[6:]                 # 6 is length of 'model.'
         if parsedKey in modelFields:         
             Say("Found key = {} in model".format(parsedKey), verbosity=2)
-            # key in model needs some extra parsing
-            if val.isnumeric():     
-                parsedVal = float(val)
-            elif re.search('\(.*\)',val):   # If val contains a function, evaluate it (TODO security hazard)
-                parsedVal = eval(val)
-            else:
-                parsedVal = val
+            parsedVal = ParseVal(val)
             Say("parsedVal = " + str(parsedVal) + " of type " + str(type(parsedVal)), verbosity=3)
             setattr(model, parsedKey, reshape(parsedVal, [len(parsedVal),1]))
         else:
             raise(key + " not found in model class")
     else:
         if key in settingsDict:
-            settingsDict[key] = val if not val.isnumeric() else float(val)
+            parsedVal = ParseVal(val)
+            settingsDict[key] = parsedVal
         elif not key=='VERBOSITY':          # VERBOSITY is already evaluated
             raise(key + " not found in settings dictionary")
 
@@ -129,6 +130,7 @@ for key,val in zip(argv[1::2], argv[2::2]):
 Lx = model.L[0,0] * 1e6
 Ly = model.L[1,0] * 1e6
 Lz = model.L[2,0] * 1e6
+offset = settingsDict['offset']
 #Lx = Ly = Lz = 200
 # Throw warning if not all L are equal
 if not (Lx == Ly == Lz):
@@ -137,8 +139,8 @@ if not (Lx == Ly == Lz):
 # Throw warning if cells are outside of domain
 NBallOutsideDomain = 0
 for ball in model.ballArray[:,0]:                       # Must loop row-wise, that's how MATLAB works
-    pos = ball.pos[:,0]
-    if not np.all([(array([0,0,0]) < pos*1e6), (pos*1e6 < array([Lx, Ly, Lz]))]):
+    pos = ball.pos[:,0]*1e6 + offset
+    if not np.all([(array([0,0,0]) < pos), (pos < array([Lx, Ly, Lz]))]):
         NBallOutsideDomain += 1
 if NBallOutsideDomain > 0:
     Say("WARNING: {} balls are outside the domain".format(NBallOutsideDomain))
@@ -189,8 +191,8 @@ lightTracker.track_axis = 'TRACK_Z'
 #%%
 # Set up world
 bpy.context.scene.world.horizon_color = (1, 1, 1)           # White background
-bpy.context.scene.render.resolution_x = 2*1920
-bpy.context.scene.render.resolution_y = 2*1080
+bpy.context.scene.render.resolution_x = 1920
+bpy.context.scene.render.resolution_y = 1080
 bpy.context.scene.render.resolution_percentage = settingsDict['resolution_percentage']         # Allows for quick scaling
 
 """
@@ -344,7 +346,7 @@ for iCell,cell in enumerate(model.cellArray[:,0]):
         ball = model.ballArray[iBall,0]
         pos = ball.pos[:,0] * 1e6
         r = ball.radius[0,0] * 1e6
-        cellG = CreateSphere(pos,r)
+        cellG = CreateSphere(pos, r, offset)
         cellG.name = 'Sphere{:d}-{:04d}'.format(int(cell.type[0,0]), int(iCell))
         cellG.active_material = yellowM
     else:
@@ -355,7 +357,7 @@ for iCell,cell in enumerate(model.cellArray[:,0]):
             pos[ii,:]   = ball.pos[:,0] * 1e6
             r[ii]       = ball.radius[0,0] * 1e6
 #            CreateSphere(ball.pos*1e6,ball.radius*1e6+0.05)        # Debugging purposes
-        cellG = CreateRod(pos,r)
+        cellG = CreateRod(pos, r, offset)
         cellG.name = 'Rod{:d}-{:04d}'.format(int(cell.type[0,0]), int(iCell))
         cellG.active_material = redM
 
@@ -364,7 +366,7 @@ for iStick,stick in enumerate(model.stickSpringArray[:,0]):
     for ii,iBall in enumerate(stick.ballArray[:,0]):
         ball = model.ballArray[iBall,0]
         pos[ii,:]   = ball.pos[:,0] * 1e6
-    stickG = CreateSpring(pos, 0.1)
+    stickG = CreateSpring(pos, 0.1, offset)
     stickG.name = 'Stick-{:04d}'.format(int(iStick))
     stickG.active_material = stickM
 
@@ -373,7 +375,7 @@ for iFil,fil in enumerate(model.filSpringArray[:,0]):
     for ii,iBall in enumerate(fil.ballArray):
         ball = model.ballArray[iBall,0]
         pos[ii,:]   = ball.pos[:,0] * 1e6
-    filG = CreateSpring(pos, 0.1)
+    filG = CreateSpring(pos, 0.1, offset)
     filG.name = 'Fil-{:04d}'.format(int(iFil))
     filG.active_material = filM
 
@@ -381,7 +383,7 @@ for iAnchor,anchor in enumerate(model.anchorSpringArray[:,0]):
     iBall = anchor.ballArray[0,0]
     ball = model.ballArray[iBall,0]
     pos   = ball.pos[:,0] * 1e6
-    anchorG = CreateSpring(np.concatenate([[pos, [pos[0],pos[1],0.0]]], 0), 0.1)
+    anchorG = CreateSpring(np.concatenate([[pos, [pos[0],pos[1],0.0]]], 0), 0.1, offset)
     anchorG.name = 'Anchor-{:04d}'.format(int(iAnchor))
     anchorG.active_material = anchorM
 
