@@ -53,8 +53,8 @@ public class RunEcoli extends Run {
 				typeInit[ii] = 4;
 				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 				radiusModifier[ii] = model.radiusCellStDev[typeInit[ii]]*random.rand.Gaussian();
-				directionInit[ii] = new Vector3d((rand.Double()-0.5), 					(rand.Double()-0.5), 				0.0).normalise();
-				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.Linit.x, 	(rand.Double()-0.5)*model.Linit.y,	Ball.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii]);  
+				directionInit[ii] = new Vector3d((rand.Double()-0.5), 								(rand.Double()-0.5), 								0.0).normalise();
+				position0Init[ii] = new Vector3d(model.L.x/2 + (rand.Double()-0.5)*model.Linit.x, 	model.L.y/2 + (rand.Double()-0.5)*model.Linit.y,	Ball.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii]);  
 				final double restLength =  RodSpring.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}
