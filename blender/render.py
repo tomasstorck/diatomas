@@ -12,7 +12,7 @@ import sys, os, time, re
 
 import numpy as np
 from numpy.linalg import norm
-from numpy import array, pi
+from numpy import array, pi, reshape
 
 import scipy.io
 
@@ -90,7 +90,7 @@ def Say(text, verbosity=0):
 argv = sys.argv[sys.argv.index("--")+1:]                    # Get all arguments after -- (Blender won't touch these)
 matPath = argv[0];                                          # Get matPath
 VERBOSITY = 0 if not 'VERBOSITY' in argv else int(argv[argv.index('VERBOSITY')+1])   # Get VERBOSITY if defined
-model = scipy.io.loadmat(matPath, chars_as_strings=True, mat_dtype=False, squeeze_me=True, struct_as_record=False)['model']
+model = scipy.io.loadmat(matPath, chars_as_strings=True, mat_dtype=False, squeeze_me=False, struct_as_record=False)['model'][0,0]
     
 ###############################################################################
 
@@ -116,7 +116,7 @@ for key,val in zip(argv[1::2], argv[2::2]):
             else:
                 parsedVal = val
             Say("parsedVal = " + str(parsedVal) + " of type " + str(type(parsedVal)), verbosity=3)
-            setattr(model, parsedKey, parsedVal)
+            setattr(model, parsedKey, reshape(parsedVal, [len(parsedVal),1]))
         else:
             raise(key + " not found in model class")
     else:
@@ -126,9 +126,9 @@ for key,val in zip(argv[1::2], argv[2::2]):
             raise(key + " not found in settings dictionary")
 
 #%% Get common parameters
-Lx = model.L[0] * 1e6
-Ly = model.L[1] * 1e6
-Lz = model.L[2] * 1e6
+Lx = model.L[0,0] * 1e6
+Ly = model.L[1,0] * 1e6
+Lz = model.L[2,0] * 1e6
 #Lx = Ly = Lz = 200
 # Throw warning if not all L are equal
 if not (Lx == Ly == Lz):
@@ -136,8 +136,9 @@ if not (Lx == Ly == Lz):
 
 # Throw warning if cells are outside of domain
 NBallOutsideDomain = 0
-for ball in model.ballArray:
-    if not np.all([(array([0,0,0]) < ball.pos*1e6), (ball.pos*1e6 < array([Lx, Ly, Lz]))]):
+for ball in model.ballArray[:,0]:                       # Must loop row-wise, that's how MATLAB works
+    pos = ball.pos[:,0]
+    if not np.all([(array([0,0,0]) < pos*1e6), (pos*1e6 < array([Lx, Ly, Lz]))]):
         NBallOutsideDomain += 1
 if NBallOutsideDomain > 0:
     Say("WARNING: {} balls are outside the domain".format(NBallOutsideDomain))
@@ -290,7 +291,7 @@ for text in (xText, yText, zText):
     text.data.font = times
 
 # Draw planes with all bells and whistles
-if model.normalForce:
+if model.normalForce[0,0]:
     #%% Draw grid
     bpy.ops.mesh.primitive_grid_add(x_subdivisions=int(Lx/10)+1, y_subdivisions=int(Ly/10)+1, radius=Lx/2)
     zPlaneGrid = bpy.context.object
@@ -337,49 +338,49 @@ if model.normalForce:
 
 ###############################################################################
 #%% Draw cells
-for iCell,cell in enumerate(model.cellArray):
-    if cell.type <= 1:
-        iBall = cell.ballArray.astype(int)
-        ball = model.ballArray[iBall]
-        pos = ball.pos * 1e6
-        r = ball.radius * 1e6
+for iCell,cell in enumerate(model.cellArray[:,0]):
+    if cell.type[0,0] <= 1:
+        iBall = cell.ballArray[0,0].astype(int)
+        ball = model.ballArray[iBall,0]
+        pos = ball.pos[:,0] * 1e6
+        r = ball.radius[0,0] * 1e6
         cellG = CreateSphere(pos,r)
-        cellG.name = 'Sphere{:d}-{:04d}'.format(int(cell.type), int(iCell))
+        cellG.name = 'Sphere{:d}-{:04d}'.format(int(cell.type[0,0]), int(iCell))
         cellG.active_material = yellowM
     else:
         pos = np.empty([2,3])
         r   = np.empty(2)
-        for ii,iBall in enumerate(cell.ballArray.astype(int)):
-            ball        = model.ballArray[iBall]
-            pos[ii,:]   = ball.pos * 1e6
-            r[ii]       = ball.radius * 1e6
+        for ii,iBall in enumerate(cell.ballArray[:,0].astype(int)):
+            ball        = model.ballArray[iBall,0]
+            pos[ii,:]   = ball.pos[:,0] * 1e6
+            r[ii]       = ball.radius[0,0] * 1e6
 #            CreateSphere(ball.pos*1e6,ball.radius*1e6+0.05)        # Debugging purposes
         cellG = CreateRod(pos,r)
-        cellG.name = 'Rod{:d}-{:04d}'.format(int(cell.type), int(iCell))
+        cellG.name = 'Rod{:d}-{:04d}'.format(int(cell.type[0,0]), int(iCell))
         cellG.active_material = redM
 
-for iStick,stick in enumerate(model.stickSpringArray):
+for iStick,stick in enumerate(model.stickSpringArray[:,0]):
     pos = np.empty([2,3])
-    for ii,iBall in enumerate(stick.ballArray):
-        ball = model.ballArray[iBall]
-        pos[ii,:]   = ball.pos * 1e6
+    for ii,iBall in enumerate(stick.ballArray[:,0]):
+        ball = model.ballArray[iBall,0]
+        pos[ii,:]   = ball.pos[:,0] * 1e6
     stickG = CreateSpring(pos, 0.1)
     stickG.name = 'Stick-{:04d}'.format(int(iStick))
     stickG.active_material = stickM
 
-for iFil,fil in enumerate(model.filSpringArray):
+for iFil,fil in enumerate(model.filSpringArray[:,0]):
     pos = np.empty([2,3])
     for ii,iBall in enumerate(fil.ballArray):
-        ball = model.ballArray[iBall]
-        pos[ii,:]   = ball.pos * 1e6
+        ball = model.ballArray[iBall,0]
+        pos[ii,:]   = ball.pos[:,0] * 1e6
     filG = CreateSpring(pos, 0.1)
     filG.name = 'Fil-{:04d}'.format(int(iFil))
     filG.active_material = filM
 
-for iAnchor,anchor in enumerate(model.anchorSpringArray):
-    iBall = anchor.ballArray
-    ball = model.ballArray[iBall]
-    pos   = ball.pos * 1e6
+for iAnchor,anchor in enumerate(model.anchorSpringArray[:,0]):
+    iBall = anchor.ballArray[0,0]
+    ball = model.ballArray[iBall,0]
+    pos   = ball.pos[:,0] * 1e6
     anchorG = CreateSpring(np.concatenate([[pos, [pos[0],pos[1],0.0]]], 0), 0.1)
     anchorG.name = 'Anchor-{:04d}'.format(int(iAnchor))
     anchorG.active_material = anchorM
