@@ -100,9 +100,13 @@ model = scipy.io.loadmat(matPath, chars_as_strings=True, mat_dtype=False, squeez
 ###############################################################################
 
 # Default settings for render.py (better to override from command line or rendermonitor.py)
-settingsDict = {'renderDirName':'render',
+settingsDict = {'camPos':'auto',
+                'camRot':array([65, 0, -25]),
+                'offset':array([0,0,0]),
+                'renderDirName':'render',
                 'resolution_percentage':100,    # in percent
-                'offset':array([0,0,0])
+                'saveBlend':True,
+                'textSizeDivider':50,
                 }
 
 ###############################################################################
@@ -132,9 +136,6 @@ Ly = model.L[1,0] * 1e6
 Lz = model.L[2,0] * 1e6
 offset = settingsDict['offset']
 #Lx = Ly = Lz = 200
-# Throw warning if not all L are equal
-if not (Lx == Ly == Lz):
-    Say("WARNING: domain size is not uniform")
 
 # Throw warning if cells are outside of domain
 NBallOutsideDomain = 0
@@ -149,9 +150,31 @@ if NBallOutsideDomain > 0:
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
 
+#%%
+# Set up world
+bpy.context.scene.world.horizon_color = (1, 1, 1)           # White background
+bpy.context.scene.render.resolution_x = 1920
+bpy.context.scene.render.resolution_y = 1080
+bpy.context.scene.render.resolution_percentage = settingsDict['resolution_percentage']         # Allows for quick scaling
+
+"""
+# Mist/fog, fading distant cells and nanowires
+bpy.context.scene.world.mist_settings.falloff = 'LINEAR'    
+bpy.context.scene.world.mist_settings.intensity = 0
+bpy.context.scene.world.mist_settings.height = 0
+bpy.context.scene.world.mist_settings.start = 100
+bpy.context.scene.world.mist_settings.depth = 40
+bpy.context.scene.world.mist_settings.use_mist = True
+"""
+
+
 #%% Create camera
-camPos = Lx/30* np.array([-15, -46, 42])
-camRot = np.array([65, 0, -25])
+camAspect = bpy.context.scene.render.resolution_x/bpy.context.scene.render.resolution_y
+if settingsDict['camPos'] == 'auto':
+    camPos = Lx/30* (array([-15, -46, 42]))                    # limited by camera width    
+else:
+    camPos= settingsDict['camPos']
+camRot = settingsDict['camRot']
 bpy.ops.object.camera_add(location=camPos, rotation=(np.deg2rad(camRot[0]), np.deg2rad(camRot[1]), np.deg2rad(camRot[2])))
 bpy.context.scene.camera = bpy.data.objects["Camera"]           # Set as active camera
 cam = bpy.context.object
@@ -187,23 +210,6 @@ light.parent = cam
 lightTracker = light.constraints.new('TRACK_TO')                # Tell camera to track empty (for rotation)
 lightTracker.target = cam
 lightTracker.track_axis = 'TRACK_Z'
-
-#%%
-# Set up world
-bpy.context.scene.world.horizon_color = (1, 1, 1)           # White background
-bpy.context.scene.render.resolution_x = 1920
-bpy.context.scene.render.resolution_y = 1080
-bpy.context.scene.render.resolution_percentage = settingsDict['resolution_percentage']         # Allows for quick scaling
-
-"""
-# Mist/fog, fading distant cells and nanowires
-bpy.context.scene.world.mist_settings.falloff = 'LINEAR'    
-bpy.context.scene.world.mist_settings.intensity = 0
-bpy.context.scene.world.mist_settings.height = 0
-bpy.context.scene.world.mist_settings.start = 100
-bpy.context.scene.world.mist_settings.depth = 40
-bpy.context.scene.world.mist_settings.use_mist = True
-"""
 
 #%% Prepare materials
 yellowM = bpy.data.materials.new('yellow')
@@ -258,13 +264,14 @@ whiteM.specular_intensity = 0
 whiteM.diffuse_shader = 'TOON'                               # Give it a cartoon-ish finish, clear shadows and lines
 
 #%% Draw XYZ axis legend
-axLegCylH = 2.0*Lx/30                                          # Arrow body
-axLegConeH = 0.4*Lx/30                                         # Arrow head
-axLegCylR = 0.1*Lx/30
+textSizeDivider = settingsDict['textSizeDivider']
+axLegCylH = 3.0*np.round((norm(camPos)/textSizeDivider)**0.5)                                  # Arrow body
+axLegConeH = 0.8*np.round((norm(camPos)/textSizeDivider)**0.5)                                         # Arrow head
+axLegCylR = 0.2*np.round((norm(camPos)/textSizeDivider)**0.5)
 for ax,locCyl,locCone,rot in zip(['X', 'Y', 'Z'], \
       [(axLegCylH/2, 0.0, 0.0),             (0.0, axLegCylH/2, 0),              (0.0, 0.0, axLegCylH/2)],  \
-      [(axLegCylH-axLegConeH/2, 0.0, 0.0),  (0.0, axLegCylH-axLegConeH/2, 0),   (0.0, 0.0, axLegCylH+axLegConeH/2)],  \
-      [(0, pi/2, 0), (pi/2, 0, 0), (0, 0, 0)]):
+      [(axLegCylH+axLegConeH/2, 0.0, 0.0),  (0.0, axLegCylH+axLegConeH/2, 0),   (0.0, 0.0, axLegCylH+axLegConeH/2)],  \
+      [(0, pi/2, 0), (3*pi/2, 0, 0), (0, 0, 0)]):
     bpy.ops.mesh.primitive_cylinder_add(radius=axLegCylR, depth=axLegCylH, location=locCyl, rotation=rot)
     bpy.ops.object.shade_smooth()
     bpy.context.object.name = 'legendCyl'+ax
@@ -274,7 +281,7 @@ for ax,locCyl,locCone,rot in zip(['X', 'Y', 'Z'], \
     bpy.context.object.name = 'legendCone'+ax
     bpy.context.object.active_material = inkM
 # Create text
-fontSize = 3*np.round(Lx/30)
+fontSize = 5.0*np.round((norm(camPos)/textSizeDivider)**0.5)
 bpy.ops.object.text_add(location=(2, -fontSize*0.5, 0))
 xText = bpy.context.object
 xText.data.body = 'x'
@@ -295,48 +302,65 @@ for text in (xText, yText, zText):
 # Draw planes with all bells and whistles
 if model.normalForce[0,0]:
     #%% Draw grid
+    # Z plane (horizontal)    
+    zPlaneHeightScale = Ly/Lx
     bpy.ops.mesh.primitive_grid_add(x_subdivisions=int(Lx/10)+1, y_subdivisions=int(Ly/10)+1, radius=Lx/2)
     zPlaneGrid = bpy.context.object
+    zPlaneGrid.name = 'zPlaneGrid'
     zPlaneGrid.location = [Lx/2, Ly/2, 0.0]
     zPlaneGrid.active_material = wireM
     zPlaneGrid.rotation_euler[2] = 1*pi
-    
-    bpy.ops.mesh.primitive_plane_add(radius=Lx/2, location=(Lx/2, Ly/2, -0.1))  # Plane to project shadows on
+    zPlaneGrid.scale[1] = zPlaneHeightScale
+
+    # Plane to project shadows on
+    bpy.ops.mesh.primitive_plane_add(radius=Lx/2, location=(Lx/2, Ly/2, -0.1))  
     zPlane = bpy.context.object
+    zPlane.name = 'zPlane'
+    zPlane.scale[1] = zPlaneHeightScale
     zPlane.active_material = whiteM
         
-    bpy.ops.mesh.primitive_grid_add(x_subdivisions=int(Lx/10)+1, y_subdivisions=int(Ly/10)+1, radius=Lx/2)
+    # Y plane (back)
+    yPlaneHeightScale = Lz/Lx
+    bpy.ops.mesh.primitive_grid_add(x_subdivisions=int(Lx/10)+1, y_subdivisions=int(Lz/10)+1, radius=Lx/2)
     yPlaneGrid = bpy.context.object
+    yPlaneGrid.name = 'yPlaneGrid'
     yPlaneGrid.active_material = wireM
     yPlaneGrid.location = [Lx/2, Ly, Lz/2]
     yPlaneGrid.rotation_euler[0] = 0.5*pi
-    yPlaneGrid.rotation_euler[2] = 1*pi
+    yPlaneGrid.scale[1] = yPlaneHeightScale
     
     #%% Draw ticks
-    fontSize = 2*np.round(Lx/30)
-    for p in np.arange(0,Lx+1,10):
+    fontSize = 4.0*np.round((norm(camPos)/textSizeDivider)**0.5)
+    pos = 0
+    tickDone = False
+    while not tickDone:
         tickList = []
-        if p > 0:               # x ticks
-            bpy.ops.object.text_add(location=(p, -fontSize, 0))
+        tickDone = True
+        if pos > 0 and pos <= Lx:               # x ticks
+            tickDone = False
+            bpy.ops.object.text_add(location=(pos, -fontSize, 0))
             xTick = bpy.context.object
-            xTick.data.body = str(int(p))    
+            xTick.data.body = str(int(pos))    
             tickList.append(xTick)
-        if p > 0 and p < Ly:    # y ticks
-            bpy.ops.object.text_add(location=(-fontSize, p, 0))
+        if pos > 0 and pos < Ly:               # y ticks
+            tickDone = False
+            bpy.ops.object.text_add(location=(-fontSize, pos, 0))
             yTick = bpy.context.object
-            yTick.data.body = str(int(p))
+            yTick.data.body = str(int(pos))
             tickList.append(yTick)
-        if True:                # z ticks
-            bpy.ops.object.text_add(location=(-fontSize, Ly, p))
+        if pos <= Lz:                           # z ticks
+            tickDone = False
+            bpy.ops.object.text_add(location=(-fontSize, Ly, pos))
             zTick = bpy.context.object
-            zTick.data.body = str(int(p))
+            zTick.data.body = str(int(pos))
             zTick.rotation_euler[0] = 0.5*pi
             tickList.append(zTick)
         for tick in tickList:   # assign material
-            tick.data.size = 2*np.round(Lx/30)
+            tick.data.size = fontSize
             tick.active_material = inkM
             tick.data.font = times
             tick.data.align = 'CENTER'                     # only horizontal
+        pos += np.ceil(max([Lx,Ly,Lz])/100)*10
 
 ###############################################################################
 #%% Draw cells
@@ -420,7 +444,8 @@ else:
     renderDir = matDir
 
 bpy.data.scenes['Scene'].render.filepath = renderDir + "/" + matName + ".png"
-#bpy.ops.wm.save_as_mainfile(filepath=renderDir + "/" + matName + ".blend", check_existing=False)
+if settingsDict['saveBlend']:
+    bpy.ops.wm.save_as_mainfile(filepath=renderDir + "/" + matName + ".blend", check_existing=False)
 
 #%% Render
 if not os.path.isdir(renderDir):

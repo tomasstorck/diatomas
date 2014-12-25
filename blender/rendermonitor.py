@@ -15,7 +15,7 @@ dirFilter = '.*'
 renderpySettingsDict = {'VERBOSITY':VERBOSITY,
                         'resolution_percentage':50,
                         'offset':'array([5,5,0])',
-                        'model.L':'array([50e-6,50e-6,50e-6])',
+                        'model.L':'array([50e-6,50e-6,10e-6])',
                         }
 
 ###############################################################################
