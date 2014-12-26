@@ -12,34 +12,51 @@ import sys, os, time, re
 
 import numpy as np
 from numpy.linalg import norm
-from numpy import array, pi, reshape
+from numpy import array, pi, reshape, round
 
 import scipy.io
 
 #%% Function definitions %
+rodLib = {}                                           # Contains rods of various aspect ratios
 def CreateRod(pos, r, offset=array([0,0,0])):
     pos = array(pos)
     LV = pos[1]-pos[0]
     L = norm(LV)
-    bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=sum(r)/2)
-    spring = bpy.context.object                                 # Ugly but appears to be the way to do it
-    bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, L), size=r[1])
-    ball1 = bpy.context.object
-    bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, 0), size=r[0])
-    ball0 = bpy.context.object
-    # Deselect everything, then select objects in the right order (making ball0 the active object)
-    bpy.ops.object.select_all(action='DESELECT')
-    spring.select = True
-    ball1.select = True
-    ball0.select = True
-    rod = ball0
-    # Join meshes, easier to work on entire cell
-    bpy.ops.object.join()
-    # Apply modifiers and smoothing
-    bpy.ops.object.modifier_add(type='EDGE_SPLIT')              # Required to get proper "shinyness"
-    bpy.ops.object.shade_smooth()
-    # Define vector in XY plane we will revolve along
-    rod.rotation_mode = 'AXIS_ANGLE'                # Other rotations are sequential: rotate around X, THEN around y, etc.
+    assert r[0] == r[1]
+    rMean = sum(r)/2
+    aspect = round(L/(2*rMean),1)
+    if aspect in rodLib:
+        Say("\t\tAspect = {} in rodLib".format(aspect), verbosity=2)
+        originalRod,originalR = rodLib.get(round(aspect,2))
+        rod = originalRod.copy()
+        rod.scale = [rMean/originalR]*3                 # Make it a len 3 vector
+        rod.name = rod.name + "_copy_r{}".format(rMean) # Need to set something as to not have duplicate names in scene
+        # Link to scene (not needed for original CreateRod)
+        bpy.context.scene.objects.link(rod)
+    else:
+        Say("\t\tAspect = {} NOT in rodLib".format(aspect), verbosity=2)
+        bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=rMean)
+        spring = bpy.context.object                                 # Ugly but appears to be the way to do it
+        bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, L), size=rMean)
+        ball1 = bpy.context.object
+        bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, 0), size=rMean)
+        ball0 = bpy.context.object
+        # Deselect everything, then select objects in the right order (making ball0 the active object)
+        bpy.ops.object.select_all(action='DESELECT')
+        spring.select = True
+        ball1.select = True
+        ball0.select = True
+        rod = ball0
+        # Join meshes, easier to work on entire cell
+        bpy.ops.object.join()
+        # Apply modifiers and smoothing
+        bpy.ops.object.modifier_add(type='EDGE_SPLIT')              # Required to get proper "shinyness"
+        bpy.ops.object.shade_smooth()
+        # Set rotation mode
+        rod.rotation_mode = 'AXIS_ANGLE'                # Other rotations are sequential: rotate around X, THEN around y, etc.
+        # Add this object to the library
+        rodLib[aspect] = [rod, rMean]
+    # Identical for copied or new. Define vector in XY plane we will revolve along
     rod.rotation_axis_angle[1] = -1*LV[1]          # X axis (use Y position). Relative, absolute doesn't matter. -1* because we want perpendicular vector
     rod.rotation_axis_angle[2] = LV[0]              # Y axis (use X position)
     # Calculate how much we need to rotate (angle from [0 0 L] to [x y 0] to get vector [0 0 L] to overlay [x y z])
@@ -49,23 +66,47 @@ def CreateRod(pos, r, offset=array([0,0,0])):
     rod.location = pos[0,:]+offset
     return rod                                                # Returns entire, merged cell
 
+sphereLib = [None, 0]
 def CreateSphere(pos, r, offset=array([0,0,0])):
     pos = array(pos)
     r = r
-    bpy.ops.mesh.primitive_uv_sphere_add(location=pos+offset, size=r)
-    ball0 = bpy.context.object
-    bpy.ops.object.shade_smooth()
+    if sphereLib[0] is None:
+        Say("\t\tDefining initial spherical cell", verbosity=2)
+        bpy.ops.mesh.primitive_uv_sphere_add(location=pos+offset, size=r)
+        ball0 = bpy.context.object
+        bpy.ops.object.shade_smooth()
+        sphereLib[:] = [ball0, r]
+    else:
+        Say("\t\tCopying existing sphere", verbosity=2)
+        originalSphere,originalR = sphereLib
+        sphere = originalSphere.copy()
+        sphere.scale = [r/originalR]*3
+        # Add to scene
+        bpy.context.scene.objects.link(sphere)        
     return ball0
 
+cylLib = [None, 0]
 def CreateSpring(pos, r, offset=array([0,0,0])):
     pos = array(pos)
     LV = pos[1,:]-pos[0,:]
     L = norm(LV)
-    bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=0.15)
-    cyl = bpy.context.object
-    bpy.ops.object.shade_smooth()
+    if cylLib[0] is None:
+        Say("\t\tDefining initial spring", verbosity=2)
+        bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=0.15)
+        cyl = bpy.context.object
+        bpy.ops.object.shade_smooth()
+        # Set rotation mode
+        cyl.rotation_mode = 'AXIS_ANGLE'
+        # Set as original spring
+        cylLib[:] = [cyl, L]
+    else:
+        Say("\t\tCopying existing spring", verbosity=2)
+        originalCyl,originalL = cylLib
+        cyl = originalCyl.copy()
+        cyl.scale[2] = L/originalL
+        # Add to scene
+        bpy.context.scene.objects.link(cyl)        
     # Define vector in XY plane we will revolve along (note: see CreateRod for method)
-    cyl.rotation_mode = 'AXIS_ANGLE'
     cyl.rotation_axis_angle[1] = -1*LV[1]
     cyl.rotation_axis_angle[2] = LV[0]
     # Calculate how much we need to rotate
@@ -86,6 +127,10 @@ def Say(text, verbosity=0):
 def ParseVal(val):
     if val.isnumeric():     
         return float(val)
+    elif val.lower() == 'true':
+        return True
+    elif val.lower() == 'false':
+        return False
     elif re.search('\(.*\)',val):   # If val contains a function, evaluate it (TODO security hazard)
         return eval(val)
     else:
@@ -102,6 +147,9 @@ model = scipy.io.loadmat(matPath, chars_as_strings=True, mat_dtype=False, squeez
 # Default settings for render.py (better to override from command line or rendermonitor.py)
 settingsDict = {'camPos':'auto',
                 'camRot':array([65, 0, -25]),
+                'drawAnchor':True,
+                'drawFil':True,
+                'drawStick':True,
                 'offset':array([0,0,0]),
                 'renderDirName':'render',
                 'resolution_percentage':100,    # in percent
@@ -112,15 +160,15 @@ settingsDict = {'camPos':'auto',
 ###############################################################################
 # Get overwriting dictionary for render.py and model class
 modelFields = dir(model)
-Say('Argument parsing, analysing {} possible setting values and {} model fields'.format(len(settingsDict), len(modelFields)), verbosity=2)
+Say('Argument parsing, analysing {} possible setting values and {} model fields'.format(len(settingsDict), len(modelFields)), verbosity=3)
 for key,val in zip(argv[1::2], argv[2::2]):
     if key.startswith('model.'):
         parsedKey = key[6:]                 # 6 is length of 'model.'
         if parsedKey in modelFields:         
-            Say("Found key = {} in model".format(parsedKey), verbosity=2)
+            Say("Found key = {} in model".format(parsedKey), verbosity=3)
             parsedVal = ParseVal(val)
-            Say("parsedVal = " + str(parsedVal) + " of type " + str(type(parsedVal)), verbosity=3)
-            setattr(model, parsedKey, reshape(parsedVal, [len(parsedVal),1]))
+            Say("parsedVal = " + str(parsedVal) + " of type " + str(type(parsedVal)), verbosity=4)
+            setattr(model, parsedKey, reshape(parsedVal, [len(parsedVal) if not type(parsedVal) is bool else 1,1]))
         else:
             raise(key + " not found in model class")
     else:
@@ -131,6 +179,7 @@ for key,val in zip(argv[1::2], argv[2::2]):
             raise(key + " not found in settings dictionary")
 
 #%% Get common parameters
+Say("Analysing domain and setting common parameters", verbosity=1)
 Lx = model.L[0,0] * 1e6
 Ly = model.L[1,0] * 1e6
 Lz = model.L[2,0] * 1e6
@@ -147,11 +196,13 @@ if NBallOutsideDomain > 0:
     Say("WARNING: {} balls are outside the domain".format(NBallOutsideDomain))
 
 #%% Clean up geometry (default cube, camera, light source)
+Say("Cleaning up geometry", verbosity=1)
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
 
 #%%
 # Set up world
+Say("Setting up world", verbosity=1)
 bpy.context.scene.world.horizon_color = (1, 1, 1)           # White background
 bpy.context.scene.render.resolution_x = 1920
 bpy.context.scene.render.resolution_y = 1080
@@ -169,6 +220,7 @@ bpy.context.scene.world.mist_settings.use_mist = True
 
 
 #%% Create camera
+Say("Calculating and creating camera", verbosity=1)
 camAspect = bpy.context.scene.render.resolution_x/bpy.context.scene.render.resolution_y
 if settingsDict['camPos'] == 'auto':
     camPos = Lx/30* (array([-15, -46, 42]))                    # limited by camera width    
@@ -194,6 +246,7 @@ Don't forget to deselect preview!
 """
 
 #%% Create light sources
+Say("Creating light sources", verbosity=1)
 # Sun 
 bpy.ops.object.lamp_add(type='SUN', location=(0, 0, 40))
 sun = bpy.context.object
@@ -212,6 +265,7 @@ lightTracker.target = cam
 lightTracker.track_axis = 'TRACK_Z'
 
 #%% Prepare materials
+Say("Preparing material configuration", verbosity=1)
 yellowM = bpy.data.materials.new('yellow')
 yellowM.diffuse_color = (1.0, 1.0, 0.0)
 yellowM.diffuse_intensity = 0.8
@@ -264,10 +318,11 @@ whiteM.specular_intensity = 0
 whiteM.diffuse_shader = 'TOON'                               # Give it a cartoon-ish finish, clear shadows and lines
 
 #%% Draw XYZ axis legend
+Say("Drawing XYZ arrows/legend", verbosity=1)
 textSizeDivider = settingsDict['textSizeDivider']
-axLegCylH = 3.0*np.round((norm(camPos)/textSizeDivider)**0.5)                                  # Arrow body
-axLegConeH = 0.8*np.round((norm(camPos)/textSizeDivider)**0.5)                                         # Arrow head
-axLegCylR = 0.2*np.round((norm(camPos)/textSizeDivider)**0.5)
+axLegCylH = 3.0*round((norm(camPos)/textSizeDivider)**0.5)                                  # Arrow body
+axLegConeH = 0.8*round((norm(camPos)/textSizeDivider)**0.5)                                         # Arrow head
+axLegCylR = 0.2*round((norm(camPos)/textSizeDivider)**0.5)
 for ax,locCyl,locCone,rot in zip(['X', 'Y', 'Z'], \
       [(axLegCylH/2, 0.0, 0.0),             (0.0, axLegCylH/2, 0),              (0.0, 0.0, axLegCylH/2)],  \
       [(axLegCylH+axLegConeH/2, 0.0, 0.0),  (0.0, axLegCylH+axLegConeH/2, 0),   (0.0, 0.0, axLegCylH+axLegConeH/2)],  \
@@ -281,7 +336,7 @@ for ax,locCyl,locCone,rot in zip(['X', 'Y', 'Z'], \
     bpy.context.object.name = 'legendCone'+ax
     bpy.context.object.active_material = inkM
 # Create text
-fontSize = 5.0*np.round((norm(camPos)/textSizeDivider)**0.5)
+fontSize = 5.0*round((norm(camPos)/textSizeDivider)**0.5)
 bpy.ops.object.text_add(location=(2, -fontSize*0.5, 0))
 xText = bpy.context.object
 xText.data.body = 'x'
@@ -301,6 +356,7 @@ for text in (xText, yText, zText):
 
 # Draw planes with all bells and whistles
 if model.normalForce[0,0]:
+    Say("Drawing plane, grid, etc", verbosity=1)
     #%% Draw grid
     # Z plane (horizontal)    
     zPlaneHeightScale = Ly/Lx
@@ -330,7 +386,7 @@ if model.normalForce[0,0]:
     yPlaneGrid.scale[1] = yPlaneHeightScale
     
     #%% Draw ticks
-    fontSize = 4.0*np.round((norm(camPos)/textSizeDivider)**0.5)
+    fontSize = 4.0*round((norm(camPos)/textSizeDivider)**0.5)
     pos = 0
     tickDone = False
     while not tickDone:
@@ -364,7 +420,9 @@ if model.normalForce[0,0]:
 
 ###############################################################################
 #%% Draw cells
+Say("Drawing cells", verbosity=1)
 for iCell,cell in enumerate(model.cellArray[:,0]):
+    Say("\tCell = {}, type = {}".format(iCell, cell.type[0,0]), verbosity=1)
     if cell.type[0,0] <= 1:
         iBall = cell.ballArray[0,0].astype(int)
         ball = model.ballArray[iBall,0]
@@ -380,36 +438,42 @@ for iCell,cell in enumerate(model.cellArray[:,0]):
             ball        = model.ballArray[iBall,0]
             pos[ii,:]   = ball.pos[:,0] * 1e6
             r[ii]       = ball.radius[0,0] * 1e6
-#            CreateSphere(ball.pos*1e6,ball.radius*1e6+0.05)        # Debugging purposes
         cellG = CreateRod(pos, r, offset)
         cellG.name = 'Rod{:d}-{:04d}'.format(int(cell.type[0,0]), int(iCell))
         cellG.active_material = redM
+Say("fraction {} in rodLib".format(round(1-len(rodLib)/len(model.cellArray[:,0]),2)), verbosity=1)
 
-for iStick,stick in enumerate(model.stickSpringArray[:,0]):
-    pos = np.empty([2,3])
-    for ii,iBall in enumerate(stick.ballArray[:,0]):
-        ball = model.ballArray[iBall,0]
-        pos[ii,:]   = ball.pos[:,0] * 1e6
-    stickG = CreateSpring(pos, 0.1, offset)
-    stickG.name = 'Stick-{:04d}'.format(int(iStick))
-    stickG.active_material = stickM
+if settingsDict['drawStick']:
+    for iStick,stick in enumerate(model.stickSpringArray[:,0]):
+        Say("\tSticking spring = {}".format(iStick), verbosity=1)
+        pos = np.empty([2,3])
+        for ii,iBall in enumerate(stick.ballArray[:,0]):
+            ball = model.ballArray[int(iBall),0]
+            pos[ii,:]   = ball.pos[:,0] * 1e6
+        stickG = CreateSpring(pos, 0.1, offset)
+        stickG.name = 'Stick-{:04d}'.format(int(iStick))
+        stickG.active_material = stickM
 
-for iFil,fil in enumerate(model.filSpringArray[:,0]):
-    pos = np.empty([2,3])
-    for ii,iBall in enumerate(fil.ballArray):
-        ball = model.ballArray[iBall,0]
-        pos[ii,:]   = ball.pos[:,0] * 1e6
-    filG = CreateSpring(pos, 0.1, offset)
-    filG.name = 'Fil-{:04d}'.format(int(iFil))
-    filG.active_material = filM
+if settingsDict['drawFil']:
+    for iFil,fil in enumerate(model.filSpringArray[:,0]):
+        Say("\tFilament spring = {}".format(iFil), verbosity=1)
+        pos = np.empty([2,3])
+        for ii,iBall in enumerate(fil.ballArray):
+            ball = model.ballArray[int(iBall),0]
+            pos[ii,:]   = ball.pos[:,0] * 1e6
+        filG = CreateSpring(pos, 0.1, offset)
+        filG.name = 'Fil-{:04d}'.format(int(iFil))
+        filG.active_material = filM
 
-for iAnchor,anchor in enumerate(model.anchorSpringArray[:,0]):
-    iBall = anchor.ballArray[0,0]
-    ball = model.ballArray[iBall,0]
-    pos   = ball.pos[:,0] * 1e6
-    anchorG = CreateSpring(np.concatenate([[pos, [pos[0],pos[1],0.0]]], 0), 0.1, offset)
-    anchorG.name = 'Anchor-{:04d}'.format(int(iAnchor))
-    anchorG.active_material = anchorM
+if settingsDict['drawAnchor']:
+    for iAnchor,anchor in enumerate(model.anchorSpringArray[:,0]):
+        Say("\tAnchoring spring = {}".format(iAnchor), verbosity=1)
+        iBall = anchor.ballArray[0,0]
+        ball = model.ballArray[int(iBall),0]
+        pos   = ball.pos[:,0] * 1e6
+        anchorG = CreateSpring(np.concatenate([[pos, [pos[0],pos[1],0.0]]], 0), 0.1, offset)
+        anchorG.name = 'Anchor-{:04d}'.format(int(iAnchor))
+        anchorG.active_material = anchorM
 
 #CreateSphere([Lx/2+5,Ly/2+5,5],10)
 #CreateRod(array([[Lx/2,Ly/2,0],[Lx/2,Ly/2,4]]),array([1,1]))
@@ -435,6 +499,7 @@ bpy.ops.object.select_all(action='DESELECT')
 
 ###############################################################################
 #%% Save
+Say("Saving", verbosity=1)
 matName = os.path.splitext( matPath.split("/")[-1] )[0]
 matDir = "/".join(matPath.split('/')[:-1])
 if "/output/"+matName in matPath:
@@ -448,6 +513,7 @@ if settingsDict['saveBlend']:
     bpy.ops.wm.save_as_mainfile(filepath=renderDir + "/" + matName + ".blend", check_existing=False)
 
 #%% Render
+Say("Rendering", verbosity=1)
 if not os.path.isdir(renderDir):
     os.mkdir(renderDir)
 bpy.ops.render.render(write_still=True)
