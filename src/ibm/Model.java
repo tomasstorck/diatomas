@@ -118,8 +118,8 @@ public class Model implements Serializable {
 	// ODE settings
 	public double ODETol = 1e-7;
 	// === AS STUFF ===
-	public int flocF = 4;
-	public int filF = 5;
+	public int flocF = -1;
+	public int filF = -1;
 	// === COMSOL STUFF ===
 	public double[] yieldXS = new double[]{2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};		// [Cmol X/mol reaction] yield of biomass. Reactions are normalised to mol substrate 
 	//////////////////////////////////////////////////////////////////////////////////////////
@@ -568,7 +568,6 @@ public class Model implements Serializable {
 		ArrayList<Cell> dividedCell = new ArrayList<Cell>();
 		for(int iCell=0; iCell<NCell; iCell++){
 			Cell mother = cellArray.get(iCell);
-			// Obtain mol increase based on flux FIXME
 			// Grow mother cell
 			double newAmount = mother.GetAmount() + mother.Rx * growthTimeStep * yieldXS[mother.type];
 			mother.SetAmount(newAmount);

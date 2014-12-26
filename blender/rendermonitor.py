@@ -52,7 +52,7 @@ while True:
                         suffix = "     --> WARNING and ERROR"
                     elif 'error' in stdout.lower():
                         suffix = "     --> ERROR"
-                    if 'warning' in stdout.lower():
+                    else:
                         suffix = "     --> "
                         for line in stdout.split('\n'):
                             if 'warning' in line.lower():

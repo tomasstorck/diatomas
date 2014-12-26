@@ -59,7 +59,7 @@ def CreateSphere(pos, r, offset=array([0,0,0])):
 
 def CreateSpring(pos, r, offset=array([0,0,0])):
     pos = array(pos)
-    LV = pos[1]-pos[0]
+    LV = pos[1,:]-pos[0,:]
     L = norm(LV)
     bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=0.15)
     cyl = bpy.context.object
@@ -72,7 +72,7 @@ def CreateSpring(pos, r, offset=array([0,0,0])):
     rotationRad = np.arccos(LV[2]/L)
     cyl.rotation_axis_angle[0] = rotationRad
     # Displace. 
-    cyl.location[0] = (pos[0,:]+pos[1,:])/2 + offset
+    cyl.location = (pos[0,:]+pos[1,:])/2 + offset
     return cyl
 
 def Say(text, verbosity=0):

@@ -14,8 +14,8 @@ public class RunAS extends Run {
 	public void Initialise() {
 		model.Write("Loading parameters for AS","");
 		// Load default parameters
-		int filF = model.filF;
-		int flocF = model.flocF;
+		int flocF = model.flocF = 4;
+		int filF = model.filF = 5;
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
 		model.Linit = new Vector3d(7e-6, 7e-6, 7e-6);
 		model.radiusCellMax[filF] = 0.5e-6;					// [m] (Lau 1984)
