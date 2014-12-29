@@ -18,23 +18,16 @@ import scipy.io
 
 #%% Function definitions %
 rodLib = {}                                           # Contains rods of various aspect ratios
-def CreateRod(pos, r, offset=array([0,0,0])):
+def CreateRod(pos, r, material, offset=array([0,0,0])):
     pos = array(pos)
     LV = pos[1]-pos[0]
     L = norm(LV)
     assert r[0] == r[1]
     rMean = sum(r)/2
     aspect = round(L/(2*rMean),1)
-    if aspect in rodLib:
-        Say("\t\tAspect = {} in rodLib".format(aspect), verbosity=2)
-        originalRod,originalR = rodLib.get(round(aspect,2))
-        rod = originalRod.copy()
-        rod.scale = [rMean/originalR]*3                 # Make it a len 3 vector
-        rod.name = rod.name + "_copy_r{}".format(rMean) # Need to set something as to not have duplicate names in scene
-        # Link to scene (not needed for original CreateRod)
-        bpy.context.scene.objects.link(rod)
-    else:
-        Say("\t\tAspect = {} NOT in rodLib".format(aspect), verbosity=2)
+    keyName = str(aspect)+material                      # Dictionary stored based on aspect ratio and material
+    if not keyName in rodLib:
+        Say("\t\tAspect = {} with material = {} NOT in rodLib".format(aspect, material), verbosity=2)
         bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=rMean)
         spring = bpy.context.object                                 # Ugly but appears to be the way to do it
         bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, L), size=rMean)
@@ -54,8 +47,19 @@ def CreateRod(pos, r, offset=array([0,0,0])):
         bpy.ops.object.shade_smooth()
         # Set rotation mode
         rod.rotation_mode = 'AXIS_ANGLE'                # Other rotations are sequential: rotate around X, THEN around y, etc.
+        # Set material        
+        rod.active_material = bpy.data.materials[material]
         # Add this object to the library
-        rodLib[aspect] = [rod, rMean]
+        rodLib[keyName] = [rod, rMean]         # rMean required for scaling only, material is copied by reference, not value, so needs to be recreated for different material
+    else:
+        Say("\t\tAspect = {} in rodLib".format(aspect), verbosity=2)
+        originalRod,originalR = rodLib.get(keyName)
+        rod = originalRod.copy()
+        rod.scale = [rMean/originalR]*3                 # Make it a len 3 vector
+        rod.name = rod.name + "_copy_r{}".format(rMean) # Need to set something as to not have duplicate names in scene
+        # Link to scene (not needed for original CreateRod)
+        bpy.context.scene.objects.link(rod)
+        
     # Identical for copied or new. Define vector in XY plane we will revolve along
     rod.rotation_axis_angle[1] = -1*LV[1]          # X axis (use Y position). Relative, absolute doesn't matter. -1* because we want perpendicular vector
     rod.rotation_axis_angle[2] = LV[0]              # Y axis (use X position)
@@ -66,42 +70,48 @@ def CreateRod(pos, r, offset=array([0,0,0])):
     rod.location = pos[0,:]+offset
     return rod                                                # Returns entire, merged cell
 
-sphereLib = [None, 0]
-def CreateSphere(pos, r, offset=array([0,0,0])):
+sphereLib = {}
+def CreateSphere(pos, r, material, offset=array([0,0,0])):
     pos = array(pos)
     r = r
-    if sphereLib[0] is None:
+    keyName = material
+    if not keyName in sphereLib:
         Say("\t\tDefining initial spherical cell", verbosity=2)
         bpy.ops.mesh.primitive_uv_sphere_add(location=pos+offset, size=r)
-        ball0 = bpy.context.object
+        sphere = bpy.context.object
         bpy.ops.object.shade_smooth()
-        sphereLib[:] = [ball0, r]
+        sphere.active_material = bpy.data.materials[material]
+        sphereLib[keyName] = [sphere, r]
     else:
         Say("\t\tCopying existing sphere", verbosity=2)
-        originalSphere,originalR = sphereLib
+        originalSphere,originalR = sphereLib[keyName]
         sphere = originalSphere.copy()
         sphere.scale = [r/originalR]*3
+        sphere.location = pos+offset
         # Add to scene
         bpy.context.scene.objects.link(sphere)        
-    return ball0
+    return sphere
 
-cylLib = [None, 0]
-def CreateSpring(pos, r, offset=array([0,0,0])):
+cylLib = {}
+def CreateSpring(pos, r, material, offset=array([0,0,0])):
     pos = array(pos)
     LV = pos[1,:]-pos[0,:]
     L = norm(LV)
-    if cylLib[0] is None:
+    keyName = material
+    if not keyName in cylLib:
         Say("\t\tDefining initial spring", verbosity=2)
         bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=0.15)
         cyl = bpy.context.object
         bpy.ops.object.shade_smooth()
         # Set rotation mode
         cyl.rotation_mode = 'AXIS_ANGLE'
+        # Set material
+        cyl.active_material = bpy.data.materials[material]
         # Set as original spring
-        cylLib[:] = [cyl, L]
+        cylLib[keyName] = [cyl, L]
     else:
         Say("\t\tCopying existing spring", verbosity=2)
-        originalCyl,originalL = cylLib
+        originalCyl,originalL = cylLib[keyName]
         cyl = originalCyl.copy()
         cyl.scale[2] = L/originalL
         # Add to scene
@@ -355,82 +365,88 @@ for text in (xText, yText, zText):
     text.data.font = times
 
 # Draw planes with all bells and whistles
-if model.normalForce[0,0]:
-    Say("Drawing plane, grid, etc", verbosity=1)
-    #%% Draw grid
-    # Z plane (horizontal)    
-    zPlaneHeightScale = Ly/Lx
-    bpy.ops.mesh.primitive_grid_add(x_subdivisions=int(Lx/10)+1, y_subdivisions=int(Ly/10)+1, radius=Lx/2)
-    zPlaneGrid = bpy.context.object
-    zPlaneGrid.name = 'zPlaneGrid'
-    zPlaneGrid.location = [Lx/2, Ly/2, 0.0]
-    zPlaneGrid.active_material = wireM
-    zPlaneGrid.rotation_euler[2] = 1*pi
-    zPlaneGrid.scale[1] = zPlaneHeightScale
+Say("Drawing plane, grid, etc", verbosity=1)
+#%% Draw grid
+# Z plane (horizontal)    
+zPlaneHeightScale = Ly/Lx
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=int(Lx/10)+1, y_subdivisions=int(Ly/10)+1, radius=Lx/2)
+zPlaneGrid = bpy.context.object
+zPlaneGrid.name = 'zPlaneGrid'
+zPlaneGrid.location = [Lx/2, Ly/2, 0.0]
+zPlaneGrid.active_material = wireM
+zPlaneGrid.rotation_euler[2] = 1*pi
+zPlaneGrid.scale[1] = zPlaneHeightScale
 
-    # Plane to project shadows on
-    bpy.ops.mesh.primitive_plane_add(radius=Lx/2, location=(Lx/2, Ly/2, -0.1))  
-    zPlane = bpy.context.object
-    zPlane.name = 'zPlane'
-    zPlane.scale[1] = zPlaneHeightScale
-    zPlane.active_material = whiteM
-        
-    # Y plane (back)
-    yPlaneHeightScale = Lz/Lx
-    bpy.ops.mesh.primitive_grid_add(x_subdivisions=int(Lx/10)+1, y_subdivisions=int(Lz/10)+1, radius=Lx/2)
-    yPlaneGrid = bpy.context.object
-    yPlaneGrid.name = 'yPlaneGrid'
-    yPlaneGrid.active_material = wireM
-    yPlaneGrid.location = [Lx/2, Ly, Lz/2]
-    yPlaneGrid.rotation_euler[0] = 0.5*pi
-    yPlaneGrid.scale[1] = yPlaneHeightScale
-    
-    #%% Draw ticks
-    fontSize = 4.0*round((norm(camPos)/textSizeDivider)**0.5)
-    pos = 0
-    tickDone = False
-    while not tickDone:
-        tickList = []
-        tickDone = True
-        if pos > 0 and pos <= Lx:               # x ticks
-            tickDone = False
-            bpy.ops.object.text_add(location=(pos, -fontSize, 0))
-            xTick = bpy.context.object
-            xTick.data.body = str(int(pos))    
-            tickList.append(xTick)
-        if pos > 0 and pos < Ly:               # y ticks
-            tickDone = False
-            bpy.ops.object.text_add(location=(-fontSize, pos, 0))
-            yTick = bpy.context.object
-            yTick.data.body = str(int(pos))
-            tickList.append(yTick)
-        if pos <= Lz:                           # z ticks
-            tickDone = False
-            bpy.ops.object.text_add(location=(-fontSize, Ly, pos))
-            zTick = bpy.context.object
-            zTick.data.body = str(int(pos))
-            zTick.rotation_euler[0] = 0.5*pi
-            tickList.append(zTick)
-        for tick in tickList:   # assign material
-            tick.data.size = fontSize
-            tick.active_material = inkM
-            tick.data.font = times
-            tick.data.align = 'CENTER'                     # only horizontal
-        pos += np.ceil(max([Lx,Ly,Lz])/100)*10
+# Plane to project shadows on
+bpy.ops.mesh.primitive_plane_add(radius=Lx/2, location=(Lx/2, Ly/2, -0.1))  
+zPlane = bpy.context.object
+zPlane.name = 'zPlane'
+zPlane.scale[1] = zPlaneHeightScale
+zPlane.active_material = whiteM
+
+# Y plane (back)
+yPlaneHeightScale = Lz/Lx
+bpy.ops.mesh.primitive_grid_add(x_subdivisions=int(Lx/10)+1, y_subdivisions=int(Lz/10)+1, radius=Lx/2)
+yPlaneGrid = bpy.context.object
+yPlaneGrid.name = 'yPlaneGrid'
+yPlaneGrid.active_material = wireM
+yPlaneGrid.location = [Lx/2, Ly, Lz/2]
+yPlaneGrid.rotation_euler[0] = 0.5*pi
+yPlaneGrid.scale[1] = yPlaneHeightScale
+
+#%% Draw ticks
+fontSize = 4.0*round((norm(camPos)/textSizeDivider)**0.5)
+pos = 0
+tickDone = False
+while not tickDone:
+    tickList = []
+    tickDone = True
+    if pos > 0 and pos <= Lx:               # x ticks
+        tickDone = False
+        bpy.ops.object.text_add(location=(pos, -fontSize, 0))
+        xTick = bpy.context.object
+        xTick.data.body = str(int(pos))    
+        tickList.append(xTick)
+    if pos > 0 and pos < Ly:               # y ticks
+        tickDone = False
+        bpy.ops.object.text_add(location=(-fontSize, pos, 0))
+        yTick = bpy.context.object
+        yTick.data.body = str(int(pos))
+        tickList.append(yTick)
+    if pos <= Lz:                           # z ticks
+        tickDone = False
+        bpy.ops.object.text_add(location=(-fontSize, Ly, pos))
+        zTick = bpy.context.object
+        zTick.data.body = str(int(pos))
+        zTick.rotation_euler[0] = 0.5*pi
+        tickList.append(zTick)
+    for tick in tickList:   # assign material
+        tick.data.size = fontSize
+        tick.active_material = inkM
+        tick.data.font = times
+        tick.data.align = 'CENTER'                     # only horizontal
+    pos += np.ceil(max([Lx,Ly,Lz])/100)*10
 
 ###############################################################################
+
+# Make list to assign material (cell colour)
+Say("Building cell material list", verbosity=1)
+cellMaterial = [None]*6                                 # 6 possilble cell types in model
+for ia,a in enumerate(model.activeCellType[:,0].astype(int)):
+    cellMaterial[a] = [redM.name, yellowM.name, blueM.name][ia]
+    
 #%% Draw cells
 Say("Drawing cells", verbosity=1)
 for iCell,cell in enumerate(model.cellArray[:,0]):
-    Say("\tCell = {}, type = {}".format(iCell, cell.type[0,0]), verbosity=1)
-    if cell.type[0,0] <= 1:
+    cellType = cell.type[0,0].astype(int)
+    Say("\tCell = {}, type = {}".format(iCell, cellType), verbosity=1)
+    if cell.type[0,0].astype(int) <= 1:
         iBall = cell.ballArray[0,0].astype(int)
         ball = model.ballArray[iBall,0]
         pos = ball.pos[:,0] * 1e6
         r = ball.radius[0,0] * 1e6
-        cellG = CreateSphere(pos, r, offset)
-        cellG.name = 'Sphere{:d}-{:04d}'.format(int(cell.type[0,0]), int(iCell))
-        cellG.active_material = yellowM
+        cellG = CreateSphere(pos, r, cellMaterial[cellType], offset)
+        cellG.name = 'Sphere{:d}-{:04d}'.format(cellType, iCell)
     else:
         pos = np.empty([2,3])
         r   = np.empty(2)
@@ -438,9 +454,8 @@ for iCell,cell in enumerate(model.cellArray[:,0]):
             ball        = model.ballArray[iBall,0]
             pos[ii,:]   = ball.pos[:,0] * 1e6
             r[ii]       = ball.radius[0,0] * 1e6
-        cellG = CreateRod(pos, r, offset)
-        cellG.name = 'Rod{:d}-{:04d}'.format(int(cell.type[0,0]), int(iCell))
-        cellG.active_material = redM
+        cellG = CreateRod(pos, r, cellMaterial[cellType], offset)
+        cellG.name = 'Rod{:d}-{:04d}'.format(cellType, iCell)
 Say("fraction {} in rodLib".format(round(1-len(rodLib)/len(model.cellArray[:,0]),2)), verbosity=1)
 
 if settingsDict['drawStick']:
@@ -450,9 +465,8 @@ if settingsDict['drawStick']:
         for ii,iBall in enumerate(stick.ballArray[:,0]):
             ball = model.ballArray[int(iBall),0]
             pos[ii,:]   = ball.pos[:,0] * 1e6
-        stickG = CreateSpring(pos, 0.1, offset)
+        stickG = CreateSpring(pos, 0.1, stickM.name, offset)
         stickG.name = 'Stick-{:04d}'.format(int(iStick))
-        stickG.active_material = stickM
 
 if settingsDict['drawFil']:
     for iFil,fil in enumerate(model.filSpringArray[:,0]):
@@ -461,9 +475,8 @@ if settingsDict['drawFil']:
         for ii,iBall in enumerate(fil.ballArray):
             ball = model.ballArray[int(iBall),0]
             pos[ii,:]   = ball.pos[:,0] * 1e6
-        filG = CreateSpring(pos, 0.1, offset)
+        filG = CreateSpring(pos, 0.1, filM.name, offset)
         filG.name = 'Fil-{:04d}'.format(int(iFil))
-        filG.active_material = filM
 
 if settingsDict['drawAnchor']:
     for iAnchor,anchor in enumerate(model.anchorSpringArray[:,0]):
@@ -471,9 +484,8 @@ if settingsDict['drawAnchor']:
         iBall = anchor.ballArray[0,0]
         ball = model.ballArray[int(iBall),0]
         pos   = ball.pos[:,0] * 1e6
-        anchorG = CreateSpring(np.concatenate([[pos, [pos[0],pos[1],0.0]]], 0), 0.1, offset)
+        anchorG = CreateSpring(np.concatenate([[pos, [pos[0],pos[1],0.0]]], 0), 0.1, anchorM.name, offset)
         anchorG.name = 'Anchor-{:04d}'.format(int(iAnchor))
-        anchorG.active_material = anchorM
 
 #CreateSphere([Lx/2+5,Ly/2+5,5],10)
 #CreateRod(array([[Lx/2,Ly/2,0],[Lx/2,Ly/2,4]]),array([1,1]))
@@ -504,13 +516,15 @@ matName = os.path.splitext( matPath.split("/")[-1] )[0]
 matDir = "/".join(matPath.split('/')[:-1])
 if "/output/"+matName in matPath:
     renderDir = matPath[:matPath.index("/output/"+matName)] + "/" + settingsDict['renderDirName']
+    if not os.path.isdir(renderDir):
+        os.mkdir(renderDir)
 else:
     Say("WARNING: output directory not found, writing .png and .blend to same folder as .mat")
     renderDir = matDir
 
 bpy.data.scenes['Scene'].render.filepath = renderDir + "/" + matName + ".png"
 if settingsDict['saveBlend']:
-    bpy.ops.wm.save_as_mainfile(filepath=renderDir + "/" + matName + ".blend", check_existing=False)
+    bpy.ops.wm.save_as_mainfile(filepath = renderDir + "/" + matName + ".blend", check_existing=False)
 
 #%% Render
 Say("Rendering", verbosity=1)

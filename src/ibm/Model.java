@@ -90,6 +90,7 @@ public class Model implements Serializable {
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 	public double[] muStDev = {0.25, 0.25, 0.25, 0.25, 0.25, 0.25};	// Standard deviation. Only used in GrowthSimple()!    
 	public double syntrophyFactor = 1.0; 		// Accelerated growth if two cells of different types are stuck to each other
+	public int[] activeCellType = new int[0];
 	// Attachment
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public int attachCellType = 0;				// What cell type the new cell is 
@@ -120,8 +121,10 @@ public class Model implements Serializable {
 	// === AS STUFF ===
 	public int flocF = -1;
 	public int filF = -1;
-	// === COMSOL STUFF ===
-	public double[] yieldXS = new double[]{2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};		// [Cmol X/mol reaction] yield of biomass. Reactions are normalised to mol substrate 
+	// === AOM/SR STUFF===
+	public double[] yieldXS = new double[]{2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};		// [Cmol X/mol reaction] yield of biomass. Reactions are normalised to mol substrate
+	public int aom = -1;
+	public int dss = -1;
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
 	/////////////////////////////////////

@@ -121,8 +121,8 @@ public class Interface{
 			message += "Activated Sludge";
 			instance = new RunAS(model);
 		} else if(model.simulation == 4) {
-			message += "COMSOL";
-			instance = new RunComsol(model);
+			message += "AOM/SR";
+			instance = new RunAOM(model);
 		} else {
 			throw new RuntimeException("Unknown simulation type: " + model.simulation);
 		}

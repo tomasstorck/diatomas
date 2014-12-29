@@ -10,7 +10,7 @@ def Say(text, verbosity=0, end='\n'):
             print(time.strftime('DEBUG: ') + text, end=end)
 
 ###############################################################################
-VERBOSITY = 0
+VERBOSITY = 4
 dirFilter = '.*'
 renderpySettingsDict = {'VERBOSITY':VERBOSITY,
                         'resolution_percentage':50,

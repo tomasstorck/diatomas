@@ -32,6 +32,7 @@ public class RunEcoli extends Run {
 		model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 		model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 		model.growthTimeStep = 240.0;		// s, i.e. 4 minutes
+		model.activeCellType = new int[]{4};
 	}
 	
 	public void Start() throws Exception {

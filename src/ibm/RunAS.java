@@ -16,6 +16,7 @@ public class RunAS extends Run {
 		// Load default parameters
 		int flocF = model.flocF = 4;
 		int filF = model.filF = 5;
+		model.activeCellType = new int[]{filF, flocF};
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
 		model.Linit = new Vector3d(7e-6, 7e-6, 7e-6);
 		model.radiusCellMax[filF] = 0.5e-6;					// [m] (Lau 1984)
