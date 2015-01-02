@@ -89,7 +89,9 @@ public class Model implements Serializable {
 	public double[] nCellMin =	new double[NXType];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
 	public double[] muStDev = {0.25, 0.25, 0.25, 0.25, 0.25, 0.25};	// Standard deviation. Only used in GrowthSimple()!    
-	public double syntrophyFactor = 1.0; 		// Accelerated growth if two cells of different types are stuck to each other
+	public double syntrophyDist = 5e-6; 		// Maximum distance for cell to be counted to contribute to syntrophy 
+	public double syntrophyA = 2; 				// Pre-exponential factor. Maximum achievable factor for GrowthSimple()
+	public double syntrophyB = 0; 				// Factor before -N in exp(). How quickly syntrophyA is approached
 	public int[] activeCellType = new int[0];
 	// Attachment
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
@@ -558,16 +560,34 @@ public class Model implements Serializable {
 
 			// Random growth, with syntrophy if required
 			double mu = muAvgSimple[mother.type] + (muStDev[mother.type] * rand.Gaussian());	// Come up with a mu for this cell, this iteration
-			double growthAcceleration = 1.0;
-			for(Cell stickCell : mother.stickCellArray) {
-				if(mother.type != stickCell.type) {
-					// The cell types are different on the other end of the spring
-					growthAcceleration *= syntrophyFactor;
-					break;
+			int N = 0;
+			for(Cell cell : cellArray) {
+				if(mother.type == cell.type)
+					break; 												// Only cells of other species are counted
+				if(mother.type < 2 && cell.type < 2) {
+					if(mother.ballArray[0].pos.minus( cell.ballArray[0].pos ).norm() < syntrophyDist) 		
+						N++;
+				} else if(mother.type < 2 || cell.type < 2) {
+					// Find out who is sphere, rod
+					Cell sphere, rod;
+					if(mother.type < 2) {
+						sphere = mother;
+						rod = cell;
+					} else {
+						sphere = cell;
+						rod = mother;
+					}
+					if(ericson.DetectCollision.LinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos).dist < syntrophyDist)
+						N++;
+				} else if(mother.type < 6 && cell.type < 6) {
+					if(ericson.DetectCollision.LinesegLineseg(mother.ballArray[0].pos, mother.ballArray[1].pos, cell.ballArray[0].pos, cell.ballArray[1].pos).dist < syntrophyDist)
+						N++;
+				} else {
+					throw new IndexOutOfBoundsException("Unknown cell types: mother " + mother.type + " and other cell " + cell.type);
 				}
 			}
+			double growthAcceleration = syntrophyA-(syntrophyA-1)*Math.exp(-syntrophyB*N);
 			amount *= Math.exp(mu*growthAcceleration*growthTimeStep/3600.0);					// We need growthTimeStep s --> h
-
 			// Syntrophic growth for sticking cells
 			mother.SetAmount(amount);
 		}
