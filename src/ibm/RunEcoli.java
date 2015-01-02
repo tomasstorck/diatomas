@@ -127,12 +127,14 @@ public class RunEcoli extends Run {
 			for(Spring rod : model.rodSpringArray) 	rod.ResetRestLength();
 			for(Spring fil : model.filSpringArray) 	fil.ResetRestLength();
 			// Attach new cells
-			final double NNew = model.attachmentRate*(model.growthTimeStep/3600.0);
-			model.attachCounter += NNew;
-			model.Write("Attaching " + (int)model.attachCounter + " new cells", "iter");
-			model.Attachment((int)model.attachCounter);
-			model.attachCounter -= (int)model.attachCounter;	// Subtract how many cells we've added this turn
-
+			if(model.attachmentRate > 0) {
+				final double NNew = model.attachmentRate*(model.growthTimeStep/3600.0);
+				model.attachCounter += NNew;
+				model.Write("Attaching " + (int)model.attachCounter + " new cells", "iter");
+				model.Attachment((int)model.attachCounter);
+				model.attachCounter -= (int)model.attachCounter;	// Subtract how many cells we've added this turn
+			}
+				
 			// Relaxation
 			int relaxationIterInit = (int) (model.relaxationTimeStep/model.relaxationTimeStepdt);
 			model.Write("Starting relaxation calculations","iter"); 
