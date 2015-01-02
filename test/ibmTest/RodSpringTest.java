@@ -24,7 +24,7 @@ public class RodSpringTest {
 		// Rod
 		model.radiusCellMax[2] = model.radiusCellMax[4] = r;
 		model.lengthCellMax[2] = model.lengthCellMax[4] = 2*model.radiusCellMax[2];
-		model.UpdateAmountCellMax();
+		model.UpdateDependentParameters();
 		double n = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX/model.MWX;
 		rod2 = new Cell(2, n, 0.0, r, 0.0, 0.0+model.lengthCellMax[2], r, 0.0, false, model); 		// variable radius, fixed aspect
 		rod4 = new Cell(4, n, 0.0, r, 0.0, 0.0+model.lengthCellMax[2], r, 0.0, false, model); 		// fixed radius, variable length

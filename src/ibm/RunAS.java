@@ -42,8 +42,9 @@ public class RunAS extends Run {
 	}
 	
 	public void Start() {
-		model.UpdateAmountCellMax();		// Update model parameters
-		
+		model.UpdateDependentParameters();		// Update model parameters
+		int filF = model.filF;
+		int flocF = model.flocF;
 		// Initialise model if we are starting a new simulation
 		if(model.growthIter == 0 && model.relaxationIter == 0) {
 			// Set initial cell parameters based on model
@@ -56,8 +57,6 @@ public class RunAS extends Run {
 			Vector3d[] position1Init = new Vector3d[model.NCellInit];
 			
 			// Create parameters for new cells
-			int filF = model.filF;
-			int flocF = model.flocF;
 			for(int ii=0; ii<model.NCellInit; ii++){
 				if(model.nCellMax[flocF]>model.nCellMax[filF]) {
 					final int div = (int) (model.nCellMax[flocF] / model.nCellMax[filF]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
@@ -70,8 +69,8 @@ public class RunAS extends Run {
 			for(int ii=0; ii<model.NCellInit; ii++) {
 				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 				radiusModifier[ii] = 0.0; 
-				directionInit[ii] = new Vector3d((rand.Double()-0.5), 							(rand.Double()-0.5), 							(rand.Double()-0.5)).normalise();
 				final double restLength =  RodSpring.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
+				directionInit[ii] = new Vector3d((rand.Double()-0.5), 							(rand.Double()-0.5), 							(rand.Double()-0.5)).normalise();
 				position0Init[ii] = new Vector3d(model.L.x/2 + (rand.Double()-0.5)*model.L.x, 	model.L.y/2 + (rand.Double()-0.5)*model.L.y, 	(rand.Double()-0.5)*model.L.z);
 				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}

@@ -43,7 +43,7 @@ public class RunComsol extends Run {
 	}
 	
 	public void Start() throws IOException {
-		model.UpdateAmountCellMax();		// Update model parameters
+		model.UpdateDependentParameters();		// Update model parameters
 		
 		// Connect to COMSOL server
 		if(model.comsol) {

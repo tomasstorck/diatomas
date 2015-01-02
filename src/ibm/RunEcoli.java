@@ -36,8 +36,7 @@ public class RunEcoli extends Run {
 	}
 	
 	public void Start() throws Exception {
-		model.UpdateAmountCellMax();
-		
+		model.UpdateDependentParameters();
 		// Initialise model if we are starting a new simulation
 		if(model.growthIter == 0 && model.relaxationIter == 0) {			// First time we run this simulation, didn't load it
 			// Set initial cell parameters based on model

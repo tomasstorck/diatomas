@@ -123,7 +123,7 @@ public class Model implements Serializable {
 	public int filF = -1;
 	// === AOM/SR STUFF===
 	public double[] yieldXS = new double[]{2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};		// [Cmol X/mol reaction] yield of biomass. Reactions are normalised to mol substrate
-	public int aom = -1;
+	public int anme = -1;
 	public int dss = -1;
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -132,7 +132,8 @@ public class Model implements Serializable {
 	/////////////////////////////////////
 	public Model() {}	// Default constructor, includes default values
 	
-	public void UpdateAmountCellMax() {	// Updates the nCellMax based on supplied radiusCellMax and lengthCellMax 
+	public void UpdateDependentParameters() {
+		// Update the nCellMax based on supplied radiusCellMax and lengthCellMax
 		for(int ii = 0; ii<2; ii++) {
 			nCellMax[ii] 		= (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3))*rhoX/MWX; 
 			nCellMin[ii] 		= 0.5 * nCellMax[ii];
@@ -148,6 +149,14 @@ public class Model implements Serializable {
 				lengthCellMin[ii] = nCellMin[ii]*MWX/(Math.PI*rhoX*Math.pow(radiusCellMin[ii],2.0)) - 4.0/3.0*radiusCellMin[ii];	
 			}
 			
+		}
+		// Update activeCellTypes
+		if(simulation == 0) { 					// E. coli
+			this.activeCellType = new int[]{4};
+		} else if(simulation == 2) { 			// Activated sludge
+			this.activeCellType = new int[]{this.filF, this.flocF};
+		} else if(simulation == 4) { 			// Anaerobic oxidation of methane
+			this.activeCellType = new int[]{this.anme, this.dss};
 		}
 	}
 	

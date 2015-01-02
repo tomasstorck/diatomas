@@ -24,7 +24,7 @@ public class CellTest {
 		// Rod
 		model.radiusCellMax[0] = model.radiusCellMax[2] = model.radiusCellMax[4] = r;
 		model.lengthCellMax[2] = model.lengthCellMax[4] = 2*model.radiusCellMax[2];
-		model.UpdateAmountCellMax();
+		model.UpdateDependentParameters();
 		sphere0 = 	new Cell(0, model.nCellMax[0],	0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, model); 		// variable radius, fixed aspect  
 		rod2 = 		new Cell(2, model.nCellMax[2], 		0.0, 0.0, 0.0, 0.0+model.lengthCellMax[2], 0.0, 0.0, false, model); 		// variable radius, fixed aspect
 		rod4 = 		new Cell(4, model.nCellMax[4], 		0.0, 0.0, 0.0, 0.0+model.lengthCellMax[4], 0.0, 0.0, false, model); 		// fixed radius, variable length
