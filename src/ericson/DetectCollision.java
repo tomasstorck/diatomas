@@ -43,7 +43,7 @@ public class DetectCollision {
 		return new ericson.ReturnObject(dP, Math.sqrt(dist2), s, t, c1, c2);
 	}
 	
-	public static ericson.ReturnObject LineSegLine(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {
+	public static ericson.ReturnObject LinesegLine(Vector3d p1, Vector3d q1, Vector3d p2, Vector3d q2) {
 		// Based on DetectLineSegLineSeg from Ericson
 		// Computes closest points C1 and C2 of L1(s) = P1+s*(Q1-P1) and S2(t) = P2+t*(Q2-P2). s is unlimited, t is limited to [0, 1]
 		Vector3d d1 = q1.minus(p1);		// Direction of S1

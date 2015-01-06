@@ -1,0 +1,5 @@
+*.blend
+*.blend1
+*.png
+*.mat
+/logfile.txt

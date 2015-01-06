@@ -893,7 +893,7 @@ public class Model implements Serializable {
 					// Find the distance between the path of the particle (a line) and the rod spring (a line segment)
 					Ball ball0 = spring.ballArray[0];
 					Ball ball1 = spring.ballArray[1];
-					ericson.ReturnObject E = ericson.DetectCollision.LineSegLine(ball0.pos, ball1.pos, dest, dest.plus(dirn));							// Detect distance line-point, with line the path and point the ball.pos
+					ericson.ReturnObject E = ericson.DetectCollision.LinesegLine(ball0.pos, ball1.pos, dest, dest.plus(dirn));							// Detect distance line-point, with line the path and point the ball.pos
 					if( E.dist < rNew+ball0.radius ) {
 						// Good, if the attaching particle would be moved along path from dirn to dest it would collide with the rod
 						// Now check if it is the first ball that the newly attached cell would encounter, i.e. if the distance from dest is the largest yet
