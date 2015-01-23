@@ -2,21 +2,27 @@
 # -*- coding: utf-8 -*-
 import os, time, subprocess, re 
 
-def Say(text, verbosity=0, end='\n'):
+def Say(text, verbosity=0, end='\n', suppressTime=False):
     if verbosity<=VERBOSITY:
+        if suppressTime:
+            timeStr = ''
+        else:
+            timeStr = time.strftime('%H:%M:%S   ')
         if verbosity == 0:
-            print(time.strftime('%H:%M:%S   ') + text, end=end)
+            print(timeStr + text, end=end)
         else: 
-            print(time.strftime('DEBUG: ') + text, end=end)
+            print('DEBUG: ' + text, end=end)
 
 ###############################################################################
 VERBOSITY = 0
 dirFilter = '.*'
+iterModDiv = 5
 renderpySettingsDict = {'VERBOSITY':VERBOSITY,
                         'resolution_percentage':50,
-                        'offset':'array([20,20,0])',
-                        'model.L':'array([70e-6,70e-6,10e-6])',
-                        'saveBlend':False,
+                        'offset':'array([10,10,10])',
+                        'model.L':'array([20e-6,20e-6,20e-6])',
+                        'saveBlend':True,
+                        'drawStick':False,
                         }
 
 ###############################################################################
@@ -33,6 +39,9 @@ while True:
         fileDir = [files for files in os.listdir(dAbs) if os.path.splitext(files)[-1]=='.mat']
         fileDir.sort(reverse=True)
         for f in fileDir:
+            if not int(re.match('g(\d{4})r(\d{4}).mat',f).group(2))%iterModDiv == 0:
+                # relaxation iteration  % iterModulusDivider == 0
+                continue
             fAbs = dAbs + "/" + f
             # Check if file is already plotted
             fName = os.path.splitext(fAbs.split("/")[-1])[0]
@@ -60,7 +69,7 @@ while True:
                                 suffix += line + ' '
                     Say("    " + f + suffix)
                 else:
-                    Say('')                                 # Make newline
+                    Say('', suppressTime=True)            # Make newline
 
     time.sleep(max(0, 60-(time.time()-t0)))               # There must be at least 60 seconds between each loop
         

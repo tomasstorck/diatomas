@@ -276,23 +276,30 @@ lightTracker.track_axis = 'TRACK_Z'
 
 #%% Prepare materials
 Say("Preparing material configuration", verbosity=1)
-yellowM = bpy.data.materials.new('yellow')
-yellowM.diffuse_color = (1.0, 1.0, 0.0)
-yellowM.diffuse_intensity = 0.8
-yellowM.specular_intensity = 0.1
-yellowM.specular_hardness = 50
+lightM = bpy.data.materials.new('light')
+lightM.diffuse_color = (0.3, 1.0, 0.0)
+lightM.diffuse_intensity = 0.6
+lightM.specular_color = (0.6, 1.0, 0.5)
+lightM.specular_intensity = 0.1
+lightM.specular_hardness = 5
+lightM.specular_shader = 'PHONG'
 
-redM = bpy.data.materials.new('red')
-redM.diffuse_color = (0.4, 0.0, 0.0)
-redM.diffuse_intensity = 0.5
-redM.specular_intensity = 0.1
-redM.specular_hardness = 50
+darkM = bpy.data.materials.new('dark')
+darkM.diffuse_color = (0.4, 0.0, 0.0)
+darkM.diffuse_intensity = 0.7
+darkM.specular_color = (1.0, 0.25, 0.25)
+darkM.specular_intensity = 0.1
+darkM.specular_hardness = 5
+darkM.specular_shader = 'PHONG'
 
-blueM = bpy.data.materials.new('blue')
-blueM.diffuse_color = (0.0, 0.2, 0.8)
-blueM.diffuse_intensity = 0.5
-blueM.specular_intensity = 0.1
-blueM.specular_hardness = 50
+mediumM = bpy.data.materials.new('medium')
+mediumM.diffuse_color = (0.0, 0.2, 0.8)
+mediumM.diffuse_intensity = 0.5
+mediumM.specular_color = (0.25, 0.5, 1.0)
+mediumM.specular_intensity = 0.1
+mediumM.specular_hardness = 5
+mediumM.specular_shader = 'PHONG'
+
 
 inkM = bpy.data.materials.new('ink')                     # ink (text, lines)
 inkM.diffuse_intensity = 0
@@ -433,7 +440,7 @@ while not tickDone:
 Say("Building cell material list", verbosity=1)
 cellMaterial = [None]*6                                 # 6 possilble cell types in model
 for ia,a in enumerate(model.activeCellType[:,0].astype(int)):
-    cellMaterial[a] = [redM.name, yellowM.name, blueM.name][ia]
+    cellMaterial[a] = [darkM.name, lightM.name, mediumM.name][ia]
     
 #%% Draw cells
 Say("Drawing cells", verbosity=1)
