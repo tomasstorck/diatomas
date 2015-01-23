@@ -14,29 +14,36 @@ public class RunAOM extends Run {
 	public void Initialise() {
 		model.Write("Loading parameters for AOM/SR","");
 		// Load default parameters
-		int aom = model.anme = 0;
+		int anme = model.anme = 0;
 		int dss = model.dss = 1;
-		model.Linit = new Vector3d(5e-6, 5e-6, 5e-6);
+		model.Linit = new Vector3d(2e-6, 2e-6, 2e-6);
 		model.L = new Vector3d(10e-6, 10e-6, 10e-6);
-		model.radiusCellMax[aom] = 0.55e-6;					// [m]
+		model.radiusCellMax[anme] = 0.55e-6;					// [m]
 		model.radiusCellMax[dss] = 0.44e-6;					// [m]
-		model.muAvgSimple[aom] = 0.003/24.0;				// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
-		model.muAvgSimple[dss] = 0.003/24.0;				// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
-		model.muStDev[aom] = 0.2*model.muAvgSimple[aom];
+		model.muAvgSimple[anme] = 0.003/24.0;				// [h-1]  
+		model.muAvgSimple[dss] = 0.003/2.0/24.0;			// [h-1] 
+		model.muStDev[anme] = 0.2*model.muAvgSimple[anme];
 		model.muStDev[dss]  = 0.2*model.muAvgSimple[dss];	// Defined as one fifth
-		model.syntrophyA = 5;
-		model.syntrophyB = 0.2;
-		model.syntrophyDist = 10e-6;
-		model.NCellInit = 6;
-		model.growthTimeStep = 2*7*24*3600.0;
+		model.syntrophyType = new int[]{dss};
+		model.syntrophyPartner = new int[]{anme};
+		model.syntrophyA = 2; 								// Syntrophy can speed up growth to a factor syntrophyA
+		model.syntrophyB = 0.2; 							// 0.2 --> doesn't reach max. growth rate easily
+		model.syntrophyDist = 1e-6;
+		model.NCellInit = 500;
+		model.growthTimeStep = 7*24*3600.0;
 		model.attachCellType = 1;
 		model.attachmentRate = 0.0;
 		model.filament = false;
 		model.sticking = true;
-		model.stickType[aom][aom] = model.stickType[aom][dss] = model.stickType[dss][aom] = model.stickType[dss][dss] = true;	// Anything sticks
+		model.stickType[anme][anme] = model.stickType[anme][dss] = model.stickType[dss][anme] = model.stickType[dss][dss] = true;	// Anything sticks
+//		model.stickType[anme][dss] = model.stickType[dss][anme] = model.stickType[dss][dss] = true;
+//		model.Ks =
+		model.stickFormLim = 0.1e-6;
+		model.stickStretchLim = 0.5e-6;
 		model.anchoring = false;
 		model.normalForce = false;
 		model.electrostatic = false;
+		model.Kc = 1e-11;
 	}
 	
 	public void Start() {
@@ -55,23 +62,42 @@ public class RunAOM extends Run {
 			Vector3d[] position1Init = new Vector3d[model.NCellInit];
 			
 			// Create parameters for new cells
+//			for(int ii=0; ii<model.NCellInit; ii++){
+//				if(model.nCellMax[aom]>model.nCellMax[dss]) {
+//					final int div = (int) (model.nCellMax[aom] / model.nCellMax[dss]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
+//					typeInit[ii] = ii%div==0 ? aom : dss;
+//				} else {
+//					final int div = (int) (model.nCellMax[dss] / model.nCellMax[aom]) + 1;
+//					typeInit[ii] = ii%div==0 ? dss : aom;
+//				}
+//			}
+			// Alternative: manual setting of cell count for each type
 			for(int ii=0; ii<model.NCellInit; ii++){
-				if(model.nCellMax[aom]>model.nCellMax[dss]) {
-					final int div = (int) (model.nCellMax[aom] / model.nCellMax[dss]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
-					typeInit[ii] = ii%div==0 ? aom : dss;
-				} else {
-					final int div = (int) (model.nCellMax[dss] / model.nCellMax[aom]) + 1;
-					typeInit[ii] = ii%div==0 ? dss : aom;
-				}
+				int div = 3;
+				typeInit[ii] = ii%div==0 ? aom : dss;	
 			}
 			for(int ii=0; ii<model.NCellInit; ii++) {
+				// Alternative: pre-defined shell-shaped aggregate
+				if(typeInit[ii]==aom) {
+					double d = 0.8*rand.Double()*2e-6 + 0.2*2e-6;
+					position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
+				}
+				else if(typeInit[ii]==dss) {
+					double d = rand.Double()*0.5e-6 + 3e-6;
+					position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
+				}
 				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 				radiusModifier[ii] = 0.0;
-				final double restLength =  RodSpring.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
-				directionInit[ii] = new Vector3d((rand.Double()-0.5), 							(rand.Double()-0.5), 							(rand.Double()-0.5)).normalise();
-				position0Init[ii] = new Vector3d(model.L.x/2 + (rand.Double()-0.5)*model.L.x, 	model.L.y/2 + (rand.Double()-0.5)*model.L.y, 	(rand.Double()-0.5)*model.L.z);
-				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}
+			position1Init = position0Init;
+				// Default random cell distribution
+//				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
+//				radiusModifier[ii] = 0.0;
+//				final double restLength =  RodSpring.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
+//				directionInit[ii] = new Vector3d((rand.Double()-0.5), 							(rand.Double()-0.5), 							(rand.Double()-0.5)).normalise();
+//				position0Init[ii] = new Vector3d(model.Linit.x/2 + (rand.Double()-0.5)*model.Linit.x, 	model.Linit.y/2 + (rand.Double()-0.5)*model.Linit.y, 	(rand.Double()-0.5)*model.Linit.z);
+//				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
+//			}
 			
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NCellInit; iCell++){
@@ -87,6 +113,10 @@ public class RunAOM extends Run {
 			}
 			model.Write(model.cellArray.size() + " initial cells created","iter");
 	
+			if(!model.DetectCollisionCellArray(1.0).isEmpty()) {
+				model.Write("Initial cells overlap", "warning");
+			}
+			
 			// Save and convert the file
 			model.Save();
 			ser2mat.Convert(model);	
@@ -99,7 +129,7 @@ public class RunAOM extends Run {
 
 			// Grow cells
 			model.Write("Growing cells", "iter");
-			model.GrowthSimple();
+			model.GrowthSyntrophy();
 			// Mark mother cell for division if ready
 			ArrayList<Cell> dividingCellArray = new ArrayList<Cell>(0);
 			for(Cell mother : model.cellArray) {

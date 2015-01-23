@@ -18,6 +18,8 @@ import org.apache.commons.math3.ode.nonstiff.DormandPrince54Integrator;
 import org.apache.commons.math3.ode.sampling.StepHandler;
 import org.apache.commons.math3.ode.sampling.StepInterpolator;
 
+
+
 import random.rand;
 
 public class Model implements Serializable {
@@ -88,11 +90,13 @@ public class Model implements Serializable {
 	public double[] nCellMax =	new double[NXType];
 	public double[] nCellMin =	new double[NXType];
 	public double[] muAvgSimple = {0.33, 0.33, 0.33, 0.33, 0.33, 0.33};	// [h-1] 0.33  == doubling every 20 minutes. Only used in GrowthSimple!
-	public double[] muStDev = {0.25, 0.25, 0.25, 0.25, 0.25, 0.25};	// Standard deviation. Only used in GrowthSimple()!    
-	public double syntrophyDist = 5e-6; 		// Maximum distance for cell to be counted to contribute to syntrophy 
+	public double[] muStDev = {0.25, 0.25, 0.25, 0.25, 0.25, 0.25};	// Standard deviation. Only used in GrowthSimple() and GrowthSyntrophy
+	public int[]  syntrophyType = new int[0];	// Which cell types benefit from syntrophic interactions
+	public int[]  syntrophyPartner = new int[0];// syntrophyType benefits when close to this cell type
+	public double syntrophyDist = 5e-6; 		// Maximum distance for cell to be counted to contribute to syntrophy (radius already subtracted) 
 	public double syntrophyA = 2; 				// Pre-exponential factor. Maximum achievable factor for GrowthSimple()
 	public double syntrophyB = 0; 				// Factor before -N in exp(). How quickly syntrophyA is approached
-	public int[] activeCellType = new int[0];
+	public int[] activeCellType = new int[0]; 	// Used to keep track, e.g. for plotting
 	// Attachment
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public int attachCellType = 0;				// What cell type the new cell is 
@@ -551,49 +555,83 @@ public class Model implements Serializable {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public ArrayList<Cell> GrowthSimple() throws RuntimeException {									// Growth based on a random number, further enhanced by being sticked to a cell of other type (==0 || !=0) 
+	public ArrayList<Cell> GrowthSimple() throws RuntimeException {									// Growth based on a random number 
 		int NCell = cellArray.size();
 		ArrayList<Cell> dividedCell = new ArrayList<Cell>(); 
 		for(int iCell=0; iCell<NCell; iCell++){
 			Cell mother = cellArray.get(iCell);
 			double amount = mother.GetAmount();
 
-			// Random growth, with syntrophy if required
+			// Random growth
 			double mu = muAvgSimple[mother.type] + (muStDev[mother.type] * rand.Gaussian());	// Come up with a mu for this cell, this iteration
-			int N = 0;
-			for(Cell cell : cellArray) {
-				if(mother.type == cell.type)
-					break; 												// Only cells of other species are counted
-				if(mother.type < 2 && cell.type < 2) {
-					if(mother.ballArray[0].pos.minus( cell.ballArray[0].pos ).norm() < syntrophyDist) 		
-						N++;
-				} else if(mother.type < 2 || cell.type < 2) {
-					// Find out who is sphere, rod
-					Cell sphere, rod;
-					if(mother.type < 2) {
-						sphere = mother;
-						rod = cell;
-					} else {
-						sphere = cell;
-						rod = mother;
-					}
-					if(ericson.DetectCollision.LinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos).dist < syntrophyDist)
-						N++;
-				} else if(mother.type < 6 && cell.type < 6) {
-					if(ericson.DetectCollision.LinesegLineseg(mother.ballArray[0].pos, mother.ballArray[1].pos, cell.ballArray[0].pos, cell.ballArray[1].pos).dist < syntrophyDist)
-						N++;
-				} else {
-					throw new IndexOutOfBoundsException("Unknown cell types: mother " + mother.type + " and other cell " + cell.type);
+			amount *= Math.exp(mu*growthTimeStep/3600.0);					// We need growthTimeStep s --> h
+			mother.SetAmount(amount);
+		}
+		return dividedCell;
+	}
+	
+	public ArrayList<Cell> GrowthSyntrophy() throws RuntimeException {								// Growth based on a random number, further enhanced by cell proximity. Used for AOM 
+		int NCell = cellArray.size();
+		ArrayList<Cell> dividedCell = new ArrayList<Cell>(); 
+		for(int iCell=0; iCell<NCell; iCell++){
+			Cell mother = cellArray.get(iCell);
+			double amount = mother.GetAmount();
+
+			// Random growth
+			double mu = muAvgSimple[mother.type] + (muStDev[mother.type] * rand.Gaussian());	// Come up with a mu for this cell, this iteration
+			// Syntrophic growth
+			double syntrophyFactor = 1.0; 								// No acceleration by default
+			boolean isSyntrophyType = false;
+			for(int ii=0; ii<syntrophyType.length; ii++){
+				if(mother.type == syntrophyType[ii]) {
+					isSyntrophyType = true;
+					break;
 				}
 			}
-			double growthAcceleration = syntrophyA-(syntrophyA-1)*Math.exp(-syntrophyB*N);
-			amount *= Math.exp(mu*growthAcceleration*growthTimeStep/3600.0);					// We need growthTimeStep s --> h
+			if(isSyntrophyType) {
+				int N = 0;
+				for(Cell cell : cellArray) {
+					boolean isSyntrophyPartner = false;
+					for(int ii=0; ii<syntrophyPartner.length; ii++){
+						if(cell.type == syntrophyPartner[ii]) {
+							isSyntrophyPartner = true;
+							break;
+						}
+					}
+					if(isSyntrophyPartner) {
+						double R2 = mother.ballArray[0].radius + cell.ballArray[0].radius; 			// We'll need the total radius
+						if(mother.type < 2 && cell.type < 2) {
+							if(mother.ballArray[0].pos.minus( cell.ballArray[0].pos ).norm() - R2 < syntrophyDist) 		
+								N++;
+						} else if(mother.type < 2 || cell.type < 2) {
+							// Find out who is sphere, rod
+							Cell sphere, rod;
+							if(mother.type < 2) {
+								sphere = mother;
+								rod = cell;
+							} else {
+								sphere = cell;
+								rod = mother;
+							}
+							if(ericson.DetectCollision.LinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos).dist - R2 < syntrophyDist)
+								N++;
+						} else if(mother.type < 6 && cell.type < 6) {
+							if(ericson.DetectCollision.LinesegLineseg(mother.ballArray[0].pos, mother.ballArray[1].pos, cell.ballArray[0].pos, cell.ballArray[1].pos).dist -R2 < syntrophyDist)
+								N++;
+						} else {
+							throw new IndexOutOfBoundsException("Unknown cell types: mother " + mother.type + " and other cell " + cell.type);
+						}
+					}
+				}
+				syntrophyFactor = syntrophyA-(syntrophyA-1)*Math.exp(-syntrophyB*N);
+			}
+			amount *= Math.exp(mu*syntrophyFactor*growthTimeStep/3600.0);					// We need growthTimeStep s --> h
 			// Syntrophic growth for sticking cells
 			mother.SetAmount(amount);
 		}
-		
 		return dividedCell;
 	}
+
 	
 	public ArrayList<Cell> GrowthFlux() throws RuntimeException {
 		int NCell = cellArray.size();
