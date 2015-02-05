@@ -8,13 +8,11 @@ public class Ball implements Serializable {
 	private static final long serialVersionUID = 1L;
 	//
 	public double n;		// [mol] Chemical amount 
-	public double radius;
-	public Vector3d pos;
-	public Vector3d vel;
-	public Vector3d force;
-//	public int index;
+	public double radius; 	// [m]
+	public Vector3d pos;	// [m, m, m]
+	public Vector3d vel; 	// [m/s, m/s, m/s]
+	public Vector3d force; 	// [N, N, N]
 	public Cell cell;
-//	public int ballArrayIndex;
 	
 	///////////////////////////////////////////////////////////////////
 	
@@ -29,7 +27,6 @@ public class Ball implements Serializable {
 		this.n = amount;
 		
 		// Add ball to required arrays
-//		this.ballArrayIndex = ballArrayIndex;
 		cell.ballArray[ballArrayIndex] = this;
 		model.ballArray.add(this);
 		// Update the radius
@@ -68,6 +65,13 @@ public class Ball implements Serializable {
 			if(array.get(index).equals(this))	return index;
 		}
 		return -1;			// Error
+	}
+	
+	public void Remove() {
+		Model model = cell.model;
+		if(!model.ballArray.remove(this)) {
+			throw new RuntimeException("Ball " + this.Index() + " was not found in model.ballArray and cannot be removed");
+		}
 	}
 }
 

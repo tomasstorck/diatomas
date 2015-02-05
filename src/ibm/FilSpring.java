@@ -106,6 +106,9 @@ public class FilSpring extends Spring {
 			cell1.filSpringArray.remove(sibling);
 			count += (model.filSpringArray.remove(sibling))?1:0;
 		}
+		if(count == 0) {
+			throw new RuntimeException("FilSpring " + this.Index() + " was not present and could not be removed");
+		}
 		return count;
 	}
 	

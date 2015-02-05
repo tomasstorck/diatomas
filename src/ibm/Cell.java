@@ -240,6 +240,53 @@ public class Cell implements Serializable {
 		// Nothing found
 		return null;
 	}
+	
+	public void Remove() {
+		for(StickSpring spring : stickSpringArray) {
+			spring.Break();
+		}
+		for(AnchorSpring spring : anchorSpringArray) {
+			spring.Break();
+		}
+		for(FilSpring spring : filSpringArray) {
+			spring.Break();
+		}
+		for(RodSpring spring : rodSpringArray) {
+			spring.Break();
+		}
+		for(Ball ball : ballArray) {
+			ball.Remove();
+		}
+		model.cellArray.remove(this);
+		// Error checking. TODO: This can probably be removed
+		for(Cell cell : model.cellArray) {
+			if(cell.stickCellArray.contains(this)) {
+				throw new RuntimeException("Cell " + this.Index() + " was not properly removed from model");
+			}
+		}
+		for(Ball ball : this.ballArray) {
+			for(StickSpring spring : model.stickSpringArray) {
+				if(spring.ballArray[0] == ball || spring.ballArray[1] == ball) {		// Compare by reference
+					throw new RuntimeException("A ball in cell " + this.Index() + " was not properly removed from model (via stick)");
+				}
+			}
+			for(AnchorSpring spring : model.anchorSpringArray) {
+				if(spring.ballArray[0] == ball) {		// Compare by reference
+					throw new RuntimeException("A ball in cell " + this.Index() + " was not properly removed from model (via anchor)");
+				}
+			}
+			for(FilSpring spring : model.filSpringArray) {
+				if(spring.ballArray[0] == ball || spring.ballArray[1] == ball) {		// Compare by reference
+					throw new RuntimeException("A ball in cell " + this.Index() + " was not properly removed from model (via filament)");
+				}
+			}
+			for(RodSpring spring : model.rodSpringArray) {
+				if(spring.ballArray[0] == ball || spring.ballArray[1] == ball) {		// Compare by reference
+					throw new RuntimeException("A ball in cell " + this.Index() + " was not properly removed from model (via rod)");
+				}
+			}
+		}		
+	}
 }
 
 

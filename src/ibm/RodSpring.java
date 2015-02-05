@@ -40,7 +40,17 @@ public class RodSpring extends Spring {
 		this.K = model.Kr;
 	}
 	
-	// Left out Break(), CRodSpring can't break
+	public int Break() {
+		Model model = ballArray[0].cell.model;
+		boolean isRemovedModel = model.rodSpringArray.remove(this);
+		boolean isRemovedCell = this.ballArray[0].cell.rodSpringArray.remove(this);
+		if(isRemovedModel && isRemovedCell) {
+			return 1;
+		}
+		else {
+			throw new RuntimeException("RodSpring " + this.Index() + " was not present and could not be removed");
+		}
+	}
 	
 	public Vector3d GetL() {
 		return ballArray[1].pos.minus(ballArray[0].pos);

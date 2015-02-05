@@ -54,6 +54,9 @@ public class AnchorSpring extends Spring {
 			cell0.anchorSpringArray.remove(sibling);
 			count += (model.anchorSpringArray.remove(sibling))?1:0;
 		}
+		if(count == 0) {
+			throw new RuntimeException("AnchorSpring " + this.Index() + " was not present and could not be removed");
+		}
 		return count;
 	}
 	
