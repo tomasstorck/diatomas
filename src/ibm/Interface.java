@@ -558,7 +558,11 @@ public class Interface{
 		
 		// Update model name
 		String[] splitLoadPath = loadPath.split("/");
-		model.name = splitLoadPath[1];					// Used to be 0, but now 1 because the first will be results
+		for(int iStr=0; iStr<splitLoadPath.length; iStr++) {
+			if(splitLoadPath.equals("results")) {
+				model.name = splitLoadPath[iStr+1];					// [0] = results/				
+			}
+		}
 		
 		return model;
 	}

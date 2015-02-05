@@ -15,8 +15,9 @@ def Say(text, verbosity=0, end='\n', suppressTime=False):
 
 ###############################################################################
 VERBOSITY = 0
-dirFilter = '.*'
-iterModDiv = 5
+dirFilter = '.*'        # regular expression
+#dirFilter = 'odetol'        # regular expression
+iterModDiv = 250
 renderpySettingsDict = {'VERBOSITY':VERBOSITY,
                         'resolution_percentage':50,
                         'offset':'array([10,10,10])',
@@ -71,5 +72,5 @@ while True:
                 else:
                     Say('', suppressTime=True)            # Make newline
 
-    time.sleep(max(0, 60-(time.time()-t0)))               # There must be at least 60 seconds between each loop
+    time.sleep(max(0, 10-(time.time()-t0)))               # There must be at least 60 seconds between each loop
         
