@@ -17,7 +17,7 @@ def Say(text, verbosity=0, end='\n', suppressTime=False):
 VERBOSITY = 0
 dirFilter = '.*'        # regular expression
 #dirFilter = 'odetol'        # regular expression
-iterModDiv = 250
+iterModDiv = 5 
 renderpySettingsDict = {'VERBOSITY':VERBOSITY,
                         'resolution_percentage':50,
                         'offset':'array([10,10,10])',
@@ -31,7 +31,7 @@ renderpySettingsDict = {'VERBOSITY':VERBOSITY,
 resultsPath = os.getcwd()[:os.getcwd().index("/blender")] + "/results"
 while True:
     t0 = time.time()
-    dirList = [dirs for dirs in os.listdir(resultsPath) if os.path.isdir(os.path.join(resultsPath, dirs)) and re.search(dirFilter,dirs)]
+    dirList = [dirs for dirs in os.listdir(resultsPath) if os.path.isdir(os.path.join(resultsPath, dirs)) and os.path.isdir(os.path.join(resultsPath, dirs, 'output')) and re.search(dirFilter,dirs)]
     dirList.sort()
     for d in dirList:
         Say(d)

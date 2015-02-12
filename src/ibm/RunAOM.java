@@ -18,86 +18,103 @@ public class RunAOM extends Run {
 		int dss = model.dss = 1;
 		model.Linit = new Vector3d(2e-6, 2e-6, 2e-6);
 		model.L = new Vector3d(10e-6, 10e-6, 10e-6);
-		model.radiusCellMax[anme] = 0.55e-6;					// [m]
-		model.radiusCellMax[dss] = 0.44e-6;					// [m]
-		model.muAvgSimple[anme] = 0.003/24.0;				// [h-1]  
-		model.muAvgSimple[dss] = 0.003/2.0/24.0;			// [h-1] 
+		model.radiusCellMax[anme] = 0.55e-6/2.0;				// [m]
+		model.radiusCellMax[dss] = 0.44e-6/2.0;					// [m]
+//		model.muAvgSimple[anme] = 1.2*0.003/24.0;				// [h-1]. Works for model.NCellInit = 60  
+		model.muAvgSimple[anme] = 1.5*0.003/24.0;				// [h-1]. Works for model.NCellInit = 13
+		model.muAvgSimple[dss] = 0.003/24.0;					// [h-1] 
 		model.muStDev[anme] = 0.2*model.muAvgSimple[anme];
-		model.muStDev[dss]  = 0.2*model.muAvgSimple[dss];	// Defined as one fifth
+		model.muStDev[dss]  = 0.2*model.muAvgSimple[dss];		// Defined as one fifth
 		model.syntrophyType = new int[]{dss};
 		model.syntrophyPartner = new int[]{anme};
-		model.syntrophyA = 2; 								// Syntrophy can speed up growth to a factor syntrophyA
-		model.syntrophyB = 0.2; 							// 0.2 --> doesn't reach max. growth rate easily
+		model.syntrophyA = 1.0; 								// Syntrophy can speed up growth to a factor syntrophyA
+		model.syntrophyB = 0.2; 								// 0.2 --> doesn't reach max. growth rate easily
 		model.syntrophyDist = 1e-6;
-		model.NCellInit = 500;
+//		model.NCellInit = 60;
+		model.NCellInit = 13;
 		model.growthTimeStep = 7*24*3600.0;
 		model.attachCellType = 1;
 		model.attachmentRate = 0.0;
 		model.filament = false;
 		model.sticking = true;
-		model.stickType[anme][anme] = model.stickType[anme][dss] = model.stickType[dss][anme] = model.stickType[dss][dss] = true;	// Anything sticks
+//		model.stickType[anme][anme] = model.stickType[anme][dss] = model.stickType[dss][anme] = model.stickType[dss][dss] = true;	// Anything sticks
 //		model.stickType[anme][dss] = model.stickType[dss][anme] = model.stickType[dss][dss] = true;
-//		model.Ks =
+//		model.stickType[dss][dss] = true;
+		model.stickType[anme][anme] = true;
+//		model.stickType[anme][dss] = model.stickType[dss][anme] = true;
 		model.stickFormLim = 0.1e-6;
 		model.stickStretchLim = 0.5e-6;
 		model.anchoring = false;
 		model.normalForce = false;
 		model.electrostatic = false;
-		model.Kc = 1e-11;
+//		model.Kc = 1e-11; 						// Scaled for cell size (default 1e-10)
+		model.Ks = 1e-12; 						// Scaled for cell size (default 1e-11)
+//		model.Kd = 1e-11;						// Scaled for cell size (default 1e-13)
 	}
 	
 	public void Start() {
 		model.UpdateDependentParameters();		// Update model parameters
-		int aom = model.anme;
+		int anme = model.anme;
 		int dss = model.dss;
 		// Initialise model if we are starting a new simulation
 		if(model.growthIter == 0 && model.relaxationIter == 0) {
+			model.Write("Generating inoculum configuration", "iter");
 			// Set initial cell parameters based on model
 			rand.Seed(model.randomSeed);
 			int[] typeInit = new int[model.NCellInit];
 			double[] nInit = new double[model.NCellInit];
+			double[] radiusInit = new double[model.NCellInit];
 			double[] radiusModifier = new double[model.NCellInit];
-			Vector3d[] directionInit = new Vector3d[model.NCellInit];
 			Vector3d[] position0Init = new Vector3d[model.NCellInit];
 			Vector3d[] position1Init = new Vector3d[model.NCellInit];
-			
-			// Create parameters for new cells
+//			// Create parameters for new cells: using div
 //			for(int ii=0; ii<model.NCellInit; ii++){
-//				if(model.nCellMax[aom]>model.nCellMax[dss]) {
-//					final int div = (int) (model.nCellMax[aom] / model.nCellMax[dss]) + 1;	// e.g. 5 is 3x heavier --> div is 1/4, so there will be 3x more 4 cells than 5
-//					typeInit[ii] = ii%div==0 ? aom : dss;
-//				} else {
-//					final int div = (int) (model.nCellMax[dss] / model.nCellMax[aom]) + 1;
-//					typeInit[ii] = ii%div==0 ? dss : aom;
-//				}
+//				int div = 6; 							// 1 in $div cells is AOM
+//				typeInit[ii] = ii%div==0 ? anme : dss;	
 //			}
-			// Alternative: manual setting of cell count for each type
+			// Create parameters for new cells: using absolute count (for NCellInit == 13)
 			for(int ii=0; ii<model.NCellInit; ii++){
-				int div = 3;
-				typeInit[ii] = ii%div==0 ? aom : dss;	
+				int Nanme = 1;
+				typeInit[ii] = ii<Nanme ? anme : dss;	
 			}
 			for(int ii=0; ii<model.NCellInit; ii++) {
-				// Alternative: pre-defined shell-shaped aggregate
-				if(typeInit[ii]==aom) {
-					double d = 0.8*rand.Double()*2e-6 + 0.2*2e-6;
-					position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
-				}
-				else if(typeInit[ii]==dss) {
-					double d = rand.Double()*0.5e-6 + 3e-6;
-					position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
-				}
 				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
+				radiusInit[ii] = Ball.Radius(nInit[ii], typeInit[ii], model);		// TODO: Is nInit correct or should we divide by 2 for rod cells?
 				radiusModifier[ii] = 0.0;
+				// Inoculum positioning: organised aggregate
+//				double rAggregate = 1.0e-6; 	// works well for model.NCellInit == 60
+				double rAggregate = 0.55e-6; 	// works well for model.NCellInit == 13
+				boolean overlap = true;
+				while(overlap) {
+					if(typeInit[ii]==anme) {
+						double d = rand.Double()*(rAggregate - 0.2e-6 - 0.25e-6);
+						position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
+					}
+					else if(typeInit[ii]==dss) {
+						double d = rAggregate;
+						position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
+					}
+					overlap = false;
+					for(int jj=0; jj<ii; jj++) {
+						if( (position0Init[ii].minus(position0Init[jj])).norm() - radiusInit[ii] - radiusInit[jj] < 0.0) { 		// Cells probably overlap
+							overlap = true;
+						}
+					}
+				}
+//				// Inoculum positioning: random
+//				boolean overlap = true;
+//				while(overlap) {
+//					double d = rand.Double() * 1e-6;
+//					position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
+//					overlap = false;
+//					for(int jj=0; jj<ii; jj++) {
+//						if( (position0Init[ii].minus(position0Init[jj])).norm() - radiusInit[ii] - radiusInit[jj] < 0.0) { 		// Cells probably overlap
+//							overlap = true;
+//						}
+//					}
+//				}
 			}
 			position1Init = position0Init;
-				// Default random cell distribution
-//				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
-//				radiusModifier[ii] = 0.0;
-//				final double restLength =  RodSpring.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
-//				directionInit[ii] = new Vector3d((rand.Double()-0.5), 							(rand.Double()-0.5), 							(rand.Double()-0.5)).normalise();
-//				position0Init[ii] = new Vector3d(model.Linit.x/2 + (rand.Double()-0.5)*model.Linit.x, 	model.Linit.y/2 + (rand.Double()-0.5)*model.Linit.y, 	(rand.Double()-0.5)*model.Linit.z);
-//				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
-//			}
 			
 			// Create initial cells
 			for(int iCell = 0; iCell < model.NCellInit; iCell++){

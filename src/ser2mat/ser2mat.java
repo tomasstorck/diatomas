@@ -108,7 +108,7 @@ public class ser2mat {
 							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
 						}
 						else if(f.getGenericType() 	== Model.class) {
-							continue; 									// Don't save CModel
+							continue; 									// Don't save Model class
 						}
 						else if(f.getType() == int[].class) {
 							String fname = f.getName();
@@ -164,7 +164,7 @@ public class ser2mat {
 						else if(f.getType() == Ball[].class) {
 							String fname = f.getName();
 							Ball[] val = (Ball[]) f.get(o);
-							// Convert CBall[] to double[] by looking at indices
+							// Convert Ball[] to double[] by looking at indices
 							double[] valDouble = new double[val.length]; 
 							for(int ii=0; ii<val.length; ii++)
 								valDouble[ii] = val[ii].Index();
@@ -187,11 +187,11 @@ public class ser2mat {
 							String fname = f.getName();
 							ArrayList<?> fArrayList = (ArrayList<?>) f.get(o); 
 							Class<?> c = GetParClass(f);					// It's an ArrayList<Class c>
-								if(o == model) {							// This ArrayList is nested directly under CModel
+								if(o == model) {							// This ArrayList is nested directly under Model class
 									MLStructure mlONew = new MLStructure(fname, new int[] {((ArrayList<?>) f.get(o)).size() ,1}); 		
 									oTodoArray.add(f.get(o));
 									mlObjectArray.add(mlONew);
-								} else {									// NOT nested directly under CModel --> find indices now
+								} else {									// NOT nested directly under Model class --> find indices now
 									Method IndexMethod = c.getMethod("Index");
 									double[] fIndexArray = new double[fArrayList.size()]; 		// Though it is int, we'll save it as double
 									for(int ie=0; ie<fArrayList.size(); ie++) {
