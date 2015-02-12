@@ -196,7 +196,7 @@ public class ser2mat {
 									double[] fIndexArray = new double[fArrayList.size()]; 		// Though it is int, we'll save it as double
 									for(int ie=0; ie<fArrayList.size(); ie++) {
 										Object e1 = fArrayList.get(ie);
-										fIndexArray[ie] = (int) IndexMethod.invoke(e1);
+										fIndexArray[ie] = (Integer) IndexMethod.invoke(e1);
 									}
 									mlO.setField(fname,            new MLDouble(null, fIndexArray, Math.max(fIndexArray.length,1)), io);
 								}

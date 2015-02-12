@@ -16,6 +16,7 @@ public class RunEcoli extends Run {
 		rand.Seed(model.randomSeed);			// Set seed
 		// Load default parameters
 		model.Write("Loading parameters for E. coli","");
+		model.randomSeed = 9; 				// As in paper.
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
 		model.Linit = new Vector3d(1e-6, 1e-6, 1e-6);
 		model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
@@ -28,7 +29,7 @@ public class RunEcoli extends Run {
 		model.filType[4] = true;
 		model.anchorStretchLim = 1e-6;		// Bit longer than initial to work with DLVO forces 
 		model.sticking = model.filament = false;
-		model.electrostatic = false;
+		model.electrostatic = true; 		// Default enabled for E. coli. As in paper.
 		model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
 		model.muStDev[4] = 0.277;			// h-1. Képès, 1986
 		model.growthTimeStep = 240.0;		// s, i.e. 4 minutes
