@@ -9,3 +9,4 @@ diatomas.jar
 .project
 *.class
 /results
+/series.py

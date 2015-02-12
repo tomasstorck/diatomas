@@ -14,50 +14,50 @@ SIDE = false;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%
-% E. COLI
-%%%%%%%%%%%%%%%
-ECOLI = true;
-loadFileNameList = {'g0070r0070.mat'};		% E. coli
-
-%%
-% Perspective
-PERSPECTIVE = true;
-imageFolderName = 'perspective';
-%%
-% % Top
-% TOP = true;
-% imageFolderName = 'top';
-% %%
-% % Side
-% SIDE = true;
-% imageFolderName = 'side';
-% %%
-
-folderFilter = '*';		% <================
-plane = true;
-ceilLightColour = [0.65,0.65,0.65];
-camLightColour = [0.45 0.45 0.45];
-
 % %%%%%%%%%%%%%%%
-% % AS
+% % E. COLI
 % %%%%%%%%%%%%%%%
-% AS = true;
+% ECOLI = true;
+% % loadFileNameList = {'g0070r0070.mat'};		% E. coli
+% 
+% %%
+% % Perspective
 % PERSPECTIVE = true;
-% %%%
-% % AS low
-% loadFileNameList = {'g0131r0131.mat','g0112r0112.mat','g0000r0000.mat'};		% AS low
-% folderFilter = 'as_low*';
-% % %%%
-% % % % AS high
-% % % loadFileNameList = {'g0092r0092.mat'};		% AS high
-% % % folderFilter = 'as_high*';
-% % % %%%
-% % 
 % imageFolderName = 'perspective';
-% plane = false;
-% ceilLightColour = [0.8,0.8,0.8];
-% camLightColour = [0.6 0.6 0.6];
+% %%
+% % % Top
+% % TOP = true;
+% % imageFolderName = 'top';
+% % %%
+% % % Side
+% % SIDE = true;
+% % imageFolderName = 'side';
+% % %%
+% 
+% folderFilter = 'ecoli*';		% <================
+% plane = true;
+% ceilLightColour = [0.65,0.65,0.65];
+% camLightColour = [0.45 0.45 0.45];
+
+%%%%%%%%%%%%%%%
+% AS
+%%%%%%%%%%%%%%%
+AS = true;
+PERSPECTIVE = true;
+%%%
+% AS low
+% loadFileNameList = {'g0131r0131.mat','g0112r0112.mat','g0000r0000.mat'};		% AS low
+folderFilter = 'as_low*';
+% %%%
+% % % AS high
+% % loadFileNameList = {'g0092r0092.mat'};		% AS high
+% % folderFilter = 'as_high*';
+% % %%%
+% 
+imageFolderName = 'perspective';
+plane = false;
+ceilLightColour = [0.8,0.8,0.8];
+camLightColour = [0.6 0.6 0.6];
 
 % % SWAPCOLOURS - for cocci simulations
 % swapColours = true;
