@@ -55,7 +55,7 @@ public class RunEcoli extends Run {
 				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 				radiusModifier[ii] = model.radiusCellStDev[typeInit[ii]]*random.rand.Gaussian();
 				directionInit[ii] = new Vector3d((rand.Double()-0.5), 								(rand.Double()-0.5), 								0.0).normalise();
-				position0Init[ii] = new Vector3d(model.L.x/2 + (rand.Double()-0.5)*model.Linit.x, 	model.L.y/2 + (rand.Double()-0.5)*model.Linit.y,	Ball.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii]);  
+				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.Linit.x, 	(rand.Double()-0.5)*model.Linit.y,	Ball.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii]);  
 				final double restLength =  RodSpring.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}
@@ -96,6 +96,15 @@ public class RunEcoli extends Run {
 			int NFil = 0; int NBranch = 0;													// Keep track of how many filament springs and how many new branches we make
 			for(Cell mother : dividingCellArray) {
 				Cell daughter = model.DivideCell(mother);
+//				// Slightly displace to prevent deadlock (doesn't work)
+//				for(Ball ball : daughter.ballArray) { 
+//					ball.pos.x += 1e-7*(rand.Double()-0.5);
+//					ball.pos.y += 1e-7*(rand.Double()-0.5);
+//				}
+//				for(Ball ball : mother.ballArray) { 
+//					ball.pos.x += 1e-7*(rand.Double()-0.5);
+//					ball.pos.y += 1e-7*(rand.Double()-0.5);
+//				}
 				if(mother.filament) {
 					Cell neighbourDaughter = mother.GetNeighbour();
 					if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency && neighbourDaughter != null) {
