@@ -71,7 +71,7 @@ public class RunAS extends Run {
 				radiusModifier[ii] = 0.0; 
 				final double restLength =  RodSpring.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 				directionInit[ii] = new Vector3d((rand.Double()-0.5), 							(rand.Double()-0.5), 							(rand.Double()-0.5)).normalise();
-				position0Init[ii] = new Vector3d(model.L.x/2 + (rand.Double()-0.5)*model.L.x, 	model.L.y/2 + (rand.Double()-0.5)*model.L.y, 	(rand.Double()-0.5)*model.L.z);
+				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.Linit.x, 	(rand.Double()-0.5)*model.Linit.y, 	(rand.Double()-0.5)*model.Linit.z);
 				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}
 			
