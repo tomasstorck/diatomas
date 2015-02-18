@@ -47,6 +47,7 @@ public class Model implements Serializable {
 	public double stickFormLim = 0.5e-6; 		// Added to rest length to check if we should form sticking springs
 	// --> Anchoring
 	public boolean anchoring = false;
+	public boolean anchorGliding = false;		// Do anchor springs glide, or attach to fixed point?
 	public double Kan	= 1e-11;				// anchor
 	public double anchorStretchLim = 1e-6;	// Maximum tension for anchoring springs
 	public double anchorFormLim = 0.5e-6;		// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
@@ -461,7 +462,9 @@ public class Model implements Serializable {
 							breakArray.add(anchor);
 						}
 					}
-					for(AnchorSpring anchor : breakArray)		NAnchorBreak += anchor.Break();
+					for(AnchorSpring anchor : breakArray) {
+						NAnchorBreak += anchor.Break();
+					}
 				} else {									// Cell is not yet anchored
 					// Form anchor?
 					boolean formBall0 = (ball0.pos.z < anchorFormLim+ball0.radius) ? true : false;

@@ -79,7 +79,7 @@ public class Cell implements Serializable {
 		for(Ball ball : ballArray) {
 			Vector3d substratumPos = new Vector3d(ball.pos);
 			substratumPos.z = 0.0;
-			new AnchorSpring(ball, substratumPos);
+			new AnchorSpring(ball, substratumPos, model.anchorGliding);
 		}
 
 		// Add sibling springs, assuming all anchors in this cell are siblings

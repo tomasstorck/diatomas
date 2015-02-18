@@ -47,7 +47,7 @@ public class RodSpring extends Spring {
 		if(isRemovedModel && isRemovedCell) {
 			return 1;
 		}
-		else {
+		else { 	// TODO: outdated and overly complicated
 			throw new RuntimeException("RodSpring " + this.Index() + " was not present and could not be removed");
 		}
 	}

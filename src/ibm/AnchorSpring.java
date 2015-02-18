@@ -6,26 +6,28 @@ public class AnchorSpring extends Spring {
 	private static final long serialVersionUID = 1L;
 	public Vector3d anchorPoint = new Vector3d();
 	public ArrayList<AnchorSpring> siblingArray = new ArrayList<AnchorSpring>(2);
+	public boolean gliding;
 
 	///////////////////////////////////////////////////////////////////
 	// This class can have two forms: normal (static point) or gliding (moving point) anchoring links
 	// To switch, only the GetL() function needs to be changed.
 	
-	public AnchorSpring(Ball ball0, Vector3d anchorPoint) {
-		// We don't use the super constructor here: CAnchorSpring is different
+	public AnchorSpring(Ball ball0, Vector3d anchorPoint, boolean gliding) {
+		// We don't use the super constructor here: AnchorSpring is different
 		ballArray = new Ball[1];
 		ballArray[0] = ball0;
 		this.anchorPoint = anchorPoint;
+		this.gliding = gliding;
 		ResetK();
 		ResetRestLength();
 		// Add to arrays
 		final Model model = ball0.cell.model;
 		model.anchorSpringArray.add(this);
-		ball0.cell.anchorSpringArray.add(this);
+		ball0.cell.anchorSpringArray.add(this);	
 	}
 	
 	public static double RestLength(double height, double radius) {
-		return Math.max(height,radius*1.01);						// WORKAROUND: Choose current position, but make sure it is not forcing the spring into the substratum
+		return Math.max(height,radius*1.01);						// Choose current position, but make sure it is not forcing the spring into the substratum
 	}
 	
 	public void ResetRestLength() {
@@ -54,9 +56,6 @@ public class AnchorSpring extends Spring {
 			cell0.anchorSpringArray.remove(sibling);
 			count += (model.anchorSpringArray.remove(sibling))?1:0;
 		}
-		if(count == 0) {
-			throw new RuntimeException("AnchorSpring " + this.Index() + " was not present and could not be removed");
-		}
 		return count;
 	}
 	
@@ -66,10 +65,13 @@ public class AnchorSpring extends Spring {
 	}
 	
 	public Vector3d GetL() {
-		// Static anchoring links
-		return anchorPoint.minus(ballArray[0].pos);
-//		// Moving anchoring links
-//		return new Vector3d(0.0, -1.0*ballArray[0].pos.y, 0.0);
+		if(gliding) {
+			// Moving (gliding) anchoring links
+			return new Vector3d(0.0, 0.0, -1.0*ballArray[0].pos.z);
+		} else {
+			// Static anchoring links
+			return anchorPoint.minus(ballArray[0].pos);
+		}
 
 	}
 }
