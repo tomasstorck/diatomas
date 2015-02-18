@@ -7,16 +7,16 @@ import os, re, time, subprocess
 
 iterModDiv = 1
 
-dirPathList = ["/home/tomas/documenten/modelling/diatomas_symlink/results/ecoli_noanchor_nodlvo_newModel2"]
+dirPathList = ["/home/tomas/documenten/modelling/diatomas_symlink/results/ecoli_anchor_gliding_nodlvo"]
 for d in dirPathList:
     print(time.strftime('%H:%M:%S   ') + d)
     dAbs = d + "/output"
     fileList = [files for files in os.listdir(dAbs) if os.path.splitext(files)[-1]=='.mat']
-    fileList.sort(reverse=False)
+    fileList.sort(reverse=True)
     for f in fileList:
         ###################
         # Optional: skip some files manually
-        if int(re.match('g(\d{4})r(\d{4}).mat',f).group(2)) > 127369172:
+        if int(re.match('g(\d{4})r(\d{4}).mat',f).group(2)) > 500:
             continue
         ###################
         print(time.strftime('%H:%M:%S   ') + "\t" + f)

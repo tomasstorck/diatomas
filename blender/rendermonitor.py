@@ -21,7 +21,7 @@ def Say(text, verbosity=0, end='\n', suppressTime=False):
 #dirFilter = '.*'        # regular expression
 dirFilter = 'ecoli_'
 #dirFilter = 'odetol'        # regular expression
-VERBOSITY = 6           # Note that only rendermonitor.py is printed to console, render.py shows up in logfile.txt
+VERBOSITY = 0           # Note that only rendermonitor.py is printed to console, render.py shows up in logfile.txt
 iterModDiv = 5 
 
 ###############################################################################
@@ -38,28 +38,28 @@ while True:
         #######################
         renderpySettingsDict = {'VERBOSITY':VERBOSITY,
                                 'resolution_percentage':50,
-#                                'offset':'array([10,10,0])',
-#                                'model.L':'array([20e-6,20e-6,20e-6])',
+                                'offset':'array([120,120,20])',
+                                'model.L':'array([60e-6,60e-6,60e-6])',
                                 'saveBlend':True,
                                 'drawStick':False,
                                 'renderDir':'render'
                                 }
 
-        renderpySettingsDict['suppressRender'] = True
+        #renderpySettingsDict['suppressRender'] = True
 
         if re.match('^aom', d):
             renderpySettingsDict['model.L'] = 'array([20e-6,20e-6,20e-6])'
             renderpySettingsDict['offset'] = 'array([10,10,10])'
-            renderpySettingsDict['preRender'] = 'ConfigAOM'
+            renderpySettingsDict['configMaterial'] = 'ConfigAOM'
             renderpySettingsDict['gridStepSize'] = 5
         elif re.match('^as', d):
             renderpySettingsDict['model.L'] = 'array([80e-6,80e-6,80e-6])'
             renderpySettingsDict['offset'] = 'array([40,40,40])'
-            renderpySettingsDict['preRender'] = 'ConfigAS'
+            renderpySettingsDict['configMaterial'] = 'ConfigAS'
         elif re.match('^ecoli', d):
             renderpySettingsDict['model.L'] = 'array([80e-6,80e-6,80e-6])'
             renderpySettingsDict['offset'] = 'array([40,40,0])'
-            renderpySettingsDict['preRender'] = 'ConfigEcoli'       # Change colours of cells for consistency with paper/experiments
+            renderpySettingsDict['configMaterial'] = 'ConfigEcoli'       # Change colours of cells for consistency with paper/experiments
             renderpySettingsDict['colourByGeneration'] = True
             
         #######################################################################        

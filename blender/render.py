@@ -31,6 +31,7 @@ def CreateRod(pos, r, material):
     aspect = round(L/(2*rMean),1)
     keyName = str(aspect)+material                      # Dictionary stored based on aspect ratio and material
     if not keyName in rodLib:
+        Say("\t\tAspect = {} with material = {} NOT in rodLib".format(aspect, material), verbosity=2)
         bpy.ops.mesh.primitive_cylinder_add(depth=L, location=(0, 0, L/2), radius=rMean)
         spring = bpy.context.object                                 # Ugly but appears to be the way to do it
         bpy.ops.mesh.primitive_uv_sphere_add(location=(0, 0, L), size=rMean)
@@ -55,6 +56,7 @@ def CreateRod(pos, r, material):
         # Add this object to the library
         rodLib[keyName] = [rod, rMean]         # rMean required for scaling only, material is copied by reference, not value, so needs to be recreated for different material
     else:
+        Say("\t\tAspect = {} in rodLib".format(aspect), verbosity=2)
         originalRod,originalR = rodLib.get(keyName)
         rod = originalRod.copy()
         rod.scale = [rMean/originalR]*3                 # Make it a len 3 vector
@@ -249,6 +251,38 @@ def DefineMaterials():
     anchorM.diffuse_intensity = 0.5
     anchorM.specular_intensity = 0.1
 ###############################################################################
+
+def SetupCameraPersp(location, rotation):                       # Does not allow automatic configuration
+    bpy.ops.object.camera_add(location=location, rotation=rotation)
+    cam = bpy.context.object
+    cam.name = 'CameraPersp'
+    cam.data.clip_end = 1000                                         # Render whole range. This number will suffice
+    cam.data.lens = 25
+    cam.data.sensor_width = 30
+    bpy.context.scene.camera = cam           # Set as active camera    
+    
+    """
+    Focal blur: see http://wiki.blender.org/index.php/Doc:2.6/Tutorials/Composite_Nodes/Setups/Depth_Of_Field
+    Good settings:
+    - Add defocus composite
+    - Use Z buffer
+    - Link Zs
+    - Distance 70-100
+    - fStop 0.3-0.5
+    Don't forget to deselect preview!
+    """
+
+    # Light point behind camera
+    bpy.ops.object.lamp_add(type='POINT', location=(0,0,5))        # Location is relative to camera
+    light = bpy.context.object
+    light.name = 'PointCamPersp'
+    light.data.falloff_type = 'CONSTANT'
+    bpy.ops.object.select_all(action='DESELECT')                    # Make camera the light point's parent  (more detail in animation section, bottom of file)
+    light.parent = cam
+    lightTracker = light.constraints.new('TRACK_TO')                # Tell camera to track empty (for rotation)
+    lightTracker.target = cam
+    lightTracker.track_axis = 'TRACK_Z'
+    
 
 def SetupCameraSide(distance=None, Lx=20, Ly=20, Lz=20, camWidth=1920, camHeight=1080):   # Add camera to the scene, for side view
     if distance is None:
@@ -545,6 +579,32 @@ def ParseVal(val):
 
 ###############################################################################
 
+###############################################################################
+
+# Default settings for render.py (better to override from command line or rendermonitor.py)
+settingsDict = {'camPos':None,
+                'camRot':array([65, 0, -25]),
+                'colourByGeneration':False,
+                'drawAxisLegend':True,
+                'drawPlane':True,
+                'drawPlaneGrid':(False, True, True),
+                'drawPlaneGridY':True,
+                'drawAnchor':True,
+                'drawFil':True,
+                'drawStick':True,
+                'gridStepSize':10,
+                'offset':array([0,0,0]),
+                'planeInfinite':False,
+                'configMaterial':None,               # Set materials, pre-configured
+                'renderDir':'render',
+                'resolution_percentage':100,    # in percent
+                'saveBlend':True,
+                'suppressRender':False,
+                'textSizeDivider':50,
+                }
+VERBOSITY = 0
+###############################################################################
+
 if __name__ == '__main__':                                      # Run if not imported as module
     
     #%% Import model
@@ -553,31 +613,6 @@ if __name__ == '__main__':                                      # Run if not imp
     VERBOSITY = 0 if not 'VERBOSITY' in argv else int(argv[argv.index('VERBOSITY')+1])   # Get VERBOSITY if defined
     model = scipy.io.loadmat(matPath, chars_as_strings=True, mat_dtype=False, squeeze_me=False, struct_as_record=False)['model'][0,0]
         
-    ###############################################################################
-    
-    # Default settings for render.py (better to override from command line or rendermonitor.py)
-    settingsDict = {'camPos':'auto',
-                    'camRot':array([65, 0, -25]),
-                    'colourByGeneration':False,
-                    'drawAxisLegend':True,
-                    'drawPlane':True,
-                    'drawPlaneGrid':(False, True, True),
-                    'drawPlaneGridY':True,
-                    'drawAnchor':True,
-                    'drawFil':True,
-                    'drawStick':True,
-                    'gridStepSize':10,
-                    'offset':array([0,0,0]),
-                    'planeInfinite':False,
-                    'preRender':None,               # Set materials, pre-configured
-                    'renderDir':'render',
-                    'resolution_percentage':100,    # in percent
-                    'saveBlend':True,
-                    'suppressRender':False,
-                    'textSizeDivider':50,
-                    }
-    
-    ###############################################################################
     # Get overwriting dictionary for render.py and model class
     modelFields = dir(model)
     Say('Argument parsing, analysing {} possible setting values and {} model fields'.format(len(settingsDict), len(modelFields)), verbosity=3)
@@ -641,31 +676,12 @@ if __name__ == '__main__':                                      # Run if not imp
     
     #%% Create camera
     Say("Calculating and creating camera", verbosity=1)
-    camAspect = bpy.context.scene.render.resolution_x/bpy.context.scene.render.resolution_y
-    if settingsDict['camPos'] == 'auto':
+    if settingsDict['camPos'] == None:
         camPos = Lx/30* (array([-15, -46, 42]))                    # limited by camera width    
     else:
         camPos= settingsDict['camPos']
-    camRot = settingsDict['camRot']
-    bpy.ops.object.camera_add(location=camPos, rotation=(np.deg2rad(camRot[0]), np.deg2rad(camRot[1]), np.deg2rad(camRot[2])))
-    cam = bpy.context.object    
-    cam.name = 'CameraPersp'
-    cam.data.clip_end = 1000                                         # Render whole range. This number will suffice
-    cam.data.lens = 25
-    cam.data.sensor_width = 30
-    bpy.context.scene.camera = cam           # Set as active camera    
-    
-    """
-    Focal blur: see http://wiki.blender.org/index.php/Doc:2.6/Tutorials/Composite_Nodes/Setups/Depth_Of_Field
-    Good settings:
-    - Add defocus composite
-    - Use Z buffer
-    - Link Zs
-    - Distance 70-100
-    - fStop 0.3-0.5
-    Don't forget to deselect preview!
-    """
-    
+    camRot = (np.deg2rad(settingsDict['camRot'][0]), np.deg2rad(settingsDict['camRot'][1]), np.deg2rad(settingsDict['camRot'][2]))
+    SetupCameraPersp(location=camPos, rotation=camRot)
    
     #%% Create light sources
     Say("Creating light sources", verbosity=1)
@@ -676,24 +692,24 @@ if __name__ == '__main__':                                      # Run if not imp
     sun.data.shadow_soft_size = 1.5                                 # Soft shadow, based on distance to light source/plane
     sun.data.shadow_ray_samples = 10
     
-    # Light point behind camera
-    bpy.ops.object.lamp_add(type='POINT', location=(0,0,5))        # Location is relative to camera
-    light = bpy.context.object
-    light.name = 'PointCamPersp'
-    light.data.falloff_type = 'CONSTANT'
-    bpy.ops.object.select_all(action='DESELECT')                    # Make camera the light point's parent  (more detail in animation section, bottom of file)
-    light.parent = cam
-    lightTracker = light.constraints.new('TRACK_TO')                # Tell camera to track empty (for rotation)
-    lightTracker.target = cam
-    lightTracker.track_axis = 'TRACK_Z'
-    
+    #%% Materials
     DefineMaterials()
+
+    if settingsDict['configMaterial'] != 'None':
+        if settingsDict['configMaterial'] == 'ConfigEcoli':
+            cellMaterial = ConfigEcoli()
+        elif settingsDict['configMaterial'] == 'ConfigAOM':
+            cellMaterial = ConfigAOM()
+        else:
+            cellMaterial = ConfigAS()        
+
     
+    #%% Legend
     if settingsDict['drawAxisLegend']:
         Say("Drawing XYZ arrows/legend", verbosity=1)
         SetupXYZLegend(fontSize=round((norm(camPos)/settingsDict['textSizeDivider'])**0.5))
         
-    # Draw planes with all bells and whistles
+    #%% Draw planes with all bells and whistles
     Say("Drawing plane, grid, etc", verbosity=1)
     
     if settingsDict['drawPlane']:
@@ -706,16 +722,7 @@ if __name__ == '__main__':                                      # Run if not imp
         DeleteTick(x=0, y=[0, int(Ly)])
         
     ###############################################################################
-
-    # Pre-render
-    if settingsDict['preRender'] != 'None':
-        if settingsDict['preRender'] == 'ConfigEcoli':
-            cellMaterial = ConfigEcoli()
-        elif settingsDict['preRender'] == 'ConfigAOM':
-            cellMaterial = ConfigAOM()
-        else:
-            cellMaterial = ConfigAS()        
-        
+       
     #%% Draw cells
     Say("Drawing cells", verbosity=1)
     for iCell,cell in enumerate(model.cellArray[:,0]):
