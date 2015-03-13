@@ -29,6 +29,7 @@ public class RunAS extends Run {
 		model.muStDev[filF]  = 0.2*model.muAvgSimple[filF];		// Defined as one fifth
 		model.muStDev[flocF] = 0.2*model.muAvgSimple[flocF];
 		model.NCellInit = 18;
+//		model.NCellInit = 18*2; 			// For multiple flocs 
 		model.growthTimeStep = 300.0;
 		model.attachCellType = 5;
 		model.attachNotTo = new int[]{};
@@ -72,6 +73,9 @@ public class RunAS extends Run {
 				final double restLength =  RodSpring.RestLength(Ball.Radius(nInit[ii], typeInit[ii], model), nInit[ii], typeInit[ii], model);
 				directionInit[ii] = new Vector3d((rand.Double()-0.5), 							(rand.Double()-0.5), 							(rand.Double()-0.5)).normalise();
 				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.Linit.x, 	(rand.Double()-0.5)*model.Linit.y, 	(rand.Double()-0.5)*model.Linit.z);
+//				if(ii>model.NCellInit/2) {
+//					position0Init[ii] = position0Init[ii].plus(new Vector3d(50e-6, 0e-6, 0e-6)); 	// Displace half the cells by a number of microns in X direction
+//				}
 				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}
 			
