@@ -21,7 +21,7 @@ public class RunAOM extends Run {
 		model.radiusCellMax[anme] = 0.55e-6/2.0;				// [m]
 		model.radiusCellMax[dss] = 0.44e-6/2.0;					// [m]
 //		model.muAvgSimple[anme] = 1.2*0.003/24.0;				// [h-1]. Works for model.NCellInit = 60  
-		model.muAvgSimple[anme] = 1.5*0.003/24.0;				// [h-1]. Works for model.NCellInit = 13
+		model.muAvgSimple[anme] = 0.003/24.0;				// [h-1]. Works for model.NCellInit = 13
 		model.muAvgSimple[dss] = 0.003/24.0;					// [h-1] 
 		model.muStDev[anme] = 0.2*model.muAvgSimple[anme];
 		model.muStDev[dss]  = 0.2*model.muAvgSimple[dss];		// Defined as one fifth
@@ -31,7 +31,7 @@ public class RunAOM extends Run {
 		model.syntrophyB = 0.2; 								// 0.2 --> doesn't reach max. growth rate easily
 		model.syntrophyDist = 1e-6;
 //		model.NCellInit = 60;
-		model.NCellInit = 13;
+		model.NCellInit = 18;
 		model.growthTimeStep = 7*24*3600.0;
 		model.attachCellType = 1;
 		model.attachmentRate = 0.0;
@@ -74,7 +74,8 @@ public class RunAOM extends Run {
 //			}
 			// Create parameters for new cells: using absolute count (for NCellInit == 13)
 			for(int ii=0; ii<model.NCellInit; ii++){
-				int Nanme = 1;
+				int Ndss = 12;
+				int Nanme = model.NCellInit-Ndss;
 				typeInit[ii] = ii<Nanme ? anme : dss;	
 			}
 			for(int ii=0; ii<model.NCellInit; ii++) {
@@ -83,23 +84,27 @@ public class RunAOM extends Run {
 				radiusModifier[ii] = 0.0;
 				// Inoculum positioning: organised aggregate
 //				double rAggregate = 1.0e-6; 	// works well for model.NCellInit == 60
-				double rAggregate = 0.55e-6; 	// works well for model.NCellInit == 13
-				boolean overlap = true;
-				while(overlap) {
+				double rAggregate = 0.8e-6; 	// works well for model.NCellInit == 13
+				int NOverlap = 0;
+				while(true) {
+					if(NOverlap > 10000) {
+						throw new RuntimeException("Could not find a non-overlappting initial cell configuration"); 
+					}
 					if(typeInit[ii]==anme) {
-						double d = rand.Double()*(rAggregate - 0.2e-6 - 0.25e-6);
+						double d = rand.Double()*(rAggregate - 0.2e-6 - model.radiusCellMax[anme]);
 						position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
 					}
 					else if(typeInit[ii]==dss) {
 						double d = rAggregate;
 						position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
 					}
-					overlap = false;
 					for(int jj=0; jj<ii; jj++) {
 						if( (position0Init[ii].minus(position0Init[jj])).norm() - radiusInit[ii] - radiusInit[jj] < 0.0) { 		// Cells probably overlap
-							overlap = true;
+							NOverlap += 1;
+							continue;
 						}
 					}
+					break; 		// No overlap, next cell
 				}
 //				// Inoculum positioning: random
 //				boolean overlap = true;
