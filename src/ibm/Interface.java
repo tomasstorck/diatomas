@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
 
+import javax.swing.text.StyledEditorKit.BoldAction;
+
 import ser2mat.ser2mat;
 
 public class Interface{
@@ -171,7 +173,10 @@ public class Interface{
 						String fieldClassName = fieldClass.getSimpleName();
 						// boolean
 						if(fieldClassName.equals("Boolean")) {
-							boolean bool = Integer.parseInt(value) == 1 ? true : false;
+							if(!(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
+								throw new NumberFormatException("Could not parse value: " + value);
+							}
+							boolean bool = Boolean.parseBoolean(value);
 							if(field.getBoolean(run) != bool) {
 								field.setBoolean(run, bool);
 								model.Write(field.getName() + " set to " + (bool?"true":"false"), "");
@@ -247,9 +252,12 @@ public class Interface{
 									int jj = Integer.parseInt(jjString);
 									// boolean[][]					// OPTIMISE: We could make this with generics, virtually the same code is used for all these types
 									if(fieldClassName.equals("boolean")) {
+										if(!(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
+											throw new NumberFormatException("Could not parse value: " + value);
+										}
 										boolean[][] bool = (boolean[][]) field.get(model);
-										if(bool[ii][jj] = (Integer.parseInt(value) == 1 ? true : false)) {
-											bool[ii][jj] = Integer.parseInt(value) == 1 ? true : false;
+										if(bool[ii][jj] != Boolean.parseBoolean(value)) {
+											bool[ii][jj] = Boolean.parseBoolean(value);
 											field.set(model, bool);
 											model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + (bool[ii][jj]?"true":"false"), "");
 										}
@@ -302,9 +310,12 @@ public class Interface{
 									int ii = Integer.parseInt(iiString);
 									// boolean[]
 									if(fieldClassName.equals("boolean")) {
+										if(!(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
+											throw new NumberFormatException("Could not parse value: " + value);
+										}
 										boolean[] bool = (boolean[]) field.get(model);
-										if(bool[ii] != (Integer.parseInt(value) == 1 ? true : false)) {
-											bool[ii] = (Integer.parseInt(value) == 1 ? true : false);
+										if(bool[ii] != Boolean.parseBoolean(value)) {
+											bool[ii] = Boolean.parseBoolean(value);
 											model.Write(field.getName() + "[" + ii + "] set to " + (bool[ii]?"true":"false"), "");
 											field.set(model, bool);
 										}
@@ -361,6 +372,9 @@ public class Interface{
 								}
 								// boolean[]
 								if(fieldClassName.equals("boolean")) {
+									if(!(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
+										throw new NumberFormatException("Could not parse value: " + value);
+									}
 									boolean[] bool = new boolean[splitValue.length];
 									for(int ii=0; ii<splitValue.length; ii++) {
 										if(bool[ii] != (Integer.parseInt(splitValue[ii]) == 1 ? true : false)) {
@@ -426,7 +440,10 @@ public class Interface{
 							String fieldClassName = fieldClass.getSimpleName();
 							// boolean
 							if(fieldClassName.equals("Boolean")) {
-								boolean bool = Integer.parseInt(value) == 1 ? true : false;
+								if(!(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
+									throw new NumberFormatException("Could not parse value: " + value);
+								}
+								boolean bool = Boolean.parseBoolean(value);
 								if(field.getBoolean(model) != bool) {
 									field.setBoolean(model, bool);
 									model.Write(field.getName() + " set to " + (bool?"true":"false"), "");
@@ -480,7 +497,7 @@ public class Interface{
 			}
 			// Are you still here?
 			if(!key.equalsIgnoreCase("load")) {			// Load will be handled later
-				// Perhaps it's for this instance only (e.g. COMSOL port)
+				// Perhaps it's for this instance only (e.g. COMSOL port, i.e. not in Model but in Run)
 				for(Field field : Run.class.getFields()) {
 					if(key.equalsIgnoreCase(field.getName())) {
 						key = field.getName();						// Update key to the correct Capitalisation
@@ -490,7 +507,10 @@ public class Interface{
 							String fieldClassName = fieldClass.getSimpleName();
 							// boolean
 							if(fieldClassName.equals("Boolean")) {
-								boolean bool = Integer.parseInt(value) == 1 ? true : false;
+								if(!(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
+									throw new NumberFormatException("Could not parse value: " + value);
+								}
+								boolean bool = Boolean.parseBoolean(value);
 								if(field.getBoolean(instance) != bool) {
 									field.setBoolean(instance, bool);
 									model.Write("For this instance, " + field.getName() + " set to " + (bool?"true":"false"), "");
