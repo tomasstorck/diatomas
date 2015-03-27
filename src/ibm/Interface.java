@@ -132,10 +132,10 @@ public class Interface{
 		message += "', name '" + model.name + "' w/ arguments: ";
 		// Set command line arguments
 		if(!argument.containsKey("load")) {
-			SetArgument(model, argument, false);				// Don't want to do multiplications (e.g. Kan[0] *0.1) just yet to prevent from doubling it up
+			SetArgument(model, argument);
 			instance.Initialise();
 		}
-		SetArgument(model, argument, true);
+		SetArgument(model, argument);
 		
 		// Copy simulation .jar file to this folder
 		model.Write("Copying .jar file to simulation folder", "");
@@ -186,7 +186,6 @@ public class Interface{
 						// double
 						if(fieldClassName.equals("Double")) {
 							double number = field.getDouble(run);
-							// See if we have a relative (e.g. Kan *10) or absolute (e.g. Kan 1e-10) value
 							number = Double.parseDouble(value);			// Absolute
 							if(field.getDouble(run) != number) {
 								field.setDouble(run, number);
@@ -221,7 +220,7 @@ public class Interface{
 		}
 	}
 	
-	public static void SetArgument(Model model, Map<String, String> argument, boolean doRelative) {
+	public static void SetArgument(Model model, Map<String, String> argument) {
 		Iterator<Entry<String, String>> argumentKeys = argument.entrySet().iterator();
 		args:while(argumentKeys.hasNext()) {
 			Entry<String, String> iter = argumentKeys.next(); 
@@ -265,22 +264,11 @@ public class Interface{
 									}
 									// double[][]
 									if(fieldClassName.equals("double")) {
-//										double[][] numberRef = (double[][]) field.get(modelRef);
 										double[][] number = (double[][]) field.get(model);
-										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
-										if(value.startsWith("*")) {	// Relative
-											double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-											if(multiplier != 1.0 && doRelative) {
-												number[ii][jj] *= multiplier;
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + number[ii][jj], "");
-											}
-										} else {
-											if(number[ii][jj] != Double.parseDouble(value)) {
-												number[ii][jj] = Double.parseDouble(value);
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + number[ii][jj], "");
-											}
+										if(number[ii][jj] != Double.parseDouble(value)) {
+											number[ii][jj] = Double.parseDouble(value);
+											field.set(model, number);
+											model.Write(field.getName() + "[" + ii + "][" + jj + "] set to " + number[ii][jj], "");
 										}
 										continue args;
 									}
@@ -324,20 +312,10 @@ public class Interface{
 									// double[]
 									if(fieldClassName.equals("double")) {
 										double[] number = (double[]) field.get(model);
-										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
-										if(value.startsWith("*")) {	// Relative
-											double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-											if(multiplier != 1.0 && doRelative) {
-												number[ii] *= multiplier;
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-											}
-										} else {
-											if(number[ii] != Double.parseDouble(value)) {
-												number[ii] = Double.parseDouble(value);
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-											}
+										if(number[ii] != Double.parseDouble(value)) {
+											number[ii] = Double.parseDouble(value);
+											field.set(model, number);
+											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
 										}
 										continue args;
 									}
@@ -364,76 +342,7 @@ public class Interface{
 								}
 							// We make an entirely new array
 							} else {
-								String fieldClassName = fieldClass.getComponentType().getName();
-								String[] splitValue = value.split(",");			// Split at comma
-								for(int ii=0; ii<splitValue.length; ii++) {		// Replace all curly braces
-									splitValue[ii] = splitValue[ii].replace("{","");
-									splitValue[ii] = splitValue[ii].replace("}","");
-								}
-								// boolean[]
-								if(fieldClassName.equals("boolean")) {
-									if(!(value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
-										throw new NumberFormatException("Could not parse value: " + value);
-									}
-									boolean[] bool = new boolean[splitValue.length];
-									for(int ii=0; ii<splitValue.length; ii++) {
-										if(bool[ii] != (Integer.parseInt(splitValue[ii]) == 1 ? true : false)) {
-											bool[ii] = Integer.parseInt(splitValue[ii]) == 1 ? true : false;
-											model.Write(field.getName() + "[" + ii + "] set to " + (bool[ii]?"true":"false"), "");
-											field.set(model, bool);
-										}
-									}
-									continue args;
-								}
-								// double[]
-								if(fieldClassName.equals("double")) {
-									double[] number = new double[splitValue.length];
-									double[] numberOld = (double[]) field.get(model);
-									for(int ii=0; ii<splitValue.length; ii++) {
-										// See if we have a relative (e.g. Ka[0] *10) or absolute (e.g. Ka[0] 1e-10) value
-										if(splitValue[ii].startsWith("*")) {											// Relative
-											double multiplier = Double.parseDouble(splitValue[ii].substring(1));		// Cut off *
-											if(multiplier != 1.0 && doRelative) {
-												number[ii] = numberOld[ii] * multiplier;
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-											}
-											
-										} else {
-											if(number[ii] != numberOld[ii]) {											// Here we already have numberOld, so we can use this
-												number[ii] = Double.parseDouble(splitValue[ii]);
-												field.set(model, number);
-												model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-											}
-										}
-										
-									}
-									continue args;
-								}
-								// int[]
-								if(fieldClassName.equals("int")) {
-									int[] number = new int[splitValue.length];
-									for(int ii=0; ii<splitValue.length; ii++) {
-										if(number[ii] != Integer.parseInt(splitValue[ii])) {
-											number[ii] = Integer.parseInt(splitValue[ii]);
-											field.set(model, number);
-											model.Write(field.getName() + "[" + ii + "] set to " + number[ii], "");
-										}
-									}
-									continue args;
-								}
-								// String[]
-								if(fieldClassName.equals("String")) {
-									String[] string = new String[splitValue.length];
-									for(int ii=0; ii<splitValue.length; ii++) {
-										if(splitValue[ii].equals(string[ii])) {
-											string[ii] = splitValue[ii];
-											field.set(model, string);
-											model.Write(field.getName() + "[" + ii + "] set to " + string[ii], "");
-										}
-									}
-									continue args;
-								}
+								throw new NumberFormatException("Value format invalid, use field[][] value format");
 							}
 						// The field is NOT an array
 						} else {
@@ -453,20 +362,10 @@ public class Interface{
 							// double
 							if(fieldClassName.equals("Double")) {
 								double number = field.getDouble(model);
-								// See if we have a relative (e.g. Kan *10) or absolute (e.g. Kan 1e-10) value
-								if(value.startsWith("*")) {						// Relative
-									double multiplier = Double.parseDouble(value.substring(1));		// Cut off *
-									if(multiplier != 1.0 && doRelative) {
-										number = field.getDouble(model) * multiplier;				// Hasn't been multiplied before, so do it
-										field.setDouble(model, number);
-										model.Write(field.getName() + " set to " + number, "");
-									}
-								} else {
-									number = Double.parseDouble(value);			// Absolute
-									if(field.getDouble(model) != number) {
-										field.setDouble(model, number);
-										model.Write(field.getName() + " set to " + number, "");
-									}
+								number = Double.parseDouble(value);			// Absolute
+								if(field.getDouble(model) != number) {
+									field.setDouble(model, number);
+									model.Write(field.getName() + " set to " + number, "");
 								}
 								continue args;									// Check next argument (i.e. continue outer loop)
 							}
@@ -520,7 +419,6 @@ public class Interface{
 							// double
 							if(fieldClassName.equals("Double")) {
 								double number = field.getDouble(instance);
-								// See if we have a relative (e.g. Kan *10) or absolute (e.g. Kan 1e-10) value
 								number = Double.parseDouble(value);			// Absolute
 								if(field.getDouble(instance) != number) {
 									field.setDouble(instance, number);
