@@ -42,7 +42,7 @@ public class Model implements Serializable {
 	// --> Sticking
 	public boolean sticking = false;
 	public boolean[][] stickType = new boolean[NXType][NXType];
-	public double Ks 	= 1e-11;
+	public double[][] Ks 	= new double[NXType][NXType];
 	public double stickStretchLim = 1e-6;		// Maximum tension for sticking springs
 	public double stickFormLim = 0.5e-6; 		// Added to rest length to check if we should form sticking springs
 	// --> Anchoring
@@ -206,6 +206,10 @@ public class Model implements Serializable {
 				E.printStackTrace();
 			}
 		}
+		// Throw error if desired
+		if(format.equalsIgnoreCase("error")) {
+			throw new RuntimeException(string);
+		}
 	}
 	
 	public void Write(String message, String format) {
@@ -346,7 +350,7 @@ public class Model implements Serializable {
 	//////////////////////
 	public int[] Relaxation() throws RuntimeException {
 		final FirstOrderIntegrator odeIntegrator = new DormandPrince54Integrator(0, relaxationTimeStepdt, ODETol, ODETol); 	// (minStep, maxStep, absTol, relTol)
-//		final FirstOrderIntegrator odeIntegrator = new MidpointIntegrator(ODETol); 											// (stepSize)
+//		final FirstOrderIntegrator odeIntegrator = new MidpointIntegrator(relaxationTimeStepdt/20.0); 											// (stepSize)
 		final RelaxationODE ode = new RelaxationODE(this); 			// Subclass of FirstOrderDifferentialEquations in Apache Commons
 		StepHandler stepHandler = new StepHandler() {
 			public void init(double t0, double[] y0, double t) {}
