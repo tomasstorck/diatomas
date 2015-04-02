@@ -108,6 +108,10 @@ public class Interface{
 			}
 			model = Load(loadName);
 			model.Write("Loaded " + loadName, "");
+			// Check if we are loading a simulation that has finished the relaxation step.  
+			if(model.growthIter*(int)(model.relaxationTimeStep/model.relaxationTimeStepdt) != model.relaxationIter) {
+				model.Write("Relaxation was not finished in the loaded simulation, specify file to be loaded manually","error");
+			}
 		}
 		// Set name to prevent writing things to default folder
 		if(!argument.containsKey("load")) {
