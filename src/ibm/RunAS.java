@@ -36,6 +36,7 @@ public class RunAS extends Run {
 		model.filament = true;
 		model.filType[filF] = true;			// Only filament former forms filaments
 		model.sticking = true;
+		model.Ks[filF][flocF] = model.Ks[flocF][filF] = model.Ks[filF][filF] = model.Ks[flocF][flocF] = 1e-11;
 		model.stickType[filF][flocF] = model.stickType[flocF][filF] = model.stickType[filF][filF] = model.stickType[flocF][flocF] = true;	// Anything sticks
 		model.anchoring = false;
 		model.normalForce = false;

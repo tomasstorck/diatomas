@@ -24,6 +24,7 @@ public class RunEcoli extends Run {
 		model.radiusCellStDev[4] = model.radiusCellMax[4]*0.05;	// [m] Standard deviation from radiusCellMax. Note that this will work only with fixed radius rods! Spheres and var. radius rods must have a "free" radius
 		model.NCellInit = 1;
 		model.normalForce = true;
+		model.Ks[4][4] = 1e-11;
 		model.KfRod = new double[]{5e-13, 5e-13};
 		model.filStretchLim = 1e-6;
 		model.filType[4] = true;

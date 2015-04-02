@@ -37,19 +37,16 @@ public class RunAOM extends Run {
 		model.attachmentRate = 0.0;
 		model.filament = false;
 		model.sticking = true;
-//		model.stickType[anme][anme] = model.stickType[anme][dss] = model.stickType[dss][anme] = model.stickType[dss][dss] = true;	// Anything sticks
-//		model.stickType[anme][dss] = model.stickType[dss][anme] = model.stickType[dss][dss] = true;
-//		model.stickType[dss][dss] = true;
 		model.stickType[anme][anme] = true;
 //		model.stickType[anme][dss] = model.stickType[dss][anme] = true;
+//		model.stickType[dss][dss] = true;
+		model.Ks[anme][anme] = 1e-12; 			// Scaled for cell size (default 1e-11)
+//		model.Ks[anme][dss] = model.Ks[dss][anme] = model.Ks[dss][dss] = 1e-14;
 		model.stickFormLim = 0.1e-6;
 		model.stickStretchLim = 0.5e-6;
 		model.anchoring = false;
 		model.normalForce = false;
 		model.electrostatic = false;
-//		model.Kc = 1e-11; 						// Scaled for cell size (default 1e-10)
-		model.Ks = 1e-12; 						// Scaled for cell size (default 1e-11)
-//		model.Kd = 1e-11;						// Scaled for cell size (default 1e-13)
 	}
 	
 	public void Start() {
@@ -84,7 +81,7 @@ public class RunAOM extends Run {
 				radiusModifier[ii] = 0.0;
 				// Inoculum positioning: organised aggregate
 //				double rAggregate = 1.0e-6; 	// works well for model.NCellInit == 60
-				double rAggregate = 0.8e-6; 	// works well for model.NCellInit == 13
+				double rAggregate = 0.9e-6; 	// works well for model.NCellInit == 13
 				int NOverlap = 0;
 				while(true) {
 					if(NOverlap > 10000) {
@@ -98,13 +95,20 @@ public class RunAOM extends Run {
 						double d = rAggregate;
 						position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
 					}
+					boolean overlap = false;
 					for(int jj=0; jj<ii; jj++) {
-						if( (position0Init[ii].minus(position0Init[jj])).norm() - radiusInit[ii] - radiusInit[jj] < 0.0) { 		// Cells probably overlap
-							NOverlap += 1;
-							continue;
+						if( (position0Init[ii].minus(position0Init[jj])).norm() - radiusInit[ii] - radiusInit[jj] < 0.0) { 		// Cells probably overlap (always if spheres)
+							overlap = true;
+							break;
 						}
 					}
-					break; 		// No overlap, next cell
+					if(overlap) { 
+						NOverlap += 1; 		// Add 1 to number of failed attempts
+						continue;			// Continue finding a better position
+					} else {
+						break; 				// No overlap, next cell
+					}
+					
 				}
 //				// Inoculum positioning: random
 //				boolean overlap = true;

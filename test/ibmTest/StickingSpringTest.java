@@ -21,7 +21,7 @@ public class StickingSpringTest {
 		model.sticking = true;
 		model.MWX = 10;
 		model.rhoX = 100;
-		model.Ks = 1e-11;
+		model.Ks[0][0] = 1e-11;
 		for(int ii=0; ii<model.stickType.length; ii++) {
 			for(int jj=0; jj<model.stickType[0].length; jj++) {
 				model.stickType[ii][jj] = true;

@@ -44,7 +44,7 @@ public class StickSpring extends Spring {
 			if(cell0.type<6 && cell1.type<6) 	springDiv = 4.0;
 			else throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
 		} else 									springDiv = 2.0;
-		K = model.Ks/springDiv;
+		K = model.Ks[cell0.type][cell1.type]/springDiv;
 	}
 	
 	public int Break() {
