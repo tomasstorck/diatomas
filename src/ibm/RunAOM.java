@@ -79,49 +79,57 @@ public class RunAOM extends Run {
 				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
 				radiusInit[ii] = Ball.Radius(nInit[ii], typeInit[ii], model);		// TODO: Is nInit correct or should we divide by 2 for rod cells?
 				radiusModifier[ii] = 0.0;
-				// Inoculum positioning: organised aggregate
 //				double rAggregate = 1.0e-6; 	// works well for model.NCellInit == 60
-				double rAggregate = 0.9e-6; 	// works well for model.NCellInit == 13
+//				double rAggregate = 0.9e-6; 	// works well for model.NCellInit == 18 with organised aggregate
+				double rAggregate = 0.7e-6; 	// works well for model.NCellInit == 18 with random inoculum
+//				// Inoculum positioning: organised aggregate
+//				int NOverlap = 0;
+//				while(true) {
+//					if(NOverlap > 10000) {
+//						throw new RuntimeException("Could not find a non-overlappting initial cell configuration"); 
+//					}
+//					if(typeInit[ii]==anme) {
+//						double d = rand.Double()*(rAggregate - 0.2e-6 - model.radiusCellMax[anme]);
+//						position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
+//					}
+//					else if(typeInit[ii]==dss) {
+//						double d = rAggregate;
+//						position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
+//					}
+//					boolean overlap = false;
+//					for(int jj=0; jj<ii; jj++) {
+//						if( (position0Init[ii].minus(position0Init[jj])).norm() - radiusInit[ii] - radiusInit[jj] < 0.0) { 		// Cells probably overlap (always if spheres)
+//							overlap = true;
+//							break;
+//						}
+//					}
+//					if(overlap) { 
+//						NOverlap += 1; 		// Add 1 to number of failed attempts
+//						continue;			// Continue finding a better position
+//					} else {
+//						break; 				// No overlap, next cell
+//					}
+//					
+//				}
+				
+				// Inoculum positioning: random
 				int NOverlap = 0;
-				while(true) {
-					if(NOverlap > 10000) {
-						throw new RuntimeException("Could not find a non-overlappting initial cell configuration"); 
+				boolean overlap = true;
+				while(overlap) {
+					if(NOverlap>10000) {
+						throw new RuntimeException("Could not find a non-overlappting initial cell configuration");
 					}
-					if(typeInit[ii]==anme) {
-						double d = rand.Double()*(rAggregate - 0.2e-6 - model.radiusCellMax[anme]);
-						position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
-					}
-					else if(typeInit[ii]==dss) {
-						double d = rAggregate;
-						position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
-					}
-					boolean overlap = false;
+					double d = rand.Double() * rAggregate;
+					position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
+					overlap = false;
 					for(int jj=0; jj<ii; jj++) {
-						if( (position0Init[ii].minus(position0Init[jj])).norm() - radiusInit[ii] - radiusInit[jj] < 0.0) { 		// Cells probably overlap (always if spheres)
+						if( (position0Init[ii].minus(position0Init[jj])).norm() - radiusInit[ii] - radiusInit[jj] < 0.0) { 		// Cells probably overlap
 							overlap = true;
+							NOverlap += 1;
 							break;
 						}
 					}
-					if(overlap) { 
-						NOverlap += 1; 		// Add 1 to number of failed attempts
-						continue;			// Continue finding a better position
-					} else {
-						break; 				// No overlap, next cell
-					}
-					
 				}
-//				// Inoculum positioning: random
-//				boolean overlap = true;
-//				while(overlap) {
-//					double d = rand.Double() * 1e-6;
-//					position0Init[ii] = new Vector3d((rand.Double()-0.5),(rand.Double()-0.5),(rand.Double()-0.5)).normalise().times(d);
-//					overlap = false;
-//					for(int jj=0; jj<ii; jj++) {
-//						if( (position0Init[ii].minus(position0Init[jj])).norm() - radiusInit[ii] - radiusInit[jj] < 0.0) { 		// Cells probably overlap
-//							overlap = true;
-//						}
-//					}
-//				}
 			}
 			position1Init = position0Init;
 			
@@ -137,11 +145,18 @@ public class RunAOM extends Run {
 						filament,										// With capability to form filaments?
 						model);
 			}
+			
+//			for(Ball ball : model.ballArray) 						// Enable for reproducible, less dense geometry
+//				ball.pos = ball.pos.times(0.9/0.7);
+//			}
+			
 			model.Write(model.cellArray.size() + " initial cells created","iter");
 	
 			if(!model.DetectCollisionCellArray(1.0).isEmpty()) {
 				model.Write("Initial cells overlap", "warning");
 			}
+			
+
 			
 			// Save and convert the file
 			model.Save();
