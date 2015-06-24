@@ -7,7 +7,7 @@ import os, re, time, subprocess
 
 iterModDiv = 1
 
-dirPathList = ["/home/tomas/documenten/modelling/diatomas_symlink/results/ecoli_noanchor_dlvo_newModel2"]
+dirPathList = ["/home/tomas/documenten/modelling/diatomas_symlink/results/as_low_bridging_seed2"]
 for d in dirPathList:
     print(time.strftime('%H:%M:%S   ') + d)
     dAbs = d + "/output"
@@ -16,7 +16,7 @@ for d in dirPathList:
     for f in fileList:
         ###################
         # Optional: skip some files manually
-        if int(re.match('g(\d{4})r(\d{4}).mat',f).group(2)) > 500:
+        if int(re.match('g(\d{4})r(\d{4}).mat',f).group(2)) != 560:
             continue
         ###################
         print(time.strftime('%H:%M:%S   ') + "\t" + f)
@@ -24,7 +24,7 @@ for d in dirPathList:
             # relaxation iteration (YYYY in filename gXXXXrYYYY.mat) % iterModulusDivider == 0
             continue
         fAbs = dAbs + "/" + f
-        callStr = ["blender", "--background", "--python", "ecoli.py", "--", fAbs]              # Call string is with filename
+        callStr = ["blender", "--background", "--python", "as_nofil.py", "--", fAbs]              # Call string is with filename
         [stdout, _] = subprocess.Popen(callStr, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()
         stdout = stdout.decode()
         if 'Error' in stdout:

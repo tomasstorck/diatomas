@@ -10,3 +10,4 @@ diatomas.jar
 *.class
 /results
 /series.py
+/blender (copy)/
