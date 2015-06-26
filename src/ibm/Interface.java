@@ -20,9 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.GZIPInputStream;
-
-import javax.swing.text.StyledEditorKit.BoldAction;
-
 import ser2mat.ser2mat;
 
 public class Interface{
