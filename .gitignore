@@ -3,11 +3,8 @@
 /state
 /.settings
 /.externalToolBuilders
-/.git*
 diatomas.jar
 .classpath
 .project
 *.class
 /results
-/series.py
-/blender (copy)/
