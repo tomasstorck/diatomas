@@ -8,7 +8,9 @@ Eclipse and Git are used for managing this project. Arch Linux and JRE 7 (OpenJD
 Importing the latest version into Eclipse
 -----------------------------------------
 1. clone the git repository (https://github.com/tomasstorck/diatomas)
+```
 git clone https://github.com/tomasstorck/diatomas.git
+```
 2. create a new project in eclipse and select the folder created in step 1, the defaults will do for now.
 3. download the Apache Commons Math library .jar file, available in the Arch Linux User repository (as java-commons-math) or directly from Apache (download the binaries from http://commons.apache.org/proper/commons-math/download_math.cgi). Add this as an external library (Project Properties > Java Build Path > Libraries > Add External JARs).
 4. download the MatIO library (https://github.com/gradusnikov/jmatio) and compile using Maven. On Arch Linux, install from the Arch Linux User Repository (as java-jmatio). Add as an external library as described in step 3. 
