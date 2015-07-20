@@ -27,7 +27,7 @@ public class RunAOM extends Run {
 		model.muStDev[dss]  = 0.2*model.muAvgSimple[dss];		// Defined as one fifth
 		model.syntrophyType = new int[]{dss};
 		model.syntrophyPartner = new int[]{anme};
-		model.syntrophyA = 1.0; 								// Syntrophy can speed up growth to a factor syntrophyA
+		model.syntrophyA = 1.0; 								// Syntrophy can speed up growth to a factor syntrophyA. 1.0 means no speed-up.
 		model.syntrophyB = 0.2; 								// 0.2 --> doesn't reach max. growth rate easily
 		model.syntrophyDist = 1e-6;
 //		model.NCellInit = 60;
