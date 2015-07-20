@@ -8,3 +8,4 @@ diatomas.jar
 .project
 *.class
 /results
+/lib
