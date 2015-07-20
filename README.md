@@ -15,6 +15,20 @@ git clone https://github.com/tomasstorck/diatomas.git
 5. add JUnit to the Java build path (Project Properties > Jva Build Path > Libraries > Add Library).
 6. (optional) add the COMSOL library files if you cloned this branch (similar to 3; files are in COMSOL subfolder plugins, add all of them). The model will work fine without this step if you do not use the COMSOL functionalities.
 
+Compiling and running
+---------------------
+The model is compiled by running the Ant build file (`antjar.xml`). This can easily be done from Eclipse (right-click `antjar.xml` > Run As > Ant Build)
+
+Model parameters and the order in which steps are executed are defined in the `src/ibm/Run*.java` files, therefore files need to be recompiled upon changes. Alternatively, minor changes can be made without recompiling by passing arguments via the command line. For example, to run a simulation for anaerobic oxidation of methane with 36 initial cells, start:
+```
+java -jar diatomas.jar simulation 4 NCellInit 36
+```
+
+A description of the parameters is given in the source code of `src/ibm/Model.java` or via 
+```
+java -jar diatomas.jar --help
+```
+
 Pushing changes
 ---------------
 Feel free to fork the repository on GitHub and submit pull requests, especially for bugfixes and unit tests. Please keep in mind, however, that I am no longer working on this project full-time.
