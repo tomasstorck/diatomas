@@ -15,7 +15,7 @@ git clone https://github.com/tomasstorck/diatomas.git
 3. copy the following library files directly into the folder `lib`:
   * download the Apache Commons Math library `commons-math3-*.jar` file, available directly from Apache (download and extract the binaries from http://commons.apache.org/proper/commons-math/download_math.cgi) or via the Arch Linux User repository (as `java-commons-math`).
   * download the MatIO library (https://github.com/gradusnikov/jmatio), compile using Maven and copy the resulting .jar file. On Arch Linux, download and compile using the Arch Linux User Repository (package `java-jmatio`).
-  * (optional) copy the COMSOL library files if you cloned this branch. Copy the `com.comsol.*.jar` files in the root of the `plugins` subdirectory.
+  * (optional) copy the COMSOL library files if you cloned this branch. Copy the `*.jar` files in the root of the `plugins` subdirectory.
 4. add the library files from step 3 to the Java Build Path (Project > Properties > Java Build Path > Libraries > Add JARs).
 5. add JUnit to the Java build path (Project > Properties > Java Build Path > Libraries > Add Library).
 
