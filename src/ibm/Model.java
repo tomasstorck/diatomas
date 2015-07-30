@@ -29,14 +29,13 @@ public class Model implements Serializable {
 	public String name = "default";
 	public int simulation = 0;					// The simulation type: see Run
 	public int randomSeed = 1;
-	public boolean comsol = false;
 	// Domain properties
-	public Vector3d L 	= new Vector3d(2e-6, 2e-6, 2e-6);
-	public Vector3d Linit = new Vector3d(1e-6, 1e-6, 1e-6);
+	public Vector3d L 	= new Vector3d(2e-6, 2e-6, 2e-6); 	// Used only in COMSOL simulations
+	public Vector3d Linit = new Vector3d(1e-6, 1e-6, 1e-6); // Used to generate cell inoculum
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
-	public double rhoX	= 1010;					// [kg/m3], diatoma density
+	public double rhoX	= 1010;					// [kg/m3], cell density
 	public double MWX 	= 24.6e-3;				// [kg/mol], composition CH1.8O0.5N0.2
-	public int NXType = 6;
+	public int NXType = 6; 						// Number of different cell types available (not all of these have to be used)
 	// --> Intracellular (rod) springs
 	public double Kr 	= 5e-11;				// internal cell spring
 	// --> Sticking
@@ -49,7 +48,7 @@ public class Model implements Serializable {
 	public boolean anchoring = false;
 	public boolean anchorGliding = false;		// Do anchor springs glide, or attach to fixed point?
 	public double Kan	= 1e-11;				// anchor
-	public double anchorStretchLim = 1e-6;	// Maximum tension for anchoring springs
+	public double anchorStretchLim = 1e-6;		// Maximum tension for anchoring springs
 	public double anchorFormLim = 0.5e-6;		// Multiplication factor for rest length to form anchors. Note that actual rest length is the distance between the two, which could be less
 	// --> Filaments
 	public boolean filament = false;
@@ -57,8 +56,8 @@ public class Model implements Serializable {
 	public double KfSphere 	= 2e-11;			// filament spring for sphere-sphere filial links
 	public double[] KfRod 	= {2e-11, 2e-11};	// filament spring for rod-rod filial links {short spring, long spring}
 	public boolean filSphereStraightFil = false;// Make streptococci-like structures if true, otherwise staphylococci
-	public double filRodBranchFrequency = 0.0;// Which fraction of daughter cells form a branching filial link instead of a straight
-	public double filStretchLim = 2e-6;		// Maximum tension for sticking springs
+	public double filRodBranchFrequency = 0.0;	// Which fraction of daughter cells form a branching filial link instead of a straight
+	public double filStretchLim = 2e-6;			// Maximum tension for sticking springs
 	public double filLengthSphere = 1.1;		// How many times R2 the sphere filament's rest length is
 	public double[] filLengthRod = {0.5, 1.7};	// How many times R2 the rod filament's [0] short and [1] long spring rest length is
 	// --> Gravity/buoyancy, drag and electrostatics
@@ -97,7 +96,7 @@ public class Model implements Serializable {
 	public double syntrophyDist = 5e-6; 		// Maximum distance for cell to be counted to contribute to syntrophy (radius already subtracted) 
 	public double syntrophyA = 2; 				// Pre-exponential factor. Maximum achievable factor for GrowthSimple()
 	public double syntrophyB = 0; 				// Factor before -N in exp(). How quickly syntrophyA is approached
-	public int[] activeCellType = new int[0]; 	// Used to keep track, e.g. for plotting
+	public int[] activeCellType = new int[0]; 	// Used to keep track, e.g. for plotting. Generally set by UpdateDependentParameters(), do not hard-code. 
 	// Attachment
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public int attachCellType = 0;				// What cell type the new cell is 

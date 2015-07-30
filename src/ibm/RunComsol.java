@@ -1,3 +1,4 @@
+// Demo file to test COMSOL integration into the IbM. More a proof-of-principle than usable code. Based mostly on RunAS 
 package ibm;
 
 import java.io.IOException;
@@ -16,8 +17,9 @@ public class RunComsol extends Run {
 	public void Initialise() {
 		model.Write("Loading parameters for COMSOL","");
 		// Load default parameters
-		int filF = model.filF;
-		int flocF = model.flocF;
+		int filF = model.filF = 4;
+		int flocF = model.flocF = 5;
+		model.activeCellType = new int[]{filF, flocF};
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
 		model.Linit = new Vector3d(7e-6, 7e-6, 7e-6);
 		model.radiusCellMax[filF] = 0.5e-6;					// [m] (Lau 1984)
@@ -27,8 +29,8 @@ public class RunComsol extends Run {
 		if(flocF>2)	model.lengthCellMax[flocF] = 1.1e-6;	// [m] (Lau 1984), compensated
 		model.muAvgSimple[filF] = 0.271;					// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
 		model.muAvgSimple[flocF] = 0.383;		// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
+		model.muStDev[filF]  = 0.2*model.muAvgSimple[filF];		// Defined as one fifth
 		model.muStDev[flocF] = 0.2*model.muAvgSimple[flocF];
-		model.muStDev[filF]  = 0.2*model.muAvgSimple[filF];		// Defined as one fifth 
 		model.NCellInit = 18;
 		model.growthTimeStep = 300.0;
 		model.attachCellType = 5;
@@ -46,10 +48,8 @@ public class RunComsol extends Run {
 		model.UpdateDependentParameters();		// Update model parameters
 		
 		// Connect to COMSOL server
-		if(model.comsol) {
-			model.Write("Starting server and connecting model to localhost:" + port, "iter");
-			Server.Connect(port);
-		}
+		model.Write("Starting server and connecting model to localhost:" + port, "iter");
+		Server.Connect(port);
 		
 		// Initialise model if we are starting a new simulation
 		int filF = model.filF;

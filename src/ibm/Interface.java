@@ -123,6 +123,9 @@ public class Interface{
 		} else if(model.simulation == 2) {
 			message += "Activated Sludge";
 			instance = new RunAS(model);
+		} else if(model.simulation == 3) {
+			message += "COMSOL demo";
+			instance = new RunComsol(model);
 		} else if(model.simulation == 4) {
 			message += "AOM/SR";
 			instance = new RunAOM(model);
