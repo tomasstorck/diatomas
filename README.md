@@ -26,9 +26,9 @@ The model is compiled well by Eclipse without making changes to the default conf
 
 In order to run with COMSOL support, the following VM argument must be included under Run > Run Configurations > Arguments > VM arguments:
 ```
--Dcs.root=/opt/$PATH
+-Dcs.root=$PATH
 ```
-with the path to the COMSOL folder root substituted for `$PATH` (e.g., `comsol43a`)
+with the path to the COMSOL folder root substituted for `$PATH` (e.g., `/opt/comsol43a`)
 
 Model parameters and the order in which steps are executed are defined in the `src/ibm/Run*.java` files, therefore files need to be recompiled upon changes. Alternatively, minor changes can be made without recompiling by passing arguments via the command line. For example, to run a simulation for anaerobic oxidation of methane with 36 initial cells, start with program arguments:
 ```
