@@ -22,16 +22,27 @@ git clone https://github.com/tomasstorck/diatomas.git
 
 Compiling and running
 ---------------------
-The model is compiled by running the Ant build file (`antjar.xml`). This can easily be done from Eclipse (right-click `antjar.xml` > Run As > Ant Build)
+The model is compiled well by Eclipse without making changes to the default configuration.
 
-Model parameters and the order in which steps are executed are defined in the `src/ibm/Run*.java` files, therefore files need to be recompiled upon changes. Alternatively, minor changes can be made without recompiling by passing arguments via the command line. For example, to run a simulation for anaerobic oxidation of methane with 36 initial cells, start:
+In order to run with COMSOL support, the following VM argument must be included under Run > Run Configurations > Arguments > VM arguments:
 ```
-java -jar diatomas.jar simulation 4 NCellInit 36
+-Dcs.root=/opt/$PATH
+```
+with the path to the COMSOL folder root substituted for `$PATH` (e.g., `comsol43a`)
+
+Model parameters and the order in which steps are executed are defined in the `src/ibm/Run*.java` files, therefore files need to be recompiled upon changes. Alternatively, minor changes can be made without recompiling by passing arguments via the command line. For example, to run a simulation for anaerobic oxidation of methane with 36 initial cells, start with program arguments:
+```
+simulation 4 NCellInit 36
 ```
 
-A description of the parameters is given in the source code of `src/ibm/Model.java` or via 
+A description of the parameters is given in the source code of `src/ibm/Model.java` or via program argument:
 ```
-java -jar diatomas.jar --help
+--help
+```
+
+Note that Eclipse will prompt for program arguments on every run if the following string is set as program argument:
+```
+${string_prompt}
 ```
 
 Pushing changes
