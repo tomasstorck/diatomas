@@ -1,28 +1,33 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project default="create_run_jar" name="Create Runnable Jar for Project diatomas">
-    <!--define folder properties-->
-    <property name="dir.jarfile" value="."/>
-	<property name="dir.lib" value="./lib"/>
-	<property name="dir.temp" value="./build"/>
-    <target name="create_run_jar">
-    	<!-- Flatten and repack library files -->
-    	<unzip dest="${dir.temp}">
+<project default="compile_and_clean" name="Create Runnable Jar for Diatomas">
+    <!--define folder properties -->
+	<property name="dir.root" value="."/>
+	<property name="dir.bin"  value="${dir.root}/bin"/>
+	<property name="dir.lib"  value="${dir.root}/lib"/>
+	<property name="dir.src"  value="${dir.root}/src"/>
+	<property name="dir.temp" value="${dir.root}/build"/>
+	<!-- set up targets -->
+	<target name="prepare">
+		<unzip dest="${dir.temp}">
             <fileset dir="${dir.lib}">
                 <include name="**/*.jar" />
             </fileset>    
         </unzip>
-    	<zip destfile="${dir.jarfile}/lib.zip">
-    	    <zipfileset dir="${dir.temp}"/>
-    	</zip>
-    	<!-- Create jar -->
-        <jar destfile="${dir.jarfile}/diatomas.jar" filesetmanifest="mergewithoutmain">
+	</target>
+    <target name="compile"  depends="prepare">
+        <jar destfile="${dir.root}/diatomas.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="ibm.Interface"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-            <fileset dir="${dir.jarfile}/bin"/>
-            <zipfileset excludes="META-INF/*.SF" src="/usr/lib/eclipse/plugins/org.hamcrest.core_1.3.0.v201303031735.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="${dir.jarfile}/lib.zip"/>
+            <fileset dir="${dir.bin}"/>
+    	    <fileset dir="${dir.src}" includes="**/*.java"/>
+            <zipfileset excludes="META-INF/*.SF" dir="${dir.temp}"/>
         </jar>
     </target>
+	<target name="clean">
+		<delete dir="${dir.temp}"/>
+	</target>
+	<target name="compile_and_clean" depends="compile,clean">
+	</target>
 </project>
