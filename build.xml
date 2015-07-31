@@ -14,7 +14,10 @@
             </fileset>    
         </unzip>
 	</target>
-    <target name="compile_with_lib"  depends="prepare">
+	<target name="compile">
+		<javac srcdir="${dir.src}" destdir="${dir.bin}"/>
+	</target>
+    <target name="pack_with_lib"  depends="prepare,compile">
         <jar destfile="${dir.root}/diatomas.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Main-Class" value="ibm.Interface"/>
@@ -26,7 +29,7 @@
         </jar>
     </target>
 	
-	<target name="compile_without_lib">
+	<target name="pack_without_lib" depends="compile">
 		<!--define CLASSPATH based on contents lib directory, based on http://stackoverflow.com/questions/858766/generate-manifest-class-path-from-classpath-in-ant (Qianjigui) -->
 		<path id="build.classpath">
 		  <fileset dir="${dir.lib}">
@@ -55,8 +58,8 @@
 	<target name="clean">
 		<delete dir="${dir.temp}"/>
 	</target>
-	<target name="compile_with_lib_and_clean" depends="prepare,compile_with_lib,clean">
+	<target name="compile_with_lib_and_clean" depends="prepare,pack_with_lib,clean">
 	</target>
-	<target name="compile_without_lib_and_clean" depends="compile_without_lib,clean">
+	<target name="compile_without_lib_and_clean" depends="pack_without_lib,clean">
 	</target>
 </project>
