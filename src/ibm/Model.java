@@ -32,7 +32,8 @@ public class Model implements Serializable {
 	// Domain properties
 	public Vector3d L 	= new Vector3d(2e-6, 2e-6, 2e-6); 	// Used only in COMSOL simulations
 	public Vector3d Linit = new Vector3d(1e-6, 1e-6, 1e-6); // Used to generate cell inoculum
-	public int NXType = 6; 						// Number of different cell types available (not all of these have to be used)
+	public int NXType = 2; 						// Number of different cell types available (not all of these have to be used)
+	public int[] shapeX = new int[NXType];		// 0 == sphere, 1 == rod
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double[] rhoX = new double[NXType];	// [kg/m3], cell density
 	public double[] MWX = new double[NXType];	// [kg/mol], composition CH1.8O0.5N0.2
@@ -74,8 +75,8 @@ public class Model implements Serializable {
 	public boolean normalForce = false;			// Use normal force to simulate cells colliding with substratum (at y=0)
 	public boolean initialAtSubstratum = false;	// All initial balls are positioned at y(t=0) = ball.radius
 	// --> Collision forces
-	public double Kc 	= 1e-10;					// cell-cell collision
-	public double Kw 	= 1e-10;				// wall(substratum)-cell spring
+	public double Kc 	= 1e-10;				// cell-cell collision
+	public double Kw 	= 1e-10;				// wall (substratum)-cell spring
 	// Model biomass and growth properties
 	public int NdComp = 5;						// d for dynamic compound (e.g. total Ac)
 	public int NcComp = 8;						// c for concentration (or virtual compound, e.g. Ac-)
@@ -96,7 +97,7 @@ public class Model implements Serializable {
 	public double syntrophyDist = 5e-6; 		// Maximum distance for cell to be counted to contribute to syntrophy (radius already subtracted) 
 	public double syntrophyA = 2; 				// Pre-exponential factor. Maximum achievable factor for GrowthSimple()
 	public double syntrophyB = 0; 				// Factor before -N in exp(). How quickly syntrophyA is approached
-	public int[] activeCellType = new int[0]; 	// Used to keep track, e.g. for plotting. Generally set by UpdateDependentParameters(), do not hard-code. 
+	//public int[] activeCellType = new int[0]; 	// Used to keep track, e.g. for plotting. Generally set by UpdateDependentParameters(), do not hard-code. 
 	// Attachment
 	public double attachmentRate = 0.0;			// [h-1] Number of cells newly attached per hour
 	public int attachCellType = 0;				// What cell type the new cell is 
@@ -129,8 +130,8 @@ public class Model implements Serializable {
 	public int filF = -1;
 	// === AOM/SR STUFF===
 	public double[] yieldXS = new double[]{2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};		// [Cmol X/mol reaction] yield of biomass. Reactions are normalised to mol substrate
-	public int anme = -1;
-	public int dss = -1;
+//	public int anme = -1;
+//	public int dss = -1;
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
 	/////////////////////////////////////
@@ -140,30 +141,34 @@ public class Model implements Serializable {
 	
 	public void UpdateDependentParameters() {
 		// Update the nCellMax based on supplied radiusCellMax and lengthCellMax
-		for(int ii = 0; ii<2; ii++) {
-			nCellMax[ii] 		= (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3))*rhoX[ii]/MWX[ii]; 
-			nCellMin[ii] 		= 0.5 * nCellMax[ii];
-		}
-		for(int ii = 2; ii<6; ii++) {
-			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3) + Math.PI*Math.pow(radiusCellMax[ii],2)*lengthCellMax[ii])*rhoX[ii]/MWX[ii];
-			nCellMin[ii] = 0.5 * nCellMax[ii];
-			if(ii<4) {
-				radiusCellMin[ii] = Ball.Radius(nCellMin[ii], ii, this);
-				lengthCellMin[ii] = radiusCellMin[ii] * lengthCellMax[ii]/radiusCellMax[ii];		// min radius times constant aspect ratio	
+		for(int ii = 0; ii<NXType; ii++) {
+			int shape = shapeX[ii];
+			if(shape==0) {
+				nCellMax[ii] 		= (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3))*rhoX[ii]/MWX[ii]; 
+				nCellMin[ii] 		= 0.5 * nCellMax[ii];
+			} else if(shape==1 || shape==2) {
+				nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3) + Math.PI*Math.pow(radiusCellMax[ii],2)*lengthCellMax[ii])*rhoX[ii]/MWX[ii];
+				nCellMin[ii] = 0.5 * nCellMax[ii];
+				if(ii==1) {
+					radiusCellMin[ii] = Ball.Radius(nCellMin[ii], ii, this);
+					lengthCellMin[ii] = radiusCellMin[ii] * lengthCellMax[ii]/radiusCellMax[ii];		// min radius times constant aspect ratio	
+				} else {
+					radiusCellMin[ii] = radiusCellMax[ii];
+					lengthCellMin[ii] = nCellMin[ii]*MWX[ii]/(Math.PI*rhoX[ii]*Math.pow(radiusCellMin[ii],2.0)) - 4.0/3.0*radiusCellMin[ii];	
+				}
 			} else {
-				radiusCellMin[ii] = radiusCellMax[ii];
-				lengthCellMin[ii] = nCellMin[ii]*MWX[ii]/(Math.PI*rhoX[ii]*Math.pow(radiusCellMin[ii],2.0)) - 4.0/3.0*radiusCellMin[ii];	
+				throw new IndexOutOfBoundsException("Cell type: " + ii);
 			}
 			
 		}
-		// Update activeCellTypes
-		if(simulation == 0) { 					// E. coli
-			this.activeCellType = new int[]{4};
-		} else if(simulation == 2) { 			// Activated sludge
-			this.activeCellType = new int[]{this.filF, this.flocF};
-		} else if(simulation == 4) { 			// Anaerobic oxidation of methane
-			this.activeCellType = new int[]{this.anme, this.dss};
-		}
+//		// Update activeCellTypes
+//		if(simulation == 0) { 					// E. coli
+//			this.activeCellType = new int[]{4};
+//		} else if(simulation == 2) { 			// Activated sludge
+//			this.activeCellType = new int[]{this.filF, this.flocF};
+//		} else if(simulation == 4) { 			// Anaerobic oxidation of methane
+//			this.activeCellType = new int[]{this.anme, this.dss};
+//		}
 	}
 	
 	
@@ -221,7 +226,12 @@ public class Model implements Serializable {
 	public ArrayList<Cell> DetectFloorCollision(double touchFactor) {				// actual distance < dist*radius--> collision    
 		ArrayList<Cell> collisionCell = new ArrayList<Cell>();
 		for(Cell cell : cellArray) {
-			int NBall = (cell.type<2) ? 1 : 2;	// Figure out number of balls based on type
+			int shape = this.shapeX[cell.type];
+			int NBall = 0; 															// Figure out number of balls based on type
+			if(shape==0)					NBall = 1;
+			else if(shape==1 || shape==2) 	NBall = 2;
+			else throw new IndexOutOfBoundsException("Cell type: " + cell.type);
+
 			for(int iBall=0; iBall<NBall; iBall++) {
 				Ball ball = cell.ballArray[iBall];
 				if(ball.pos.z - touchFactor*ball.radius < 0) {
@@ -250,8 +260,10 @@ public class Model implements Serializable {
 	}
 	
 	public boolean DetectCollisionCellCell(Cell cell0, Cell cell1, double touchFactor) {
+		int shape0 = this.shapeX[cell0.type];
+		int shape1 = this.shapeX[cell1.type];
 		double R2 = cell0.ballArray[0].radius + cell1.ballArray[0].radius; 
-		if(cell0.type < 2 && cell1.type < 2) {				// Ball-ball. Nice and simple
+		if(shape0==0 && shape1==0) {						// Ball-ball. Nice and simple
 			double dist = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos).norm();
 			if(dist<R2*touchFactor) {
 				return true;
@@ -263,7 +275,7 @@ public class Model implements Serializable {
 			Vector3d diff = cell1.ballArray[0].pos.minus(cell0.ballArray[0].pos);
 			Cell rod;	Cell sphere;						// Initialise rod and sphere, should we need it later on (rod-sphere collision detection)
 			double dist;
-			if(cell0.type > 1 && cell1.type > 1) {			// Rod-rod
+			if((shape0==1 || shape0==2) && (shape1==1 || shape1==2)) {					// Rod-rod
 				H2 = 1.5*(touchFactor*( lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2 ));		// Does not take stretching of the rod spring into account, but should do the trick still
 				if(Math.abs(diff.x)<H2 && Math.abs(diff.y)<H2 && Math.abs(diff.z)<H2) {
 					// Do good collision detection
@@ -272,8 +284,8 @@ public class Model implements Serializable {
 				} else {
 					return false;							// Not close enough, won't overlap
 				}
-			} else if(cell0.type<6 && cell1.type<6) {		// Rod-ball
-				if(cell0.type<2) {
+			} else if(shape0<2 && shape1<2) {				// Rod-sphere
+				if(shape0==1 || shape0==2) {
 					rod=cell1;
 					sphere=cell0;
 				} else {
@@ -450,10 +462,12 @@ public class Model implements Serializable {
 		
 		for(int ii=0; ii<cellArray.size(); ii++) {
 			Cell cell0 = cellArray.get(ii);
+			int shape0 = this.shapeX[cell0.type]; 
 			// Anchoring
 			if(anchoring) {
 				Ball ball0 = cell0.ballArray[0];
-				Ball ball1 = (cell0.type>1) ? ball1 = cell0.ballArray[1] : null;
+				Ball ball1 = (shape0==1 || shape0==2) ? ball1 = cell0.ballArray[1] : null;
+				if(shape0>2)	throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
 
 				if(cell0.anchorSpringArray.size()>0) { 		// This cell is already anchored
 					ArrayList<AnchorSpring> breakArray = new ArrayList<AnchorSpring>();
@@ -472,15 +486,15 @@ public class Model implements Serializable {
 					// Form anchor?
 					boolean formBall0 = (ball0.pos.z < anchorFormLim+ball0.radius) ? true : false;
 					boolean formBall1 = false;
-					if(cell0.type > 1) 	formBall1 = (ball1.pos.z < anchorFormLim+ball1.radius) ? true : false;			// If ball1 != null
-					if(formBall0 || formBall1) {
-						NAnchorForm += cell0.Anchor();
-					}
+					if(shape0==1 || shape0==2) 	formBall1 = (ball1.pos.z < anchorFormLim+ball1.radius) ? true : false;			// If ball1 != null
+					if(formBall0 || formBall1) 	NAnchorForm += cell0.Anchor();
+					if(shape0>2)	throw new IndexOutOfBoundsException("Cell type: " + cell0.type);
 				}
 			}
 			// Sticking and filial links
 			for(int jj=ii+1; jj<cellArray.size(); jj++) {	// Only check OTHER cells not already checked in a different order (i.e. factorial elimination)
 				Cell cell1 = cellArray.get(jj);
+				int shape1 = this.shapeX[cell1.type];
 				// Are these cells connected to each other, either through sticking spring or filament?
 				boolean isStuck = false, isFilament = false;
 				Spring stickingSpring = null, filamentSpring = null; 
@@ -517,11 +531,11 @@ public class Model implements Serializable {
 						double R2 = c0b0.radius + c1b0.radius;
 						Vector3d dirn = (c1b0.pos.minus(c0b0.pos));
 						double dist;
-						if(cell0.type<2 && cell1.type<2) {	// both spheres
+						if(shape0==0 && shape1==0) {	// both spheres
 							if(stickType[cell0.type][cell1.type]) { 
 								dist = (c1b0.pos.minus(c0b0.pos)).norm();						// Not a spring, so can't use GetL() yet
 							} else continue;
-						} else if(cell0.type<2) {			// 1st sphere, 2nd rod
+						} else if(shape0==0) {			// 1st sphere, 2nd rod
 							double H2f =  1.5*(stickFormLim+(lengthCellMax[cell1.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.y<H2f && dirn.z<H2f) {
 								Ball c1b1 = cell1.ballArray[1];
@@ -529,7 +543,7 @@ public class Model implements Serializable {
 								ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(c1b0.pos, c1b1.pos, c0b0.pos);
 								dist = C.dist;
 							} else continue;
-						} else if(cell1.type<2) {			// 2nd sphere, 1st rod
+						} else if(shape1==0) {			// 2nd sphere, 1st rod
 							double H2f = 1.5*(stickFormLim+(lengthCellMax[cell0.type] + R2));	// H2 is maximum allowed distance with still change to collide: R0 + R1 + 2*R1*aspect
 							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.y<H2f && dirn.z<H2f) {
 								Ball c0b1 = cell0.ballArray[1];
@@ -537,7 +551,7 @@ public class Model implements Serializable {
 								ericson.ReturnObject C = ericson.DetectCollision.LinesegPoint(c0b0.pos, c0b1.pos, c1b0.pos);
 								dist = C.dist;
 							} else continue;
-						} else if(cell0.type<6 && cell1.type<6) {  	// both rod
+						} else if((shape0==1 || shape0==2) && (shape1==1 || shape1==2)) {  	// both rod
 							double H2f = 1.5*(stickFormLim+(lengthCellMax[cell0.type] + lengthCellMax[cell1.type] + R2));
 							if(stickType[cell0.type][cell1.type] && dirn.x<H2f && dirn.y<H2f && dirn.z<H2f) {
 								Ball c0b1 = cell0.ballArray[1];
@@ -576,7 +590,7 @@ public class Model implements Serializable {
 		return dividedCell;
 	}
 	
-	public ArrayList<Cell> GrowthSyntrophy() throws RuntimeException {								// Growth based on a random number, further enhanced by cell proximity. Used for AOM 
+	public ArrayList<Cell> GrowthSyntrophy() throws RuntimeException {								// Growth based on a random number, further enhanced by cell proximity. Used for AOM
 		int NCell = cellArray.size();
 		ArrayList<Cell> dividedCell = new ArrayList<Cell>(); 
 		for(int iCell=0; iCell<NCell; iCell++){
@@ -597,6 +611,8 @@ public class Model implements Serializable {
 			if(isSyntrophyType) {
 				int N = 0;
 				for(Cell cell : cellArray) {
+					int shapeMother = this.shapeX[mother.type];
+					int shapeCell = this.shapeX[cell.type];
 					boolean isSyntrophyPartner = false;
 					for(int ii=0; ii<syntrophyPartner.length; ii++){
 						if(cell.type == syntrophyPartner[ii]) {
@@ -606,26 +622,25 @@ public class Model implements Serializable {
 					}
 					if(isSyntrophyPartner) {
 						double R2 = mother.ballArray[0].radius + cell.ballArray[0].radius; 			// We'll need the total radius
-						if(mother.type < 2 && cell.type < 2) {
+						if(shapeMother==0 && shapeCell==0) {
 							if(mother.ballArray[0].pos.minus( cell.ballArray[0].pos ).norm() - R2 < syntrophyDist) 		
 								N++;
-						} else if(mother.type < 2 || cell.type < 2) {
-							// Find out who is sphere, rod
-							Cell sphere, rod;
-							if(mother.type < 2) {
-								sphere = mother;
-								rod = cell;
-							} else {
-								sphere = cell;
-								rod = mother;
-							}
-							if(ericson.DetectCollision.LinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos).dist - R2 < syntrophyDist)
-								N++;
-						} else if(mother.type < 6 && cell.type < 6) {
+						} else if((shapeMother==1 || shapeMother==2) && (shapeCell==1 || shapeCell==2)) {
 							if(ericson.DetectCollision.LinesegLineseg(mother.ballArray[0].pos, mother.ballArray[1].pos, cell.ballArray[0].pos, cell.ballArray[1].pos).dist -R2 < syntrophyDist)
 								N++;
 						} else {
-							throw new IndexOutOfBoundsException("Unknown cell types: mother " + mother.type + " and other cell " + cell.type);
+							Cell sphere, rod;
+							if(shapeMother==0 && (shapeCell==1 || shapeCell==2)) {
+								sphere = mother;
+								rod = cell;
+							} else if((shapeMother==1 || shapeMother==2) && shapeCell==0) {
+								sphere = cell;
+								rod = mother;
+							} else {
+								throw new IndexOutOfBoundsException("Unknown cell types: mother " + mother.type + " and other cell " + cell.type);
+							}
+							if(ericson.DetectCollision.LinesegPoint(rod.ballArray[0].pos, rod.ballArray[1].pos, sphere.ballArray[0].pos).dist - R2 < syntrophyDist)
+								N++;
 						}
 					}
 				}
@@ -655,7 +670,8 @@ public class Model implements Serializable {
 		// Nomenclature: c0 == mother, c1 == daughter
 		double n = c0.GetAmount();
 		Cell c1;
-		if(c0.type<2) {
+		int shape = this.shapeX[c0.type];
+		if(shape==0) {
 			///////
 			// Original cell:
 			//     (     )
@@ -714,7 +730,7 @@ public class Model implements Serializable {
 			c1.ballArray[0].force = new Vector3d(c0.ballArray[0].force);
 			c1.mother = 			c0;
 			c1.Rx = 					c0.Rx;
-		} else if (c0.type<6) {
+		} else if (shape==1 || shape==2) {
 			///////
 			// Original cell:
 			// (00)~~~~~~~~~~~~(01)
@@ -781,9 +797,10 @@ public class Model implements Serializable {
 	}
 	
 	public void CreateFilament(Cell c0, Cell c1) {
-		if(c0.type==c1.type && c0.type<2)
+		int shape0 = this.shapeX[c0.type];
+		if(c0.type==c1.type && shape0==0)
 			new FilSpring(c0.ballArray[0], c1.ballArray[0], 3);
-		else if (c0.type==c1.type && c0.type<6) {
+		else if (c0.type==c1.type && (shape0==1 || shape0==2)) {
 			// Make new filial link between mother and daughter
 			FilSpring filSmall = 	new FilSpring(c1.ballArray[0], c0.ballArray[1], 4);							// type==4 --> Small spring
 			FilSpring filBig = 	new FilSpring(c1.ballArray[1], c0.ballArray[0], 5);							// type==? --> Big spring
@@ -795,9 +812,10 @@ public class Model implements Serializable {
 	}
 	
 	public void CreateFilament(Cell daughter, Cell mother, Cell neighbour) {
-		if(mother.type==daughter.type && mother.type<2)
+		int shapeMother = this.shapeX[mother.type];
+		if(mother.type==daughter.type && shapeMother==0)
 			new FilSpring(mother.ballArray[0], daughter.ballArray[0], 3);
-		else if (mother.type==daughter.type && mother.type<6) {
+		else if (mother.type==daughter.type && (shapeMother==1 || shapeMother==2)) {
 			// Make new filial link between mother and daughter
 			FilSpring filSmallDM = 	new FilSpring(daughter.ballArray[0], mother.ballArray[1], 6);
 			FilSpring filBigDM = 		new FilSpring(daughter.ballArray[1], mother.ballArray[0], 7);
@@ -813,7 +831,9 @@ public class Model implements Serializable {
 	}
 	
 	public void TransferFilament(Cell mother, Cell daughter) {
-		if(mother.type < 2 && daughter.type < 2) {
+		int shapeMother = this.shapeX[mother.type];
+		int shapeDaughter = this.shapeX[daughter.type];
+		if(shapeMother==0 && shapeDaughter==0) {
 			Ball motherBall0 = mother.ballArray[0];
 			Ball daughterBall0 = daughter.ballArray[0];
 			ArrayList<FilSpring> donateFilArray = new ArrayList<FilSpring>();
@@ -833,7 +853,7 @@ public class Model implements Serializable {
 				// Reset rest lengths. Spring constant won't change because it depends on cell type
 				fil.ResetRestLength();
 			}
-		} else if(mother.type < 6 && daughter.type < 6) {
+		} else if((shapeMother==1 || shapeMother==2) && (shapeDaughter==1 || shapeDaughter==2)) {
 			Ball c0b0 = mother.ballArray[0];
 			Ball c0b1 = mother.ballArray[1];
 			Ball c1b0 = daughter.ballArray[0];
@@ -897,11 +917,16 @@ public class Model implements Serializable {
 			final double rNew = Ball.Radius(nNew, typeNew, this); 
 			// Create array of balls in non-spherical cells 
 			ArrayList<Ball> ballArrayRod = new ArrayList<Ball>(ballArray.size());
-			for(Ball ball : ballArray) 	if(ball.cell.type>1) 	ballArrayRod.add(ball);
+			for(Ball ball : ballArray) {
+				int shape = ball.cell.model.shapeX[ball.cell.type];
+				if(shape==1 || shape==2) 	ballArrayRod.add(ball);
+				else if(shape>2)	throw new IndexOutOfBoundsException("Cell type: " + ball.cell.type);
+			}
 			// Find a random rod's ball position dest(ination) and move the ball there from dirn ("along the path") until we find a particle
 			Vector3d firstPos = new Vector3d(0.0, 0.0, 0.0);
 			// Create and position the new cell to this champion ball. Position it in the direction of dirn
 			Cell newCell = new Cell(typeNew, nNew, firstPos, new Vector3d(), filNew, this);
+			int shapeNew = this.shapeX[typeNew]; 
 			tryloop:while(true) {
 				// Find dest(ination) based on random position within range of the domain
 				Vector3d[] spread = GetBallSpread();
@@ -970,9 +995,9 @@ public class Model implements Serializable {
 						continue tryloop;
 				// Reposition the cell
 				newCell.ballArray[0].pos = firstPos;
-				if(typeNew>1 && typeNew<6) {
+				if(shapeNew==1 || shapeNew==2) {
 					newCell.ballArray[1].pos = firstPos.plus( dirn.times(newCell.rodSpringArray.get(0).restLength) );
-				} else if (typeNew>6)
+				} else if (shapeNew>2)
 					throw new IndexOutOfBoundsException("Cell type: " + typeNew);
 				// Check if it is not overlapping with any other cells
 				for(int iCell=0; iCell<cellArray.size()-1; iCell++) {

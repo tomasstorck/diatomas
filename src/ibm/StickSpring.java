@@ -39,11 +39,13 @@ public class StickSpring extends Spring {
 		double springDiv;
 		Cell cell0 = ballArray[0].cell;
 		Cell cell1 = ballArray[1].cell;
-		if(cell0.type<2 && cell1.type<2)		springDiv = 1.0;
-		else if(cell0.type>1 && cell1.type>1) {
-			if(cell0.type<6 && cell1.type<6) 	springDiv = 4.0;
-			else throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
-		} else 									springDiv = 2.0;
+		int shape0 = model.shapeX[cell0.type];
+		int shape1 = model.shapeX[cell1.type];
+		if(shape0==0 && shape1==0)										springDiv = 1.0;
+		else if((shape0==1 || shape0==2) && (shape1==1 || shape1==2)) 	springDiv = 4.0;
+		else if(shape0==1 || shape0==2 || shape1==1 || shape1==2) 		springDiv = 2.0;
+		else throw new IndexOutOfBoundsException("Cell types: " + cell0.type + " and " + cell1.type);
+		
 		K = model.Ks[cell0.type][cell1.type]/springDiv;
 	}
 	

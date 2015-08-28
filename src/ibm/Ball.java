@@ -46,15 +46,17 @@ public class Ball implements Serializable {
 	}
 	
 	public static double Radius(double n, int type, Model model, double radiusModifier) {
-		if (type<2) {
-			return Math.pow( 							n*model.MWX[type] / (Math.PI * model.rhoX[type] * 4.0/3.0), .333333);						// Note that rho is in kg m-3 but cell mass is in Cmol
+		int shape = model.shapeX[type];
+		if (shape==0) {
+			return Math.pow( 						n*model.MWX[type] / (Math.PI * model.rhoX[type] * 4.0/3.0), .333333);							// Note that rho is in kg m-3 but cell mass is in Cmol
+		} else if(shape==1) { 									// variable radius balls
+			double aspect = model.lengthCellMax[type] / model.radiusCellMax[type];																	// Aspect is here length over radius (not diameter)
+			return Math.pow(					2.0*n*model.MWX[type] / (Math.PI * model.rhoX[type] * (aspect + 4.0/3.0)), .333333);				// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
+		} else if(shape==2) { 									// fixed radius balls
+			double aspect = model.lengthCellMax[type] / model.radiusCellMax[type];
+			return Math.pow(     model.nCellMax[type]*model.MWX[type] / (Math.PI * model.rhoX[type] * (aspect + 4.0/3.0)), .333333) + radiusModifier;
 		} else {
-			double aspect = model.lengthCellMax[type] / model.radiusCellMax[type];														// Aspect is here length over radius (not diameter) 
-			if(type<4) {			// type == 2 || 3 is variable radius balls
-				return Math.pow(					2.0*n*model.MWX[type] / (Math.PI * model.rhoX[type] * (aspect + 4.0/3.0)), .333333);			// Note that 2.0*mass could at some point in the future be wrong. Can't use GetMass() yet
-			} else {					// type == 4 || 5 is fixed radius (variable length) rod
-				return Math.pow(     model.nCellMax[type]*model.MWX[type]	/ (Math.PI * model.rhoX[type] * (aspect + 4.0/3.0)), .333333) + radiusModifier;			// No longer static due to radiusModifier
-			}
+			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}
 	}
 	

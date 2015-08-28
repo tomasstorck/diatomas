@@ -39,8 +39,9 @@ public class AnchorSpring extends Spring {
 		final Model model = ballArray[0].cell.model;
 		double springDiv;
 		Cell cell = ballArray[0].cell;
-		if(cell.type<2)						springDiv = 1.0;
-		else if(cell.type<6)				springDiv = 2.0;
+		int shape = model.shapeX[cell.type];
+		if(shape==0)						springDiv = 1.0;
+		else if(shape==1 || shape==2)		springDiv = 2.0;
 		else throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 		K = model.Kan/springDiv;
 	}

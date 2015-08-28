@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import random.rand;
 import ser2mat.ser2mat;
 
-public class RunEcoli extends Run {
+public class RunEcoli extends Run { 	// simulation == 0
 	Model model;
 	
 	public RunEcoli(Model model) {
@@ -16,28 +16,28 @@ public class RunEcoli extends Run {
 		rand.Seed(model.randomSeed);			// Set seed
 		// Load default parameters
 		model.Write("Loading parameters for E. coli","");
-		model.activeCellType = new int[]{4};
-		model.MWX[4] = 24.6e-3;
-		model.rhoX[4] =1010; 				// [kg m-3]
+//		model.activeCellType = new int[]{4};
+		model.shapeX[0] = 2; 				// E. coli is a fixed radius rod (==1)
+		model.MWX[0] = 24.6e-3;
+		model.rhoX[0] =1010; 				// [kg m-3]
 		model.randomSeed = 9; 				// As in paper.
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
 		model.Linit = new Vector3d(1e-6, 1e-6, 1e-6);
-		model.radiusCellMax[4] = 0.375e-6;	// m. From Pierucci, 1978
-		model.lengthCellMax[4] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
-		model.radiusCellStDev[4] = model.radiusCellMax[4]*0.05;	// [m] Standard deviation from radiusCellMax. Note that this will work only with fixed radius rods! Spheres and var. radius rods must have a "free" radius
+		model.radiusCellMax[0] = 0.375e-6;	// m. From Pierucci, 1978
+		model.lengthCellMax[0] = 5.0e-6;	// m. From Pierucci, 1978. Theirs is initial cell length, so including 1*D
+		model.radiusCellStDev[0] = model.radiusCellMax[0]*0.05;	// [m] Standard deviation from radiusCellMax. Note that this will work only with fixed radius rods! Spheres and var. radius rods must have a "free" radius
 		model.NCellInit = 1;
 		model.normalForce = true;
-		model.Ks[4][4] = 1e-11;
+		model.Ks[0][0] = 1e-11;
 		model.KfRod = new double[]{5e-13, 5e-13};
 		model.filStretchLim = 1e-6;
-		model.filType[4] = true;
+		model.filType[0] = true;
 		model.anchorStretchLim = 1e-6;		// Bit longer than initial to work with DLVO forces 
 		model.sticking = model.filament = false;
 		model.electrostatic = true; 		// Default enabled for E. coli. As in paper.
-		model.muAvgSimple[4] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
-		model.muStDev[4] = 0.277;			// h-1. Képès, 1986
+		model.muAvgSimple[0] = 1.23;		// h-1, i.e. doubling every 33 minutes. Koch & Wang, 1982
+		model.muStDev[0] = 0.277;			// h-1. Képès, 1986
 		model.growthTimeStep = 240.0;		// s, i.e. 4 minutes
-		model.activeCellType = new int[]{4};
 	}
 	
 	public void Start() throws Exception {
@@ -55,8 +55,7 @@ public class RunEcoli extends Run {
 			
 			// Create parameters for new cells
 			for(int ii=0; ii<model.NCellInit; ii++) {
-				typeInit[ii] = 4;
-				nInit[ii] = 0.5*model.nCellMax[typeInit[ii]] * (1.0 + rand.Double());
+				nInit[ii] = 0.5*model.nCellMax[0] * (1.0 + rand.Double());
 				radiusModifier[ii] = model.radiusCellStDev[typeInit[ii]]*random.rand.Gaussian();
 				directionInit[ii] = new Vector3d((rand.Double()-0.5), 								(rand.Double()-0.5), 								0.0).normalise();
 				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.Linit.x, 	(rand.Double()-0.5)*model.Linit.y,	Ball.Radius(nInit[ii]/2.0, typeInit[ii], model) + radiusModifier[ii]);  
@@ -131,7 +130,7 @@ public class RunEcoli extends Run {
 //			// Adjust growth time step if needed
 //			final int growthStepNMax = 100;
 //			final double growthFactorExpected;
-//			growthFactorExpected = Math.exp(model.muAvgSimple[4]*model.growthTimeStep/3600);
+//			growthFactorExpected = Math.exp(model.muAvgSimple[0]*model.growthTimeStep/3600);
 //			if(model.cellArray.size()*(growthFactorExpected-1.0) > growthStepNMax) {
 //				model.Write("At least " + growthStepNMax + " cells expected to divide next step, halving growth time step", "warning");
 //				model.growthTimeStep *= 0.5;
@@ -148,11 +147,12 @@ public class RunEcoli extends Run {
 				model.Attachment((int)model.attachCounter);
 				model.attachCounter -= (int)model.attachCounter;	// Subtract how many cells we've added this turn
 			}
-				
+			model.Save(); 	// FIXME remove
 			// Relaxation
 			int relaxationIterInit = (int) (model.relaxationTimeStep/model.relaxationTimeStepdt);
 			model.Write("Starting relaxation calculations","iter"); 
-			int NAnchorBreak = 0, NAnchorForm = 0, NStickBreak = 0, NStickForm = 0, NFilBreak = 0;			for(int ir=0; ir<relaxationIterInit; ir++) {
+			int NAnchorBreak = 0, NAnchorForm = 0, NStickBreak = 0, NStickForm = 0, NFilBreak = 0;			
+			for(int ir=0; ir<relaxationIterInit; ir++) {
 				int[] relaxationOut = model.Relaxation();
 				int nstp 	=  relaxationOut[0]; 
 				NAnchorBreak+= relaxationOut[1];

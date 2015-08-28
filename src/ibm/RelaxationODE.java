@@ -43,6 +43,8 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			for(int jCell=iCell+1; jCell<model.cellArray.size(); jCell++) { 		// Factorial elimination to optimise loop
 				Cell cell1 = model.cellArray.get(jCell);
 				Ball c1b0 = cell1.ballArray[0];
+				int shape0 = model.shapeX[cell0.type];
+				int shape1 = model.shapeX[cell1.type];
 				// Do a very simple, cheap collision detection
 				Vector3d dirn = c0b0.pos.minus(c1b0.pos);
 				double dist = dirn.norm();
@@ -54,7 +56,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 				if(dist<maxCollDist) { 												// Balls are close enough that they could collide --> further investigate
 					double R2 = c0b0.radius + c1b0.radius; 							// We assume radius ball 0 and 1 are equal for all cells
 					// Ball-ball collision
-					if( cell0.type<2 && cell1.type<2 ) {
+					if( shape0==0 && shape1==0) {
 						double d = R2*radiusModifier - dist;
 						if(d>0.0) {
 							// We have a collision
@@ -63,11 +65,35 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 							c0b0.force = c0b0.force.plus(Fs);
 							c1b0.force = c1b0.force.minus(Fs);
 						}
-					// Ball-rod (or rod-ball) collision
-					} else if( cell0.type<2 || cell1.type<2 ) {
+					// Rod-rod
+					} else if((shape0==1 || shape0==2) && (shape1==1 || shape1==2)) {
+						Ball c0b1 = cell0.ballArray[1];
+						Ball c1b1 = cell1.ballArray[1];
+						// calculate the distance between the segments
+						ericson.ReturnObject C = ericson.DetectCollision.LinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
+						Vector3d dP = C.dP;										// dP is vector from closest point 2 --> 1
+						dist = C.dist; 											// Make distance more accurate
+						double sc = C.sc;
+						double tc = C.tc;
+						double d = R2*radiusModifier - dist;					// d is the magnitude of the overlap vector, as defined in the IbM paper
+						if(d>0.0) {
+							double f = model.Kc/dist*d;
+							Vector3d Fs = dP.times(f);
+							// Add these elastic force to the cells
+							double sc1 = 1-sc;
+							double tc1 = 1-tc;
+							// both balls in 1st rod
+							c0b0.force = c0b0.force.plus(Fs.times(sc1));
+							c0b1.force = c0b1.force.plus(Fs.times(sc));
+							// both balls in 2nd rod
+							c1b0.force = c1b0.force.minus(Fs.times(tc1));
+							c1b1.force = c1b1.force.minus(Fs.times(tc));
+						}
+						// Ball-rod (or rod-ball) collision
+					} else if(shape0==1 || shape0==2 || shape1==1 || shape1==2 ) {
 						// Find out which cell is rod, which is ball, and assign
 						Ball ballb0, rodb0, rodb1;
-						if(cell0.type < 2) {
+						if(shape0==0) {
 							ballb0 = c0b0;
 							rodb0 = c1b0;
 							rodb1 = cell1.ballArray[1];
@@ -91,30 +117,6 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 							rodb0.force = rodb0.force.plus(Fs.times(1.0-sc)); 
 							rodb1.force = rodb1.force.plus(Fs.times(sc));
 						}	
-					// Rod-rod
-					} else if( cell0.type<6 && cell1.type<6 ) {
-						Ball c0b1 = cell0.ballArray[1];
-						Ball c1b1 = cell1.ballArray[1];
-						// calculate the distance between the segments
-						ericson.ReturnObject C = ericson.DetectCollision.LinesegLineseg(c0b0.pos, c0b1.pos, c1b0.pos, c1b1.pos);
-						Vector3d dP = C.dP;										// dP is vector from closest point 2 --> 1
-						dist = C.dist; 											// Make distance more accurate
-						double sc = C.sc;
-						double tc = C.tc;
-						double d = R2*radiusModifier - dist;					// d is the magnitude of the overlap vector, as defined in the IbM paper
-						if(d>0.0) {
-							double f = model.Kc/dist*d;
-							Vector3d Fs = dP.times(f);
-							// Add these elastic force to the cells
-							double sc1 = 1-sc;
-							double tc1 = 1-tc;
-							// both balls in 1st rod
-							c0b0.force = c0b0.force.plus(Fs.times(sc1));
-							c0b1.force = c0b1.force.plus(Fs.times(sc));
-							// both balls in 2nd rod
-							c1b0.force = c1b0.force.minus(Fs.times(tc1));
-							c1b1.force = c1b1.force.minus(Fs.times(tc));
-						}
 					// Invalid cells
 					} else {
 						throw new RuntimeException("Unknown cell type");
@@ -122,7 +124,7 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 				}
 			}
 		}
-		// Calculate gravity+bouyancy, normal force and drag
+		// Calculate gravity+buoyancy, normal force and drag
 		for(Ball ball : model.ballArray) {
 			// Contact force
 			double zPos = ball.pos.z;

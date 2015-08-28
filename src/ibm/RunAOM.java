@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import random.rand;
 import ser2mat.ser2mat;
 
-public class RunAOM extends Run {
+public class RunAOM extends Run {		// simulation == 4 
 	
 	public RunAOM(Model model) {
 		this.model = model;
@@ -14,9 +14,11 @@ public class RunAOM extends Run {
 	public void Initialise() {
 		model.Write("Loading parameters for AOM/SR","");
 		// Load default parameters
-		int anme = model.anme = 0;
-		int dss = model.dss = 1;
-		model.activeCellType = new int[]{anme, dss};			// Only used for COMSOL
+		int anme = 0;
+		int dss = 1;
+		model.shapeX[anme] = 0;
+		model.shapeX[dss] = 0;
+//		model.activeCellType = new int[]{anme, dss};			// Only used for COMSOL
 		model.Linit = new Vector3d(2e-6, 2e-6, 2e-6);
 		model.L = new Vector3d(10e-6, 10e-6, 10e-6);
 		model.MWX[anme] = model.MWX[dss] = 24.6e-3;				// [kg mol-1]
@@ -54,8 +56,8 @@ public class RunAOM extends Run {
 	
 	public void Start() {
 		model.UpdateDependentParameters();		// Update model parameters
-		int anme = model.anme;
-		int dss = model.dss;
+		int anme = 0;
+		int dss = 1;
 		// Initialise model if we are starting a new simulation
 		if(model.growthIter == 0 && model.relaxationIter == 0) {
 			model.Write("Generating inoculum configuration", "iter");
@@ -184,13 +186,14 @@ public class RunAOM extends Run {
 			int NFil = 0; int NBranch = 0;													// Keep track of how many filament springs and how many new branches we make
 			for(Cell mother : dividingCellArray) {
 				Cell daughter = model.DivideCell(mother);
+				int shapeMother = model.shapeX[mother.type];
 				if(mother.filament) {
-					if(mother.type<2) {
+					if(shapeMother==0) {
 						if(model.filSphereStraightFil)
 							model.TransferFilament(mother, daughter);
 						model.CreateFilament(mother, daughter);
 						NFil += 1;
-					} else if (mother.type<6) {
+					} else if (shapeMother==1 || shapeMother==2) {
 						Cell neighbourDaughter = mother.GetNeighbour();
 						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency && neighbourDaughter != null) {
 							model.CreateFilament(daughter, mother, neighbourDaughter);		// 3 arguments --> branched, 2 springs daughter to mother and 2 daughter to neighbour 

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import random.rand;
 import ser2mat.ser2mat;
 
-public class RunAS extends Run {
+public class RunAS extends Run { 		// simulation == 2
 	
 	public RunAS(Model model) {
 		this.model = model;
@@ -14,21 +14,23 @@ public class RunAS extends Run {
 	public void Initialise() {
 		model.Write("Loading parameters for AS","");
 		// Load default parameters
-		int filF = model.filF = 4;
-		int flocF = model.flocF = 5;
-		model.activeCellType = new int[]{filF, flocF};
+		int filF = 0;
+		int flocF = 1;
+		int shapeFilF = model.shapeX[filF] = 0;
+		int shapeFlocF = model.shapeX[flocF] = 0;
+//		model.activeCellType = new int[]{filF, flocF};
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
 		model.Linit = new Vector3d(7e-6, 7e-6, 7e-6);
-		model.MWX[filF] = model.MWX[flocF] = 24.6e-3;		// [kg mol-1]
-		model.rhoX[filF] = model.rhoX[flocF] = 1010; 				// [kg m-3]
-		model.radiusCellMax[filF] = 0.5e-6;					// [m] (Lau 1984)
-		if(flocF<2) model.radiusCellMax[flocF] = 0.52e-6; 	// Same volume as below
-		else 		model.radiusCellMax[flocF] = 0.35e-6;	// [m] (Lau 1984) 		
-		model.lengthCellMax[filF] = 4e-6;					// [m] (Lau 1984), compensated for model length = actual length - 2*r
-		if(flocF>2)	model.lengthCellMax[flocF] = 1.1e-6;	// [m] (Lau 1984), compensated
-		model.muAvgSimple[filF] = 0.271;					// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
-		model.muAvgSimple[flocF] = 0.383;		// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
-		model.muStDev[filF]  = 0.2*model.muAvgSimple[filF];		// Defined as one fifth
+		model.MWX[filF] = model.MWX[flocF] = 24.6e-3;									// [kg mol-1]
+		model.rhoX[filF] = model.rhoX[flocF] = 1010; 									// [kg m-3]
+		model.radiusCellMax[filF] = 0.5e-6;												// [m] (Lau 1984)
+		if(shapeFlocF==0) 						model.radiusCellMax[flocF] = 0.52e-6; 	// Same volume as below
+		else 									model.radiusCellMax[flocF] = 0.35e-6;	// [m] (Lau 1984) 		
+		model.lengthCellMax[filF] = 4e-6;												// [m] (Lau 1984), compensated for model length = actual length - 2*r
+		if(shapeFlocF==1 || shapeFlocF==2)		model.lengthCellMax[flocF] = 1.1e-6;	// [m] (Lau 1984), compensated
+		model.muAvgSimple[filF] = 0.271;												// [h-1] muMax = 6.5 day-1 = 0.271 h-1, S. natans, (Lau 1984). Monod coefficient *should* be low (not in Lau) so justified high growth versus species 5. 
+		model.muAvgSimple[flocF] = 0.383;												// [h-1] muMax = 9.2 day-1 = 0.383 h-1, "floc former" (Lau 1984). Monod coefficient *should* be high (not in Lau)
+		model.muStDev[filF]  = 0.2*model.muAvgSimple[filF];								// Defined as one fifth
 		model.muStDev[flocF] = 0.2*model.muAvgSimple[flocF];
 		model.NCellInit = 18;
 //		model.NCellInit = 18*2; 			// For multiple flocs 
@@ -119,13 +121,14 @@ public class RunAS extends Run {
 			int NFil = 0; int NBranch = 0;													// Keep track of how many filament springs and how many new branches we make
 			for(Cell mother : dividingCellArray) {
 				Cell daughter = model.DivideCell(mother);
+				int shapeMother = model.shapeX[mother.type];
 				if(mother.filament) {
-					if(mother.type<2) {
+					if(shapeMother==0) {
 						if(model.filSphereStraightFil)
 							model.TransferFilament(mother, daughter);
 						model.CreateFilament(mother, daughter);
 						NFil += 1;
-					} else if (mother.type<6) {
+					} else if(shapeMother==1 || shapeMother==2) {
 						Cell neighbourDaughter = mother.GetNeighbour();
 						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency && neighbourDaughter != null) {
 							model.CreateFilament(daughter, mother, neighbourDaughter);		// 3 arguments --> branched, 2 springs daughter to mother and 2 daughter to neighbour 

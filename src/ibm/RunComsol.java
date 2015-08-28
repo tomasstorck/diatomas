@@ -9,7 +9,7 @@ import comsol.Server;
 import random.rand;
 import ser2mat.ser2mat;
 
-public class RunComsol extends Run {
+public class RunComsol extends Run {		// simulation == 3
 	public RunComsol(Model model) {
 		this.model = model;
 	}
@@ -19,7 +19,7 @@ public class RunComsol extends Run {
 		// Load default parameters
 		int filF = model.filF = 4;
 		int flocF = model.flocF = 5;
-		model.activeCellType = new int[]{filF, flocF};
+//		model.activeCellType = new int[]{filF, flocF};
 		model.MWX[filF] = model.MWX[flocF] = 24.6e-3;		// [kg mol-1]
 		model.rhoX[filF] = model.rhoX[flocF] = 1010; 				// [kg m-3]
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
@@ -118,9 +118,10 @@ public class RunComsol extends Run {
 			model.Write("\tCreating cells", "iter");
 			// Create cells in the COMSOL model
 			for(Cell cell : model.cellArray) {
-				if(cell.type<2) 		comsol.CreateSphere(cell);
-				else if(cell.type<6)	comsol.CreateRod(cell);
-				else 					throw new IndexOutOfBoundsException("Cell type: " + cell.type);
+				int cellShape = model.shapeX[cell.type];
+				if(cellShape==0) 						comsol.CreateSphere(cell);
+				else if(cellShape==1 || cellShape==2)	comsol.CreateRod(cell);
+				else throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 			}
 			// Compile array with oxidating, reducing MO
 			ArrayList<Cell> oxCellArray = new ArrayList<Cell>();
@@ -178,13 +179,14 @@ public class RunComsol extends Run {
 			int NFil = 0; int NBranch = 0;													// Keep track of how many filament springs and how many new branches we make
 			for(Cell mother : dividingCellArray) {
 				Cell daughter = model.DivideCell(mother);
+				int motherShape = model.shapeX[mother.type]; 
 				if(mother.filament) {
-					if(mother.type<2) {
+					if(motherShape==0) {
 						if(model.filSphereStraightFil)
 							model.TransferFilament(mother, daughter);
 						model.CreateFilament(mother, daughter);
 						NFil += 1;
-					} else if (mother.type<6) {
+					} else if(motherShape==1 || motherShape==2) {
 						Cell neighbourDaughter = mother.GetNeighbour();
 						if(mother.filSpringArray.size()>2 && rand.Double() < model.filRodBranchFrequency && neighbourDaughter != null) {
 							model.CreateFilament(daughter, mother, neighbourDaughter);		// 3 arguments --> branched, 2 springs daughter to mother and 2 daughter to neighbour 

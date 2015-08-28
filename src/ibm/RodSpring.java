@@ -18,10 +18,11 @@ public class RodSpring extends Spring {
 	}
 	
 	public static double RestLength(double radius, double amount, int type, Model model) {
-		// If type == 1 based on mass, type==2 based on max mass
-		if(type<4) {
-			return radius * model.lengthCellMax[type]/model.radiusCellMax[type];							// About 2 balls in the same cell, so no need to make it complicated  
-		} else if (type<6) {
+		// If shape == 1 based on mass (var radius, fixed aspect), shape == 2 based on max mass (fixed radius, variable aspect)
+		int shape = model.shapeX[type];
+		if(shape==1) {
+			return radius * model.lengthCellMax[type]/model.radiusCellMax[type];							// Fixed aspect. About 2 balls in the same cell, so no need to make it complicated  
+		} else if (shape==2) {
 			return amount*model.MWX[type]/(Math.PI*model.rhoX[type]*radius*radius) - 4.0/3.0*radius;
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
