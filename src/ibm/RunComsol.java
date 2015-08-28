@@ -20,6 +20,7 @@ public class RunComsol extends Run {
 		int filF = model.filF = 4;
 		int flocF = model.flocF = 5;
 		model.activeCellType = new int[]{filF, flocF};
+		model.MWX[filF] = model.MWX[flocF] = 24.6e-3;		// [kg mol-1]
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
 		model.Linit = new Vector3d(7e-6, 7e-6, 7e-6);
 		model.radiusCellMax[filF] = 0.5e-6;					// [m] (Lau 1984)

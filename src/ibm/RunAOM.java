@@ -16,8 +16,10 @@ public class RunAOM extends Run {
 		// Load default parameters
 		int anme = model.anme = 0;
 		int dss = model.dss = 1;
+		model.activeCellType = new int[]{anme, dss};			// Only used for COMSOL
 		model.Linit = new Vector3d(2e-6, 2e-6, 2e-6);
 		model.L = new Vector3d(10e-6, 10e-6, 10e-6);
+		model.MWX[anme] = model.MWX[dss] = 24.6e-3;				// [kg mol-1]
 		model.radiusCellMax[anme] = 0.55e-6/2.0;				// [m]
 		model.radiusCellMax[dss] = 0.44e-6/2.0;					// [m]
 //		model.muAvgSimple[anme] = 1.2*0.003/24.0;				// [h-1]. Works for model.NCellInit = 60  
