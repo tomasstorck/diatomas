@@ -19,23 +19,23 @@ public class StickingSpringTest {
 	public void SetUp() {
 		model = new Model();
 		model.sticking = true;
-		model.MWX = 10;
-		model.rhoX = 100;
-		model.Ks[0][0] = 1e-11;
 		for(int ii=0; ii<model.stickType.length; ii++) {
+			model.MWX[ii] = 10;
+			model.rhoX[ii] = 100;
 			for(int jj=0; jj<model.stickType[0].length; jj++) {
 				model.stickType[ii][jj] = true;
+				model.Ks[ii][jj] = 1e-11;
 			}
 		}
 		// Sphere
 		r = 0.5e-6; 
-		double n = 4.0/3.0*Math.PI*Math.pow(r, 3) * model.rhoX/model.MWX;
+		double n = 4.0/3.0*Math.PI*Math.pow(r, 3) * model.rhoX[0]/model.MWX[0];
 		sphere0 = new Cell(0, n, 1.0, r, 1.0, 0, 0, 0, false, model);
 		sphere1 = new Cell(0, n, 2.0, r, 1.0, 0, 0, 0, false, model);
 		// Rod
 		model.radiusCellMax[2] = r;
 		model.lengthCellMax[2] = 2*model.radiusCellMax[2];
-		n = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX/model.MWX;
+		n = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX[2]/model.MWX[2];
 		rod0 = new Cell(2, n, -1.0, r, 1.0, -1.0+model.lengthCellMax[2], r, 1.0, false, model);
 		rod1 = new Cell(2, n, -2.0, r, 1.0, -2.0+model.lengthCellMax[2], r, 1.0, false, model);
 	}

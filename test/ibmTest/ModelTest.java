@@ -25,14 +25,14 @@ public class ModelTest {
 	@Before
 	public void SetUp() {
 		model = new Model();
-		model.MWX = 10;
-		model.rhoX = 100;
+		model.MWX[0] = model.MWX[2] = 10;
+		model.rhoX[0] = model.rhoX[2] = 100;
 		rSphere = 0.5e-6; 
-		nSphere = 4.0/3.0*Math.PI*Math.pow(rSphere, 3) * model.rhoX/model.MWX; 
+		nSphere = 4.0/3.0*Math.PI*Math.pow(rSphere, 3) * model.rhoX[0]/model.MWX[0]; 
 		model.radiusCellMax[2] = 0.5e-6;
 		model.lengthCellMax[2] = 2*model.radiusCellMax[2];
 		rRod = 0.5e-6; 
-		nRod = (4.0/3.0*Math.PI*Math.pow(rRod, 3)  +  Math.PI*Math.pow(rRod, 2)*model.lengthCellMax[2]) * model.rhoX/model.MWX;
+		nRod = (4.0/3.0*Math.PI*Math.pow(rRod, 3)  +  Math.PI*Math.pow(rRod, 2)*model.lengthCellMax[2]) * model.rhoX[2]/model.MWX[2];
 		sphere0 = new Cell(0, nSphere, -1.0, 0, 0, 0, 0, 0, false, model);
 		sphere1 = new Cell(0, nSphere, -2.0, 0, 0, 0, 0, 0, false, model);
 		rod0 = 	  new Cell(2, nRod,     1.0, 0, 0, 1+model.lengthCellMax[2], 0, 0, false, model);

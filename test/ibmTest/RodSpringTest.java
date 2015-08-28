@@ -17,15 +17,15 @@ public class RodSpringTest {
 	@Before
 	public void SetUp() {
 		model = new Model();
-		model.MWX = 10;
-		model.rhoX = 100;
+		model.MWX[0] = model.MWX[2] = 10;
+		model.rhoX[0] = model.rhoX[2] = 100;
 		model.Kr = 1e-11;
 		r = 0.5e-6; 
 		// Rod
 		model.radiusCellMax[2] = model.radiusCellMax[4] = r;
 		model.lengthCellMax[2] = model.lengthCellMax[4] = 2*model.radiusCellMax[2];
 		model.UpdateDependentParameters();
-		double n = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX/model.MWX;
+		double n = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX[2]/model.MWX[2];
 		rod2 = new Cell(2, n, 0.0, r, 0.0, 0.0+model.lengthCellMax[2], r, 0.0, false, model); 		// variable radius, fixed aspect
 		rod4 = new Cell(4, n, 0.0, r, 0.0, 0.0+model.lengthCellMax[2], r, 0.0, false, model); 		// fixed radius, variable length
 	}

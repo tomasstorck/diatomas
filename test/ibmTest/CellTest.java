@@ -17,8 +17,8 @@ public class CellTest {
 	@Before
 	public void SetUp() {
 		model = new Model();
-		model.MWX = 10;
-		model.rhoX = 100;
+		model.MWX[0] = model.MWX[2] = model.MWX[4] = 10;
+		model.rhoX[0] = model.rhoX[2] = model.rhoX[4] = 100;
 		r = 0.5e-6;
 		// Sphere
 		// Rod
@@ -26,8 +26,8 @@ public class CellTest {
 		model.lengthCellMax[2] = model.lengthCellMax[4] = 2*model.radiusCellMax[2];
 		model.UpdateDependentParameters();
 		sphere0 = 	new Cell(0, model.nCellMax[0],	0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, model); 		// variable radius, fixed aspect  
-		rod2 = 		new Cell(2, model.nCellMax[2], 		0.0, 0.0, 0.0, 0.0+model.lengthCellMax[2], 0.0, 0.0, false, model); 		// variable radius, fixed aspect
-		rod4 = 		new Cell(4, model.nCellMax[4], 		0.0, 0.0, 0.0, 0.0+model.lengthCellMax[4], 0.0, 0.0, false, model); 		// fixed radius, variable length
+		rod2 = 		new Cell(2, model.nCellMax[2], 	0.0, 0.0, 0.0, 0.0+model.lengthCellMax[2], 0.0, 0.0, false, model); 		// variable radius, fixed aspect
+		rod4 = 		new Cell(4, model.nCellMax[4], 	0.0, 0.0, 0.0, 0.0+model.lengthCellMax[4], 0.0, 0.0, false, model); 		// fixed radius, variable length
 	}
 
 	@Test
@@ -39,8 +39,8 @@ public class CellTest {
 	
 	@Test
 	public void testCellAmountCellMax() {
-		double nSphere = 4.0/3.0*Math.PI*Math.pow(r, 3) * model.rhoX/model.MWX;
-		double nRod = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX/model.MWX;
+		double nSphere = 4.0/3.0*Math.PI*Math.pow(r, 3) * model.rhoX[0]/model.MWX[0];
+		double nRod = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX[2]/model.MWX[2];
 		assertTrue(model.nCellMax[0] == nSphere &&
 				model.nCellMax[2] == nRod &&
 				model.nCellMax[4] == nRod);

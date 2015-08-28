@@ -19,17 +19,17 @@ public class AnchorSpringTest {
 	public void SetUp() {
 		model = new Model();
 		model.anchoring = true;
-		model.MWX = 10;
-		model.rhoX = 100;
+		model.MWX[0] = model.MWX[2] = 10;
+		model.rhoX[0] = model.rhoX[2] = 100;
 		// Sphere
 		r = 0.5e-6; 
-		double n = 4.0/3.0*Math.PI*Math.pow(r, 3) * model.rhoX/model.MWX;
-		cell0 = new Cell(0, n, 1.0, r, 1.0, 0, 0, 0, false, model);
+		double n = 4.0/3.0*Math.PI*Math.pow(r, 3) * model.rhoX[0]/model.MWX[0];
+		cell0 = new Cell(0, n, 1.0, 1.0, r, 0, 0, 0, false, model);
 		// Rod
 		model.radiusCellMax[2] = r;
 		model.lengthCellMax[2] = 2*model.radiusCellMax[2];
-		n = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX/model.MWX;
-		cell1 = new Cell(2, n, 1.0, r, 1.0, 1.0+model.lengthCellMax[2], r, 1.0, false, model);
+		n = (4.0/3.0*Math.PI*Math.pow(r, 3)  +  Math.PI*Math.pow(r, 2)*model.lengthCellMax[2]) * model.rhoX[0]/model.MWX[0];
+		cell1 = new Cell(2, n, 1.0, 1.0, r, 1.0+model.lengthCellMax[2], 1.0, r, false, model);
 	}
 	
 	@Test
@@ -38,14 +38,14 @@ public class AnchorSpringTest {
 		cell1.Anchor();
 		assertTrue(model.anchorSpringArray.size() == 3 && 
 				cell0.anchorSpringArray.get(0).anchorPoint.x == 1.0 &&
-				cell0.anchorSpringArray.get(0).anchorPoint.y == 0.0 &&
-				cell0.anchorSpringArray.get(0).anchorPoint.z == 1.0 &&
+				cell0.anchorSpringArray.get(0).anchorPoint.y == 1.0 &&
+				cell0.anchorSpringArray.get(0).anchorPoint.z == 0.0 &&
 				cell1.anchorSpringArray.get(0).anchorPoint.x == 1.0 &&
-				cell1.anchorSpringArray.get(0).anchorPoint.y == 0.0 &&
-				cell1.anchorSpringArray.get(0).anchorPoint.z == 1.0 &&
+				cell1.anchorSpringArray.get(0).anchorPoint.y == 1.0 &&
+				cell1.anchorSpringArray.get(0).anchorPoint.z == 0.0 &&
 				cell1.anchorSpringArray.get(1).anchorPoint.x == 1.0+model.lengthCellMax[2] &&
-				cell1.anchorSpringArray.get(1).anchorPoint.y == 0.0 &&
-				cell1.anchorSpringArray.get(1).anchorPoint.z == 1.0);
+				cell1.anchorSpringArray.get(1).anchorPoint.y == 1.0 &&
+				cell1.anchorSpringArray.get(1).anchorPoint.z == 0.0);
 	}
 	
 	@Test
@@ -68,8 +68,12 @@ public class AnchorSpringTest {
 		model.FormBreak();
 		assertTrue(model.anchorSpringArray.size() == 3);
 	}
+	
 	@Test
-	public void testSpringAnchorGetL() {							
+	public void testSpringAnchorGetL() {
+		for(Ball ball : model.ballArray) {
+			ball.pos.z = r; 
+		}
 		cell0.Anchor();
 		cell1.Anchor();
 		assertTrue(model.anchorSpringArray.get(0).GetL().norm() == r &&
