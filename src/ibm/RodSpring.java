@@ -22,7 +22,7 @@ public class RodSpring extends Spring {
 		if(type<4) {
 			return radius * model.lengthCellMax[type]/model.radiusCellMax[type];							// About 2 balls in the same cell, so no need to make it complicated  
 		} else if (type<6) {
-			return amount*model.MWX/(Math.PI*model.rhoX*radius*radius) - 4.0/3.0*radius;
+			return amount*model.MWX[type]/(Math.PI*model.rhoX[type]*radius*radius) - 4.0/3.0*radius;
 		} else {
 			throw new IndexOutOfBoundsException("Cell type: " + type);
 		}

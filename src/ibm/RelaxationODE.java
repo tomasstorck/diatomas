@@ -127,7 +127,8 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			// Contact force
 			double zPos = ball.pos.z;
 			double r = ball.radius;
-			double MWX = model.MWX[ball.cell.type];  
+			double MWX = model.MWX[ball.cell.type];
+			double rhoX = model.rhoX[ball.cell.type];
 			if(model.normalForce) {
 				if(zPos<r){
 					ball.force.z += model.Kw*(r-zPos);
@@ -136,9 +137,9 @@ public class RelaxationODE implements FirstOrderDifferentialEquations {
 			// Gravity and buoyancy
 			if(model.gravity) {
 				if(model.gravityZ) {
-					ball.force.z += model.G * (model.rhoX-model.rhoWater) * ball.n*MWX/model.rhoX;
+					ball.force.z += model.G * (rhoX-model.rhoWater) * ball.n*MWX/rhoX;
 				} else if(zPos>r*1.1) {			// Only if not already at the floor plus a tiny bit 
-					ball.force.z += model.G * (model.rhoX-model.rhoWater) * ball.n*MWX/model.rhoX;  //let the ball fall. Note that G is negative 
+					ball.force.z += model.G * (rhoX-model.rhoWater) * ball.n*MWX/rhoX;  //let the ball fall. Note that G is negative 
 				}
 			}
 			// Electrostatic attraction

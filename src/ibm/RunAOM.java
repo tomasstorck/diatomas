@@ -20,6 +20,7 @@ public class RunAOM extends Run {
 		model.Linit = new Vector3d(2e-6, 2e-6, 2e-6);
 		model.L = new Vector3d(10e-6, 10e-6, 10e-6);
 		model.MWX[anme] = model.MWX[dss] = 24.6e-3;				// [kg mol-1]
+		model.rhoX[anme] = model.rhoX[dss] = 1010; 				// [kg m-3]
 		model.radiusCellMax[anme] = 0.55e-6/2.0;				// [m]
 		model.radiusCellMax[dss] = 0.44e-6/2.0;					// [m]
 //		model.muAvgSimple[anme] = 1.2*0.003/24.0;				// [h-1]. Works for model.NCellInit = 60  

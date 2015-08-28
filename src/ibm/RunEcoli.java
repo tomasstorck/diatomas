@@ -18,6 +18,7 @@ public class RunEcoli extends Run {
 		model.Write("Loading parameters for E. coli","");
 		model.activeCellType = new int[]{4};
 		model.MWX[4] = 24.6e-3;
+		model.rhoX[4] =1010; 				// [kg m-3]
 		model.randomSeed = 9; 				// As in paper.
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
 		model.Linit = new Vector3d(1e-6, 1e-6, 1e-6);

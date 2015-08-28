@@ -34,7 +34,7 @@ public class Model implements Serializable {
 	public Vector3d Linit = new Vector3d(1e-6, 1e-6, 1e-6); // Used to generate cell inoculum
 	public int NXType = 6; 						// Number of different cell types available (not all of these have to be used)
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
-	public double rhoX	= 1010;					// [kg/m3], cell density
+	public double[] rhoX = new double[NXType];	// [kg/m3], cell density
 	public double[] MWX = new double[NXType];	// [kg/mol], composition CH1.8O0.5N0.2
 	// --> Intracellular (rod) springs
 	public double Kr 	= 5e-11;				// internal cell spring
@@ -141,18 +141,18 @@ public class Model implements Serializable {
 	public void UpdateDependentParameters() {
 		// Update the nCellMax based on supplied radiusCellMax and lengthCellMax
 		for(int ii = 0; ii<2; ii++) {
-			nCellMax[ii] 		= (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3))*rhoX/MWX[ii]; 
+			nCellMax[ii] 		= (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3))*rhoX[ii]/MWX[ii]; 
 			nCellMin[ii] 		= 0.5 * nCellMax[ii];
 		}
 		for(int ii = 2; ii<6; ii++) {
-			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3) + Math.PI*Math.pow(radiusCellMax[ii],2)*lengthCellMax[ii])*rhoX/MWX[ii];
+			nCellMax[ii] = (4.0/3.0*Math.PI * Math.pow(radiusCellMax[ii],3) + Math.PI*Math.pow(radiusCellMax[ii],2)*lengthCellMax[ii])*rhoX[ii]/MWX[ii];
 			nCellMin[ii] = 0.5 * nCellMax[ii];
 			if(ii<4) {
 				radiusCellMin[ii] = Ball.Radius(nCellMin[ii], ii, this);
 				lengthCellMin[ii] = radiusCellMin[ii] * lengthCellMax[ii]/radiusCellMax[ii];		// min radius times constant aspect ratio	
 			} else {
 				radiusCellMin[ii] = radiusCellMax[ii];
-				lengthCellMin[ii] = nCellMin[ii]*MWX[ii]/(Math.PI*rhoX*Math.pow(radiusCellMin[ii],2.0)) - 4.0/3.0*radiusCellMin[ii];	
+				lengthCellMin[ii] = nCellMin[ii]*MWX[ii]/(Math.PI*rhoX[ii]*Math.pow(radiusCellMin[ii],2.0)) - 4.0/3.0*radiusCellMin[ii];	
 			}
 			
 		}
