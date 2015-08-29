@@ -60,7 +60,7 @@ public class Interface{
 				// Convert ser to mat files
 				String modelPath = args[ii+1];
 				// Open directory
-				File dir = new File(modelPath + "/output/");
+				File dir = new File("results/" + modelPath + "/output/");
 				// Construct filter
 				FilenameFilter filter = new FilenameFilter() {
 				    public boolean accept(File dir, String name) {
@@ -73,7 +73,7 @@ public class Interface{
 				java.util.Arrays.sort(files);
 				for(String fileName : files) { 
 					model.Write("Loading " + fileName,"", true, false);
-					String loadPath = modelPath + "/output/" + fileName;
+					String loadPath = "results/" + modelPath + "/output/" + fileName;
 					model = Load(loadPath);
 					ser2mat.Convert(model);
 				}
