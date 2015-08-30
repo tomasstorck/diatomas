@@ -181,11 +181,11 @@ public class RunAOM extends Run {		// simulation == 4
 			double[] increaseAmountArray = model.GrowthSyntrophy();
 			
 			// Produce S8 (s)
-			if(model.MWX[s8s] != model.MWX[anme] || model.rhoX[s8s] != model.rhoX[s8s]) {
+			if(model.MWX[s8s] != model.MWX[anme] || model.rhoX[s8s] != model.rhoX[anme]) { 	// Assume MWX or rhoX are set if S8 (s) is enabled 
 				model.Write("Distributing produced S8 (s)", "iter");
 				int NCell = model.cellArray.size();
 				// Based on increase in growth for ANME
-				for(int iCell = 0; iCell<model.cellArray.size(); iCell++) {
+				for(int iCell = 0; iCell<NCell; iCell++) {
 					Cell cell = model.cellArray.get(iCell);
 					if(cell.type!=anme) 	continue; 										// Only ANME cells produce S8 (s)
 					double s8sAmount = increaseAmountArray[iCell] * model.yieldMatrix[s8s][anme];
