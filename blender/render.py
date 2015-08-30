@@ -142,24 +142,6 @@ def Offset(offset):
 
 
 ###############################################################################
-
-def ConfigEcoli():                                           # Assuming colouring by generation
-    whiteM = bpy.data.materials['white']
-    whiteM.diffuse_color = (0.5, 0.5, 0.5)                  # Grey (substratum)
-    whiteM.diffuse_shader = 'LAMBERT'
-    cellMaterial = ['cell0', 'cell1', 'cell2', 'cell3']
-    return cellMaterial
-    
-def ConfigAS(swapColours=False):
-    cellMaterial = ['cell1', 'cell2', 'cell2', 'cell2', 'cell0', 'cell1']         # Java code sets cellType 4 as fil former (red), 0 or 5 as floc former (yellow)
-    return cellMaterial
-    
-def ConfigAOM():
-    cellMaterial = ['cellAnme', 'cellDss', 'cellAnme', 'cellDss', 'cellAnme', 'cellDss']  # Java code sets even as ANME, odd as DSS (and this code is 0-based)
-    return cellMaterial
-
-
-###############################################################################    
     
 def DefineMaterials():
     # Prepare materials
@@ -173,6 +155,12 @@ def DefineMaterials():
     whiteM.diffuse_intensity = 1
     whiteM.specular_intensity = 0
     whiteM.diffuse_shader = 'TOON'                               # Give it a cartoon-ish finish, clear shadows and lines
+
+    greyM = bpy.data.materials.new('grey')                     # Bottom plane (to cash shadows on), for E. coli
+    greyM.diffuse_color = (0.5, 0.5, 0.5)                  # Grey (substratum)
+    greyM.diffuse_intensity = 1
+    greyM.specular_intensity = 0
+    greyM.diffuse_shader = 'LAMBERT'
     
     wireM = bpy.data.materials.new('wire')                       # wire (grid)
     wireM.type = 'WIRE'
@@ -229,7 +217,7 @@ def DefineMaterials():
     cell3M.specular_shader = 'PHONG'
     
     
-    stickM = bpy.data.materials.new('stick')                    # EPS (sticking)
+    stickM = bpy.data.materials.new('stick')                    # EPS (sticking, adhesive)
     stickM.diffuse_color = (1.0, 1.0, 1.0)
     stickM.diffuse_intensity = 1.0
     stickM.specular_intensity = 0.1
@@ -401,7 +389,7 @@ def SetupScalebarLegend(location=(-20,-20, 0), length=10, fontSize=1):
 ###############################################################################
 
 def SetupPlanes(drawPlaneZ=True, drawPlaneGrid=(False, True, True), Lx=20, Ly=20, Lz=20, radiusZPlane=None, stepSize=10.0):
-    whiteM = bpy.data.materials['white']    
+    surfaceM = surfaceMaterial    
     wireM = bpy.data.materials['wire']    
     
     # Plane to project shadows on
@@ -415,7 +403,7 @@ def SetupPlanes(drawPlaneZ=True, drawPlaneGrid=(False, True, True), Lx=20, Ly=20
         planeZ.name = 'planeZ'
         planeZHeightScale = Ly/Lx
         planeZ.scale[1] = planeZHeightScale
-        planeZ.active_material = whiteM
+        planeZ.active_material = surfaceM
     
     #%% Draw grid
     if drawPlaneGrid[2]:
@@ -688,17 +676,8 @@ if __name__ == '__main__':                                      # Run if not imp
     sun.data.shadow_soft_size = 1.5                                 # Soft shadow, based on distance to light source/plane
     sun.data.shadow_ray_samples = 10
     
-    #%% Materials
+    #%% Materials # FIXME remove
     DefineMaterials()
-
-    if settingsDict['configMaterial'] != 'None':
-        if settingsDict['configMaterial'] == 'ConfigEcoli':
-            cellMaterial = ConfigEcoli()
-        elif settingsDict['configMaterial'] == 'ConfigAOM':
-            cellMaterial = ConfigAOM()
-        else:
-            cellMaterial = ConfigAS()        
-
     
     #%% Legend
     if settingsDict['drawAxisLegend']:

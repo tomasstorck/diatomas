@@ -41,7 +41,8 @@ sun.data.shadow_ray_samples = 10
 
 # Materials
 render.DefineMaterials()
-cellMaterial = render.ConfigAS()
+cellMaterial = ['cell0', 'cell1']         # Java code sets cellType 0 as fil former (red), 1 as floc former (yellow)
+surfaceMaterial = 'white'
 
 #%% Draw cells
 for iCell,cell in enumerate(model.cellArray[:,0]):

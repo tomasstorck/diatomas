@@ -21,8 +21,8 @@ Lx=10; Ly=10; Lz=10
 fontSize = 0.25
 camWidth = 1920; camHeight = 1080
 iterModDiv = 5 
-drawPlanes = True
-#drawPlanes = False
+#drawPlanes = True
+drawPlanes = False
 
 argv = sys.argv[sys.argv.index("--")+1:]                    # Get all arguments after -- (Blender won't touch these)
 matPath = argv[0];                                          # Get matPath
@@ -56,13 +56,15 @@ sun.data.shadow_ray_samples = 10
 
 # Materials
 render.DefineMaterials()
-cellMaterial = render.ConfigAOM()
+cellMaterial = ['cellAnme', 'cellDss', 'cell1']                 # Java code sets 0 as ANME, 1 as DSS, possibly 2 as S8 (s)
+surfaceMaterial = 'white'
 
 #%% Draw cells
 for iCell,cell in enumerate(model.cellArray[:,0]):
     cellType = cell.type[0][0].astype(int)
+    cellShape = model.shapeX[cellType][0]
     if model.ballArray[cell.ballArray[0,0].astype(int),0].pos[1,0] > 0.0:                                     # Only plot if on far side of aggregate
-        if cell.type[0,0].astype(int) <= 1:
+        if cellShape==0:
             iBall = cell.ballArray[0,0].astype(int)
             ball = model.ballArray[iBall,0]
             pos = ball.pos[:,0] * 1e6

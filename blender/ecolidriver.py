@@ -7,7 +7,7 @@ import os, re, time, subprocess
 
 iterModDiv = 1
 
-dirPathList = ["/home/tomas/documenten/modelling/diatomas_symlink/results/ecoli_noanchor_dlvo_newModel2"]
+dirPathList = ["/home/tomas/documenten/modelling/diatomas/results/default_new"]
 for d in dirPathList:
     print(time.strftime('%H:%M:%S   ') + d)
     dAbs = d + "/output"

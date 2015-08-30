@@ -46,7 +46,11 @@ sun.data.shadow_ray_samples = 10
 
 # Materials
 render.DefineMaterials()
-cellMaterial = render.ConfigEcoli()
+whiteM = bpy.data.materials['white']
+whiteM.diffuse_color = (0.5, 0.5, 0.5)                  # Grey (substratum)
+whiteM.diffuse_shader = 'LAMBERT'
+cellMaterial = ['cell3']
+surfaceMaterial = 'greyM'
 
 #%% Draw cells
 for iCell,cell in enumerate(model.cellArray[:,0]):
@@ -55,7 +59,8 @@ for iCell,cell in enumerate(model.cellArray[:,0]):
         ancestor = model.cellArray[ancestor.mother[0][0],0]
     cellType = int(np.where(model.cellArray==ancestor)[0][0])
 
-    if cell.type[0,0].astype(int) <= 1:
+    cellShape = model.shapeX[cell.type[0,0].astype(int),0].astype(int)
+    if cellShape == 0:
         iBall = cell.ballArray[0,0].astype(int)
         ball = model.ballArray[iBall,0]
         pos = ball.pos[:,0] * 1e6
