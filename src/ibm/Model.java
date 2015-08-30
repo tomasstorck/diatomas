@@ -131,8 +131,6 @@ public class Model implements Serializable {
 	// === AOM/SR STUFF===
 	public double[] yieldVector = {2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};
 	public double[][] yieldMatrix = new double[NXType][NXType];		// [unit depends on simulation] yield[a][b] is yield of a over b.
-//	public int anme = -1;
-//	public int dss = -1;
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
 	/////////////////////////////////////

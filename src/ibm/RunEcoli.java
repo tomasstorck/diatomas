@@ -127,14 +127,6 @@ public class RunEcoli extends Run { 	// simulation == 0
 				model.Write(dividingCellArray.size() + " cells divided, total " + model.cellArray.size() + " cells","iter");
 				model.Write(NFil + " filament springs formed, " + NBranch + " new branches", "iter");
 			}
-//			// Adjust growth time step if needed
-//			final int growthStepNMax = 100;
-//			final double growthFactorExpected;
-//			growthFactorExpected = Math.exp(model.muAvgSimple[0]*model.growthTimeStep/3600);
-//			if(model.cellArray.size()*(growthFactorExpected-1.0) > growthStepNMax) {
-//				model.Write("At least " + growthStepNMax + " cells expected to divide next step, halving growth time step", "warning");
-//				model.growthTimeStep *= 0.5;
-//			}
 			// Reset springs where needed
 			model.Write("Resetting springs","iter");
 			for(Spring rod : model.rodSpringArray) 	rod.ResetRestLength();
@@ -147,7 +139,6 @@ public class RunEcoli extends Run { 	// simulation == 0
 				model.Attachment((int)model.attachCounter);
 				model.attachCounter -= (int)model.attachCounter;	// Subtract how many cells we've added this turn
 			}
-			model.Save(); 	// FIXME remove
 			// Relaxation
 			int relaxationIterInit = (int) (model.relaxationTimeStep/model.relaxationTimeStepdt);
 			model.Write("Starting relaxation calculations","iter"); 

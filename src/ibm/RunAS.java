@@ -17,7 +17,6 @@ public class RunAS extends Run { 		// simulation == 2
 		int filF = 0;
 		int flocF = 1;
 		int shapeFlocF = model.shapeX[flocF] = 0;
-//		model.activeCellType = new int[]{filF, flocF};
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);
 		model.Linit = new Vector3d(7e-6, 7e-6, 7e-6);
 		model.MWX[filF] = model.MWX[flocF] = 24.6e-3;									// [kg mol-1]
@@ -78,7 +77,7 @@ public class RunAS extends Run { 		// simulation == 2
 				directionInit[ii] = new Vector3d((rand.Double()-0.5), 							(rand.Double()-0.5), 							(rand.Double()-0.5)).normalise();
 				position0Init[ii] = new Vector3d((rand.Double()-0.5)*model.Linit.x, 	(rand.Double()-0.5)*model.Linit.y, 	(rand.Double()-0.5)*model.Linit.z);
 //				if(ii>model.NCellInit/2) {
-//					position0Init[ii] = position0Init[ii].plus(new Vector3d(50e-6, 0e-6, 0e-6)); 	// Displace half the cells by a number of microns in X direction
+//					position0Init[ii] = position0Init[ii].plus(new Vector3d(50e-6, 0e-6, 0e-6)); 	// Displace half the cells by a number of microns in X direction (two initial flocs)
 //				}
 				position1Init[ii] = position0Init[ii].plus(directionInit[ii].times(restLength));
 			}
@@ -152,20 +151,6 @@ public class RunAS extends Run { 		// simulation == 2
 			model.Write("Resetting springs","iter");
 			for(Spring rod : model.rodSpringArray) 	rod.ResetRestLength();
 			for(Spring fil : model.filSpringArray) 	fil.ResetRestLength();
-//			// Count number of filament formers and floc formers 
-//			int NCellFil = 0, NCellFloc = 0;
-//			for(CCell cell : model.cellArray) {
-//				if(cell.type == model.filF) 		NCellFil++;
-//				else if(cell.type == model.flocF) 	NCellFloc++;
-//			}
-//			// Adjust growth time step if needed
-//			final int growthStepNMax = 100;
-//			final double growthFactorExpectedFil =  Math.exp(model.muAvgSimple[model.filF] *model.growthTimeStep/3600);
-//			final double growthFactorExpectedFloc = Math.exp(model.muAvgSimple[model.flocF]*model.growthTimeStep/3600);
-//			if((NCellFil*(growthFactorExpectedFil-1.0) + NCellFloc*(growthFactorExpectedFloc-1.0)) > growthStepNMax) {
-//				model.Write("At least " + growthStepNMax + " cells expected to divide next step, halving growth time step", "warning");
-//				model.growthTimeStep *= 0.5;
-//			}
 			// Attach new cells
 			if(model.attachmentRate > 0) {
 				final double NNew = model.attachmentRate*(model.growthTimeStep/3600.0);

@@ -18,7 +18,6 @@ public class RunAOM extends Run {		// simulation == 4
 		int dss = 1;
 		model.shapeX[anme] = 0;
 		model.shapeX[dss] = 0;
-//		model.activeCellType = new int[]{anme, dss};			// Only used for COMSOL
 		model.Linit = new Vector3d(2e-6, 2e-6, 2e-6);
 		model.L = new Vector3d(10e-6, 10e-6, 10e-6);
 		model.MWX[anme] = model.MWX[dss] = 24.6e-3;				// [kg mol-1]
@@ -43,16 +42,14 @@ public class RunAOM extends Run {		// simulation == 4
 		model.filament = false;
 		model.sticking = true;
 		model.stickType[anme][anme] = true;
-//		model.stickType[anme][dss] = model.stickType[dss][anme] = true;
-//		model.stickType[dss][dss] = true;
 		model.Ks[anme][anme] = 1e-12; 			// Scaled for cell size (default 1e-11)
-//		model.Ks[anme][dss] = model.Ks[dss][anme] = model.Ks[dss][dss] = 1e-14;
+		model.Ks[anme][dss] = model.Ks[dss][anme] = model.Ks[dss][dss] = 1e-12; 	// Remeber it is still disabled 
 		model.stickFormLim = 0.1e-6;
 		model.stickStretchLim = 0.5e-6;
 		model.anchoring = false;
 		model.normalForce = false;
 		model.electrostatic = false;
-		// With sulfur species, include below
+		// With sulfur species (S8 (s)), include below
 		int s8s = 2; 											// NXCType is high enough
 		model.shapeX[s8s] = 0;
 		model.MWX[s8s] =256e-3;									// [kg mol-1]
@@ -162,10 +159,6 @@ public class RunAOM extends Run {		// simulation == 4
 						filament,										// With capability to form filaments?
 						model);
 			}
-			
-//			for(Ball ball : model.ballArray) 						// Enable for reproducible, less dense geometry
-//				ball.pos = ball.pos.times(0.9/0.7);
-//			}
 			
 			model.Write(model.cellArray.size() + " initial cells created","iter");
 	
