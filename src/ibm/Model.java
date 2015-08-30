@@ -32,7 +32,7 @@ public class Model implements Serializable {
 	// Domain properties
 	public Vector3d L 	= new Vector3d(2e-6, 2e-6, 2e-6); 	// Used only in COMSOL simulations
 	public Vector3d Linit = new Vector3d(1e-6, 1e-6, 1e-6); // Used to generate cell inoculum
-	public int NXType = 2; 						// Number of different cell types available (not all of these have to be used)
+	public int NXType = 6; 						// Number of different cell types available
 	public int[] shapeX = new int[NXType];		// 0 == sphere, 1 == rod
 	public double rhoWater = 1000;				// [kg/m3], density of bulk liquid (water)
 	public double[] rhoX = new double[NXType];	// [kg/m3], cell density
@@ -129,7 +129,8 @@ public class Model implements Serializable {
 	public int flocF = -1;
 	public int filF = -1;
 	// === AOM/SR STUFF===
-	public double[] yieldXS = new double[]{2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};		// [Cmol X/mol reaction] yield of biomass. Reactions are normalised to mol substrate
+	public double[] yieldVector = {2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6, 2.6/24.6, 7.6/24.6};
+	public double[][] yieldMatrix = new double[NXType][NXType];		// [unit depends on simulation] yield[a][b] is yield of a over b.
 //	public int anme = -1;
 //	public int dss = -1;
 	//////////////////////////////////////////////////////////////////////////////////////////
@@ -575,24 +576,25 @@ public class Model implements Serializable {
 	//////////////////
 	// Growth stuff //
 	//////////////////
-	public ArrayList<Cell> GrowthSimple() throws RuntimeException {									// Growth based on a random number 
+	public double[] GrowthSimple() throws RuntimeException {									// Growth based on a random number 
 		int NCell = cellArray.size();
-		ArrayList<Cell> dividedCell = new ArrayList<Cell>(); 
+		double[] increaseAmountArray = new double[NCell]; 
 		for(int iCell=0; iCell<NCell; iCell++){
 			Cell mother = cellArray.get(iCell);
 			double amount = mother.GetAmount();
 
 			// Random growth
 			double mu = muAvgSimple[mother.type] + (muStDev[mother.type] * rand.Gaussian());	// Come up with a mu for this cell, this iteration
-			amount *= Math.exp(mu*growthTimeStep/3600.0);					// We need growthTimeStep s --> h
-			mother.SetAmount(amount);
+			double amountNew = amount*Math.exp(mu*growthTimeStep/3600.0);									// We need growthTimeStep s --> h
+			mother.SetAmount(amountNew);
+			increaseAmountArray[iCell] = amountNew - amount; 									// increaseAmount must be calculated from amountNew and amount instead of other way around for reproducibility
 		}
-		return dividedCell;
+		return increaseAmountArray;
 	}
 	
-	public ArrayList<Cell> GrowthSyntrophy() throws RuntimeException {								// Growth based on a random number, further enhanced by cell proximity. Used for AOM
+	public double[] GrowthSyntrophy() throws RuntimeException {								// Growth based on a random number, further enhanced by cell proximity. Used for AOM
 		int NCell = cellArray.size();
-		ArrayList<Cell> dividedCell = new ArrayList<Cell>(); 
+		double[] increaseAmountArray = new double[NCell]; 
 		for(int iCell=0; iCell<NCell; iCell++){
 			Cell mother = cellArray.get(iCell);
 			double amount = mother.GetAmount();
@@ -646,24 +648,28 @@ public class Model implements Serializable {
 				}
 				syntrophyFactor = syntrophyA-(syntrophyA-1)*Math.exp(-syntrophyB*N);
 			}
-			amount *= Math.exp(mu*syntrophyFactor*growthTimeStep/3600.0);					// We need growthTimeStep s --> h
+			double amountNew = amount*Math.exp(mu*syntrophyFactor*growthTimeStep/3600.0);					// We need growthTimeStep s --> h
 			// Syntrophic growth for sticking cells
-			mother.SetAmount(amount);
+			mother.SetAmount(amountNew);
+			increaseAmountArray[iCell] = amountNew - amount;
 		}
-		return dividedCell;
+		return increaseAmountArray;
 	}
 
 	
-	public ArrayList<Cell> GrowthFlux() throws RuntimeException {
+	public double[] GrowthFlux() throws RuntimeException {
 		int NCell = cellArray.size();
-		ArrayList<Cell> dividedCell = new ArrayList<Cell>();
+		double[] increaseAmountArray = new double[NCell];
 		for(int iCell=0; iCell<NCell; iCell++){
 			Cell mother = cellArray.get(iCell);
+			double amount = mother.GetAmount();
 			// Grow mother cell
-			double newAmount = mother.GetAmount() + mother.Rx * growthTimeStep * yieldXS[mother.type];
+			double increaseAmount = mother.Rx * growthTimeStep * yieldVector[mother.type];
+			double newAmount = amount + increaseAmount;
 			mother.SetAmount(newAmount);
+			increaseAmountArray[iCell] = increaseAmount;
 		}
-		return dividedCell;
+		return increaseAmountArray;
 	}
 	
 	public Cell DivideCell(Cell c0) {
