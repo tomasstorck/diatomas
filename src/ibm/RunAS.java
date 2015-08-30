@@ -16,7 +16,6 @@ public class RunAS extends Run { 		// simulation == 2
 		// Load default parameters
 		int filF = 0;
 		int flocF = 1;
-		int shapeFilF = model.shapeX[filF] = 0;
 		int shapeFlocF = model.shapeX[flocF] = 0;
 //		model.activeCellType = new int[]{filF, flocF};
 		model.L = new Vector3d(30e-6, 30e-6, 30e-6);

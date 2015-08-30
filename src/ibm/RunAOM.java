@@ -26,7 +26,7 @@ public class RunAOM extends Run {		// simulation == 4
 		model.radiusCellMax[anme] = 0.55e-6/2.0;				// [m]
 		model.radiusCellMax[dss] = 0.44e-6/2.0;					// [m]
 //		model.muAvgSimple[anme] = 1.2*0.003/24.0;				// [h-1]. Works for model.NCellInit = 60  
-		model.muAvgSimple[anme] = 0.003/24.0;				// [h-1]. Works for model.NCellInit = 13
+		model.muAvgSimple[anme] = 0.003/24.0;					// [h-1]. Works for model.NCellInit = 13
 		model.muAvgSimple[dss] = 0.003/24.0;					// [h-1] 
 		model.muStDev[anme] = 0.2*model.muAvgSimple[anme];
 		model.muStDev[dss]  = 0.2*model.muAvgSimple[dss];		// Defined as one fifth
@@ -52,12 +52,24 @@ public class RunAOM extends Run {		// simulation == 4
 		model.anchoring = false;
 		model.normalForce = false;
 		model.electrostatic = false;
+		// With sulfur species, include below
+		int s8s = 2; 											// NXCType is high enough
+		model.shapeX[s8s] = 0;
+		model.MWX[s8s] =256e-3;									// [kg mol-1]
+		model.rhoX[s8s] = 2070; 								// [kg m-3]
+		model.radiusCellMax[s8s] = 1e-5;						// [m]. Arbitrary high value
+		model.muAvgSimple[s8s] = 0.0;							// [h-1] 
+		model.muStDev[s8s] = 0.0;
+		model.stickType[anme][s8s] = model.stickType[s8s][anme] = model.stickType[dss][s8s] = model.stickType[s8s][dss] = true;
+		model.Ks[anme][s8s] = model.Ks[s8s][anme] = model.Ks[dss][s8s] = model.Ks[s8s][dss] = 1e-12;
+		model.yieldMatrix[s8s][anme] = 0.1;
 	}
 	
 	public void Start() {
 		model.UpdateDependentParameters();		// Update model parameters
 		int anme = 0;
 		int dss = 1;
+		int s8s = 2; 							// No problem if unused
 		// Initialise model if we are starting a new simulation
 		if(model.growthIter == 0 && model.relaxationIter == 0) {
 			model.Write("Generating inoculum configuration", "iter");
@@ -74,7 +86,7 @@ public class RunAOM extends Run {		// simulation == 4
 //				int div = 6; 							// 1 in $div cells is AOM
 //				typeInit[ii] = ii%div==0 ? anme : dss;	
 //			}
-			// Create parameters for new cells: using absolute count (for NCellInit == 13)
+			// Create parameters for new ANME and DSS cells: using absolute count (for NCellInit == 13)
 			for(int ii=0; ii<model.NCellInit; ii++){
 				int Ndss = 12;
 				int Nanme = model.NCellInit-Ndss;
@@ -161,8 +173,6 @@ public class RunAOM extends Run {		// simulation == 4
 				model.Write("Initial cells overlap", "warning");
 			}
 			
-
-			
 			// Save and convert the file
 			model.Save();
 			ser2mat.Convert(model);	
@@ -175,7 +185,24 @@ public class RunAOM extends Run {		// simulation == 4
 
 			// Grow cells
 			model.Write("Growing cells", "iter");
-			model.GrowthSyntrophy();
+			double[] increaseAmountArray = model.GrowthSyntrophy();
+			
+			// Produce S8 (s)
+			if(model.MWX[s8s] != model.MWX[anme] || model.rhoX[s8s] != model.rhoX[s8s]) {
+				model.Write("Distributing produced S8 (s)", "iter");
+				int NCell = model.cellArray.size();
+				// Based on increase in growth for ANME
+				for(int iCell = 0; iCell<model.cellArray.size(); iCell++) {
+					Cell cell = model.cellArray.get(iCell);
+					if(cell.type!=anme) 	continue; 										// Only ANME cells produce S8 (s)
+					double s8sAmount = increaseAmountArray[iCell] * model.yieldMatrix[s8s][anme];
+					double radius = cell.ballArray[0].radius;
+					Vector3d dir = new Vector3d(2.0*(rand.Double()-0.5), 2.0*(rand.Double()-0.5), 2.0*(rand.Double()-0.5)).normalise();
+					Vector3d disp = dir.times(radius);
+					new Cell(s8s, s8sAmount, cell.ballArray[0].pos.plus(disp), new Vector3d(), false, model);
+				}
+			}
+			
 			// Mark mother cell for division if ready
 			ArrayList<Cell> dividingCellArray = new ArrayList<Cell>(0);
 			for(Cell mother : model.cellArray) {
