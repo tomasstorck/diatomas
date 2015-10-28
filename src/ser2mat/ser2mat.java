@@ -71,32 +71,32 @@ public class ser2mat {
 						if(f.getGenericType() 		== long.class) {
 							String fname = f.getName();
 							long val = f.getLong(o);
-							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
+							mlO.setField(fname, new MLDouble(null, new double[] {val}, 1), io);
 						}
 						else if (f.getGenericType() == String.class) {
 							String fname = f.getName();
 							String val = String.valueOf(f.get(o));
-							mlO.setField(fname,                    new MLChar(null, new String[] {val}, Math.max(val.length(),1)), io);
+							mlO.setField(fname, new MLChar(null, new String[] {val}, Math.max(val.length(),1)), io);
 						}
 						else if(f.getGenericType() 	== int.class) {
 							String fname = f.getName();
 							int val = f.getInt(o);
-							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
+							mlO.setField(fname, new MLDouble(null, new double[] {val}, 1), io);
 						}
 						else if(f.getGenericType() 	== double.class) {
 							String fname = f.getName();
 							double val = f.getDouble(o);
-							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
+							mlO.setField(fname, new MLDouble(null, new double[] {val}, 1), io);
 						}
 						else if(f.getGenericType() 	== boolean.class) {
 							String fname = f.getName();
 							boolean val = f.getBoolean(o);
-							mlO.setField(fname,                    new MLDouble(null, new double[] {val?1:0}, 1), io);
+							mlO.setField(fname, new MLDouble(null, new double[] {val?1:0}, 1), io);
 						}
 						else if(f.getGenericType() 	== ibm.Vector3d.class) {
 							String fname = f.getName();
 							Vector3d val = (Vector3d) f.get(o);
-							mlO.setField(fname,                    new MLDouble(null, new double[] {val.x, val.y, val.z}, 3), io);
+							mlO.setField(fname, new MLDouble(null, new double[] {val.x, val.y, val.z}, 3), io);
 						}
 						else if(f.getGenericType() 	== Cell.class) {
 							String fname = f.getName();
@@ -105,7 +105,7 @@ public class ser2mat {
 								val = ((Cell) f.get(o)).Index();
 							else
 								val = -1;
-							mlO.setField(fname,                    new MLDouble(null, new double[] {val}, 1), io);
+							mlO.setField(fname, new MLDouble(null, new double[] {val}, 1), io);
 						}
 						else if(f.getGenericType() 	== Model.class) {
 							continue; 									// Don't save Model class
@@ -118,7 +118,7 @@ public class ser2mat {
 							for(int ii=0; ii<val.length; ii++) {
 								valDouble[ii] = (int) val[ii];
 							}
-							mlO.setField(fname,                    new MLDouble(null, valDouble, Math.max(valDouble.length,1)), io);
+							mlO.setField(fname, new MLDouble(null, valDouble, Math.max(valDouble.length,1)), io);
 						}
 						else if(f.getType() == int[][].class) {
 							String fname = f.getName();
@@ -130,17 +130,17 @@ public class ser2mat {
 									valDouble[ii][jj] = (int) val[ii][jj];
 								}
 							}
-							mlO.setField(fname,                    new MLDouble(null, valDouble), io);
+							mlO.setField(fname, new MLDouble(null, valDouble), io);
 						}
 						else if(f.getType() == double[].class) {
 							String fname = f.getName();
 							double[] val = (double[]) f.get(o);
-							mlO.setField(fname,                    new MLDouble(null, val, Math.max(val.length,1)), io);
+							mlO.setField(fname, new MLDouble(null, val, Math.max(val.length,1)), io);
 						}
 						else if(f.getType() == double[][].class) {
 							String fname = f.getName();
 							double[][] val = (double[][]) f.get(o);
-							mlO.setField(fname,                    new MLDouble(null, val), io);
+							mlO.setField(fname, new MLDouble(null, val), io);
 						}
 						else if(f.getType() == boolean[].class) { 		// Alternatively: f.get(model).getClass().getComponentType()
 							String fname = f.getName();
@@ -149,7 +149,7 @@ public class ser2mat {
 							double[] valDouble = new double[val.length]; 
 							for(int ii=0; ii<val.length; ii++)
 								valDouble[ii] = val[ii] ? 1.0 : 0.0;
-							mlO.setField(fname,                    new MLDouble(null, valDouble, Math.max(valDouble.length,1)), io);
+							mlO.setField(fname, new MLDouble(null, valDouble, Math.max(valDouble.length,1)), io);
 						}
 						else if(f.getType() == boolean[][].class) {
 							String fname = f.getName();
@@ -159,7 +159,7 @@ public class ser2mat {
 							for(int ii=0; ii<val.length; ii++)
 								for(int jj=0; jj<val[0].length; jj++)
 									valDouble[ii][jj] = val[ii][jj] ? 1.0 : 0.0;
-							mlO.setField(fname,                    new MLDouble(null, valDouble), io);
+							mlO.setField(fname, new MLDouble(null, valDouble), io);
 						}
 						else if(f.getType() == Ball[].class) {
 							String fname = f.getName();
@@ -168,7 +168,7 @@ public class ser2mat {
 							double[] valDouble = new double[val.length]; 
 							for(int ii=0; ii<val.length; ii++)
 								valDouble[ii] = val[ii].Index();
-							mlO.setField(fname,                    new MLDouble(null, valDouble, Math.max(valDouble.length,1)), io);
+							mlO.setField(fname, new MLDouble(null, valDouble, Math.max(valDouble.length,1)), io);
 						}
 						else if(f.getType() == Vector3d[].class) {
 							String fname = f.getName();
@@ -180,7 +180,7 @@ public class ser2mat {
 								valDouble[ii][1] = val[ii].y;
 								valDouble[ii][2] = val[ii].z;
 							}
-							mlO.setField(fname,                    new MLDouble(null, valDouble), io);
+							mlO.setField(fname, new MLDouble(null, valDouble), io);
 						}
 						// Get the really tricky ones (cellArray, ballArray, ...). Luckily we can generalise these
 						else if(f.get(o) instanceof ArrayList) { 			// It's an ArrayList
@@ -198,7 +198,7 @@ public class ser2mat {
 										Object e1 = fArrayList.get(ie);
 										fIndexArray[ie] = (Integer) IndexMethod.invoke(e1);
 									}
-									mlO.setField(fname,            new MLDouble(null, fIndexArray, Math.max(fIndexArray.length,1)), io);
+									mlO.setField(fname, new MLDouble(null, fIndexArray, Math.max(fIndexArray.length,1)), io);
 								}
 						}
 						else {

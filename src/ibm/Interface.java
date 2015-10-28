@@ -63,9 +63,9 @@ public class Interface{
 				File dir = new File("results/" + modelPath + "/output/");
 				// Construct filter
 				FilenameFilter filter = new FilenameFilter() {
-				    public boolean accept(File dir, String name) {
-				    	return name.endsWith(".ser");
-				    }
+					public boolean accept(File dir, String name) {
+						return name.endsWith(".ser");
+					}
 				};
 				// List filtered files and convert
 				String[] files = dir.list(filter);
