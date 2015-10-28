@@ -37,7 +37,6 @@ public class Comsol {
 //		ModelUtil.showProgress(false);								// enabling this causes COMSOL to run something SWT/graphical --> crash
 //		ModelUtil.showProgress("results/" + ibm.name + "/logfile_comsol.txt");
 		comsol = ModelUtil.create("Model");
-	    comsol.modelPath("/home/tomas/Desktop");					// UPDATE
 	    comsol.modelNode().create("mod1");
 	    comsol.geom().create("geom1", 3);
 	    comsol.geom("geom1").geomRep("comsol");						// Use COMSOL geometry, prevents license issues
@@ -521,9 +520,10 @@ public class Comsol {
 	//////////////////////////////////
 
 	public String GetCellName(Cell cell) {
-		if(cell.type<2)
+		int shape = ibm.shapeX[cell.type];
+		if(shape==0)
 			return "sph" + cell.Index();
-		else if(cell.type <6)
+		else if(shape==1 || shape==2)
 			return "rod" + cell.Index();
 		else
 			throw new IndexOutOfBoundsException("Cell type: " + cell.type);
@@ -537,8 +537,12 @@ public class Comsol {
 	}
 	
 	public double GetParameter(Cell cell, String parameter, String name) throws FlException {
+		int shape = ibm.shapeX[cell.type];
 		String avName = "av" + Integer.toString(cell.Index()) + "_" + name;						// e.g. av0_c0
-		String cellName = (cell.type<2 ? "sph" : "rod") + cell.Index();							// We named it either sphere or rod + the cell's number  
+		String cellName = " "; 																	// We named it either sphere or rod + the cell's number
+		if(shape==0) 		cellName = "sph" + cell.Index();  
+		else if(shape==1 || shape==1) 	cellName = "rod" + cell.Index();
+		else throw new IndexOutOfBoundsException("Cell type: " + cell.type);
 		comsol.result().numerical().create(avName,"AvSurface");									// Determine the average surface value...
 		comsol.result().numerical(avName).selection().named("geom1_" + cellName + "_bnd");		// ... of the cell's area's... (if a selection was made, this last part allows us to select its boundaries)
 		comsol.result().numerical(avName).set("expr", parameter);								// ... parameter (e.g. concentration 1, "c0") 

@@ -11,7 +11,7 @@ import os, re, time, subprocess
 iterModDiv = 1
 
 #dirPathList = ["../results/aom_seed174_anmeStick_randomInit","../results/aom_seed174_fullStick_KsDSS1e-12","../results/aom_seed174_fullStick_KsDSS1e-13","../results/aom_seed174_fullStick_KsDSS1e-14","../results/aom_seed174_fullStick_KsDSS1e-15"]
-dirFilter = 'aom_seed174_withS8s'        # regular expression
+dirFilter = 'anmeS8sStickOnly'        # regular expression
 resultsPath = os.getcwd()[:os.getcwd().index("/blender")] + "/results"
 dirPathList = [os.path.join(resultsPath, d) for d in os.listdir(resultsPath) if os.path.isdir(os.path.join(resultsPath, d)) and os.path.isdir(os.path.join(resultsPath, d, 'output')) and re.search(dirFilter,d)]
 dirPathList.sort()
@@ -24,7 +24,7 @@ for d in dirPathList:
     for f in fileList:
 #        ###################
 #        # Optional: skip some files manually
-#        if int(re.match('g(\d{4})r(\d{4}).mat',f).group(2)) < 242*5:
+#        if int(re.match('g(\d{4})r(\d{4}).mat',f).group(2)) < 215*5:
 #            continue
 #        #####################
         print(time.strftime('%H:%M:%S   ') + "\t" + f)

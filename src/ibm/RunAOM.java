@@ -1,6 +1,7 @@
 package ibm;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import random.rand;
 import ser2mat.ser2mat;
@@ -181,18 +182,32 @@ public class RunAOM extends Run {		// simulation == 4
 			double[] increaseAmountArray = model.GrowthSyntrophy();
 			
 			// Produce S8 (s)
-			if(model.MWX[s8s] != model.MWX[anme] || model.rhoX[s8s] != model.rhoX[anme]) { 	// Assume MWX or rhoX are set if S8 (s) is enabled 
+			if(model.MWX[s8s] != model.MWX[anme] || model.rhoX[s8s] != model.rhoX[anme]) { 	// Assume MWX or rhoX are set if S8 (s) is enabled
 				model.Write("Distributing produced S8 (s)", "iter");
 				int NCell = model.cellArray.size();
-				// Based on increase in growth for ANME
+				// Find out who has a S8 (s) "cell" as a daughter through hashmap
+				HashMap<Cell, Cell> s8sMap = new HashMap<>();
+				for(Cell cell : model.cellArray) {
+					if(cell.type == s8s) 
+						s8sMap.put(cell.mother, cell);
+				}
 				for(int iCell = 0; iCell<NCell; iCell++) {
 					Cell cell = model.cellArray.get(iCell);
-					if(cell.type!=anme) 	continue; 										// Only ANME cells produce S8 (s)
+					// Determine how much the S8 (s) needs to grow, or how large the new cell must be
 					double s8sAmount = increaseAmountArray[iCell] * model.yieldMatrix[s8s][anme];
-					double radius = cell.ballArray[0].radius;
-					Vector3d dir = new Vector3d(2.0*(rand.Double()-0.5), 2.0*(rand.Double()-0.5), 2.0*(rand.Double()-0.5)).normalise();
-					Vector3d disp = dir.times(radius);
-					new Cell(s8s, s8sAmount, cell.ballArray[0].pos.plus(disp), new Vector3d(), false, model);
+					if(s8sMap.containsKey(cell)) {
+						Cell s8sCell = s8sMap.get(cell);
+						// Grow this cell manually
+						s8sCell.SetAmount(s8sCell.GetAmount() + s8sAmount); 		// This updates radius 
+					} 
+					else if(cell.type == anme)  {
+						double radius = cell.ballArray[0].radius;
+						Vector3d dir = new Vector3d(2.0*(rand.Double()-0.5), 2.0*(rand.Double()-0.5), 2.0*(rand.Double()-0.5)).normalise();
+						Vector3d disp = dir.times(radius);
+						Cell s8sCell = new Cell(s8s, s8sAmount, cell.ballArray[0].pos.plus(disp), new Vector3d(), false, model);
+						s8sCell.mother = cell;
+						s8sMap.put(cell, s8sCell);
+					}
 				}
 			}
 			
