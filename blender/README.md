@@ -5,14 +5,14 @@ Since late 2014, Blender has been replacing POVRay, because it allows up close, 
 
 Note that you need to add at least the file render.py to the Blender path. For example:
 ```
-$ sudo ln -s /home/tomas/diatomas/blender/render.py /usr/share/blender/2.73/scripts/modules/render.py 
+$ sudo ln -s ~/diatomas/blender/render.py /usr/share/blender/2.73/scripts/modules/render.py 
 ```
 
 The file render.py is the main Python script used for Blender and is the library containing the methods used in other files based on it (e.g., ecoli.py).
 
-render.py, ecoli.py etc. need to be run from within Blender. For example:
+```render.py```, ```ecoli.py``` etc. need to be run from within Blender. For example:
 ```
-$  blender --python render.py -- /home/tomas/documenten/modelling/diatomas /results/ecoli_noanchor_dlvo/output/g0100r0500.mat
+$  blender --python render.py -- ~/diatomas/results/ecoli_noanchor_dlvo/output/g0100r0500.mat
 ```
 Other files (e.g., ```rendermonitor.py```, ```ecolidriver.py```) can be run in pure Python and will call Blender when needed.  It is generally not needed to manuallly call ```blender --python ecoli.py``` etc.
 
