@@ -3,12 +3,12 @@ The functions require Python 3, NumPy, SciPy and Blender to be installed
 
 Since late 2014, Blender has been replacing POVRay, because it allows up close, intuitive viewing of the cell configuration. 
 
-Note that you need to add at least the file render.py to the Blender path. For example:
+Note that you need to add at least the file ```render.py``` to the Blender path. For example:
 ```
 $ sudo ln -s ~/diatomas/blender/render.py /usr/share/blender/2.73/scripts/modules/render.py 
 ```
 
-The file render.py is the main Python script used for Blender and is the library containing the methods used in other files based on it (e.g., ecoli.py).
+The file ```render.py``` is the main Python script used for Blender and is the library containing the methods used in other files based on it (e.g., ```ecoli.py```).
 
 ```render.py```, ```ecoli.py``` etc. need to be run from within Blender. For example:
 ```
